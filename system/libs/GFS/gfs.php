@@ -382,6 +382,7 @@ class GFS {
 	 *
 	 * @param string $file
 	 * @param string $path
+	 * @throws Exception
 	 * @throws GFSRealFileNotFoundException
 	 * @throws GFSRealFilePermissionException
 	 */
@@ -407,10 +408,15 @@ class GFS {
 							"startChunk"		=> $this->endOfContentPos
 						);
 						$this->endOfContentPos += filesize($file);
-					} finally {
+
 						fclose($filehandle);
 						unset($filehandle);
 						$this->updateDB();
+					} catch(Exception $e) {
+						fclose($filehandle);
+						unset($filehandle);
+						$this->updateDB();
+						throw $e;
 					}
 				} else {
 					throw new GFSRealFilePermissionException();
@@ -466,8 +472,11 @@ class GFS {
 					"contents"     => $content
 				);
 			}
-		} finally {
 			$this->updateDB();
+
+		} catch(Exception $e) {
+			$this->updateDB();
+			throw $e;
 		}
 	}
 
@@ -1020,10 +1029,14 @@ class GFS {
 						if (fwrite($pointer, (string)$this->db[$path]["contents"]) !== strlen((string)$this->db[$path]["contents"])) {
 							throw new GFSRealFilePermissionException();
 						}
-					} finally {
 						fclose($pointer);
 						@chmod($aim, $this->writeMode);
 						unset($pointer);
+					} catch(Exception $e) {
+						fclose($pointer);
+						@chmod($aim, $this->writeMode);
+						unset($pointer);
+						throw $e;
 					}
 					return;
 				} else {

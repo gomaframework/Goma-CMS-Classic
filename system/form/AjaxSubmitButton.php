@@ -106,10 +106,10 @@ class AjaxSubmitButton extends FormAction {
     {
         $response = new FormAjaxResponse($form, $this);
 
-        $response->exec('$("#' . $this->form()->{"secret_" . $this->form()->id()}->id() . '").val("' . convert::raw2js($this->form()->getSecretKey()) . '");');
+        $response->exec('$("#' . $form->{"secret_" . $form->id()}->id() . '").val("' . convert::raw2js($form->getSecretKey()) . '");');
 
         try {
-            $response = $this->handleSubmit($data, $response, $controller);
+            $response = $this->handleSubmit($data, $form, $response, $controller);
 
             if (is_a($response, "AjaxFormResponse") && $response->getLeaveCheck() === null) {
                 $response->setLeaveCheck(false);
@@ -156,11 +156,12 @@ class AjaxSubmitButton extends FormAction {
 
     /**
      * @param array $result
+     * @param Form $form
      * @param FormAjaxResponse $response
      * @param Controller $controller
      * @return mixed
      */
-    protected function handleSubmit($result, $response, $controller)
+    protected function handleSubmit($result, $form, $response, $controller)
     {
         $submission = $this->ajaxsubmit;
 
@@ -168,7 +169,7 @@ class AjaxSubmitButton extends FormAction {
             return call_user_func_array($submission, array(
                 $result,
                 $response,
-                $this->form(),
+                $form,
                 $controller
             ));
         } else {
@@ -178,7 +179,7 @@ class AjaxSubmitButton extends FormAction {
             ), array(
                 $result,
                 $response,
-                $this->form(),
+                $form,
                 $controller
             ));
         }

@@ -177,7 +177,7 @@ class MultiFormFormField extends ClusterFormField {
 
                     return $sortInfo[$a->{$keyField}] < $sortInfo[$b->{$keyField}] ? -1 : 1;
                 } else {
-                    throw new LogicException("Sort-Information not available.");
+                    throw new LogicException("Sort-Information not available. " . print_r($a, true) . "\n" . var_dump($b, true));
                 }
             });
         }

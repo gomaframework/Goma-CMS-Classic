@@ -655,6 +655,8 @@ class Form extends AbstractFormComponentWithChildren {
 		$data = $this->session->get(self::SESSION_PREFIX . "." . strtolower($this->name));
 		$data->request = $this->request;
 		$data->submitRequest = $this->submitRequest;
+		$data->secretKey = $this->secretKey;
+		$data->state->secret = $this->secretKey;
 
 		$this->session->set("form_state_" . $this->name, $this->state->ToArray());
 
@@ -664,14 +666,10 @@ class Form extends AbstractFormComponentWithChildren {
 			/** @var Form|GomaFormResponse $content */
 			if(is_a($content, "Form")) {
 				$content = $this->handleNextForm($content->render());
-			} else
-				if(is_a($content, "GomaFormResponse")) {
-					/** @var GomaFormResponse $content */
-					$content = $this->handleNextForm($content);
-				}
-
-			$this->session->set("form_state_" . $this->name, $this->state->ToArray());
-			$this->saveToSession();
+			} else if(is_a($content, "GomaFormResponse")) {
+				/** @var GomaFormResponse $content */
+				$content = $this->handleNextForm($content);
+			}
 
 			return $content;
 		} catch(Exception $e) {
