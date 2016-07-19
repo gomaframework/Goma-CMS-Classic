@@ -26,6 +26,11 @@ class FileUploadRenderData extends FormFieldRenderData {
     protected $defaultIcon;
 
     /**
+     * @var bool
+     */
+    protected $showDeleteButton;
+
+    /**
      * @return null|Uploads
      */
     public function getUpload()
@@ -62,6 +67,22 @@ class FileUploadRenderData extends FormFieldRenderData {
     }
 
     /**
+     * @return boolean
+     */
+    public function isShowDeleteButton()
+    {
+        return $this->showDeleteButton;
+    }
+
+    /**
+     * @param boolean $showDeleteButton
+     */
+    public function setShowDeleteButton($showDeleteButton)
+    {
+        $this->showDeleteButton = $showDeleteButton;
+    }
+
+    /**
      * @param bool $includeRendered
      * @param bool $includeChildren
      * @return array
@@ -86,6 +107,7 @@ class FileUploadRenderData extends FormFieldRenderData {
             $data["upload"] = null;
         }
 
+        $data["showDeleteButton"] = $this->showDeleteButton;
         $data["defaultIcon"] = $this->defaultIcon;
 
         return $data;

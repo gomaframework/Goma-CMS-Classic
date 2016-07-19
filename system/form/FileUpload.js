@@ -23,7 +23,7 @@ function FileUpload(form, field, formelement, url, size, types) {
 	this.actions = this.formelement.find(".actions");
 	// the info-zone
 	this.infoZone = this.formelement.find(".progress_info");
-	
+
 	// append fallback for not drag'n'drop-browsers
 	this.browse = this.formelement.find(".fileSelect");
 
@@ -33,21 +33,21 @@ function FileUpload(form, field, formelement, url, size, types) {
 		return false;
 	}.bind(this));
 
-	if(!field.upload) {
+	if(!field.upload || !field.showDeleteButton) {
 		$this.formelement.find(".delete-file-button").hide();
 	}
-	
+
 	this.uploader = new AjaxUpload("#" + this.element.id, {
 		url: url + "/frameUpload/",
 		ajaxurl: url + "/ajaxUpload/",
 		browse: this.browse,
 		usePut: false,
 		useSlice: true,
-		
+
 		max_size: size,
-		
+
 		allowed_types: types,
-		
+
 		// events
 		uploadStarted: function() {
 			var that = this;
@@ -64,15 +64,15 @@ function FileUpload(form, field, formelement, url, size, types) {
 			$($this.element).removeClass("active");
 			$($this.element).removeClass("beforeDrop");
 		},
-		
+
 		dragOver: function() {
 			$($this.element).addClass("active");
 			$($this.element).addClass("beforeDrop");
 		},
-		
+
 		/**
 		 * called when the speed was updated, just for ajax-upload
-		*/
+		 */
 		speedUpdate: function(fileIndex, file, KBperSecond) {
 			var ext = "KB/s";
 			KBperSecond = Math.round(KBperSecond);
@@ -82,17 +82,17 @@ function FileUpload(form, field, formelement, url, size, types) {
 			}
 			$this.infoZone.find("span").html(KBperSecond + ext);
 		},
-		
+
 		/**
 		 * called when the progress was updated, just for ajax-upload
-		*/
+		 */
 		progressUpdate: function(fileIndex, file, newProgress) {
 			$this.infoZone.find(".progress").stop().animate({width: newProgress + "%"}, 500);
 		},
-		
+
 		/**
 		 * event is called when the upload is done
-		*/
+		 */
 		always: function() {
 			$this.infoZone.find("span").html("100%");
 			$this.infoZone.find(".progress").css("width", "100%");
@@ -101,20 +101,20 @@ function FileUpload(form, field, formelement, url, size, types) {
 					$this.infoZone.html("");
 				});
 			}, 1000);
-			
+
 			$($this.element).find(".loading").remove();
 		},
-		
+
 		/**
 		 * method which is called, when we receive the response
-		*/
+		 */
 		done: function(html) {
 			try {
 				var data = eval('('+html+');');
 				this.updateFile(data);
 			} catch(err) {
 				if(this.isAbort) {
-				
+
 				} else {
 					$this.infoZone.html('<div class="error">An Error occured. '+err+'</div>');
 				}
@@ -137,7 +137,10 @@ function FileUpload(form, field, formelement, url, size, types) {
 			} else if(data.status == 0) {
 				$this.infoZone.html('<div class="error">'+data.error+'</div>');
 			} else {
-				$this.formelement.find(".delete-file-button").show();
+				if(field.showDeleteButton) {
+					$this.formelement.find(".delete-file-button").show();
+				}
+
 				$this.field.upload = data.file;
 				if(data.file["icon128"]) {
 					if(window.devicePixelRatio > 1.5 && data.file["icon128@2x"]) {
@@ -160,19 +163,19 @@ function FileUpload(form, field, formelement, url, size, types) {
 		updateIcon: function(icon) {
 			$($this.element).find("img").attr("src", icon);
 		},
-		
+
 		failSize: function(i) {
 			$this.infoZone.html('<div class="error">'+lang("files.filesize_failure")+'</div>');
 		},
-		
+
 		failExt: function() {
 			$this.infoZone.html('<div class="error">'+lang("files.filetype_failure")+'</div>');
 		}
-		
+
 	});
-	
+
 	// now hide original file-upload-field
 	this.formelement.find(".no-js-fallback").css("display", "none");
-	
+
 	return this;
 }

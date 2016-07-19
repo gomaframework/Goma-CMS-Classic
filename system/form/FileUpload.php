@@ -90,6 +90,11 @@ class FileUpload extends FormField {
 	protected $chunkKey;
 
 	/**
+	 * @var bool
+	 */
+	protected $showDeleteButton = true;
+
+	/**
 	 * creates field.
 	 * @param string $name
 	 * @param string $title
@@ -359,6 +364,20 @@ class FileUpload extends FormField {
 	}
 
 	/**
+	 * @param null $fieldErrors
+	 * @return FileUploadRenderData|FormFieldRenderData
+	 */
+	public function exportBasicInfo($fieldErrors = null)
+	{
+		/** @var FileUploadRenderData $info */
+		$info = parent::exportBasicInfo($fieldErrors);
+
+		$info->setShowDeleteButton($this->showDeleteButton);
+
+		return $info;
+	}
+
+	/**
 	 * @return TabRenderData
 	 */
 	protected function createsRenderDataClass() {
@@ -406,16 +425,6 @@ class FileUpload extends FormField {
 	}
 
 	/**
-	 * the result is a Uploads-Object
-	 *
-	 * @return Uploads
-	 */
-	public function result() {
-		$this->getValue();
-		return $this->value;
-	}
-
-	/**
 	 * @return ViewAccessableData
 	 */
 	public function getTemplateView()
@@ -425,9 +434,29 @@ class FileUpload extends FormField {
 
 	/**
 	 * @param ViewAccessableData $templateView
+	 * @return $this
 	 */
 	public function setTemplateView($templateView)
 	{
 		$this->templateView = $templateView;
+		return $this;
+	}
+
+	/**
+	 * @return boolean
+	 */
+	public function isShowDeleteButton()
+	{
+		return $this->showDeleteButton;
+	}
+
+	/**
+	 * @param boolean $showDeleteButton
+	 * @return $this
+	 */
+	public function setShowDeleteButton($showDeleteButton)
+	{
+		$this->showDeleteButton = $showDeleteButton;
+		return $this;
 	}
 }
