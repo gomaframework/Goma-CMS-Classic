@@ -728,6 +728,10 @@ class Form extends AbstractFormComponentWithChildren {
 	 * @throws FormNotValidException
 	 */
 	protected function handleSubmit() {
+		if(!self::submissionPossible($this, $this->getRequest()->post_params)) {
+			throw new FormNotSubmittedException();
+		}
+
 		$submissionWithoutValidation = self::findSubmission($this, $this->getRequest()->post_params, null);
 
 		$result = $this->gatherResultForSubmit(is_null($submissionWithoutValidation));
@@ -816,6 +820,24 @@ class Form extends AbstractFormComponentWithChildren {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param Form $form
+	 * @param array $post
+	 * @return bool
+	 */
+	protected static function submissionPossible($form, $post) {
+		foreach($form->fields as $field) {
+			if (is_a($field, "FormActionHandler")) {
+				if (isset($post[$field->postname()]) ||
+					(isset($post["default_submit"]) && !$field->input->hasClass("cancel") && !$field->input->name != "cancel")
+				) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

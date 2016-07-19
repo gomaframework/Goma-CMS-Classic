@@ -110,7 +110,7 @@ class FileUpload extends FormField {
 	 * @param string $collection
 	 * @param Form $form
 	 */
-	public function __construct($name = null, $title = null, $file_types = null, $value = "", $collection = null, &$form = null) {
+	public function __construct($name = null, $title = null, $file_types = null, $value = null, $collection = null, &$form = null) {
 		parent::__construct($name, $title, $value, $form);
 		if($file_types !== null && (is_array($file_types) || $file_types == "*"))
 			$this->allowed_file_types = $file_types;

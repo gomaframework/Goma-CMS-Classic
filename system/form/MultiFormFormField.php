@@ -152,7 +152,7 @@ class MultiFormFormField extends ClusterFormField {
         if(!$result)
             throw new LogicException();
 
-        $sortIds = array();
+        $sortInfo = array();
         foreach($result as $record) {
             if(isset($record->{$this->modelKeyField})) {
                 if($this->getField($record->{$this->modelKeyField})) {
@@ -160,14 +160,26 @@ class MultiFormFormField extends ClusterFormField {
                     if ($record->__shouldDeletePart) {
                         $result->removeFromSet($record);
                     } else {
-                        array_splice($sortIds, $record->__sortPart, 0, $record->id);
+                        $sortInfo[$record->{$this->modelKeyField}] = $record->__sortPart;
                     }
                 }
             }
         }
 
         if(is_a($result, "ISortableDataObjectSet")) {
-            $result->setSortByIdArray($sortIds);
+            /** @var ISortableDataObjectSet $result */
+            $keyField = $this->modelKeyField;
+            $result->sortCallback(function($a, $b) use($sortInfo, $keyField) {
+                if(isset($sortInfo[$a->{$keyField}]) && isset($sortInfo[$b->{$keyField}])) {
+                    if($sortInfo[$a->{$keyField}] == $sortInfo[$b->{$keyField}]) {
+                        return 0;
+                    }
+
+                    return $sortInfo[$a->{$keyField}] < $sortInfo[$b->{$keyField}] ? -1 : 1;
+                } else {
+                    throw new LogicException("Sort-Information not available.");
+                }
+            });
         }
 
         return $result;

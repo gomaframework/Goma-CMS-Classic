@@ -132,7 +132,7 @@ class FileUploadSet extends FormField
      * @param null $collection
      * @param null $form
      */
-    public function __construct($name = null, $title = null, $file_types = null, $value = "", $collection = null, &$form = null)
+    public function __construct($name = null, $title = null, $file_types = null, $value = null, $collection = null, &$form = null)
     {
         parent::__construct($name, $title, $value, $form);
 
