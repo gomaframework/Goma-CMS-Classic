@@ -10,7 +10,7 @@
  *
  * @version		1.0
  */
-class AuthenticationService {
+class AuthenticationService extends gObject {
 
     /**
      * limit of time when session expires.
@@ -18,9 +18,27 @@ class AuthenticationService {
     public static $expirationLimit = 604800;
 
     /**
+     * @var null|AuthenticationService
+     */
+    private static $shared;
+
+    /**
+     * @return AuthenticationService
+     */
+    public static function sharedInstance() {
+        if(!isset(self::$shared)) {
+            self::$shared = new AuthenticationService();
+        }
+
+        return self::$shared;
+    }
+
+    /**
      * gets auth-record for current authentification.
      *
+     * @param string $sessionid
      * @return UserAuthentication
+     * @throws MySQLException
      */
     public static function getAuthRecord($sessionid) {
         if(PROFILE) Profiler::mark("AuthService getAuthRecord");
@@ -44,6 +62,8 @@ class AuthenticationService {
     /**
      * returns User-Object by given Authentification-id.
      *
+     * @param int $id
+     * @param string|null $sessionId
      * @return User
      */
     public static function getUserObject($id, $sessionId = null) {
@@ -58,9 +78,9 @@ class AuthenticationService {
                 )->count() > 0) {
                 return $data;
             }
-
-            return null;
         }
+
+        return null;
     }
 
     /**
@@ -90,11 +110,10 @@ class AuthenticationService {
 
     /**
      * forces a logout
-     *
-     *@name doLogout
-     *@access public
+     * @param string|null $sessionId if to logout specific id
+     * @throws MySQLException
      */
-    public static function doLogout($sessionId = null) {
+    public function doLogout($sessionId = null) {
         if(!isset($sessionId)) {
             $sessionId = GlobalSessionManager::globalSession()->getId();
         }
@@ -116,38 +135,56 @@ class AuthenticationService {
      * @param int $allowStatus which status should be additionally allowed?
      * @return User
      */
-    public static function checkLogin($user, $pwd, $sessionId = null, $allowStatus = -1) {
+    public function checkLogin($user, $pwd, $sessionId = null, $allowStatus = -1) {
+        if($userObject = $this->resolveUser($user, $pwd)) {
+            if ($userObject->status == 1 || $userObject->status == $allowStatus) {
+
+                DefaultPermission::forceGroups($userObject);
+
+                $authentication = new UserAuthentication(array(
+                    "token"  => isset($sessionId) ? $sessionId : GlobalSessionManager::globalSession()->getId(),
+                    "userid" => $userObject->id
+                ));
+                Core::repository()->add($authentication, true);
+
+                $userObject->performLogin();
+
+                return $userObject;
+            } else if ($userObject->status == 0) {
+                throw new LoginUserMustUnlockException("User must validate email-address.", $userObject);
+            } else {
+                throw new LoginUserLockedException("User was locked by administrator.", $userObject);
+            }
+        }
+
+        throw new LoginInvalidException();
+    }
+
+    /**
+     * @param $user
+     * @param $pwd
+     * @return User|null
+     */
+    protected function resolveUser($user, $pwd) {
         DefaultPermission::checkDefaults();
+
+        $currentUserObject = null;
 
         $users = DataObject::get("user", array("nickname" => trim(strtolower($user)), "OR", "email" => array("LIKE", $user)));
 
         /** @var User $userObject */
         if($users->count() > 0) {
-            foreach($users as $userObject) {
+            foreach ($users as $userObject) {
                 // check password
                 if (Hash::checkHashMatches($pwd, $userObject->fieldGet("password"))) {
-                    if ($userObject->status == 1 || $userObject->status == $allowStatus) {
-
-                        DefaultPermission::forceGroups($userObject);
-
-                        $authentication = new UserAuthentication(array(
-                            "token"  => isset($sessionId) ? $sessionId : GlobalSessionManager::globalSession()->getId(),
-                            "userid" => $userObject->id
-                        ));
-                        Core::repository()->add($authentication, true);
-
-                        $userObject->performLogin();
-
-                        return $userObject;
-                    } else if ($userObject->status == 0) {
-                        throw new LoginUserMustUnlockException("User must validate email-address.", $userObject);
-                    } else {
-                        throw new LoginUserLockedException("User was locked by administrator.", $userObject);
-                    }
+                    $currentUserObject = $userObject;
+                    break;
                 }
             }
         }
 
-        throw new LoginInvalidException();
+        $this->callExtending("resolveUser", $currentUserObject);
+
+        return $currentUserObject;
     }
 }

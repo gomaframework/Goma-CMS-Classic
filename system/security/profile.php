@@ -107,7 +107,7 @@ class ProfileController extends FrontedController {
 		// if login and a user want's to login as someone else, we should log him out
 		if(member::login() && isset($this->getRequest()->post_params["pwd"]))
 		{
-			AuthenticationService::doLogout();
+			AuthenticationService::sharedInstance()->doLogout();
 			// if a user goes to login and is logged in, we redirect him home
 		} else if(member::login()) {
 			return GomaResponse::redirect(getRedirect(true));
@@ -142,7 +142,7 @@ class ProfileController extends FrontedController {
 	public function	logout()
 	{
 		if(isset($this->getRequest()->post_params["logout"])) {
-			AuthenticationService::doLogout();
+			AuthenticationService::sharedInstance()->doLogout();
 		}
 
 		return GomaResponse::redirect(getRedirect(true));

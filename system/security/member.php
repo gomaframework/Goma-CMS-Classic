@@ -166,7 +166,7 @@ class Member extends gObject {
 	public static function doLogin($user, $pwd)
 	{
 		try {
-			AuthenticationService::checkLogin($user, $pwd);
+			AuthenticationService::sharedInstance()->checkLogin($user, $pwd);
 
 			return true;
 		} catch(LoginInvalidException $e) {
