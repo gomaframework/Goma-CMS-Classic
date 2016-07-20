@@ -441,6 +441,7 @@ class GFS {
 	 * @param string $content
 	 * @param string $path
 	 * @param null $lastModified
+	 * @throws Exception
 	 * @throws GFSRealFilePermissionException
 	 */
 	protected function addContentToArchiveWithoutChecks($content, $path, $lastModified = null) {
@@ -1008,6 +1009,7 @@ class GFS {
 	 *
 	 * @param string $path
 	 * @param string $aim
+	 * @throws Exception
 	 * @throws GFSException
 	 * @throws GFSFileNotFoundException
 	 * @throws GFSReadonlyException

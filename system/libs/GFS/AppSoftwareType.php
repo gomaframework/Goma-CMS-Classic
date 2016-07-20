@@ -109,9 +109,6 @@ class G_AppSoftwareType extends G_SoftwareType {
 	/**
 	 * installs the framework
 	 *
-	 * @name getInstallInfo
-	 * @access public
-	 *
 	 * @return array
 	 */
 	public function getInstallInfo($controller, $forceInstall = false) {
@@ -203,7 +200,7 @@ class G_AppSoftwareType extends G_SoftwareType {
 				new FormAction("submit", lang("install.install"), array($this, "saveFormData"))
 			));
 
-			$apps = ListApplications();
+			$apps = $this->listApplications();
 			if(defined("DOMAIN_LOAD_DIRECTORY") || (count($apps) > 0 && $apps[0]["directory"] != PROJECT_LOAD_DIRECTORY)) {
 				$form->add(new TextField("domain", lang("domain")));
 			}
@@ -277,10 +274,22 @@ class G_AppSoftwareType extends G_SoftwareType {
 	}
 
 	/**
+	 * returns the array of all registered applications
+	 *
+	 * @return array
+	 */
+	function listApplications() {
+		if (file_exists(ROOT . "_config.php")) {
+			require (ROOT . "_config.php");
+			return $apps;
+		} else {
+			return array();
+		}
+	}
+
+	/**
 	 * gets package info
 	 *
-	 * @name getPackageInfo
-	 * @access public
 	 * @return array
 	 */
 	public function getPackageInfo() {

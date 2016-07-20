@@ -279,8 +279,7 @@ loadApplication($application);
 /**
  * loads the autoloader for the framework
  *
- *@name loadFramework
- *@access public
+ * @access public
  */
 function loadFramework() {
 
@@ -331,9 +330,6 @@ function loadFramework() {
 
 /**
  * this function loads an application
- *
- *@name loadApplication
- *@access public
  */
 function loadApplication($directory) {
 
@@ -406,21 +402,6 @@ function loadApplication($directory) {
 		define("PROJECT_LOAD_DIRECTORY", $directory);
 		// this doesn't look like an app, load installer
 		loadApplication("system/installer");
-	}
-}
-
-/**
- * returns the array of all registered applications
- *
- *@name ListApplications
- *@access public
- */
-function ListApplications() {
-	if (file_exists(ROOT . "_config.php")) {
-		require (ROOT . "_config.php");
-		return $apps;
-	} else {
-		return array();
 	}
 }
 
