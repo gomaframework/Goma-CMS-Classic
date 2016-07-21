@@ -19,42 +19,27 @@ class Member extends gObject {
 
 	/**
 	 * id of the current logged in user
-	 *
-	 *@name id
-	 *@access public
 	 */
 	public static $id;
 
 	/**
 	 * nickname of the user logged in
-	 *
-	 *@name nickname
-	 *@access public
 	 */
 	public static $nickname;
 
 	/**
 	 * this var reflects the status of the highest group in which the user is
-	 *
-	 *@name groupType
-	 *@access public
-	 *@var enum(0,1,2)
+	 *@var int
 	 */
 	public static $groupType = 0;
 
 	/**
 	 * set of groups of this user
-	 *
-	 *@name groups
-	 *@access public
 	 */
 	public static $groups = array();
 
 	/**
 	 * default-admin
-	 *
-	 *@name default_admin
-	 *@access public
 	 */
 	public static $default_admin;
 
@@ -68,8 +53,6 @@ class Member extends gObject {
 	/**
 	 * checks the login and writes the types
 	 *
-	 * @name 	Init
-	 * @access 	public
 	 * @return 	boolean	true if logged in
 	 */
 	public static function Init() {
@@ -157,10 +140,8 @@ class Member extends gObject {
 	 * login an user with the params
 	 * if the params are incorrect, it returns false.
 	 *
-	 * @name 	doLogin
-	 * @access 	public
-	 * @param 	string - nickname
-	 * @param 	string - password
+	 * @param 	string $user
+	 * @param 	string $pwd
 	 * @return 	bool
 	 */
 	public static function doLogin($user, $pwd)
@@ -192,9 +173,6 @@ class Member extends gObject {
 
 	/**
 	 * require login
-	 *
-	 * @name require_Login
-	 * @access public
 	 * @return bool
 	 */
 	public static function require_login() {

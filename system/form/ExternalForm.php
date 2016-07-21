@@ -83,28 +83,21 @@ class ExternalForm extends FormField {
 	/**
 	 * renders the bluebox
 	 *
-	 * @name render
-	 * @access public
 	 * @return mixed|string
 	 */
 	public function render() {
 		Core::setTitle($this->extTitle);
 		// create a deep copy
 		if(is_callable($this->external_form)) {
+			/** @var Form $form */
 			$form = call_user_func_array($this->external_form, array());
 		} else {
-			throwError(6, "No callback set", "No valid callback were set to ExternalForm::__construct");
+			throw new InvalidArgumentException("No valid callback were set to ExternalForm::__construct");
 		}
 		$form->add(new HTMLField("head", "<h1>" . convert::raw2text($this->extTitle) . "</h1>"), 1);
 		$form->addAction(new LinkAction("cancel", lang("cancel"), $this->form()->url));
 
-		if($this->Form()->controller && gObject::method_exists($this->Form()->controller, "serve")) {
-			$fronted = $this->Form()->controller;
-		} else {
-			$fronted = new FrontedController();
-		}
-
-		return $fronted->serve($form->render());
+		return $form->render();
 	}
 
 	/**

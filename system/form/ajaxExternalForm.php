@@ -11,22 +11,23 @@ defined("IN_GOMA") OR die();
  */
 class AjaxExternalForm extends FormField {
 
+	/**
+	 * @var array
+	 */
 	public $allowed_actions = array("render");
 
 	/**
-	 * external-form
-	 *@name external-form
-	 *@access public
+	 * external form.
 	 */
 	public $external_form;
 
 	/**
-	 *@name __construct
-	 *@param string - name
-	 *@param string - title
-	 *@param string - title
-	 *@param form - external form
-	 *@param form - form for this field
+	 * @param string $name
+	 * @param string|null $title
+	 * @param mixed $value
+	 * @param string $external
+	 * @param Form|null $form
+	 * @param string $code
 	 */
 	public function __construct($name = "", $title = null, $value = null, $external = "", &$form = null, $code = "") {
 		if(is_object($external))
@@ -36,8 +37,7 @@ class AjaxExternalForm extends FormField {
 	}
 
 	/**
-	 *@name createNode
-	 *@access public
+	 *
 	 */
 	public function createNode() {
 		$node = new HTMLNode("span", array("class" => "value"));
@@ -80,22 +80,15 @@ class AjaxExternalForm extends FormField {
 	 * renders the bluebox
 	 */
 	public function render() {
-		// create a deep copy
 		$form = unserialize(serialize($this->external_form));
-		if(Core::is_ajax()) {
+		if($this->getRequest()->is_ajax()) {
 			$form->addAction(new Button("cancel", lang("cancel", "Cancel"), "var id = $(this).parents('.bluebox').attr('id').replace('bluebox_','');getblueboxbyid(id).close();"));
 			return $form->render();
 		} else {
 			$form->add(new HTMLField("head", "<h1>" . convert::raw2text($this->title) . "</h1>"), 1);
 			$form->addAction(new LinkAction("cancel", lang("cancel"), $this->form()->url));
 
-			if($this->Form()->controller && gObject::method_exists($this->Form()->controller, "serve")) {
-				$fronted = $this->Form()->controller;
-			} else {
-				$fronted = new FrontedController();
-			}
-			
-			return $fronted->serve($form->render());
+			return $form->render();
 		}
 	}
 
@@ -105,5 +98,4 @@ class AjaxExternalForm extends FormField {
 	public function result() {
 		return null;
 	}
-
 }

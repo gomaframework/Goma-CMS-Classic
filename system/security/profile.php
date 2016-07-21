@@ -40,10 +40,8 @@ class ProfileController extends FrontedController {
 	 * @return string
 	 */
 	public function edit() {
-		if(!member::login())
-		{
-			HTTPResponse::redirect(BASE_URI . "profile/login/?redirect=".urlencode(ROOT_PATH . BASE_SCRIPT . "profile/edit/")."");
-			exit;
+		if(!Member::login()) {
+			return GomaResponse::redirect(BASE_URI . "profile/login/?redirect=".urlencode(ROOT_PATH . BASE_SCRIPT . "profile/edit/")."");
 		}
 
 		Core::addBreadCrumb(lang("profile"), "profile/");
@@ -63,6 +61,7 @@ class ProfileController extends FrontedController {
 	/**
 	 * default screen
 	 *
+	 * @param string|null $id
 	 * @return bool|string
 	 */
 	public function index($id = null) {
@@ -100,7 +99,6 @@ class ProfileController extends FrontedController {
 	 * login-method
 	 */
 	public function login() {
-
 		Core::addBreadCrumb(lang("login"), "profile/login/");
 		Core::setTitle(lang("login"), "profile/login/");
 
