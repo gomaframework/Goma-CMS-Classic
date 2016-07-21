@@ -339,7 +339,7 @@ abstract class AbstractFormComponentWithChildren extends AbstractFormComponent {
      */
     public function exportBasicInfo($fieldErrors = null)
     {
-        $this->url = str_replace('"', '', ROOT_PATH . BASE_SCRIPT . $this->getRequest()->url . URLEND);
+        $this->url = $this->buildUrlFromRequest();
 
         $data = parent::exportBasicInfo($fieldErrors);
 
@@ -351,6 +351,21 @@ abstract class AbstractFormComponentWithChildren extends AbstractFormComponent {
         }
 
         return $data;
+    }
+
+    /**
+     * @return string
+     */
+    protected function buildUrlFromRequest() {
+        $url = str_replace('"', '', ROOT_PATH . BASE_SCRIPT . $this->getRequest()->url . URLEND);
+        $url = $url == "//" ? "/" : $url;
+        if($this->getRequest()->get_params) {
+            $url .= "?";
+            foreach ($this->getRequest()->get_params as $key => $value) {
+                $url .= urlencode($key) . "=" . urlencode($value) . "&";
+            }
+        }
+        return $url;
     }
 
     /**
