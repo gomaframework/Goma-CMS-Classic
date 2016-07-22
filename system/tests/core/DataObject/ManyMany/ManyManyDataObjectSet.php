@@ -17,7 +17,7 @@ class ManyManyDataObjectSet extends GomaUnitTest implements TestAble {
     /**
      * internal name.
      */
-    public $name = "ManyMAayDataObjectSet";
+    public $name = "ManyManyDataObjectSet";
 
     /**
      * test filter.

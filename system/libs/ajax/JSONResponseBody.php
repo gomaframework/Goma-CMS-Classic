@@ -43,4 +43,9 @@ class JSONResponseBody extends GomaResponseBody
         $this->body = $body;
         return $this;
     }
+
+    public function __toString()
+    {
+        return json_encode($this->body);
+    }
 }
