@@ -338,7 +338,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
      */
     public function getRange($start, $length) {
         $set = clone $this;
-        $set->items = $this->dataSource->getRange($start, $length);
+        $set->items = (array) $this->dataSource->getRange($start, $length);
         $set->inExpansion = $this->inExpansion;
         return $set;
     }

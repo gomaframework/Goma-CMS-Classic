@@ -156,8 +156,10 @@ class i18n extends gObject {
 			$lang = self::AutoSelectLang();
 		}
 
-		GlobalSessionManager::globalSession()->set("lang", $lang);
-		setCookie('g_lang', $lang, TIME + 365 * 24 * 60 * 60, '/', GlobalSessionManager::getCookieHost());
+		if(!isCommandLineInterface()) {
+			GlobalSessionManager::globalSession()->set("lang", $lang);
+			setCookie('g_lang', $lang, TIME + 365 * 24 * 60 * 60, '/', GlobalSessionManager::getCookieHost());
+		}
 
 		return $lang;
 	}

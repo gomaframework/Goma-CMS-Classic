@@ -10,7 +10,7 @@
 
 require_once(ROOT . "/system/libs/thirdparty/simpletest/unit_tester.php");
 
-abstract class GomaUnitTest extends UnitTestCase implements TestAble {
+abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAble {
 	/**
 	 * information about area.
 	*/
@@ -38,4 +38,29 @@ abstract class GomaUnitTest extends UnitTestCase implements TestAble {
             $this->assertIsA($e, $exceptionName);
         }
     }
+
+	public function assertEqual() {
+		call_user_func_array(array($this, "assertEquals"), func_get_args());
+	}
+	public function assertNotEqual() {
+		call_user_func_array(array($this, "assertNotEquals"), func_get_args());
+	}
+
+	public function assertIdentical() {
+		call_user_func_array(array($this, "assertSame"), func_get_args());
+	}
+
+	public function assertPattern() {
+		call_user_func_array(array($this, "assertRegExp"), func_get_args());
+	}
+
+	public function assertNoPattern($pattern, $str, $info) {
+		$this->assertFalse(preg_match($pattern, $str), $info);
+	}
+
+	public function assertIsA($obj, $class, $msg = null) {
+		call_user_func_array(array($this, "assertInstanceOf"), array(
+			$class, $obj, $msg
+		));
+	}
 }

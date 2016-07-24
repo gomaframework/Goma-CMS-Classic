@@ -388,6 +388,18 @@ class ClassInfo extends gObject {
 
 	static $i = 0;
 
+	protected static function shouldRebuildClassInfo() {
+		$file = ROOT . CACHE_DIRECTORY . CLASS_INFO_DATAFILE;
+		$args = getCommandLineArgs();
+		return (
+			!file_exists($file) ||
+			filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") ||
+			filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist") ||
+			filemtime($file) + self::$expiringTime < NOW ||
+			isset($args["-rebuild"])
+		);
+	}
+
 	/**
 	 * loads the classinfo from file
 	 *@return null
@@ -398,7 +410,7 @@ class ClassInfo extends gObject {
 		$file = ROOT . CACHE_DIRECTORY . CLASS_INFO_DATAFILE;
 
 		self::$i++;
-		if(((!file_exists($file) || filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") || filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist") || filemtime($file) + self::$expiringTime < NOW))) {
+		if(self::shouldRebuildClassInfo()) {
 			if(PROFILE)
 				Profiler::mark("generate_class_info");
 			defined(self::GENERATE_CLASS_INFO_KEY) OR define(self::GENERATE_CLASS_INFO_KEY, true);
@@ -426,7 +438,6 @@ class ClassInfo extends gObject {
 
 			if(file_exists($file) && (filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") || filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist"))) {
 				if(!preg_match("/^dev/i", URL)) {
-
 					ClassManifest::tryToInclude("Dev", 'system/core/control/DevController.php');
 					Dev::redirectToDev();
 				}

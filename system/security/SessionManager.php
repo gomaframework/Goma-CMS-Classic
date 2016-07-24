@@ -71,25 +71,26 @@ class SessionManager implements ISessionManager {
      * @return void
      */
     public function init($id = null, $name = null) {
-
         $this->setName($name);
         $this->setId($id);
 
-        if(!isset(self::$existing) || self::$existing != $this->id) {
-            if (self::$existing != null) {
-                session_write_close();
+        if(!isCommandLineInterface()) {
+            if (!isset(self::$existing) || self::$existing != $this->id) {
+                if (self::$existing != null) {
+                    session_write_close();
+                }
+
+                $this->setSessionParams();
+
+                if (headers_sent($file, $line)) {
+                    throw new LogicException("Cannot modify session: Headers already sent in file $file on line $line");
+                }
+
+                session_start();
+
+                $this->id = session_id();
+                self::$existing = $this->id;
             }
-
-            $this->setSessionParams();
-
-            if(headers_sent($file, $line)) {
-                throw new LogicException("Cannot modify session: Headers already sent in file $file on line $line");
-            }
-
-            session_start();
-
-            $this->id = session_id();
-            self::$existing = $this->id;
         }
     }
 
@@ -156,7 +157,6 @@ class SessionManager implements ISessionManager {
      */
     public function remove($key) {
         if(isset($_SESSION[ROOT][$key])) {
-
             $fileKey = self::getStoreIndicator($_SESSION[ROOT][$key]);
             if ($fileKey !== null && file_exists(self::getFilePathForKey($fileKey))) {
                 unlink(self::getFilePathForKey($fileKey));
@@ -196,11 +196,13 @@ class SessionManager implements ISessionManager {
 
     /**
      * @param string
+     * @return $this
      */
     protected function setId($id) {
         if(isset($id)) {
             $this->id = $id;
         }
+        return $this;
     }
 
     /**
@@ -212,11 +214,13 @@ class SessionManager implements ISessionManager {
 
     /**
      * @param string $name
+     * @return $this
      */
     protected function setName($name) {
         if(isset($name)) {
             $this->name = $name;
         }
+        return $this;
     }
 
     /**

@@ -24,10 +24,6 @@ if (version_compare(phpversion(), "5.4.0", "<")) {
 	die();
 }
 
-if (!isset($_SERVER["SERVER_NAME"], $_SERVER["DOCUMENT_ROOT"])) {
-	die("Goma needs the Server-Vars SERVER_NAME and DOCUMENT_ROOT");
-}
-
 if (function_exists("ini_set")) {
 	if (!@ini_get('display_errors')) {
 		@ini_set('display_errors', 1);
@@ -148,8 +144,6 @@ require_once (FRAMEWORK_ROOT . 'libs/sql/sql.php');
 if (PROFILE)
 	Profiler::unmark("core_requires");
 
-
-
 // set error-handler
 set_error_handler("Goma_ErrorHandler");
 
@@ -202,20 +196,28 @@ if (file_exists(ROOT . '_config.php')) {
 	/*
 	 * get the current application
 	 */
+	/** @var array $apps */
 	if ($apps) {
 		foreach ($apps as $data) {
-			$u = $root_path . "selectDomain/" . $data["directory"] . "/";
-			if (substr($_SERVER["REQUEST_URI"], 0, strlen($u)) == $u) {
-				$application = $data["directory"];
-				define("BASE_SCRIPT", "selectDomain/" . $data["directory"] . "/");
-				break;
-			}
-			if (isset($data['domain'])) {
-				if (preg_match('/' . str_replace($data['domain'], '/', '\\/') . '$/i', $_SERVER['SERVER_NAME'])) {
+			$subUrl = $root_path . "selectDomain/" . $data["directory"] . "/";
+			if(isCommandLineInterface()) {
+				$args = getCommandLineArgs();
+				if(isset($args["p"]) && $args["p"] == $data["directory"]) {
 					$application = $data["directory"];
-					define("DOMAIN_LOAD_DIRECTORY", $data["directory"]);
-
+				}
+			} else {
+				if (substr($_SERVER["REQUEST_URI"], 0, strlen($subUrl)) == $subUrl) {
+					$application = $data["directory"];
+					define("BASE_SCRIPT", "selectDomain/" . $data["directory"] . "/");
 					break;
+				}
+				if (isset($data['domain'])) {
+					if (preg_match('/' . str_replace($data['domain'], '/', '\\/') . '$/i', $_SERVER['SERVER_NAME'])) {
+						$application = $data["directory"];
+						define("DOMAIN_LOAD_DIRECTORY", $data["directory"]);
+
+						break;
+					}
 				}
 			}
 		}
@@ -246,8 +248,6 @@ define("SYSTEM_TPL_PATH", "system/templates");
 // set timezone for security
 date_default_timezone_set(DEFAULT_TIMEZONE);
 
-define("URL", parseUrl());
-
 if (!file_exists(ROOT . ".htaccess") && !file_exists(ROOT . "web.config")) {
 	writeServerConfig();
 }
@@ -275,200 +275,3 @@ if (file_exists(ROOT . ".htaccess") && (strpos(file_get_contents(".htaccess"), "
 }
 
 loadApplication($application);
-
-/**
- * loads the autoloader for the framework
- *
- * @access public
- */
-function loadFramework() {
-
-	if (defined("CURRENT_PROJECT")) {
-		// if we have this directory, we have to install some files
-		$directory = CURRENT_PROJECT;
-		if (is_dir(ROOT . $directory . "/" . getPrivateKey() . "-install/")) {
-			foreach (scandir(ROOT . $directory . "/" . getPrivateKey() . "-install/") as $file) {
-				if ($file != "." && $file != ".." && is_file(ROOT . $directory . "/" . getPrivateKey() . "-install/" . $file)) {
-					if (preg_match('/\.sql$/i', $file)) {
-						$sqls = file_get_contents(ROOT . $directory . "/" . getPrivateKey() . "-install/" . $file);
-
-						$sqls = SQL::split($sqls);
-
-						foreach ($sqls as $sql) {
-							$sql = str_replace('{!#PREFIX}', DB_PREFIX, $sql);
-							$sql = str_replace('{!#CURRENT_PROJECT}', CURRENT_PROJECT, $sql);
-							$sql = str_replace('\n', "\n", $sql);
-
-							SQL::Query($sql);
-						}
-					} else if (preg_match('/\.php$/i', $file)) {
-						include_once (ROOT . $directory . "/" . getPrivateKey() . "-install/" . $file);
-					}
-
-					@unlink(ROOT . $directory . "/" . getPrivateKey() . "-install/" . $file);
-				}
-			}
-
-			FileSystem::delete(ROOT . $directory . "/" . getPrivateKey() . "-install/");
-		}
-	} else {
-		throw new Exception("Calling loadFramework() without defined CURRENT_PROJECT is illegal.");
-	}
-
-	if (PROFILE)
-		Profiler::mark("Manifest");
-
-	Core::InitCache();
-	ClassInfo::loadfile();
-
-	if (PROFILE)
-		Profiler::unmark("Manifest");
-
-	Director::Init();
-	Core::Init();
-}
-
-/**
- * this function loads an application
- */
-function loadApplication($directory) {
-
-	if (is_dir(ROOT . $directory) && file_exists(ROOT . $directory . "/application/application.php")) {
-
-		// defines
-		define("CURRENT_PROJECT", $directory);
-		define("APPLICATION", $directory);
-		define("APP_FOLDER", ROOT . $directory . "/");
-		defined("APPLICATION_TPL_PATH") OR define("APPLICATION_TPL_PATH", $directory . "/templates");
-		defined("CACHE_DIRECTORY") OR define("CACHE_DIRECTORY", $directory . "/temp/");
-		defined("UPLOAD_DIR") OR define("UPLOAD_DIR", $directory . "/uploads/");
-
-		// cache-directory
-		if (!is_dir(ROOT . CACHE_DIRECTORY)) {
-			mkdir(ROOT . CACHE_DIRECTORY, 0777, true);
-			@chmod(ROOT . CACHE_DIRECTORY, 0777);
-		}
-
-		// load config
-		if (file_exists(ROOT . $directory . "/config.php")) {
-
-			require (ROOT . $directory . "/config.php");
-
-			if (isset($domaininfo["db"])) {
-				foreach ($domaininfo['db'] as $key => $value) {
-					$GLOBALS['db' . $key] = $value;
-				}
-				define('DB_PREFIX', $GLOBALS["dbprefix"]);
-			}
-
-			$domaininfo['date_format_date'] = isset($domaininfo['date_format_date']) ? $domaininfo['date_format_date'] : "d.m.Y";
-			$domaininfo['date_format_time'] = isset($domaininfo['date_format_time']) ? $domaininfo['date_format_time'] : "H:i";
-
-			FileSystem::$safe_mode = isset($domaininfo["safe_mode"]) ? $domaininfo["safe_mode"] : false;
-
-			define('DATE_FORMAT', $domaininfo['date_format_date'] . " - " . $domaininfo['date_format_time']);
-			define('DATE_FORMAT_DATE', $domaininfo['date_format_date']);
-			define('DATE_FORMAT_TIME', $domaininfo['date_format_time']);
-			define("SITE_MODE", $domaininfo["status"]);
-			define("PROJECT_LANG", $domaininfo["lang"]);
-			define("PROJECT_TIMEZONE", $domaininfo["timezone"]);
-
-			Core::setCMSVar("TIMEZONE", $domaininfo["timezone"]);
-			Core::$site_mode = SITE_MODE;
-
-			if (isset($domaininfo["sql_driver"])) {
-				define("SQL_DRIVER_OVERRIDE", $domaininfo["sql_driver"]);
-			}
-
-		} else {
-			define("DATE_FORMAT", "d.m.Y - H:i");
-			Core::setCMSVar("TIMEZONE", DEFAULT_TIMEZONE);
-		}
-
-		ClassManifest::$directories[] = $directory . "/code/";
-		ClassManifest::$directories[] = $directory . "/application/";
-
-		if(isProjectUnavailableForIP($_SERVER["REMOTE_ADDR"], basename($directory))) {
-			$content = file_get_contents(ROOT . "system/templates/framework/503.html");
-			$content = str_replace('{BASE_URI}', BASE_URI, $content);
-			header('HTTP/1.1 503 Service Temporarily Unavailable');
-			header('Status: 503 Service Temporarily Unavailable');
-			header('Retry-After: 10');
-			die($content);
-		}
-
-		require (ROOT . $directory . "/application/application.php");
-	} else {
-		define("PROJECT_LOAD_DIRECTORY", $directory);
-		// this doesn't look like an app, load installer
-		loadApplication("system/installer");
-	}
-}
-
-/**
- * parses the URL, so that we have a clean url
- */
-function parseUrl() {
-
-	defined("BASE_SCRIPT") OR define("BASE_SCRIPT", "");
-
-	// generate ROOT_PATH
-	$root_path = str_replace("\\", "/", substr(__FILE__, 0, -22));
-	$root_path = substr($root_path, strlen(realpath($_SERVER["DOCUMENT_ROOT"])));
-	define('ROOT_PATH', $root_path);
-
-	// generate BASE_URI
-	$http = (isset($_SERVER["HTTPS"])) && $_SERVER["HTTPS"] != "off" ? "https" : "http";
-	$port = $_SERVER["SERVER_PORT"];
-	if ($http == "http" && $port == 80) {
-		$port = "";
-	} else if ($http == "https" && $port == 443) {
-		$port = "";
-	} else {
-		$port = ":" . $port;
-	}
-
-	define("BASE_URI", $http . '://' . $_SERVER["SERVER_NAME"] . $port . ROOT_PATH);
-
-	// generate URL
-	$url = isset($GLOBALS["url"]) ? $GLOBALS["url"] : $_SERVER["REQUEST_URI"];
-	$url = urldecode($url);
-	// we should do this, because the url is not correct else
-	if (preg_match('/\?/', $url)) {
-		$url = substr($url, 0, strpos($url, '?'));
-	}
-
-	$url = substr($url, strlen(ROOT_PATH . BASE_SCRIPT));
-
-	// parse URL
-	if (substr($url, 0, 1) == "/")
-		$url = substr($url, 1);
-
-	// URL-END
-	if (preg_match('/^(.*)' . preg_quote(URLEND, "/") . '$/Usi', $url, $matches)) {
-		$url = $matches[1];
-	} else if ($url != "" && !Core::is_ajax() && !preg_match('/\.([a-zA-Z]+)$/i', $url) && count($_POST) == 0) {
-		// enforce URLEND
-		$get = "";
-		$i = 0;
-		foreach ($_GET as $k => $v) {
-			if ($i == 0)
-				$i++;
-			else
-				$get .= "&";
-
-			$get .= urlencode($k) . "=" . urlencode($v);
-		}
-
-		if ($get) {
-			header("Location: " . BASE_URI . BASE_SCRIPT . $url . URLEND . "?" . $get);
-		} else {
-			header("Location: " . BASE_URI . BASE_SCRIPT . $url . URLEND);
-		}
-		exit ;
-	}
-
-	$url = str_replace('//', '/', $url);
-
-	return $url;
-}

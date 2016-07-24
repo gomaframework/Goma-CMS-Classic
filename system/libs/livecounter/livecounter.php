@@ -140,11 +140,10 @@ class livecounter extends DataObject
 	}
 
 	public static function getUserAgent() {
-		return $_SERVER['HTTP_USER_AGENT'] ? $_SERVER['HTTP_USER_AGENT'] : "unknown";
+		return isset($_SERVER['HTTP_USER_AGENT']) && $_SERVER['HTTP_USER_AGENT'] ? $_SERVER['HTTP_USER_AGENT'] : "unknown";
 	}
 
 	public static function checkForMigrationScript() {
-
 		$userAgent = self::getUserAgent();
 
 		if(!preg_match("/" . self::$no_cookie_support . "/i", $userAgent)  && !preg_match("/" . self::$bot_list . "/i", $userAgent)) {
@@ -164,12 +163,11 @@ class livecounter extends DataObject
 	}
 
 	public static function getUserIdentifier() {
-
 		$userAgent = self::getUserAgent();
 
 		// user identifier
 		if((!isset($_COOKIE['goma_sessid']) && (!preg_match("/" . self::$cookie_support . "/i", $userAgent) || preg_match("/" . self::$no_cookie_support . "/i", $userAgent)  || preg_match("/" . self::$bot_list . "/i", $userAgent))) || $userAgent == "" || $_SERVER['HTTP_USER_AGENT'] == "-") {
-			$user_identifier = md5($userAgent . $_SERVER["REMOTE_ADDR"]);
+			$user_identifier = isCommandLineInterface() ? "cli" : md5($userAgent . $_SERVER["REMOTE_ADDR"]);
 		} else if(isset($_COOKIE['goma_sessid'])) {
 			$user_identifier = $_COOKIE['goma_sessid'];
 		} else if(isset(self::$user_identifier)) {
@@ -216,6 +214,8 @@ class livecounter extends DataObject
 
 	public static function onBeforeShutdownUsingLife() {
 		GlobalSessionManager::globalSession()->stopSession();
+
+		if(isCommandLineInterface()) return;
 		
 		if(function_exists("fastcgi_finish_request")) {
 			fastcgi_finish_request();
@@ -308,8 +308,10 @@ class livecounter extends DataObject
 	}
 
 	public static function setGomaCookies($user_identifier, $host) {
-		setCookie('goma_sessid',$user_identifier, TIME + SESSION_TIMEOUT, '/', $host, false, true);
-		setCookie('goma_lifeid',$user_identifier, TIME + 365 * 24 * 60 * 60, '/', $host);
+		if(!isCommandLineInterface()) {
+			setCookie('goma_sessid', $user_identifier, TIME + SESSION_TIMEOUT, '/', $host, false, true);
+			setCookie('goma_lifeid', $user_identifier, TIME + 365 * 24 * 60 * 60, '/', $host);
+		}
 	}
 
 	public static function generateLiveCounterSession($userAgent, $user_identifier, $userid, $recurring) {

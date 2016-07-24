@@ -125,8 +125,8 @@ class Request extends gObject {
 		$this -> post_params = ArrayLib::map_key("strtolower", $post_params);
 		$this -> headers = ArrayLib::map_key("strtolower", $headers);
 		$this -> url_parts = explode('/', $url);
-		$this -> serverName = isset($serverName) ? $serverName : $_SERVER["SERVER_NAME"];
-		$this -> serverPort = isset($serverPort) ? $serverPort : $_SERVER["SERVER_PORT"];
+		$this -> serverName = isset($serverName) ? $serverName : (isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"] : null);
+		$this -> serverPort = isset($serverPort) ? $serverPort : (isset($_SERVER["SERVER_PORT"]) ? $_SERVER["SERVER_PORT"] : null);
 		$this -> remoteAddr = isset($remoteAddr) ? $remoteAddr :
 			(isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : "");
 		$this -> isSSL = $isSSL;
