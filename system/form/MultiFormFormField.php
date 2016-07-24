@@ -177,7 +177,7 @@ class MultiFormFormField extends ClusterFormField {
 
                     return $sortInfo[$a->{$keyField}] < $sortInfo[$b->{$keyField}] ? -1 : 1;
                 } else {
-                    throw new LogicException("Sort-Information not available. " . print_r($a, true) . "\n" . var_dump($b, true));
+                    throw new LogicException("Sort-Information not available.");
                 }
             });
         }
@@ -198,6 +198,13 @@ class MultiFormFormField extends ClusterFormField {
             ->setSortable(is_a($this->getModel(), "ISortableDataObjectSet"))
             ->setDeletable(is_a($this->getModel(), "RemoveStagingDataObjectSet"))
             ->setAddAble($this->getAddableClasses());
+    }
+
+    public function addRenderData($info, $notifyField = true)
+    {
+        parent::addRenderData($info, $notifyField);
+
+        $info->addJSFile("system/libs/javascript/jquery-touch-punch.js");
     }
 
     /**
