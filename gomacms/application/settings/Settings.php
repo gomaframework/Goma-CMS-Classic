@@ -24,7 +24,9 @@ class Newsettings extends DataObject implements HistoryData {
 		"register_email"	=> "Switch",
 		"gzip"				=> "Switch"
 	);
-	
+
+
+	däöajpsaj
 	/**
 	 * defaults of these fields
 	*/
