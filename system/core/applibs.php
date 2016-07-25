@@ -1035,7 +1035,8 @@ function loadApplication($directory) {
 			if(file_exists(ROOT . $directory . "/application/cli-application.php")) {
 				require (ROOT . $directory . "/application/cli-application.php");
 			} else {
-				die("CLI is not supported by that project.\n");
+				echo("CLI is not supported by that project.\n");
+				exit(1);
 			}
 		} else {
 			require (ROOT . $directory . "/application/application.php");

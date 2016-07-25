@@ -29,7 +29,6 @@ class ClassManifest {
 	 */
 	private static $class_alias = array(
         "showsitecontroller" => "frontedcontroller",
-        "phpunit_framework_testcase" => "gobject",
         "imageupload" => "ImageUploadField",
         "object" => "gObject",
         "_array" => "arraylib",
@@ -120,6 +119,11 @@ class ClassManifest {
 
 			return true;
 		}
+
+        if($class == "phpunit_framework_testcase" && !isPHPUnit()) {
+            class_alias("gObject", $class);
+            return true;
+        }
 	}
 
 	/**
