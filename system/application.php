@@ -152,6 +152,7 @@ set_exception_handler("Goma_ExceptionHandler");
 if(isCommandLineInterface()) {
 	$args = getCommandLineArgs();
 	if(isset($args["--configure"])) {
+		define("DEV_MODE", true);
 		include FRAMEWORK_ROOT . "installer/application/configure.php";
 	}
 }
@@ -172,7 +173,7 @@ if (file_exists(ROOT . '_config.php')) {
 	define("URLEND", $urlend);
 	define("PROFILE_DETAIL", $profile_detail);
 
-	define("DEV_MODE", $dev);
+	defined("DEV_MODE") OR define("DEV_MODE", $dev);
 	define("BROWSERCACHE", $browsercache);
 
 	define('SQL_DRIVER', $sql_driver);

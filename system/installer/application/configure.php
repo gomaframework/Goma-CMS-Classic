@@ -4,8 +4,6 @@ if(!isCommandLineInterface()) return;
 
 $data = getCommandLineArgs();
 
-print_r($data);
-
 $required = array("directory", "mysql.user", "mysql.password", "mysql.db", "user", "pwd");
 foreach($required as $info) {
     if(!isset($data[$info])) {
