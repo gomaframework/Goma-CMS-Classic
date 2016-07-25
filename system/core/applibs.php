@@ -748,33 +748,36 @@ function log_exception(Exception $exception) {
  * logging
  *
  * log an error
- *
- *@name log_error
- *@access public
- *@param string - error-string
+ * @param string $errorString error
  */
-function log_error($string) {
-	if(PROFILE)
-		Profiler::mark("log_error");
-	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/");
-	if(isset($GLOBALS["error_logfile"])) {
-		$file = $GLOBALS["error_logfile"];
-	} else {
-		FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/" . date("m-d-y"));
-		$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/" . date("m-d-y") . "/";
-		$file = $folder . "1.log";
-		$i = 1;
-		while(file_exists($folder . $i . ".log") && filesize($file) > 10000) {
-			$i++;
-			$file = $folder . $i . ".log";
+function log_error($errorString) {
+	if(defined("CURRENT_PROJECT")) {
+		if (PROFILE)
+			Profiler::mark("log_error");
+		FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/");
+		if (isset($GLOBALS["error_logfile"])) {
+			$file = $GLOBALS["error_logfile"];
+		} else {
+			FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/" . date("m-d-y"));
+			$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/" . date("m-d-y") . "/";
+			$file = $folder . "1.log";
+			$i = 1;
+			while (file_exists($folder . $i . ".log") && filesize($file) > 10000) {
+				$i++;
+				$file = $folder . $i . ".log";
+			}
+			$GLOBALS["error_logfile"] = $file;
 		}
-		$GLOBALS["error_logfile"] = $file;
+		$date_format = (defined("DATE_FORMAT")) ? DATE_FORMAT : "Y-m-d H:i:s";
+		if (!file_exists($file)) {
+			FileSystem::write($file, date($date_format) . ': ' . $errorString . "\n\n", null, 0777);
+		} else {
+			FileSystem::write($file, date($date_format) . ': ' . $errorString . "\n\n", FILE_APPEND, 0777);
+		}
 	}
-	$date_format = (defined("DATE_FORMAT")) ? DATE_FORMAT : "Y-m-d H:i:s";
-	if(!file_exists($file)) {
-		FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", null, 0777);
-	} else {
-		FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", FILE_APPEND, 0777);
+
+	if(isCommandLineInterface()) {
+		echo $errorString . "\n";
 	}
 
 	if(PROFILE)
@@ -787,28 +790,30 @@ function log_error($string) {
  * @param string - log-string
  */
 function logging($string) {
-	if(PROFILE)
-		Profiler::mark("logging");
+	if(defined("CURRENT_PROJECT")) {
+		if (PROFILE)
+			Profiler::mark("logging");
 
-	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/");
-	$date_format = (defined("DATE_FORMAT")) ? DATE_FORMAT : "Y-m-d H:i:s";
-	if(isset($GLOBALS["log_logfile"])) {
-		$file = $GLOBALS["log_logfile"];
-	} else {
-		FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/" . date("m-d-y"));
-		$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/" . date("m-d-y") . "/";
-		$file = $folder . "1.log";
-		$i = 1;
-		while(file_exists($folder . $i . ".log") && filesize($file) > 10000) {
-			$i++;
-			$file = $folder . $i . ".log";
+		FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/");
+		$date_format = (defined("DATE_FORMAT")) ? DATE_FORMAT : "Y-m-d H:i:s";
+		if (isset($GLOBALS["log_logfile"])) {
+			$file = $GLOBALS["log_logfile"];
+		} else {
+			FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/" . date("m-d-y"));
+			$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/" . date("m-d-y") . "/";
+			$file = $folder . "1.log";
+			$i = 1;
+			while (file_exists($folder . $i . ".log") && filesize($file) > 10000) {
+				$i++;
+				$file = $folder . $i . ".log";
+			}
+			$GLOBALS["log_logfile"] = $file;
 		}
-		$GLOBALS["log_logfile"] = $file;
-	}
-	if(!file_exists($file)) {
-		FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", null, 0777);
-	} else {
-		FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", FILE_APPEND, 0777);
+		if (!file_exists($file)) {
+			FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", null, 0777);
+		} else {
+			FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", FILE_APPEND, 0777);
+		}
 	}
 
 	if(isCommandLineInterface()) {

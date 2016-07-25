@@ -149,14 +149,18 @@ set_error_handler("Goma_ErrorHandler");
 
 set_exception_handler("Goma_ExceptionHandler");
 
-if (file_exists(ROOT . '_config.php')) {
+if(isCommandLineInterface()) {
+	$args = getCommandLineArgs();
+	if(isset($args["--configure"])) {
+		include FRAMEWORK_ROOT . "installer/application/configure.php";
+	}
+}
 
+if (file_exists(ROOT . '_config.php')) {
 	// load configuration
-	// configuration
 	require (ROOT . '_config.php');
 
 	// define the defined vars in config
-
 	if (isset($logFolder)) {
 		define("LOG_FOLDER", $logFolder);
 	} else {
@@ -187,8 +191,6 @@ if (file_exists(ROOT . '_config.php')) {
 		ClassManifest::addUnitTest();
 	}
 
-	// END define vars
-
 	// get a temporary root_path
 	$root_path = str_replace("\\", "/", substr(__FILE__, 0, -22));
 	$root_path = substr($root_path, strlen(realpath($_SERVER["DOCUMENT_ROOT"])));
@@ -201,7 +203,6 @@ if (file_exists(ROOT . '_config.php')) {
 		foreach ($apps as $data) {
 			$subUrl = $root_path . "selectDomain/" . $data["directory"] . "/";
 			if(isCommandLineInterface()) {
-				$args = getCommandLineArgs();
 				if(isset($args["p"]) && $args["p"] == $data["directory"]) {
 					$application = $data["directory"];
 				}
