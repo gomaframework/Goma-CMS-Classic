@@ -482,7 +482,7 @@ class ClassInfo extends gObject {
 			self::checkForUpgradeScripts(ROOT . APPLICATION, self::appversion());
 
 			if(isset(self::$appENV["expansion"])) {
-				ClassManifest::tryToInclude("ExpansionManager", 'system/Core/CoreLibs/ExpansionManager.php');
+				ClassManifest::tryToInclude("ExpansionManager", 'system/core/CoreLibs/ExpansionManager.php');
 				// expansions
 				foreach(self::$appENV["expansion"] as $expansion => $data) {
 					self::checkForUpgradeScripts(ExpansionManager::getExpansionFolder($expansion), ExpansionManager::expVersion($expansion));
