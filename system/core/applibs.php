@@ -852,7 +852,8 @@ function debug_log($data) {
  * checks for available retina-file on file-path.
  *
  * @param file
-*/
+ * @return string
+ */
 function RetinaPath($file) {
 	$retinaPath = substr($file, 0, strrpos($file, ".")) . "@2x." . substr($file, strpos($file, ".") + 1);
 	if(file_exists($retinaPath))
@@ -863,14 +864,15 @@ function RetinaPath($file) {
 
 /**
  * Writes the server configuration file
- *@name writeServerConfig
- *@access public
  */
 function writeServerConfig() {
-	if(strpos($_SERVER["SERVER_SOFTWARE"], "Apache") !== false) {
+	$args = getCommandLineArgs();
+	$server = isset($_SERVER["SERVER_SOFTWARE"]) ? $_SERVER["SERVER_SOFTWARE"] :
+		(isset($args["server"]) ? $args["server"] : "");
+	if(strpos(strtolower($server), "apache") !== false) {
 		$file = "htaccess";
 		$toFile = ".htaccess";
-	} else if(strpos($_SERVER["SERVER_SOFTWARE"], "IIS") !== false) {
+	} else if(strpos(strtolower($server), "iis") !== false) {
 		$file = "web.config";
 		$toFile = "web.config";
 	} else {
@@ -878,7 +880,6 @@ function writeServerConfig() {
 	}
 
 	require (ROOT . "system/resources/" . $file . ".php");
-
 
 	if(!file_put_contents(ROOT . $toFile, $serverconfig, FILE_APPEND | LOCK_EX)) {
 		die("Could not write " . $file);

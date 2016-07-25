@@ -434,8 +434,6 @@ class ClassInfo extends gObject {
 				self::raiseSoftwareError($dependencies);
 			}
 
-			// END TESTS
-
 			if(file_exists($file) && (filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") || filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist"))) {
 				if(!preg_match("/^dev/i", URL)) {
 					ClassManifest::tryToInclude("Dev", 'system/core/control/DevController.php');
@@ -888,26 +886,13 @@ class ClassInfo extends gObject {
 	 * this function checks for upgrade-scripts in a given folder with given current
 	 * version
 	 *
-	 *@param folder
-	 *@param version
+	 * @param $folder
+	 * @param $current_version
 	 */
 	public static function checkForUpgradeScripts($folder, $current_version) {
-
 		ClassManifest::tryToInclude("softwareupgrademanager", 'system/core/CoreLibs/SoftwareUpgradeManager.php');
 
-		if(SoftwareUpgradeManager::checkForUpgradeScripts($folder, $current_version)) {
-
-			// after upgrade reload.
-			ClassInfo::delete();
-
-			$http = (isset($_SERVER["HTTPS"])) ? "https" : "http";
-			$port = ":" . $_SERVER["SERVER_PORT"];
-			if(($http == "http" && $port == 80) || ($http == "https" && $port == 443)) {
-				$port = "";
-			}
-			header("Location: " . $http . "://" . $_SERVER["SERVER_NAME"] . $port . $_SERVER["REQUEST_URI"]);
-			exit;
-		}
+		SoftwareUpgradeManager::checkForUpgradeScripts($folder, $current_version);
 	}
 
 	/**

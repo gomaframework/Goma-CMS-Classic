@@ -1,23 +1,21 @@
 <?php defined("IN_GOMA") OR die();
+
 /**
  * Goma Software-Upgrade-Manager.
  *
  * @package		Goma\Core
  * @version		1.0
  */
-
 class SoftwareUpgradeManager {
-	
 	/**
 	 * this function checks for upgrade-scripts in a given folder with 
 	 * given version version
 	 *
-	 * @param 	string folder
-	 * @param 	string version
+	 * @param 	string $folder
+	 * @param 	string $current_version
 	 * @return 	boolean it was upgraded.
 	 */
 	public static function checkForUpgradeScripts($folder, $current_version) {
-
 		// get installed version
 		$version = self::getInstalledVersion($folder);
 
@@ -33,23 +31,18 @@ class SoftwareUpgradeManager {
 				if(!self::writeVersion($folder . "/version.php", $current_version)) {	
 					throw new SoftwareUpgradeWriteManagerError("Could not write file " . $folder . "/version.php. Please set file-permissions to 0777.");
 				}
-
-				return true;
-			}
-
-			if(!self::writeVersion($folder . "/version.php", $current_version)) {	
+			} else if(!self::writeVersion($folder . "/version.php", $current_version)) {
 				throw new SoftwareUpgradeWriteManagerError("Could not write file " . $folder . "/version.php. Please set file-permissions to 0777.");
 			}
 		}
-
-		// no upgrade
-		return false;
 	}
 
 	/**
 	 * get all pending upgrade scripts.
 	 *
-	 * @param 	string folder
+	 * @param 	string $version
+	 * @param 	string $current_version
+	 * @param 	string $folder
 	 * @return 	array
 	*/
 	public static function getPendingScripts($version, $current_version, $folder) {
@@ -75,8 +68,8 @@ class SoftwareUpgradeManager {
 	/**
 	 * runs all upgrade scripts by list and folder.
 	 *
-	 * @param 	string 	folder
-	 * @param 	array 	scripts
+	 * @param 	string 	$folder
+	 * @param 	array 	$versions
 	*/
 	public static function runScripts($folder, $versions) {
 		foreach($versions as $v) {
@@ -91,8 +84,8 @@ class SoftwareUpgradeManager {
 	/**
 	 * writes version to file.
 	 *
-	 * @param    string    file
-	 * @param    string    version
+	 * @param    string    $file
+	 * @param    string    $version
 	 * @return bool
 	 */
 	public static function writeVersion($file, $version) {
