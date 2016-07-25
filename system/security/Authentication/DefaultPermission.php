@@ -49,7 +49,7 @@ class DefaultPermission {
                 $user->password = Member::$default_admin["password"];
                 $user->writeToDB(true, true);
                 $user->groups()->add(DataObject::get_one("group", array("type" => 2)));
-                $user->groups()->write(false, true);
+                $user->groups()->commitStaging(false, true);
             }
 
             $cacher->write(true, 3600);

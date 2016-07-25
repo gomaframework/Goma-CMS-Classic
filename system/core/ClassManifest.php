@@ -27,7 +27,16 @@ class ClassManifest {
 	/**
 	 * List of class aliases.
 	 */
-	private static $class_alias = array("showsitecontroller" => "frontedcontroller", "ImageUpload" => "ImageUploadField", "object" => "gObject", "_array" => "arraylib", "dataobjectholder" => "viewaccessabledata", "autoloader" => "ClassManifest", "testsuite" => "Object");
+	private static $class_alias = array(
+        "showsitecontroller" => "frontedcontroller",
+        "phpunit_framework_testcase" => "gobject",
+        "imageupload" => "ImageUploadField",
+        "object" => "gObject",
+        "_array" => "arraylib",
+        "dataobjectholder" => "viewaccessabledata",
+        "autoloader" => "ClassManifest",
+        "testsuite" => "Object"
+    );
 
 	/**
 	 * Loads a class.

@@ -46,8 +46,8 @@ if(file_exists($data["directory"] . "/temp/" . CLASS_INFO_DATAFILE)) {
 
 register_shutdown_function(function() use($data) {
     $user = new User(array(
-        "nickname" => $data["user"],
-        "password" => $data["pwd"]
+        "nickname" => $data["user"]
     ));
+    $user->password = $data["pwd"];
     $user->writeToDB(false, true);
 });

@@ -37,6 +37,11 @@ class SettingsController extends gObject {
 			self::$settingsCache = new newSettings($cacher->getData());
 		} else {
 			self::$settingsCache = DataObject::get("newsettings", array("id" => 1))->first();
+			if(!self::$settingsCache) {
+				self::$settingsCache = new Newsettings(array(
+
+				));
+			}
 			$cacher->write(self::$settingsCache->toArray(), 3600);
 		}
 
