@@ -1143,6 +1143,12 @@ function isCommandLineInterface()
 	return (php_sapi_name() === 'cli');
 }
 
+function isPHPUnit() {
+	$args = isset($_SERVER["argv"]) ? $_SERVER["argv"] : array();
+
+	return isset($args[0]) && strpos($args[0], "phpunit") !== false;
+}
+
 class SQLException extends GomaException {
 	protected $standardCode = ExceptionManager::SQL_EXCEPTION;
 	/**

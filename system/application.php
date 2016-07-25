@@ -173,7 +173,7 @@ if (file_exists(ROOT . '_config.php')) {
 	define("URLEND", $urlend);
 	define("PROFILE_DETAIL", $profile_detail);
 
-	defined("DEV_MODE") OR define("DEV_MODE", $dev || isset($args["--dev"]));
+	defined("DEV_MODE") OR define("DEV_MODE", $dev || isPHPUnit());
 	define("BROWSERCACHE", $browsercache);
 
 	define('SQL_DRIVER', $sql_driver);
