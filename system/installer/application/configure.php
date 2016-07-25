@@ -28,7 +28,7 @@ $info = array(
     "db" => array(
         "user" => $data["mysql.user"],
         "pass" => $data["mysql.password"],
-        "db"   => $data["mysql.db"],
+        "db"   => str_replace("-", "_", $data["mysql.db"]), // we use str_replace to fix issues with bamboo keys
         "host" => isset($data["mysql.host"]) ? $data["mysql.host"] : "127.0.0.1",
         "prefix" => isset($data["mysql.prefix"]) ? $data["mysql.prefix"] : "goma_"
     )
