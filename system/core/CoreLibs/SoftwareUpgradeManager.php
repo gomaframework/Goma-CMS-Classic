@@ -20,7 +20,6 @@ class SoftwareUpgradeManager {
 		$version = self::getInstalledVersion($folder);
 
 		if(goma_version_compare($current_version, $version, ">")) {
-			// run upgrade-scripts
 			if(is_dir($folder . "/upgrade")) {
 				$versions = self::getPendingScripts($version, $current_version, $folder);
 
