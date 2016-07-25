@@ -101,7 +101,7 @@ class BackupModel extends DataObject {
 					} catch(Exception $e) {
 						log_exception($e);
 					}
-				} else if($data->filter(array("name" => $file))->first()->type == null) {
+				} else if($data->filter(array("name" => $file))->first() == null) {
 					$object = $data->filter(array("name" => $file))->first();
 					try {
 						$gfs = new GFS(self::BACKUP_PATH . "/" . $file);
