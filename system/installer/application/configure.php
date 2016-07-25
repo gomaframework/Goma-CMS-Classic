@@ -7,7 +7,8 @@ $data = getCommandLineArgs();
 $required = array("directory", "mysql.user", "mysql.password", "mysql.db", "user", "pwd");
 foreach($required as $info) {
     if(!isset($data[$info])) {
-        die("Configure requires all required parameters. " . implode(", ", $required) . "\n");
+        echo ("Configure requires all required parameters. " . implode(", ", $required) . "\n");
+        exit(1);
     }
 }
 
@@ -33,7 +34,8 @@ $info = array(
     )
 );
 if(!SQL::test("mysqli", $info["db"]["user"], $info["db"]["db"], $info["db"]["pass"], $info["db"]["host"])) {
-    die("Connection to MySQL-database could not be created.\n");
+    echo ("Connection to MySQL-database could not be created.\n");
+    exit(1);
 }
 
 writeProjectConfig($info, $data["directory"]);
