@@ -78,8 +78,12 @@ class mysqliDriver implements SQLDriver
             return true;
         } else {
             if ($test = new MySQLi($dbhost, $dbuser, $dbpass)) {
-                if ($test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_general_ci"))
+                logging("Create DataBase " . $dbdb);
+                if ($test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_general_bin")) {
                     return true;
+                } else {
+                    logging($test->error);
+                }
             }
             return false;
         }

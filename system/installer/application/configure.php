@@ -35,7 +35,7 @@ $info = array(
 );
 if(!SQL::test("mysqli", $info["db"]["user"], $info["db"]["db"], $info["db"]["pass"], $info["db"]["host"])) {
     echo ("Connection to MySQL-database could not be created.\n");
-    exit(1);
+    exit(2);
 }
 
 writeProjectConfig($info, $data["directory"]);
