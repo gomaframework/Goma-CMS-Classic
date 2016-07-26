@@ -27,3 +27,4 @@ echo "Goma Framework " . GOMA_VERSION . " - " . BUILD_VERSION . "\n";
 echo "Goma CMS CLI started.\n";
 
 $core = new Core();
+define("CLI_LAUNCH_FINISHED", true);

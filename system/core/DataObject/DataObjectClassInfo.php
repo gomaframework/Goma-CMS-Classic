@@ -26,7 +26,8 @@ class DataObjectClassInfo extends Extension
 
         self::generateModelClassInfo($class);
 
-        if (class_exists($class) && class_exists("DataObject") && is_subclass_of($class, "DataObject")) {
+        if (class_exists($class, false) && class_exists("DataObject", false) && is_subclass_of($class, "DataObject")) {
+            /** @var DataObject $classInstance */
             $classInstance = gObject::instance($class);
 
             $has_one = ModelHasOneRelationshipInfo::getClassInfoForClass($class);
@@ -173,12 +174,11 @@ class DataObjectClassInfo extends Extension
                     ClassInfo::$class_info[$class]["table_exists"] = true;
                 } else {
                     ClassInfo::$class_info[$class]["table_exists"] = false;
+                    $classInstance->buildDB();
                 }
             }
 
             unset($db_fields, $many_many, $has_one, $has_many, $searchable_fields, $belongs_many_many);
-
-            // get data classes
 
             $parent = strtolower(get_parent_class($class));
 
@@ -190,20 +190,20 @@ class DataObjectClassInfo extends Extension
                 ClassInfo::$class_info[$class]["dataclasses"][] = $class;
             }
 
-            $_c = $parent;
-            while ($_c != "dataobject" && $_c != "array_dataobject") {
+            $currentClass = $parent;
+            while ($currentClass != "dataobject" && $currentClass != "array_dataobject") {
                 if (ClassInfo::$class_info[$class]["table"] !== false) {
-                    ClassInfo::$class_info[$_c]["dataclasses"][] = $class;
+                    ClassInfo::$class_info[$currentClass]["dataclasses"][] = $class;
                 }
-                if (strtolower(get_parent_class($_c)) == "dataobject") {
-                    ClassInfo::$class_info[$class]["baseclass"] = $_c;
+                if (strtolower(get_parent_class($currentClass)) == "dataobject") {
+                    ClassInfo::$class_info[$class]["baseclass"] = $currentClass;
                 }
 
-                ClassInfo::$class_info[$class]["dataclasses"][] = $_c;
+                ClassInfo::$class_info[$class]["dataclasses"][] = $currentClass;
 
-                $_c = strtolower(get_parent_class($_c));
+                $currentClass = strtolower(get_parent_class($currentClass));
             }
-            unset($_c, $parent, $classInstance);
+            unset($currentClass, $parent, $classInstance);
         }
         if (PROFILE) Profiler::unmark("DataObjectClassInfo::generate");
     }
