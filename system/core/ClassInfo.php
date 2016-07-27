@@ -402,9 +402,10 @@ class ClassInfo extends gObject {
 
 	/**
 	 * loads the classinfo from file
-	 *@return null
+	 * @param IModelRepository|null $modelRepository
+	 * @return null
 	 */
-	public static function loadfile() {
+	public static function loadfile($modelRepository = null) {
 		self::$tables = array();
 		self::$database = array();
 		$file = ROOT . CACHE_DIRECTORY . CLASS_INFO_DATAFILE;
@@ -681,6 +682,8 @@ class ClassInfo extends gObject {
 
 			if(PROFILE)
 				Profiler::unmark("generate_class_info");
+
+			Core::__setRepo(isset($modelRepository) ? $modelRepository : new ModelRepository());
 
 			if(isCommandLineInterface()) {
 				Dev::buildDevCLI();

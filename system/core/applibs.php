@@ -963,8 +963,6 @@ function loadFramework($modelRepository = null) {
 		Profiler::mark("Manifest");
 
 	Core::InitCache();
-	Core::__setRepo(isset($modelRepository) ? $modelRepository : new ModelRepository());
-
 	ClassInfo::loadfile();
 
 	if (PROFILE)
