@@ -153,6 +153,11 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testSearch() {
+        $user = new User(array(
+            "nickname" => "______test",
+            "password" => "test"
+        ));
+        $user->writeToDB(true, true);
         $data = DataObject::get("user");
         $clone = clone $data;
 
@@ -165,6 +170,8 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($clone->count(), $count);
 
         $this->assertEqual($clone->first(), $first);
+
+        $user->remove(true);
     }
 
     public function testFirstLast() {
