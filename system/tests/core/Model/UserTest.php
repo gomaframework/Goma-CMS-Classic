@@ -60,14 +60,14 @@ class UserTests extends GomaUnitTest
         $user->generateCode(false);
 
         $this->assertNotEqual($user->code, "123");
-        $this->assertFalse($user->code_has_sent);
+        $this->assertFalse(!!$user->code_has_sent);
 
         $c = $user->code;
 
         $user->generateCode(true);
         $this->assertNotEqual($user->code, "123");
         $this->assertNotEqual($user->code, $c);
-        $this->assertTrue($user->code_has_sent);
+        $this->assertTrue(!!$user->code_has_sent);
     }
 
     /**
