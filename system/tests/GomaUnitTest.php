@@ -10,10 +10,12 @@ require_once(ROOT . "/system/libs/thirdparty/simpletest/unit_tester.php");
  * @author		Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  *
- * @method void assertIsNull($response, $message = null)
- * @method void assertTrue($response, $message = null)
- * @method void assertFalse($response, $message = null)
- * @method void assertRegExp($response, $regexp, $message = null)
+ * @method void assertIsNull($actual, $message = null)
+ * @method void assertTrue($actual, $message = null)
+ * @method void assertFalse($actual, $message = null)
+ * @method void assertRegExp($actual, $regexp, $message = null)
+ * @method void assertLessThanOrEqual($actual, $expected, $message = null)
+ * @method void assertGreaterThanOrEqual($actual, $expected, $message = null)
  */
 abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAble {
 	/**
@@ -68,8 +70,8 @@ abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAb
 	}
 
 	public function assertWithinMargin($info, $expected, $margin, $msg = null) {
-		$this->assertLessThanOrEqual($info, $expected + $margin, $msg);
-		$this->assertGreaterThanOrEqual($info, $expected - $margin, $msg);
+		$this->assertLessThanOrEqual($expected + $margin, $info, $msg);
+		$this->assertGreaterThanOrEqual($expected - $margin, $info, $msg);
 	}
 
 	public function assertNotA($obj, $class, $msg = null) {
