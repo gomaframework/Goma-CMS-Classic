@@ -1160,6 +1160,12 @@ function isPHPUnit() {
 	return isset($args[0]) && strpos($args[0], "phpunit") !== false;
 }
 
+function isDevModeCLI() {
+	$args = getCommandLineArgs();
+
+	return isset($args["--dev"]);
+}
+
 class SQLException extends GomaException {
 	protected $standardCode = ExceptionManager::SQL_EXCEPTION;
 	/**
