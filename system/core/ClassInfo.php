@@ -720,6 +720,8 @@ class ClassInfo extends gObject {
 					call_user_func_array($hook, array());
 				}
 			}
+
+			Core::__setRepo(isset($modelRepository) ? $modelRepository : new ModelRepository());
 		}
 
 		defined("APPLICATION_VERSION") OR define("APPLICATION_VERSION", self::$appENV["app"]["version"]);
