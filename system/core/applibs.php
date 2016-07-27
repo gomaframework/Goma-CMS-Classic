@@ -635,8 +635,6 @@ function goma_version_compare($v1, $v2, $operator = null) {
 /**
  * PHP-Error-Handdling
  */
-//!PHP-Error-Handling
-
 function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 	$uri = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : (isset($_SERVER["argv"]) ? implode(" ", $_SERVER["argv"]) : null);
 
@@ -647,16 +645,19 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 		case E_PARSE:
 		case E_USER_ERROR:
 		case E_RECOVERABLE_ERROR:
-			HTTPResponse::setResHeader(500);
-			HTTPResponse::sendHeader();
 			log_error("PHP-USER-Error: " . $errno . " " . $errstr . " in " . $errfile . " on line " . $errline . ".");
-			$content = file_get_contents(ROOT . "system/templates/framework/phperror.html");
-			$content = str_replace('{BASE_URI}', BASE_URI, $content);
-			$content = str_replace('{$errcode}', 6, $content);
-			$content = str_replace('{$errname}', "PHP-Error $errno", $content);
-			$content = str_replace('{$errdetails}', $errstr . " on line $errline in file $errfile", $content);
-			$content = str_replace('$uri', $uri, $content);
-			echo $content;
+
+			if(!isCommandLineInterface()) {
+				HTTPResponse::setResHeader(500);
+				HTTPResponse::sendHeader();
+				$content = file_get_contents(ROOT . "system/templates/framework/phperror.html");
+				$content = str_replace('{BASE_URI}', BASE_URI, $content);
+				$content = str_replace('{$errcode}', 6, $content);
+				$content = str_replace('{$errname}', "PHP-Error $errno", $content);
+				$content = str_replace('{$errdetails}', $errstr . " on line $errline in file $errfile", $content);
+				$content = str_replace('$uri', $uri, $content);
+				echo $content;
+			}
 			exit(2);
 			break;
 
@@ -673,7 +674,6 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 			break;
 		case E_USER_NOTICE:
 		case E_NOTICE:
-		case E_USER_NOTICE:
 			if(strpos($errstr, "chmod") === false && strpos($errstr, "unlink") === false) {
 				logging("Notice: [$errno] $errstr in $errfile on line $errline");
 				if(DEV_MODE && !isset($_GET["ajax"]) && (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] != "XMLHttpRequest"))
@@ -684,16 +684,19 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 			// nothing
 			break;
 		default:
-			HTTPResponse::setResHeader(500);
-			HTTPResponse::sendHeader();
 			log_error("PHP-Error: " . $errno . " " . $errstr . " in " . $errfile . " on line " . $errline . ".");
-			$content = file_get_contents(ROOT . "system/templates/framework/phperror.html");
-			$content = str_replace('{BASE_URI}', BASE_URI, $content);
-			$content = str_replace('{$errcode}', 6, $content);
-			$content = str_replace('{$errname}', "PHP-Error: " . $errno, $content);
-			$content = str_replace('{$errdetails}', $errstr . " on line $errline in file $errfile", $content);
-			$content = str_replace('$uri', $uri, $content);
-			echo $content;
+
+			if(!isCommandLineInterface()) {
+				HTTPResponse::setResHeader(500);
+				HTTPResponse::sendHeader();
+				$content = file_get_contents(ROOT . "system/templates/framework/phperror.html");
+				$content = str_replace('{BASE_URI}', BASE_URI, $content);
+				$content = str_replace('{$errcode}', 6, $content);
+				$content = str_replace('{$errname}', "PHP-Error: " . $errno, $content);
+				$content = str_replace('{$errdetails}', $errstr . " on line $errline in file $errfile", $content);
+				$content = str_replace('$uri', $uri, $content);
+				echo $content;
+			}
 			exit(2);
 	}
 
@@ -726,14 +729,16 @@ function Goma_ExceptionHandler($exception) {
 	$content = str_replace('{$errdetails}', $details, $content);
 	$content = str_replace('$uri', $uri, $content);
 
-	if(gObject::method_exists($exception, "http_status")) {
-		HTTPResponse::setResHeader($exception->http_status());
-	} else {
-		HTTPResponse::setResHeader(500);
+	if(!isCommandLineInterface()) {
+		if (gObject::method_exists($exception, "http_status")) {
+			HTTPResponse::setResHeader($exception->http_status());
+		} else {
+			HTTPResponse::setResHeader(500);
+		}
+		HTTPResponse::sendHeader();
+		echo $content;
 	}
-	HTTPResponse::sendHeader();
 
-	echo $content;
 	exit(2);
 }
 
@@ -742,6 +747,10 @@ function log_exception(Exception $exception) {
 	$uri = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : (isset($_SERVER["argv"]) ? implode(" ", $_SERVER["argv"]) : null);
 
 	$message = get_class($exception) . " " . $exception->getCode() . ":\n\n" . $exception->getMessage() . "\n\n Backtrace: " . $exception->getTraceAsString();
+	$current = $exception;
+	while($current = $current->getPrevious()) {
+		$message .= "\nPrevious: " . $current->getMessage() . "\n" . $current->getTraceAsString();
+	}
 	log_error($message);
 	
 	$debugMsg = "URL: " . $uri . "\nGoma-Version: " . GOMA_VERSION . "-" . BUILD_VERSION . "\nApplication: " . print_r(ClassInfo::$appENV, true) . "\n\n" . $message;
@@ -835,13 +844,10 @@ function logging($string) {
  *
  * this information may uploaded to the goma-server for debug-use
  *
- *@name debug_log
- *@access public
  *@param string - debug-string
  */
 function debug_log($data) {
 	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/");
-	$date_format = (defined("DATE_FORMAT")) ? DATE_FORMAT : "Y-m-d H:i:s";
 	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/" . date("m-d-y"));
 	$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/" . date("m-d-y") . "/" . date("H_i_s");
 	$file = $folder . "-1.log";
