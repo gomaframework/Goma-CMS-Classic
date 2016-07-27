@@ -42,10 +42,6 @@ abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAb
 
             $this->assertFalse(true, "Expected Exception $exceptionName, but no Exception were thrown.");
         } catch(Exception $e) {
-			if(!is_a($e, $exceptionName)) {
-				echo "ExceptionThrown: ";
-				print_r($e->getMessage());
-			}
             $this->assertIsA($e, $exceptionName);
         }
     }
