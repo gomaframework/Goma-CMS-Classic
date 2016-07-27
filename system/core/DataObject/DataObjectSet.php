@@ -148,6 +148,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * clears cache.
 	 */
 	protected function clearCache() {
+		if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
+			throw new LogicException("Clear cache is only possible when using FETCH_MODE_EDIT.");
+		}
+
 		$this->items = null;
 		$this->count = null;
 		$this->firstCache = null;
@@ -309,9 +313,11 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 		if($fetchMode == self::FETCH_MODE_EDIT || $fetchMode == self::FETCH_MODE_CREATE_NEW) {
 			$this->fetchMode = $fetchMode;
 
-			$this->items = &$this->staging->ToArray();
 			if($fetchMode == self::FETCH_MODE_CREATE_NEW) {
+				$this->items = &$this->staging->ToArray();
 				$this->count = $this->staging->count();
+			} else {
+				$this->unsetItemsProp();
 			}
 		} else {
 			throw new InvalidArgumentException("Invalid fetchmode for DataObjectSet.");
@@ -632,6 +638,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 */
 	public function forceData() {
 		if(!isset($this->items)) {
+			$this->unsetItemsProp();
 			if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
 				$this->items = &$this->getStagingWithFilterAndSort()->ToArray();
 			} else {
@@ -677,6 +684,14 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 		}
 
 		return $this;
+	}
+
+	/**
+	 * unsets item prop.
+	 */
+	protected function unsetItemsProp() {
+		$this->staging = new ArrayList($this->staging->ToArray());
+		$this->items = null;
 	}
 
 	/**
@@ -951,6 +966,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	protected function getResultFromCache($start, $length) {
 		if($this->items !== null) {
 			if ($this->page === null) {
+				if(!is_array($this->items)) {
+					throw new LogicException();
+				}
+
 				return array_slice($this->items, $start, $length);
 			} else {
 				$starting = $this->page * $this->perPage - $this->perPage;
@@ -1152,8 +1171,8 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 			}
 		}
 
+		$this->setFetchMode(DataObjectSet::FETCH_MODE_EDIT);
 		$this->clearCache();
-		$this->fetchMode = DataObjectSet::FETCH_MODE_EDIT;
 
 		if(count($exceptions) > 0) {
 			throw new DataObjectSetCommitException($exceptions, $errorRecords, count($errorRecords) . " could not be written.");

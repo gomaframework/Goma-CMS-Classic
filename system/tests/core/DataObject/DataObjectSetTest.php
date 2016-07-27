@@ -302,6 +302,7 @@ class DataObjectSetTests extends GomaUnitTest
         }
 
         $set->removeFromStage($this->patrick);
+
         $this->assertEqual($set[4], null);
         $this->assertEqual($set->last(), $this->kathi);
     }
@@ -543,6 +544,24 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($set->find("name", "JULIAN", true), $this->julian);
     }
 
+    public function testAdd() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $set->commitStaging();
+        $this->assertEqual($set->getFetchMode(), DataObjectSet::FETCH_MODE_EDIT);
+
+        $this->assertEqual(0, $set->getStaging()->count());
+        $set->getStaging()->add($this->janine);
+        $this->assertEqual(1, $set->getStaging()->count());
+
+        $set->getStaging()->remove($this->janine);
+        $this->assertEqual(0, $set->getStaging()->count());
+
+        $set->add($this->janine);
+        $this->assertEqual(1, $set->getStaging()->count());
+    }
+
     public function testCommitStaging() {
         $set = new DataObjectSet("DumpDBElementPerson");
         $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
@@ -550,7 +569,9 @@ class DataObjectSetTests extends GomaUnitTest
         $set->commitStaging();
         $this->assertEqual($set->getFetchMode(), DataObjectSet::FETCH_MODE_EDIT);
 
+        $this->assertEqual(0, $set->getStaging()->count());
         $set->add($this->janine);
+        $this->assertEqual(1, $set->getStaging()->count());
         try {
             $set->commitStaging();
             $this->assertEqual(true, false);

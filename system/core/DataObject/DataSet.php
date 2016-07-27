@@ -697,7 +697,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
         foreach($arrayList->items as $item) {
             $newItems[] = $item;
         }
-        $this->items = $newItems;
+        $this->items = (array) $newItems;
         return $this;
     }
 
