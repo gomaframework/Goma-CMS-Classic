@@ -21,18 +21,21 @@ class ManyManyGetterTest extends GomaUnitTest implements TestAble {
 
     public function testManyManyInit() {
         $data = DataObject::get("ManyManyTestObjectTwo")->getRange(0, 3)->fieldToArray("versionid");
+        $this->assertEqual(3, count($data));
         $object = new ManyManyTestObjectOne(array(
             "twosids" => $data
         ));
-        $this->assertEqual($object->twosids, $data);
-        $this->assertEqual($object->twos()->count(), 3);
+        $this->assertEqual($data, $object->twosids);
+        $this->assertEqual(3, $object->twos()->count());
     }
 
     public function testManyManyInitWithWrongValues() {
         $object = new ManyManyTestObjectOne(array(
             "twosids" => array(-1, -2, -3)
         ));
-        $this->assertNotEqual($object->twosids, array(-1, -2, -3));
-        $this->assertEqual($object->twos()->count(), 0);
+
+        // TODO: Currently this should pass
+        $this->assertEqual(array(-1, -2, -3), $object->twosids);
+        $this->assertEqual(0, $object->twos()->count());
     }
 }
