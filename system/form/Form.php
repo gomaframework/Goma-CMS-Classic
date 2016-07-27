@@ -634,7 +634,7 @@ class Form extends AbstractFormComponentWithChildren {
 	}
 
 	/**
-	 * tries to submit.
+	 * @return GomaFormResponse|string|mixed
 	 */
 	public function trySubmit() {
 		foreach($this->request->post_params as $key => $value) {
@@ -690,7 +690,7 @@ class Form extends AbstractFormComponentWithChildren {
 
 	/**
 	 * @param GomaFormResponse $formResponse
-	 * @return mixed|string
+	 * @return GomaFormResponse
 	 */
 	protected function handleNextForm($formResponse) {
 		if($formResponse->getForm()->getName() == $this->getName()) {

@@ -229,7 +229,7 @@ class FormTest extends GomaUnitTest implements TestAble {
 	 * @param $data
 	 */
 	public function _testNull($data) {
-		self::$testCalled = 1;
+		self::$testCalled = true;
 		$this->assertNull($data["test"]);
 	}
 
