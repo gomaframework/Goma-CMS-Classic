@@ -134,7 +134,7 @@ class SQL
 
         $_sql = str_replace(array("\n", "\r\n", "\r", "\n\r", "\t"), ' ', $sql) . "\n\n\n\n";
 
-        //echo $_sql . "\n";
+        echo $_sql . "\n";
         //logging($_sql);
 
         if ($track && self::$track)
