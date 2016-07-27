@@ -66,6 +66,10 @@ class adminItem extends AdminController implements PermProvider {
 	{
 		parent::__construct($keyChain);
 
+		$this->initModelFromModels();
+	}
+
+	protected function initModelFromModels() {
 		if(!$this->model) {
 			if (isset($this->models)) {
 				if (count($this->models) == 1) {
