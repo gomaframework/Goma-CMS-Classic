@@ -1161,7 +1161,7 @@ function isPHPUnit() {
 	return isset($args[0]) && strpos($args[0], "phpunit") !== false;
 }
 function shouldOutputLogs() {
-	return isCommandLineInterface() && !isPHPUnit();
+	return isCommandLineInterface();
 }
 
 function isDevModeCLI() {
