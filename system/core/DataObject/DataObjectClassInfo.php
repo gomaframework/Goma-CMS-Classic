@@ -202,10 +202,6 @@ class DataObjectClassInfo extends Extension
 
                 $currentClass = strtolower(get_parent_class($currentClass));
             }
-
-            if(isCommandLineInterface() && !ClassInfo::$class_info[$class]["table_exists"] && ClassInfo::$class_info[$class]["table"]) {
-                $classInstance->buildDB();
-            }
             unset($currentClass, $parent, $classInstance);
         }
         if (PROFILE) Profiler::unmark("DataObjectClassInfo::generate");

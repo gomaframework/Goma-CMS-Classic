@@ -681,6 +681,10 @@ class ClassInfo extends gObject {
 
 			if(PROFILE)
 				Profiler::unmark("generate_class_info");
+
+			if(isCommandLineInterface()) {
+				Dev::buildDevCLI();
+			}
 		} else {
 			defined("CLASS_INFO_LOADED") OR define("CLASS_INFO_LOADED", true);
 
