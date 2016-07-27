@@ -45,6 +45,9 @@ if(file_exists($data["directory"] . "/temp/" . CLASS_INFO_DATAFILE)) {
 }
 
 register_shutdown_function(function() use($data) {
+
+    logging("Creating user with " . $data["user"] . " and password ***");
+
     $user = new User(array(
         "nickname" => $data["user"]
     ));

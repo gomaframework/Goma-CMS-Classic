@@ -19,9 +19,6 @@ class DefaultPermission {
 
     /**
      * checks for default admin and basic groups
-     *
-     *@name checkDefaults
-     *@access public
      */
     public static function checkDefaults() {
         $cacher = new Cacher(self::CACHE_DEFAULT_CHECK);
@@ -31,7 +28,7 @@ class DefaultPermission {
                 $group->name = lang("admins", "admin");
                 $group->type = 2;
                 $group->permissions()->add(Permission::forceExisting("superadmin"));
-                $group->permissions()->write(false, true, 2);
+                $group->permissions()->commitStaging(false, true, 2);
                 $group->writeToDB(true, true, 2, false, false);
             }
 

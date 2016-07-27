@@ -16,6 +16,8 @@ defined('IN_GOMA') OR die();
  * @property    int usergroup
  * @property    string groupnotification
  *
+ * @method ManyMany_DataObjectSet permissions($filter = null, $sort = null)
+ *
  * @package        Goma\Security\Users
  *
  * @author        Goma-Team

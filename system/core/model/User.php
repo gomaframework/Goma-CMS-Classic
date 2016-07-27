@@ -21,7 +21,7 @@
  * @property Uploads avatar
  * @property bool groupadmin
  *
- * @method DataObjectSet<Group> groups() groups($filter, $sort, $limit)
+ * @method ManyMany_DataObjectSet groups($filter = null, $sort = null)
  */
 class User extends DataObject implements HistoryData, PermProvider, Notifier
 {
