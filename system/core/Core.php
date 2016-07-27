@@ -103,8 +103,8 @@ class Core extends gObject {
 
 		StaticsManager::addSaveVar("gObject", "extensions");
 		StaticsManager::addSaveVar("gObject", "extra_methods");
-		StaticsManager::AddSaveVar(Core::ID, "hooks");
-		StaticsManager::AddSaveVar(Core::ID, "cmsVarCallbacks");
+		StaticsManager::AddSaveVar(Core::class, "hooks");
+		StaticsManager::AddSaveVar(Core::class, "cmsVarCallbacks");
 		StaticsManager::AddSaveVar("Director", "rules");
 
 		self::callHook("beforeInitCore");

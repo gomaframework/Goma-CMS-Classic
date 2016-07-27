@@ -560,7 +560,7 @@ class ClassManifest {
 	}
 
 	public static function addUnitTest () {
-		self::$class_alias["unittestcase"] = gObject::ID;
+		self::$class_alias["unittestcase"] = gObject::class;
 	}
 
 }

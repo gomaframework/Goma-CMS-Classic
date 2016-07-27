@@ -556,7 +556,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
      */
     public function getConverted($item) {
         if(is_array($item)) {
-            $object = gObject::instance(ViewAccessableData::ID)->createNew($item);
+            $object = gObject::instance(ViewAccessableData::class)->createNew($item);
         } else {
             $object = $item;
         }

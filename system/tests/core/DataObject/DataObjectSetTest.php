@@ -376,7 +376,7 @@ class DataObjectSetTests extends GomaUnitTest
             $this->kathi
         );
 
-        $this->assertIsA($set->getRange(0, 1), "DataSet");
+        $this->assertIsA($set->getRange(0, 1), DataSet::class);
         $this->assertIsA($set->getRange(0, 1)->ToArray(), "array");
         $this->assertIsA($set->getArrayRange(0, 1), "array");
     }
@@ -385,13 +385,13 @@ class DataObjectSetTests extends GomaUnitTest
         $set = new DataObjectSet();
         $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
 
-        $this->assertIsA($set->getRange(0, 1), "DataSet");
+        $this->assertIsA($set->getRange(0, 1), DataSet::class);
         $this->assertIsA($set->getRange(0, 1)->ToArray(), "array");
         $this->assertIsA($set->getArrayRange(0, 1), "array");
 
         $set->add($this->janine);
 
-        $this->assertIsA($set->getRange(0, 1), "DataSet");
+        $this->assertIsA($set->getRange(0, 1), DataSet::class);
         $this->assertIsA($set->getRange(0, 1)->ToArray(), "array");
         $this->assertIsA($set->getArrayRange(0, 1), "array");
     }

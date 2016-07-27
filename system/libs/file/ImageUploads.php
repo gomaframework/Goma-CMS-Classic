@@ -85,7 +85,7 @@ class ImageUploads extends Uploads {
      */
     static $has_many = array(
         "imageVersions" => array(
-            DataObject::RELATION_TARGET => ImageUploads::ID,
+            DataObject::RELATION_TARGET => ImageUploads::class,
             DataObject::RELATION_INVERSE => "sourceImage"
         )
     );
@@ -94,7 +94,7 @@ class ImageUploads extends Uploads {
      * @var array
      */
     static $has_one = array(
-        "sourceImage"   => ImageUploads::ID
+        "sourceImage"   => ImageUploads::class
     );
 
     /**
