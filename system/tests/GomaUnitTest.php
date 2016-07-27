@@ -1,4 +1,7 @@
 <?php defined("IN_GOMA") OR die();
+
+require_once(ROOT . "/system/libs/thirdparty/simpletest/unit_tester.php");
+
 /**
  * Base-Class for all Goma Unit-Tests.
  *
@@ -7,13 +10,11 @@
  * @author		Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  *
- * @method void assertIsNull($response, $expected, $message)
- * @method void assertTrue($response, $expected, $message)
- * @method void assertFalse($response, $expected, $message)
+ * @method void assertIsNull($response, $message = null)
+ * @method void assertTrue($response, $message = null)
+ * @method void assertFalse($response, $message = null)
+ * @method void assertRegExp($response, $regexp, $message = null)
  */
-
-require_once(ROOT . "/system/libs/thirdparty/simpletest/unit_tester.php");
-
 abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAble {
 	/**
 	 * information about area.
@@ -58,12 +59,16 @@ abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAb
 		call_user_func_array(array($this, "assertNotSame"), func_get_args());
 	}
 
-	public function assertPattern() {
-		call_user_func_array(array($this, "assertRegExp"), func_get_args());
+	public function assertPattern($pattern, $str, $msg = null) {
+		call_user_func_array(array($this, "assertRegExp"), array(
+			$str,
+			$pattern,
+			$msg
+		));
 	}
 
-	public function assertNoPattern($pattern, $str, $info) {
-		$this->assertFalse(preg_match($pattern, $str), $info);
+	public function assertNoPattern($pattern, $str, $msg = null) {
+		$this->assertFalse(preg_match($pattern, $str), $msg);
 	}
 
 	public function assertWithinMargin($info, $expected, $margin, $msg = null) {
