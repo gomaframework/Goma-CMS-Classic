@@ -8,7 +8,7 @@
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  */
 
-class LangSelectTest extends GomaUnitTest implements TestAble
+class FileUploadSetTest extends GomaUnitTest implements TestAble
 {
     /**
      * area
