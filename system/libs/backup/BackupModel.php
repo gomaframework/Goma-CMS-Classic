@@ -81,7 +81,7 @@ class BackupModel extends DataObject {
 			
 			// now re-index
 			foreach($files as $file) {
-				if($file != "." && $file != "..") {
+				if($file != "." && $file != ".." && $file != "/syncStatus_" . self::VERSION) {
 					if ($data->filter(array("name" => $file))->Count() == 0 && preg_match('/\.(gfs|sgfs)$/i', $file)) {
 						$object = new BackupModel(array("name" => $file));
 						try {
