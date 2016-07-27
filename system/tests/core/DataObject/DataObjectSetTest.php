@@ -159,7 +159,7 @@ class DataObjectSetTests extends GomaUnitTest
         $count = $data->count();
         $first = $data->first();
 
-        $data->search("daniel");
+        $data->search("admin");
         $this->assertNotEqual($count, $data->count());
         $this->assertIsA($data->first(), "DataObject");
         $this->assertEqual($clone->count(), $count);
