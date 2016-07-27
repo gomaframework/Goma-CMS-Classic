@@ -1858,7 +1858,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
         foreach($query->getFrom() as $table => $data) {
             if (!isset(ClassInfo::$database[$data["table"]])) {
                 // try to create the tables
-                $this->buildDev();
+                $this->buildDB();
             }
         }
     }
