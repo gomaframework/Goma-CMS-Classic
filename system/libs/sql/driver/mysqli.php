@@ -509,6 +509,8 @@ class mysqliDriver implements SQLDriver
         if (!isset($prefix))
             $prefix = DB_PREFIX;
 
+        $this->tableStatuses = null;
+
         if ($tableInfo = $this->showTableDetails($table, true, $prefix)) {
             $this->updateTable($tableInfo, $table, $fields, $indexes, $defaults, $prefix);
         } else {
@@ -704,7 +706,7 @@ class mysqliDriver implements SQLDriver
                     }
                 } else {
                     log_error("Could not find Table {$prefix}{$table} in " . print_r($tableStatuses, true));
-                    throw new LogicException("Trying to update Table-Status of non-existing table.");
+                    throw new LogicException("Trying to update Table-Status of non-existing table {$prefix}{$table}.");
                 }
             }
 
