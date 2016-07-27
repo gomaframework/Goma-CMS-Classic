@@ -142,16 +142,30 @@ class Core extends gObject {
 	}
 
 	/**
-	 * returns repository.
+	 * returns repository or throws error.
 	 *
 	 * @return IModelRepository
 	 */
 	public static function repository() {
+		if(!isset(self::$repository)) {
+			throw new LogicException("Repository not defined.");
+		}
+
+		return self::$repository;
+	}
+
+	/**
+	 * returns repository or null.
+	 *
+	 * @return IModelRepository|null
+	 */
+	public static function getRepository() {
 		return self::$repository;
 	}
 
 	/**
 	 * sets repository.
+	 * @param IModelRepository $repository
 	 */
 	public static function __setRepo($repository) {
 		self::$repository = $repository;
