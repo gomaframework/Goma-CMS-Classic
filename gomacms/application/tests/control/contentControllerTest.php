@@ -71,6 +71,7 @@ class contentControllerTest extends GomaUnitTest
         // check if secret works
         $request->post_params["prompt_text"] = "1234";
         $response = $controller->handleRequest($request);
+        var_dump($response);
         $this->assertPattern("/prompt_text/", (string) $response);
         $this->assertNoPattern("/Hallo Welt/", (string) $response);
 

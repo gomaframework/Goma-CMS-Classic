@@ -59,12 +59,8 @@ abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAb
 		call_user_func_array(array($this, "assertNotSame"), func_get_args());
 	}
 
-	public function assertPattern($pattern, $str, $msg = null) {
-		call_user_func_array(array($this, "assertRegExp"), array(
-			$str,
-			$pattern,
-			$msg
-		));
+	public function assertPattern() {
+		call_user_func_array(array($this, "assertRegExp"), func_get_args());
 	}
 
 	public function assertNoPattern($pattern, $str, $msg = null) {
