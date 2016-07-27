@@ -703,6 +703,7 @@ class mysqliDriver implements SQLDriver
                         }
                     }
                 } else {
+                    log_error("Could not find Table {$prefix}{$table} in " . print_r($tableStatuses, true));
                     throw new LogicException("Trying to update Table-Status of non-existing table.");
                 }
             }
