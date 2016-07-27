@@ -21,6 +21,10 @@ class UploadsTest extends GomaUnitTest {
 	*/
 	public $name = "Uploads";
 
+	protected $filename;
+	protected $testfile;
+	protected $testTextFile;
+
 	/**
 	 * setup.
 	*/
@@ -46,7 +50,6 @@ class UploadsTest extends GomaUnitTest {
 	}
 
 	public function testAddExistsAndRemove() {
-
 		// store first file.
 		$file = Uploads::addFile("1" . $this->filename, $this->testfile, "FormUpload", null, true);
 
@@ -55,9 +58,9 @@ class UploadsTest extends GomaUnitTest {
 		$file->deletable = false;
 		$file->writeToDB(false, true);
 
-		$this->assertEqual($file->deletable, "0");
-		$this->assertEqual($file->filename, "1" . $this->filename);
-		$this->assertEqual($file->classname, "imageuploads");
+		$this->assertEqual(false, $file->deletable);
+		$this->assertEqual("1" . $this->filename, $file->filename);
+		$this->assertEqual("imageuploads", $file->classname);
 		$this->assertTrue(file_exists($file->realfile));
 		$this->assertEqual(md5_file($file->realfile), md5_file($this->testfile));
 		$this->assertEqual(md5_file($this->testfile), $file->md5);
@@ -167,7 +170,7 @@ class UploadsTest extends GomaUnitTest {
 		));
 
 		$this->assertTrue(file_exists($file->realfile));
-		$this->assertFalse($file->collection);
+		$this->assertNull($file->collection);
 		$this->assertEqual($file->hash(), $file->realfile, "hash()-method should return md5 of filename.");
 	}
 
