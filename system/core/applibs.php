@@ -925,10 +925,8 @@ function getCommandLineArgs() {
 
 /**
  * loads the autoloader for the framework
- *
- * @access public
  */
-function loadFramework() {
+function loadFramework($modelRepository = null) {
 	if (defined("CURRENT_PROJECT")) {
 		// if we have this directory, we have to install some files
 		$directory = CURRENT_PROJECT;
@@ -965,6 +963,8 @@ function loadFramework() {
 		Profiler::mark("Manifest");
 
 	Core::InitCache();
+	Core::__setRepo(isset($modelRepository) ? $modelRepository : new ModelRepository());
+
 	ClassInfo::loadfile();
 
 	if (PROFILE)

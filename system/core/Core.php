@@ -113,8 +113,6 @@ class Core extends gObject {
 			Resources::addData("goma.ENV.is_backend = true;");
 			define("IS_BACKEND", true);
 		}
-		
-		self::$repository = new ModelRepository();
 
 		// now init session
 		if(PROFILE)
