@@ -523,10 +523,10 @@ function str2int($string, $concat = true) {
 
 /**
  * this parses lanuage variables in a string, e.g. {$_lang_imprint}
- *@name parse_lang
- *@param string - the string to parse
- *@param array - a array of variables in the lanuage like %e%
- *@return string - the parsed string
+ *
+ * @param string - the string to parse
+ * @param array - a array of variables in the lanuage like %e%
+ * @return string - the parsed string
  */
 function parse_lang($str, $arr = array()) {
 	return preg_replace_callback('/\{\$_lang_(.*)\}/Usi', "var_lang_callback", $str);
@@ -539,10 +539,10 @@ function var_lang_callback($data) {
 
 /**
  * parses the %e% in the string
- *@name var_lang
- *@param string - the name of the languagevar
- *@param array - the array of variables
- *@return string - the parsed string
+ *
+ * @param string - the name of the languagevar
+ * @param array - the array of variables
+ * @return string - the parsed string
  */
 function var_lang($str, $replace = array()) {
 	if(!is_string($str))
@@ -557,14 +557,11 @@ function var_lang($str, $replace = array()) {
 	}
 
 	return $language;
-	// return it!!
 }
 
 /**
  * in goma we now compare version and buildnumber seperate
  *
- * @name goma_version_compare
- * @access public
  * @return bool|int
  */
 function goma_version_compare($v1, $v2, $operator = null) {
@@ -665,19 +662,23 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 		case E_CORE_WARNING:
 		case E_COMPILE_WARNING:
 		case E_USER_WARNING:
-			if(strpos($errstr, "chmod") === false && strpos($errstr, "unlink") === false) {
-				log_error("PHP-USER-Warning: " . $errno . " " . $errstr . " in " . $errfile . " on line " . $errline . ".");
-				if(DEV_MODE && !isset($_GET["ajax"]) && (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] != "XMLHttpRequest")) {
-					echo "<b>WARNING:</b> [$errno] $errstr in $errfile on line $errline<br />\n";
+			if(shouldOutputLogs()) {
+				if (strpos($errstr, "chmod") === false && strpos($errstr, "unlink") === false) {
+					log_error("PHP-USER-Warning: " . $errno . " " . $errstr . " in " . $errfile . " on line " . $errline . ".");
+					if (DEV_MODE && !isset($_GET["ajax"]) && (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] != "XMLHttpRequest")) {
+						echo "<b>WARNING:</b> [$errno] $errstr in $errfile on line $errline<br />\n";
+					}
 				}
 			}
 			break;
 		case E_USER_NOTICE:
 		case E_NOTICE:
-			if(strpos($errstr, "chmod") === false && strpos($errstr, "unlink") === false) {
-				logging("Notice: [$errno] $errstr in $errfile on line $errline");
-				if(DEV_MODE && !isset($_GET["ajax"]) && (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] != "XMLHttpRequest"))
-					echo "<b>NOTICE:</b> [$errno] $errstr in $errfile on line $errline<br />\n";
+			if(shouldOutputLogs()) {
+				if (strpos($errstr, "chmod") === false && strpos($errstr, "unlink") === false) {
+					logging("Notice: [$errno] $errstr in $errfile on line $errline");
+					if (DEV_MODE && !isset($_GET["ajax"]) && (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] != "XMLHttpRequest"))
+						echo "<b>NOTICE:</b> [$errno] $errstr in $errfile on line $errline<br />\n";
+				}
 			}
 			break;
 		case E_STRICT:
@@ -791,7 +792,7 @@ function log_error($errorString) {
 		}
 	}
 
-	if(isCommandLineInterface()) {
+	if(shouldOutputLogs()) {
 		echo $errorString . "\n";
 	}
 
@@ -831,7 +832,7 @@ function logging($string) {
 		}
 	}
 
-	if(isCommandLineInterface()) {
+	if(shouldOutputLogs()) {
 		echo $string . "\n";
 	}
 
@@ -1158,6 +1159,9 @@ function isPHPUnit() {
 	$args = isset($_SERVER["argv"]) ? $_SERVER["argv"] : array();
 
 	return isset($args[0]) && strpos($args[0], "phpunit") !== false;
+}
+function shouldOutputLogs() {
+	return isCommandLineInterface() && !isPHPUnit();
 }
 
 function isDevModeCLI() {
