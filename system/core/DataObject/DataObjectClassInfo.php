@@ -174,7 +174,6 @@ class DataObjectClassInfo extends Extension
                     ClassInfo::$class_info[$class]["table_exists"] = true;
                 } else {
                     ClassInfo::$class_info[$class]["table_exists"] = false;
-                    $classInstance->buildDB();
                 }
             }
 
@@ -202,6 +201,10 @@ class DataObjectClassInfo extends Extension
                 ClassInfo::$class_info[$class]["dataclasses"][] = $currentClass;
 
                 $currentClass = strtolower(get_parent_class($currentClass));
+            }
+
+            if(isCommandLineInterface() && !ClassInfo::$class_info[$class]["table_exists"] && ClassInfo::$class_info[$class]["table"]) {
+                $classInstance->buildDB();
             }
             unset($currentClass, $parent, $classInstance);
         }

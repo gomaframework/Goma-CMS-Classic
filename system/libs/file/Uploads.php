@@ -401,9 +401,6 @@ class Uploads extends DataObject {
 
     /**
      * event on before write
-     *
-     *@name onBeforeWrite
-     *@access public
      */
     public function onBeforeWrite($modelWriter) {
         parent::onBeforeWrite($modelWriter);
@@ -417,9 +414,6 @@ class Uploads extends DataObject {
 
     /**
      * clean up DB
-     *
-     *@name cleanUpDB
-     *@access public
      */
     public function cleanUpDB($prefix = DB_PREFIX, &$log) {
         parent::cleanUpDB($prefix, $log);
@@ -438,8 +432,6 @@ class Uploads extends DataObject {
     /**
      * returns files in the collection
      *
-     * @name getCollectionFiles
-     * @access public
      * @return DataObjectSet
      */
     public function getCollectionFiles() {
