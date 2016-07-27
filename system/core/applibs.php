@@ -638,6 +638,8 @@ function goma_version_compare($v1, $v2, $operator = null) {
 //!PHP-Error-Handling
 
 function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
+	$uri = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : (isset($_SERVER["argv"]) ? implode(" ", $_SERVER["argv"]) : null);
+
 	switch ($errno) {
 		case E_ERROR:
 		case E_CORE_ERROR:
@@ -653,9 +655,9 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 			$content = str_replace('{$errcode}', 6, $content);
 			$content = str_replace('{$errname}', "PHP-Error $errno", $content);
 			$content = str_replace('{$errdetails}', $errstr . " on line $errline in file $errfile", $content);
-			$content = str_replace('$uri', $_SERVER["REQUEST_URI"], $content);
+			$content = str_replace('$uri', $uri, $content);
 			echo $content;
-			exit ;
+			exit(2);
 			break;
 
 		case E_WARNING:
@@ -690,9 +692,9 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 			$content = str_replace('{$errcode}', 6, $content);
 			$content = str_replace('{$errname}', "PHP-Error: " . $errno, $content);
 			$content = str_replace('{$errdetails}', $errstr . " on line $errline in file $errfile", $content);
-			$content = str_replace('$uri', $_SERVER["REQUEST_URI"], $content);
+			$content = str_replace('$uri', $uri, $content);
 			echo $content;
-			exit ;
+			exit(2);
 	}
 
 	// block PHP's internal Error-Handler
@@ -703,6 +705,8 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
  * @param Exception $exception
  */
 function Goma_ExceptionHandler($exception) {
+	$uri = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : (isset($_SERVER["argv"]) ? implode(" ", $_SERVER["argv"]) : null);
+
 	if(isset($exception->isIgnorable) && $exception->isIgnorable) {
 		return;
 	}
@@ -720,7 +724,7 @@ function Goma_ExceptionHandler($exception) {
 	$content = str_replace('{$errcode}', $exception->getCode(), $content);
 	$content = str_replace('{$errname}', get_class($exception), $content);
 	$content = str_replace('{$errdetails}', $details, $content);
-	$content = str_replace('$uri', $_SERVER["REQUEST_URI"], $content);
+	$content = str_replace('$uri', $uri, $content);
 
 	if(gObject::method_exists($exception, "http_status")) {
 		HTTPResponse::setResHeader($exception->http_status());
@@ -730,7 +734,7 @@ function Goma_ExceptionHandler($exception) {
 	HTTPResponse::sendHeader();
 
 	echo $content;
-	exit ;
+	exit(2);
 }
 
 
