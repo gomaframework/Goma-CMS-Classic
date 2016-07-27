@@ -58,6 +58,12 @@ abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAb
 		$this->assertFalse(preg_match($pattern, $str), $info);
 	}
 
+	public function assertNotA($obj, $class, $msg = null) {
+		call_user_func_array(array($this, "assertNotInstanceOf"), array(
+			$class, $obj, $msg
+		));
+	}
+
 	public function assertIsA($obj, $class, $msg = null) {
 		call_user_func_array(array($this, "assertInstanceOf"), array(
 			$class, $obj, $msg
