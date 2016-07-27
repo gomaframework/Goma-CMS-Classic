@@ -64,7 +64,7 @@ abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAb
 	}
 
 	public function assertNoPattern($pattern, $str, $msg = null) {
-		$this->assertFalse(preg_match($pattern, $str), $msg);
+		$this->assertFalse(!!preg_match($pattern, $str), $msg);
 	}
 
 	public function assertWithinMargin($info, $expected, $margin, $msg = null) {
