@@ -81,42 +81,45 @@ class BackupModel extends DataObject {
 			
 			// now re-index
 			foreach($files as $file) {
-				if($data->filter(array("name" => $file))->Count() == 0 && preg_match('/\.(gfs|sgfs)$/i', $file)) {
-					$object = new BackupModel(array("name" => $file));
-					try {
-						$gfs = new GFS(self::BACKUP_PATH . "/" . $file);
-						$info = $gfs->parsePlist("info.plist");
-						if (isset($info["created"])) {
-							$object->create_date = $info["created"];
-							$object->size = filesize(self::BACKUP_PATH . "/" . $file);
+				if($file != "." && $file != "..") {
+					if ($data->filter(array("name" => $file))->Count() == 0 && preg_match('/\.(gfs|sgfs)$/i', $file)) {
+						$object = new BackupModel(array("name" => $file));
+						try {
+							$gfs = new GFS(self::BACKUP_PATH . "/" . $file);
+							$info = $gfs->parsePlist("info.plist");
+							if (isset($info["created"])) {
+								$object->create_date = $info["created"];
+								$object->size = filesize(self::BACKUP_PATH . "/" . $file);
 
-							if ($info["backuptype"] == "SQLBackup") {
-								$object->type = "SQL";
-							} else {
-								$object->type = "full";
+								if ($info["backuptype"] == "SQLBackup") {
+									$object->type = "SQL";
+								} else {
+									$object->type = "full";
+								}
+
+								$object->writeToDB(false, true);
 							}
-
-							$object->writeToDB(false, true);
+						} catch (Exception $e) {
+							log_exception($e);
 						}
-					} catch(Exception $e) {
-						log_exception($e);
-					}
-				} else if($data->filter(array("name" => $file))->first() == null) {
-					$object = $data->filter(array("name" => $file))->first();
-					try {
-						$gfs = new GFS(self::BACKUP_PATH . "/" . $file);
-						$info = $gfs->parsePlist("info.plist");
+					} else if ($data->filter(array("name" => $file))->first() == null) {
+						$object = $data->filter(array("name" => $file))->first();
+						try {
+							$gfs = new GFS(self::BACKUP_PATH . "/" . $file);
+							$info = $gfs->parsePlist("info.plist");
 
-						if (isset($info["backuptype"])) {
-							if ($info["backuptype"] == "SQLBackup") {
-								$object->type = "SQL";
-							} else {
-								$object->type = "full";
+							if (isset($info["backuptype"])) {
+								if ($info["backuptype"] == "SQLBackup") {
+									$object->type = "SQL";
+								} else {
+									$object->type = "full";
+								}
+								$object->writeToDB(false, true);
 							}
-							$object->writeToDB(false, true);
+						} catch (Exception $e) {
+							log_error("Could not open backup file " . $file);
+							log_exception($e);
 						}
-					} catch(Exception $e) {
-						log_exception($e);
 					}
 				}
 			}
@@ -127,9 +130,6 @@ class BackupModel extends DataObject {
 	
 	/**
 	 * forces to sync the folder
-	 *
-	 *@name forceSyncFolder
-	 *@access public
 	*/
 	public static function forceSyncFolder() {
 		return self::syncFolder(true);

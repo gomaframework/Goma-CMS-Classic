@@ -692,14 +692,18 @@ class mysqliDriver implements SQLDriver
                 $engines = $this->listStorageEngines();
                 $tableStatuses = $this->listStorageEnginesByTable();
 
-                if (!$forceUserMyISAM && version_compare($version, "5.6", ">=") && isset($engines["innodb"])) {
-                    if ($tableStatuses[strtolower($prefix . $table)]["Engine"] != "InnoDB") {
-                        $this->setStorageEngine($prefix . $table, "InnoDB");
+                if(isset($tableStatuses[strtolower($prefix . $table)])) {
+                    if (!$forceUserMyISAM && version_compare($version, "5.6", ">=") && isset($engines["innodb"])) {
+                        if ($tableStatuses[strtolower($prefix . $table)]["Engine"] != "InnoDB") {
+                            $this->setStorageEngine($prefix . $table, "InnoDB");
+                        }
+                    } else if (isset($engines["myisam"])) {
+                        if ($tableStatuses[strtolower($prefix . $table)]["Engine"] != "MyISAM") {
+                            $this->setStorageEngine($prefix . $table, "MyISAM");
+                        }
                     }
-                } else if (isset($engines["myisam"])) {
-                    if ($tableStatuses[strtolower($prefix . $table)]["Engine"] != "MyISAM") {
-                        $this->setStorageEngine($prefix . $table, "MyISAM");
-                    }
+                } else {
+                    throw new LogicException("Trying to update Table-Status of non-existing table.");
                 }
             }
 
