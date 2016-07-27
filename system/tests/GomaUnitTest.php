@@ -62,6 +62,11 @@ abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAb
 		$this->assertFalse(preg_match($pattern, $str), $info);
 	}
 
+	public function assertWithinMargin($info, $expected, $margin, $msg = null) {
+		$this->assertLessThanOrEqual($info, $expected + $margin, $msg);
+		$this->assertGreaterThanOrEqual($info, $expected - $margin, $msg);
+	}
+
 	public function assertNotA($obj, $class, $msg = null) {
 		call_user_func_array(array($this, "assertNotInstanceOf"), array(
 			$class, $obj, $msg
