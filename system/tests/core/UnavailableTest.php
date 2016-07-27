@@ -38,22 +38,24 @@ class UnavailableTest extends GomaUnitTest implements TestAble {
 		$this->assertEqual(isProjectUnavailableForIP($remoteAddr), false);
 		$this->assertEqual(isProjectUnavailableForIP("1.2.3.4"), false);
 
-		makeProjectUnavailable(APPLICATION, "1.2.3.4");
+		if(!isCommandLineInterface()) {
+			makeProjectUnavailable(APPLICATION, "1.2.3.4");
 
-		$this->assertEqual(isProjectUnavailable(), true);
-		$this->assertEqual(isProjectUnavailableForIP($remoteAddr), true);
-		$this->assertEqual(isProjectUnavailableForIP("1.2.3.4"), false);
+			$this->assertEqual(isProjectUnavailable(), true);
+			$this->assertEqual(isProjectUnavailableForIP($remoteAddr), true);
+			$this->assertEqual(isProjectUnavailableForIP("1.2.3.4"), false);
 
-		makeProjectUnavailable();
+			makeProjectUnavailable();
 
-		$this->assertEqual(isProjectUnavailable(), true);
-		$this->assertEqual(isProjectUnavailableForIP($remoteAddr), false);
-		$this->assertEqual(isProjectUnavailableForIP("1.2.3.4"), true);
+			$this->assertEqual(isProjectUnavailable(), true);
+			$this->assertEqual(isProjectUnavailableForIP($remoteAddr), false);
+			$this->assertEqual(isProjectUnavailableForIP("1.2.3.4"), true);
 
-		makeProjectAvailable();
+			makeProjectAvailable();
 
-		$this->assertEqual(isProjectUnavailable(), false);
-		$this->assertEqual(isProjectUnavailableForIP($remoteAddr), false);
-		$this->assertEqual(isProjectUnavailableForIP("1.2.3.4"), false);
+			$this->assertEqual(isProjectUnavailable(), false);
+			$this->assertEqual(isProjectUnavailableForIP($remoteAddr), false);
+			$this->assertEqual(isProjectUnavailableForIP("1.2.3.4"), false);
+		}
 	}
 }
