@@ -23,24 +23,32 @@ class DropdownTest extends GomaUnitTest {
      * gets key from info.
      */
     public function testGetKeyFromInfo() {
-        $this->assertEqual($this->unitTestGetKeyFromInfo(array("abc", "cde"), 0, "abc"), "abc");
-        $this->assertEqual($this->unitTestGetKeyFromInfo(array(1 => "abc", 2 => "cde"), 1, "abc"), 1);
-        $this->assertEqual($this->unitTestGetKeyFromInfo(array(
-            array("title" => "abc", "ccc" => "abc"),
-            array("title" => "deg", "ccc" => "def")
-        ), 0, array("title" => "abc", "ccc" => "abc")), "abc");
-        $this->assertEqual($this->unitTestGetKeyFromInfo(array(
+        $this->assertEqual("abc", $this->unitTestGetKeyFromInfo(array("abc", "cde"), 0, "abc"));
+        $this->assertEqual(1, $this->unitTestGetKeyFromInfo(array(1 => "abc", 2 => "cde"), 1, 1));
+
+        $this->assertThrows(function() {
+            $this->unitTestGetKeyFromInfo(array(
+                array("title" => "abc", "ccc" => "abc"),
+                array("title" => "deg", "ccc" => "def")
+            ), 0, array("title" => "abc", "ccc" => "abc"));
+        }, "InvalidArgumentException");
+
+        $this->assertEqual("abc", $this->unitTestGetKeyFromInfo(array(
+            array("title" => "abc", "ccc" => "abc", "id" => "abc"),
+            array("title" => "deg", "ccc" => "def", "id" => "deg")
+        ), 0, array("title" => "abc", "ccc" => "abc", "id" => "abc")));
+        $this->assertEqual(1, $this->unitTestGetKeyFromInfo(array(
             1 => array("title" => "abc", "ccc" => "abc"),
             2 => array("title" => "deg", "ccc" => "def")
-        ), 1, array("title" => "abc", "ccc" => "abc")), 1);
+        ), 1, array("title" => "abc", "ccc" => "abc")));
 
         $source = new DataObjectSet("user");
-        $this->assertEqual($this->unitTestGetKeyFromInfo($source, 0, $source->first()), $source->first()->id);
+        $this->assertEqual($source->first()->id, $this->unitTestGetKeyFromInfo($source, 0, $source->first()));
     }
 
     protected function unitTestGetKeyFromInfo($dataSource, $key, $value) {
         $dropdown = new DropDown();
-        $method = new ReflectionMethod("Dropdown", "getKeyFromInfo");
+        $method = new ReflectionMethod(Dropdown::class, "getKeyFromInfo");
         $method->setAccessible(true);
 
         return $method->invoke($dropdown, $dataSource, $key, $value);

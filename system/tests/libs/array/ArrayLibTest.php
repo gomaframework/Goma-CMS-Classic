@@ -64,4 +64,15 @@ class ArrayLibTest extends GomaUnitTest {
             3 => 3)
         );
 	}
+
+	public function testIsAssocFunc() {
+		$this->assertTrue(ArrayLib::isAssocArray(array(1 => 1,0 => 2,2 => 3)));
+		$this->assertTrue(ArrayLib::isAssocArray(array(1 => 1,2 => 2,3 => 3)));
+
+		$this->assertFalse(ArrayLib::isAssocArray(array(1,2,3)));
+		$this->assertFalse(ArrayLib::isAssocArray(array(
+			array("title" => "abc", "ccc" => "abc"),
+			array("title" => "deg", "ccc" => "def")
+		)));
+	}
 }
