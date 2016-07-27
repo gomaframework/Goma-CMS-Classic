@@ -132,7 +132,7 @@ class ObjectTest extends GomaUnitTest implements TestAble {
 
     public function testInstance() {
         $this->assertIsA(gObject::instance("DummyMethodTest"), "DummyMethodTest");
-        $this->assertClone(gObject::instance("DummyMethodTest"), gObject::instance("DummyMethodTest"));
+        $this->assertEqual(gObject::instance("DummyMethodTest"), gObject::instance("DummyMethodTest"));
 
         // check for cloning
         $o = gObject::instance("DummyMethodTest");
