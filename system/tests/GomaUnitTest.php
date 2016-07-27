@@ -6,6 +6,10 @@
  *
  * @author		Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
+ *
+ * @method void assertIsNull($response, $expected, $message)
+ * @method void assertTrue($response, $expected, $message)
+ * @method void assertFalse($response, $expected, $message)
  */
 
 require_once(ROOT . "/system/libs/thirdparty/simpletest/unit_tester.php");

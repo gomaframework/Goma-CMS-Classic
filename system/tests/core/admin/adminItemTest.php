@@ -62,7 +62,7 @@ class AdminItemTest extends GomaUnitTest implements TestAble {
 
 		// checks for adminitems without controller
 		$this->assertEqual($this->itemWithoutController->model(), "group");
-		$this->assertFalse($this->itemWithoutController->getControllerInst());
+		$this->assertNull($this->itemWithoutController->getControllerInst());
 		$this->assertFalse($this->itemWithoutController->__cancall("handlerequest"));
 	}
 }
