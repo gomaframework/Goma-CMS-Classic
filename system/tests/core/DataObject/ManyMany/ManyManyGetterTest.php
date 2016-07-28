@@ -26,6 +26,7 @@ class ManyManyGetterTest extends GomaUnitTest implements TestAble {
             "twosids" => $data
         ));
         $this->assertEqual($data, $object->twosids);
+        print_r($object->twos());
         $this->assertEqual(3, $object->twos()->count());
     }
 
