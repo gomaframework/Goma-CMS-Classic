@@ -8,10 +8,6 @@
         </button>
     </div>
 
-    <div class="undo-template" style="display:none">
-        $model.partTitle<span class="headline"> "<strong class="text"></strong>"</span>: <% lang("block_deleted") %> <a class="undo" href="javascript:;"><% lang("undo") %></a>
-    </div>
-
     <% CONTROL fields() as $field %>
         <% CONTROL field.jsRenderResources() as $resource %>
         <% INCLUDE_JS $resource %>
@@ -23,4 +19,8 @@
 
         $field.field
     <% ENDCONTROL %>
+</div>
+
+<div class="undo-template" style="display:none">
+    $model.partTitle<span class="headline"> "<strong class="text"></strong>"</span>: <% lang("block_deleted") %> <a class="undo" href="javascript:;"><% lang("undo") %></a>
 </div>

@@ -17,6 +17,8 @@ multiFormFieldController.prototype = {
     deletable: false,
 
     init: function() {
+        var _this = this;
+
         this.updateOrder();
 
         if(this.sortable) {
@@ -51,53 +53,65 @@ multiFormFieldController.prototype = {
 
         if(this.deletable) {
             this.element.find(".part-delete-button").show();
+
+            this.element.find(".part-delete-button").click(function(){
+                var cluster = $(this).parent().parent().parent();
+
+                _this.hideCluster(cluster, true);
+
+                return false;
+            });
+            this.element.find(".undo-template a.undo").click(function(){
+                var cluster = $(this).parent().parent();
+
+                _this.undo(cluster);
+
+                return false;
+            });
         }
     },
 
     updateOrder: function() {
         var i = 0;
         this.element.find(".form-component").each(function(){
-            $(this).attr("order", i);
-            $(this).find("input[name*=__sortpart]").val(i);
-            i++;
+            if(!$(this).parent().hasClass("part-hidden")) {
+                $(this).attr("order", i);
+                $(this).find("input[name*=__sortpart]").val(i);
+                i++;
+            }
         });
     },
 
-    hideCluster: function(animated) {
-        this.sortHiddenInput.val(-1);
+    hideCluster: function(cluster, animated) {
+        cluster.addClass("part-hidden");
+        cluster.find("input[name*=__shoulddeletepart]").val(1);
 
-        this.clusterFormField.addClass("part-hidden");
-
-        if(this.clusterFormField.find(".form_field_headline:visible").length > 0) {
-            this.clusterFormField.find(".undo-template .headline").css("display", "");
-            this.clusterFormField.find(".undo-template .headline .text").text(this.clusterFormField.find(".form_field_headline:visible input").val());
+        if(cluster.find(".form_field_headline:visible").length > 0) {
+            cluster.find(".undo-template .headline").css("display", "");
+            cluster.find(".undo-template .headline .text").text(cluster.find(".form_field_headline:visible input").val());
         } else {
-            this.clusterFormField.find(".undo-template .headline").css("display", "none");
+            cluster.find(".undo-template .headline").css("display", "none");
         }
 
         if(animated) {
-            this.clusterFormField.find(" > div").not(".undo-template").slideUp("fast");
-            this.clusterFormField.find(".undo-template").slideDown("fast", function(){
-                articleController.sharedInstance.updateOrder();
-            });
+            cluster.find(" > div").not(".undo-template").slideUp("fast");
+            cluster.find(".undo-template").slideDown("fast", function(){
+                this.updateOrder();
+            }.bind(this));
         } else {
-            this.clusterFormField.find(" > div").not(".undo-template").css("display", "none");
-            this.clusterFormField.find(".undo-template").css("display", "block");
+            cluster.find(" > div").not(".undo-template").css("display", "none");
+            cluster.find(".undo-template").css("display", "block");
 
-            articleController.sharedInstance.updateOrder();
-        }
-
-        if(!this.clusterFormField.find(".undo-template").parent().hasClass("clusterformfield")) {
-            this.clusterFormField.find(".undo-template").appendTo(this.clusterFormField);
-            this.clusterFormField.find(".undo-template a.undo").click(this.undo.bind(this));
+            this.updateOrder();
         }
     },
 
-    undo: function() {
-        this.clusterFormField.removeClass("part-hidden");
-        this.clusterFormField.find(" > div").slideDown("fast");
-        this.clusterFormField.find(".undo-template").slideUp("fast");
+    undo: function(cluster) {
+        cluster.removeClass("part-hidden");
+        cluster.find(" > div").slideDown("fast");
+        cluster.find(".undo-template").slideUp("fast");
+        cluster.find("input[name*=__shoulddeletepart]").val(0);
 
-        articleController.sharedInstance.updateOrder();
+        this.updateOrder();
     }
 };
