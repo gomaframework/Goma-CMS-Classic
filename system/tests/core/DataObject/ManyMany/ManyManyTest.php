@@ -83,6 +83,16 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         }
     }
 
+    public function testManyManyInitGetter() {
+        $data = DataObject::get("ManyManyTestObjectTwo")->getRange(0, 3)->fieldToArray("versionid");
+        $this->assertEqual(3, count($data));
+        $object = new ManyManyTestObjectOne(array(
+            "twosids" => $data
+        ));
+        $this->assertEqual($data, $object->twosids);
+        $this->assertEqual(3, $object->twos()->count());
+    }
+
     public function testLoad() {
         /** @var ManyManyTestObjectOne $firstOne */
         $firstOne = DataObject::get_one("ManyManyTestObjectOne");
