@@ -944,13 +944,12 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
      */
     public function canInsert($row = null)
     {
-
         if(isset($row)) {
             if($row->parentid != 0) {
                 $data = DataObject::get_versioned("pages", "state", array("id" => $row->parentid));
 
                 if($data->Count() > 0) {
-                    return $data->first()->can("Write", $data);
+                    return $data->first()->can("Write");
                 }
             }
         }
