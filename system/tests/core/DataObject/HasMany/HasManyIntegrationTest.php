@@ -23,4 +23,8 @@ class HasManyIntegrationTest extends GomaUnitTest implements TestAble
     /**
      *
      */
+    public function testInit() {
+        $model = new HasMany_DataObjectSet();
+        $this->assertIsA($model, HasMany_DataObjectSet::class);
+    }
 }
