@@ -63,8 +63,10 @@ class MailTests extends GomaUnitTest {
 
         $phpmailer = $mail->prepareMail();
 
-        $this->assertEqual($phpmailer->From, "noreply@" . $_SERVER["SERVER_NAME"]);
-        $this->assertEqual($phpmailer->FromName, "noreply@" . $_SERVER["SERVER_NAME"]);
+		$server = isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"] : "localhost";
+
+        $this->assertEqual("noreply@" . $server, $phpmailer->From);
+        $this->assertEqual("noreply@" . $server, $phpmailer->FromName);
     }
 
     /**

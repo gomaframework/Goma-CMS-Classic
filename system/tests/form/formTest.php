@@ -229,7 +229,7 @@ class FormTest extends GomaUnitTest implements TestAble {
 	 * @param $data
 	 */
 	public function _testNull($data) {
-		self::$testCalled = 1;
+		self::$testCalled = true;
 		$this->assertNull($data["test"]);
 	}
 
@@ -250,7 +250,8 @@ class FormTest extends GomaUnitTest implements TestAble {
 					$tpl = $reflectionProp->getValue($inst);
 
 					if ($tpl) {
-						$this->assertTrue(tpl::getFilename($tpl), "Template $tpl for class $field %s");
+						$this->assertTrue(!!tpl::getFilename($tpl), "Template $tpl for class $field %s");
+						$this->assertTrue(file_exists(tpl::getFilename($tpl)), "Template $tpl exists for class $field %s");
 					}
 				}
 			}

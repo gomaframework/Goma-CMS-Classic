@@ -27,7 +27,15 @@ class ClassManifest {
 	/**
 	 * List of class aliases.
 	 */
-	private static $class_alias = array("showsitecontroller" => "frontedcontroller", "ImageUpload" => "ImageUploadField", "object" => "gObject", "_array" => "arraylib", "dataobjectholder" => "viewaccessabledata", "autoloader" => "ClassManifest", "testsuite" => "Object");
+	private static $class_alias = array(
+        "showsitecontroller" => "frontedcontroller",
+        "imageupload" => "ImageUploadField",
+        "object" => "gObject",
+        "_array" => "arraylib",
+        "dataobjectholder" => "viewaccessabledata",
+        "autoloader" => "ClassManifest",
+        "testsuite" => "Object"
+    );
 
 	/**
 	 * Loads a class.
@@ -111,6 +119,11 @@ class ClassManifest {
 
 			return true;
 		}
+
+        if($class == "phpunit_framework_testcase" && !isPHPUnit()) {
+            class_alias("gObject", $class);
+            return true;
+        }
 	}
 
 	/**
@@ -547,7 +560,7 @@ class ClassManifest {
 	}
 
 	public static function addUnitTest () {
-		self::$class_alias["unittestcase"] = gObject::ID;
+		self::$class_alias["unittestcase"] = gObject::class;
 	}
 
 }

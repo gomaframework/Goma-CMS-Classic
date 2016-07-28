@@ -168,7 +168,26 @@ class Dev extends RequestHandler {
 		// patch
 		gObject::$cache_singleton_classes = array();
 
-        $data = "";
+       	$data = self::buildDevCLI();
+
+		unset($obj);
+		$data .= "<br />";
+
+		Core::callHook("rebuildDBInDev");
+
+		// restore page, so delete 503
+		makeProjectAvailable();
+
+		self::checkForRedirect();
+
+		return $this->template("Dev/dev.html", array("rebuilt_caches" => true, "rebuilt_db" => $data));
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function buildDevCLI() {
+		$data = "";
 		if(defined("SQL_LOADUP")) {
 			// remake db
 			foreach(classinfo::getChildren("dataobject") as $value) {
@@ -183,17 +202,7 @@ class Dev extends RequestHandler {
 		// after that rewrite classinfo
 		ClassInfo::write();
 
-		unset($obj);
-		$data .= "<br />";
-
-		Core::callHook("rebuildDBInDev");
-
-		// restore page, so delete 503
-		makeProjectAvailable();
-
-		self::checkForRedirect();
-
-		return $this->template("Dev/dev.html", array("rebuilt_caches" => true, "rebuilt_db" => $data));
+		return $data;
 	}
 
 	/**

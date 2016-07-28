@@ -177,7 +177,7 @@ class HTMLParser extends gObject
         // check anchor
         if (substr(strtolower($href), 0, 1) == "#") {
             $attrs = 'data-anchor="' . substr($href, 1) . '"';
-            $href = URL . URLEND . $href;
+            $href = ((URL . URLEND) != "/") ? (URL . URLEND . $href) : $href;
         }
 
         // check ROOT_PATH

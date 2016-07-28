@@ -177,7 +177,7 @@ function getRedirect($parentDir = false, $controller = null) {
 				$uri = substr($_SERVER["REQUEST_URI"], 0, strrpos($_SERVER["REQUEST_URI"], "/"));
 				return htmlentities(substr($uri, 0, strrpos($uri, "/")) . URLEND, ENT_COMPAT, "UTF-8", false);
 			} else {
-				return htmlentities(substr($_SERVER["REQUEST_URI"], 0, strrpos($_SERVER["REQUEST_URI"], "/")) . URLEND, ENT_COMPAT, "UTF-8", false);
+				return isset($_SERVER["REQUEST_URI"]) ? htmlentities(substr($_SERVER["REQUEST_URI"], 0, strrpos($_SERVER["REQUEST_URI"], "/")) . URLEND, ENT_COMPAT, "UTF-8", false) : null;
 			}
 		}
 	} else {
@@ -188,7 +188,7 @@ function getRedirect($parentDir = false, $controller = null) {
 		} else if(isset(Director::$requestController)) {
 			return htmlentities(ROOT_PATH . BASE_SCRIPT . Director::$requestController->originalNamespace, ENT_COMPAT, "UTF-8", false);
 		} else {
-			return htmlentities($_SERVER["REQUEST_URI"], ENT_COMPAT, "UTF-8", false);
+			return isset($_SERVER["REQUEST_URI"]) ? htmlentities($_SERVER["REQUEST_URI"], ENT_COMPAT, "UTF-8", false) : null;
 		}
 
 	}
@@ -233,10 +233,10 @@ function goma_date($format, $date = NOW) {
  * @param string $project Name of the project, default is the current
  * application.
  *
- * @return void
+ * @param string|null $ip
  */
 function makeProjectUnavailable($project = APPLICATION, $ip = null) {
-	$ip = isset($ip) ? $ip : $_SERVER["REMOTE_ADDR"];
+	$ip = isCommandLineInterface() ? "cli" : (isset($ip) ? $ip : $_SERVER["REMOTE_ADDR"]);
 	if(!file_put_contents(ROOT . $project . "/503.goma", $ip, LOCK_EX)) {
 		die("Could not make project unavailable.");
 	}
@@ -523,10 +523,10 @@ function str2int($string, $concat = true) {
 
 /**
  * this parses lanuage variables in a string, e.g. {$_lang_imprint}
- *@name parse_lang
- *@param string - the string to parse
- *@param array - a array of variables in the lanuage like %e%
- *@return string - the parsed string
+ *
+ * @param string - the string to parse
+ * @param array - a array of variables in the lanuage like %e%
+ * @return string - the parsed string
  */
 function parse_lang($str, $arr = array()) {
 	return preg_replace_callback('/\{\$_lang_(.*)\}/Usi', "var_lang_callback", $str);
@@ -539,10 +539,10 @@ function var_lang_callback($data) {
 
 /**
  * parses the %e% in the string
- *@name var_lang
- *@param string - the name of the languagevar
- *@param array - the array of variables
- *@return string - the parsed string
+ *
+ * @param string - the name of the languagevar
+ * @param array - the array of variables
+ * @return string - the parsed string
  */
 function var_lang($str, $replace = array()) {
 	if(!is_string($str))
@@ -557,14 +557,11 @@ function var_lang($str, $replace = array()) {
 	}
 
 	return $language;
-	// return it!!
 }
 
 /**
  * in goma we now compare version and buildnumber seperate
  *
- * @name goma_version_compare
- * @access public
  * @return bool|int
  */
 function goma_version_compare($v1, $v2, $operator = null) {
@@ -635,9 +632,9 @@ function goma_version_compare($v1, $v2, $operator = null) {
 /**
  * PHP-Error-Handdling
  */
-//!PHP-Error-Handling
-
 function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
+	$uri = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : (isset($_SERVER["argv"]) ? implode(" ", $_SERVER["argv"]) : null);
+
 	switch ($errno) {
 		case E_ERROR:
 		case E_CORE_ERROR:
@@ -645,54 +642,63 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 		case E_PARSE:
 		case E_USER_ERROR:
 		case E_RECOVERABLE_ERROR:
-			HTTPResponse::setResHeader(500);
-			HTTPResponse::sendHeader();
 			log_error("PHP-USER-Error: " . $errno . " " . $errstr . " in " . $errfile . " on line " . $errline . ".");
-			$content = file_get_contents(ROOT . "system/templates/framework/phperror.html");
-			$content = str_replace('{BASE_URI}', BASE_URI, $content);
-			$content = str_replace('{$errcode}', 6, $content);
-			$content = str_replace('{$errname}', "PHP-Error $errno", $content);
-			$content = str_replace('{$errdetails}', $errstr . " on line $errline in file $errfile", $content);
-			$content = str_replace('$uri', $_SERVER["REQUEST_URI"], $content);
-			echo $content;
-			exit ;
+
+			if(!isCommandLineInterface()) {
+				HTTPResponse::setResHeader(500);
+				HTTPResponse::sendHeader();
+				$content = file_get_contents(ROOT . "system/templates/framework/phperror.html");
+				$content = str_replace('{BASE_URI}', BASE_URI, $content);
+				$content = str_replace('{$errcode}', 6, $content);
+				$content = str_replace('{$errname}', "PHP-Error $errno", $content);
+				$content = str_replace('{$errdetails}', $errstr . " on line $errline in file $errfile", $content);
+				$content = str_replace('$uri', $uri, $content);
+				echo $content;
+			}
+			exit(2);
 			break;
 
 		case E_WARNING:
 		case E_CORE_WARNING:
 		case E_COMPILE_WARNING:
 		case E_USER_WARNING:
-			if(strpos($errstr, "chmod") === false && strpos($errstr, "unlink") === false) {
-				log_error("PHP-USER-Warning: " . $errno . " " . $errstr . " in " . $errfile . " on line " . $errline . ".");
-				if(DEV_MODE && !isset($_GET["ajax"]) && (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] != "XMLHttpRequest")) {
-					echo "<b>WARNING:</b> [$errno] $errstr in $errfile on line $errline<br />\n";
+			if(shouldOutputLogs()) {
+				if (strpos($errstr, "chmod") === false && strpos($errstr, "unlink") === false) {
+					log_error("PHP-USER-Warning: " . $errno . " " . $errstr . " in " . $errfile . " on line " . $errline . ".");
+					if (DEV_MODE && !isset($_GET["ajax"]) && (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] != "XMLHttpRequest")) {
+						echo "<b>WARNING:</b> [$errno] $errstr in $errfile on line $errline<br />\n";
+					}
 				}
 			}
 			break;
 		case E_USER_NOTICE:
 		case E_NOTICE:
-		case E_USER_NOTICE:
-			if(strpos($errstr, "chmod") === false && strpos($errstr, "unlink") === false) {
-				logging("Notice: [$errno] $errstr in $errfile on line $errline");
-				if(DEV_MODE && !isset($_GET["ajax"]) && (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] != "XMLHttpRequest"))
-					echo "<b>NOTICE:</b> [$errno] $errstr in $errfile on line $errline<br />\n";
+			if(shouldOutputLogs()) {
+				if (strpos($errstr, "chmod") === false && strpos($errstr, "unlink") === false) {
+					logging("Notice: [$errno] $errstr in $errfile on line $errline");
+					if (DEV_MODE && !isset($_GET["ajax"]) && (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] != "XMLHttpRequest"))
+						echo "<b>NOTICE:</b> [$errno] $errstr in $errfile on line $errline<br />\n";
+				}
 			}
 			break;
 		case E_STRICT:
 			// nothing
 			break;
 		default:
-			HTTPResponse::setResHeader(500);
-			HTTPResponse::sendHeader();
 			log_error("PHP-Error: " . $errno . " " . $errstr . " in " . $errfile . " on line " . $errline . ".");
-			$content = file_get_contents(ROOT . "system/templates/framework/phperror.html");
-			$content = str_replace('{BASE_URI}', BASE_URI, $content);
-			$content = str_replace('{$errcode}', 6, $content);
-			$content = str_replace('{$errname}', "PHP-Error: " . $errno, $content);
-			$content = str_replace('{$errdetails}', $errstr . " on line $errline in file $errfile", $content);
-			$content = str_replace('$uri', $_SERVER["REQUEST_URI"], $content);
-			echo $content;
-			exit ;
+
+			if(!isCommandLineInterface()) {
+				HTTPResponse::setResHeader(500);
+				HTTPResponse::sendHeader();
+				$content = file_get_contents(ROOT . "system/templates/framework/phperror.html");
+				$content = str_replace('{BASE_URI}', BASE_URI, $content);
+				$content = str_replace('{$errcode}', 6, $content);
+				$content = str_replace('{$errname}', "PHP-Error: " . $errno, $content);
+				$content = str_replace('{$errdetails}', $errstr . " on line $errline in file $errfile", $content);
+				$content = str_replace('$uri', $uri, $content);
+				echo $content;
+			}
+			exit(2);
 	}
 
 	// block PHP's internal Error-Handler
@@ -703,6 +709,8 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
  * @param Exception $exception
  */
 function Goma_ExceptionHandler($exception) {
+	$uri = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : (isset($_SERVER["argv"]) ? implode(" ", $_SERVER["argv"]) : null);
+
 	if(isset($exception->isIgnorable) && $exception->isIgnorable) {
 		return;
 	}
@@ -720,25 +728,33 @@ function Goma_ExceptionHandler($exception) {
 	$content = str_replace('{$errcode}', $exception->getCode(), $content);
 	$content = str_replace('{$errname}', get_class($exception), $content);
 	$content = str_replace('{$errdetails}', $details, $content);
-	$content = str_replace('$uri', $_SERVER["REQUEST_URI"], $content);
+	$content = str_replace('$uri', $uri, $content);
 
-	if(gObject::method_exists($exception, "http_status")) {
-		HTTPResponse::setResHeader($exception->http_status());
-	} else {
-		HTTPResponse::setResHeader(500);
+	if(!isCommandLineInterface()) {
+		if (gObject::method_exists($exception, "http_status")) {
+			HTTPResponse::setResHeader($exception->http_status());
+		} else {
+			HTTPResponse::setResHeader(500);
+		}
+		HTTPResponse::sendHeader();
+		echo $content;
 	}
-	HTTPResponse::sendHeader();
 
-	echo $content;
-	exit ;
+	exit(2);
 }
 
 
 function log_exception(Exception $exception) {
+	$uri = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : (isset($_SERVER["argv"]) ? implode(" ", $_SERVER["argv"]) : null);
+
 	$message = get_class($exception) . " " . $exception->getCode() . ":\n\n" . $exception->getMessage() . "\n\n Backtrace: " . $exception->getTraceAsString();
+	$current = $exception;
+	while($current = $current->getPrevious()) {
+		$message .= "\nPrevious: " . $current->getMessage() . "\n" . $current->getTraceAsString();
+	}
 	log_error($message);
 	
-	$debugMsg = "URL: " . $_SERVER["REQUEST_URI"] . "\nGoma-Version: " . GOMA_VERSION . "-" . BUILD_VERSION . "\nApplication: " . print_r(ClassInfo::$appENV, true) . "\n\n" . $message;
+	$debugMsg = "URL: " . $uri . "\nGoma-Version: " . GOMA_VERSION . "-" . BUILD_VERSION . "\nApplication: " . print_r(ClassInfo::$appENV, true) . "\n\n" . $message;
 	debug_log($debugMsg);
 }
 
@@ -748,33 +764,36 @@ function log_exception(Exception $exception) {
  * logging
  *
  * log an error
- *
- *@name log_error
- *@access public
- *@param string - error-string
+ * @param string $errorString error
  */
-function log_error($string) {
-	if(PROFILE)
-		Profiler::mark("log_error");
-	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/");
-	if(isset($GLOBALS["error_logfile"])) {
-		$file = $GLOBALS["error_logfile"];
-	} else {
-		FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/" . date("m-d-y"));
-		$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/" . date("m-d-y") . "/";
-		$file = $folder . "1.log";
-		$i = 1;
-		while(file_exists($folder . $i . ".log") && filesize($file) > 10000) {
-			$i++;
-			$file = $folder . $i . ".log";
+function log_error($errorString) {
+	if(defined("CURRENT_PROJECT")) {
+		if (PROFILE)
+			Profiler::mark("log_error");
+		FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/");
+		if (isset($GLOBALS["error_logfile"])) {
+			$file = $GLOBALS["error_logfile"];
+		} else {
+			FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/" . date("m-d-y"));
+			$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/error/" . date("m-d-y") . "/";
+			$file = $folder . "1.log";
+			$i = 1;
+			while (file_exists($folder . $i . ".log") && filesize($file) > 10000) {
+				$i++;
+				$file = $folder . $i . ".log";
+			}
+			$GLOBALS["error_logfile"] = $file;
 		}
-		$GLOBALS["error_logfile"] = $file;
+		$date_format = (defined("DATE_FORMAT")) ? DATE_FORMAT : "Y-m-d H:i:s";
+		if (!file_exists($file)) {
+			FileSystem::write($file, date($date_format) . ': ' . $errorString . "\n\n", null, 0777);
+		} else {
+			FileSystem::write($file, date($date_format) . ': ' . $errorString . "\n\n", FILE_APPEND, 0777);
+		}
 	}
-	$date_format = (defined("DATE_FORMAT")) ? DATE_FORMAT : "Y-m-d H:i:s";
-	if(!file_exists($file)) {
-		FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", null, 0777);
-	} else {
-		FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", FILE_APPEND, 0777);
+
+	if(shouldOutputLogs()) {
+		echo $errorString . "\n";
 	}
 
 	if(PROFILE)
@@ -784,33 +803,37 @@ function log_error($string) {
 /**
  * log things
  *
- *@name logging
- *@access public
- *@param string - log-string
+ * @param string - log-string
  */
 function logging($string) {
-	if(PROFILE)
-		Profiler::mark("logging");
+	if(defined("CURRENT_PROJECT")) {
+		if (PROFILE)
+			Profiler::mark("logging");
 
-	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/");
-	$date_format = (defined("DATE_FORMAT")) ? DATE_FORMAT : "Y-m-d H:i:s";
-	if(isset($GLOBALS["log_logfile"])) {
-		$file = $GLOBALS["log_logfile"];
-	} else {
-		FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/" . date("m-d-y"));
-		$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/" . date("m-d-y") . "/";
-		$file = $folder . "1.log";
-		$i = 1;
-		while(file_exists($folder . $i . ".log") && filesize($file) > 10000) {
-			$i++;
-			$file = $folder . $i . ".log";
+		FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/");
+		$date_format = (defined("DATE_FORMAT")) ? DATE_FORMAT : "Y-m-d H:i:s";
+		if (isset($GLOBALS["log_logfile"])) {
+			$file = $GLOBALS["log_logfile"];
+		} else {
+			FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/" . date("m-d-y"));
+			$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log/" . date("m-d-y") . "/";
+			$file = $folder . "1.log";
+			$i = 1;
+			while (file_exists($folder . $i . ".log") && filesize($file) > 10000) {
+				$i++;
+				$file = $folder . $i . ".log";
+			}
+			$GLOBALS["log_logfile"] = $file;
 		}
-		$GLOBALS["log_logfile"] = $file;
+		if (!file_exists($file)) {
+			FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", null, 0777);
+		} else {
+			FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", FILE_APPEND, 0777);
+		}
 	}
-	if(!file_exists($file)) {
-		FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", null, 0777);
-	} else {
-		FileSystem::write($file, date($date_format) . ': ' . $string . "\n\n", FILE_APPEND, 0777);
+
+	if(shouldOutputLogs()) {
+		echo $string . "\n";
 	}
 
 	if(PROFILE)
@@ -822,13 +845,10 @@ function logging($string) {
  *
  * this information may uploaded to the goma-server for debug-use
  *
- *@name debug_log
- *@access public
  *@param string - debug-string
  */
 function debug_log($data) {
 	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/");
-	$date_format = (defined("DATE_FORMAT")) ? DATE_FORMAT : "Y-m-d H:i:s";
 	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/" . date("m-d-y"));
 	$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/" . date("m-d-y") . "/" . date("H_i_s");
 	$file = $folder . "-1.log";
@@ -845,7 +865,8 @@ function debug_log($data) {
  * checks for available retina-file on file-path.
  *
  * @param file
-*/
+ * @return string
+ */
 function RetinaPath($file) {
 	$retinaPath = substr($file, 0, strrpos($file, ".")) . "@2x." . substr($file, strpos($file, ".") + 1);
 	if(file_exists($retinaPath))
@@ -856,14 +877,15 @@ function RetinaPath($file) {
 
 /**
  * Writes the server configuration file
- *@name writeServerConfig
- *@access public
  */
 function writeServerConfig() {
-	if(strpos($_SERVER["SERVER_SOFTWARE"], "Apache") !== false) {
+	$args = getCommandLineArgs();
+	$server = isset($_SERVER["SERVER_SOFTWARE"]) ? $_SERVER["SERVER_SOFTWARE"] :
+		(isset($args["server"]) ? $args["server"] : "");
+	if(strpos(strtolower($server), "apache") !== false) {
 		$file = "htaccess";
 		$toFile = ".htaccess";
-	} else if(strpos($_SERVER["SERVER_SOFTWARE"], "IIS") !== false) {
+	} else if(strpos(strtolower($server), "iis") !== false) {
 		$file = "web.config";
 		$toFile = "web.config";
 	} else {
@@ -871,7 +893,6 @@ function writeServerConfig() {
 	}
 
 	require (ROOT . "system/resources/" . $file . ".php");
-
 
 	if(!file_put_contents(ROOT . $toFile, $serverconfig, FILE_APPEND | LOCK_EX)) {
 		die("Could not write " . $file);
@@ -888,14 +909,25 @@ function GUID()
 	return sprintf('%04X%04X-%04X-%04X-%04X-%04X%04X%04X', mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(16384, 20479), mt_rand(32768, 49151), mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(0, 65535));
 }
 
+function getCommandLineArgs() {
+	$args = isset($_SERVER["argv"]) ? $_SERVER["argv"] : array();
+	$parsedArgs = array();
+	foreach($args as $arg) {
+		$parts = explode("=", $arg);
+		if(isset($parts[1])) {
+			$parsedArgs[$parts[0]] = $parts[1];
+		} else {
+			$parsedArgs[$parts[0]] = $parts[0];
+		}
+	}
+	return $parsedArgs;
+}
+
 
 /**
  * loads the autoloader for the framework
- *
- * @access public
  */
-function loadFramework() {
-
+function loadFramework($modelRepository = null) {
 	if (defined("CURRENT_PROJECT")) {
 		// if we have this directory, we have to install some files
 		$directory = CURRENT_PROJECT;
@@ -943,11 +975,12 @@ function loadFramework() {
 
 /**
  * this function loads an application
+ * @param $directory
  */
 function loadApplication($directory) {
+	define("URL", parseUrl());
 
 	if (is_dir(ROOT . $directory) && file_exists(ROOT . $directory . "/application/application.php")) {
-
 		// defines
 		define("CURRENT_PROJECT", $directory);
 		define("APPLICATION", $directory);
@@ -992,7 +1025,6 @@ function loadApplication($directory) {
 			if (isset($domaininfo["sql_driver"])) {
 				define("SQL_DRIVER_OVERRIDE", $domaininfo["sql_driver"]);
 			}
-
 		} else {
 			define("DATE_FORMAT", "d.m.Y - H:i");
 			Core::setCMSVar("TIMEZONE", DEFAULT_TIMEZONE);
@@ -1001,7 +1033,7 @@ function loadApplication($directory) {
 		ClassManifest::$directories[] = $directory . "/code/";
 		ClassManifest::$directories[] = $directory . "/application/";
 
-		if(isProjectUnavailableForIP($_SERVER["REMOTE_ADDR"], basename($directory))) {
+		if(!isCommandLineInterface() && isProjectUnavailableForIP($_SERVER["REMOTE_ADDR"], basename($directory))) {
 			$content = file_get_contents(ROOT . "system/templates/framework/503.html");
 			$content = str_replace('{BASE_URI}', BASE_URI, $content);
 			header('HTTP/1.1 503 Service Temporarily Unavailable');
@@ -1010,7 +1042,16 @@ function loadApplication($directory) {
 			die($content);
 		}
 
-		require (ROOT . $directory . "/application/application.php");
+		if(isCommandLineInterface()) {
+			if(file_exists(ROOT . $directory . "/application/cli-application.php")) {
+				require (ROOT . $directory . "/application/cli-application.php");
+			} else {
+				echo("CLI is not supported by that project.\n");
+				exit(1);
+			}
+		} else {
+			require (ROOT . $directory . "/application/application.php");
+		}
 	} else {
 		define("PROJECT_LOAD_DIRECTORY", $directory);
 		// this doesn't look like an app, load installer
@@ -1024,63 +1065,70 @@ function loadApplication($directory) {
 function parseUrl() {
 	defined("BASE_SCRIPT") OR define("BASE_SCRIPT", "");
 
-	$root_path = substr(ROOT, strlen(realpath($_SERVER["DOCUMENT_ROOT"])));
-	define('ROOT_PATH', $root_path);
+	if(!isCommandLineInterface()) {
+		$root_path = substr(ROOT, strlen(realpath($_SERVER["DOCUMENT_ROOT"])));
+		define('ROOT_PATH', $root_path);
 
-	// generate BASE_URI
-	$http = (isset($_SERVER["HTTPS"])) && $_SERVER["HTTPS"] != "off" ? "https" : "http";
-	$port = $_SERVER["SERVER_PORT"];
-	if ($http == "http" && $port == 80) {
-		$port = "";
-	} else if ($http == "https" && $port == 443) {
-		$port = "";
-	} else {
-		$port = ":" . $port;
-	}
-
-	define("BASE_URI", $http . '://' . $_SERVER["SERVER_NAME"] . $port . ROOT_PATH);
-
-	// generate URL
-	$url = isset($GLOBALS["url"]) ? $GLOBALS["url"] : $_SERVER["REQUEST_URI"];
-	$url = urldecode($url);
-	// we should do this, because the url is not correct else
-	if (preg_match('/\?/', $url)) {
-		$url = substr($url, 0, strpos($url, '?'));
-	}
-
-	$url = substr($url, strlen(ROOT_PATH . BASE_SCRIPT));
-
-	// parse URL
-	if (substr($url, 0, 1) == "/")
-		$url = substr($url, 1);
-
-	// URL-END
-	if (preg_match('/^(.*)' . preg_quote(URLEND, "/") . '$/Usi', $url, $matches)) {
-		$url = $matches[1];
-	} else if ($url != "" && !Core::is_ajax() && !preg_match('/\.([a-zA-Z]+)$/i', $url) && count($_POST) == 0) {
-		// enforce URLEND
-		$get = "";
-		$i = 0;
-		foreach ($_GET as $k => $v) {
-			if ($i == 0)
-				$i++;
-			else
-				$get .= "&";
-
-			$get .= urlencode($k) . "=" . urlencode($v);
-		}
-
-		if ($get) {
-			header("Location: " . BASE_URI . BASE_SCRIPT . $url . URLEND . "?" . $get);
+		// generate BASE_URI
+		$http = (isset($_SERVER["HTTPS"])) && $_SERVER["HTTPS"] != "off" ? "https" : "http";
+		$port = $_SERVER["SERVER_PORT"];
+		if ($http == "http" && $port == 80) {
+			$port = "";
+		} else if ($http == "https" && $port == 443) {
+			$port = "";
 		} else {
-			header("Location: " . BASE_URI . BASE_SCRIPT . $url . URLEND);
+			$port = ":" . $port;
 		}
-		exit ;
+
+		define("BASE_URI", $http . '://' . $_SERVER["SERVER_NAME"] . $port . ROOT_PATH);
+
+		// generate URL
+		$url = isset($GLOBALS["url"]) ? $GLOBALS["url"] : $_SERVER["REQUEST_URI"];
+		$url = urldecode($url);
+		// we should do this, because the url is not correct else
+		if (preg_match('/\?/', $url)) {
+			$url = substr($url, 0, strpos($url, '?'));
+		}
+
+		$url = substr($url, strlen(ROOT_PATH . BASE_SCRIPT));
+
+		// parse URL
+		if (substr($url, 0, 1) == "/")
+			$url = substr($url, 1);
+
+		// URL-END
+		if (preg_match('/^(.*)' . preg_quote(URLEND, "/") . '$/Usi', $url, $matches)) {
+			$url = $matches[1];
+		} else if ($url != "" && !Core::is_ajax() && !preg_match('/\.([a-zA-Z]+)$/i', $url) && count($_POST) == 0) {
+			// enforce URLEND
+			$get = "";
+			$i = 0;
+			foreach ($_GET as $k => $v) {
+				if ($i == 0)
+					$i++;
+				else
+					$get .= "&";
+
+				$get .= urlencode($k) . "=" . urlencode($v);
+			}
+
+			if ($get) {
+				header("Location: " . BASE_URI . BASE_SCRIPT . $url . URLEND . "?" . $get);
+			} else {
+				header("Location: " . BASE_URI . BASE_SCRIPT . $url . URLEND);
+			}
+			exit;
+		}
+
+		$url = str_replace('//', '/', $url);
+
+		return $url;
+	} else {
+		define('ROOT_PATH', "/");
+		define("BASE_URI", "/");
+
+		return isset($argv[0]) ? $argv[0] : "";
 	}
-
-	$url = str_replace('//', '/', $url);
-
-	return $url;
 }
 
 /**
@@ -1100,6 +1148,26 @@ if (!function_exists('getallheaders'))
 		}
 		return $headers;
 	}
+}
+
+function isCommandLineInterface()
+{
+	return (php_sapi_name() === 'cli');
+}
+
+function isPHPUnit() {
+	$args = isset($_SERVER["argv"]) ? $_SERVER["argv"] : array();
+
+	return isset($args[0]) && strpos($args[0], "phpunit") !== false;
+}
+function shouldOutputLogs() {
+	return isCommandLineInterface();
+}
+
+function isDevModeCLI() {
+	$args = getCommandLineArgs();
+
+	return isset($args["--dev"]);
 }
 
 class SQLException extends GomaException {

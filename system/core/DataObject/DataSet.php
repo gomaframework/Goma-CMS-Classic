@@ -338,7 +338,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
      */
     public function getRange($start, $length) {
         $set = clone $this;
-        $set->items = $this->dataSource->getRange($start, $length);
+        $set->items = (array) $this->dataSource->getRange($start, $length);
         $set->inExpansion = $this->inExpansion;
         return $set;
     }
@@ -556,7 +556,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
      */
     public function getConverted($item) {
         if(is_array($item)) {
-            $object = gObject::instance(ViewAccessableData::ID)->createNew($item);
+            $object = gObject::instance(ViewAccessableData::class)->createNew($item);
         } else {
             $object = $item;
         }
@@ -697,7 +697,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
         foreach($arrayList->items as $item) {
             $newItems[] = $item;
         }
-        $this->items = $newItems;
+        $this->items = (array) $newItems;
         return $this;
     }
 

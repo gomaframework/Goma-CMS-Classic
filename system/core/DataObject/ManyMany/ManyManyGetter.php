@@ -42,6 +42,19 @@ class ManyManyGetter extends AbstractGetterExtension implements ArgumentsQuery
     }
 
     /**
+     * create objects for all has-one-data.
+     */
+    public function initValues() {
+        foreach($this->getOwner()->ManyManyRelationships() as $name => $relationship) {
+            if(is_array($this->getOwner()->fieldGet($name . "ids"))) {
+                $this->setManyManyIDs($name, $this->getOwner()->fieldGet($name . "ids"));
+            } else if(is_array($this->getOwner()->fieldGet($name))) {
+                $this->setManyManyIDs($name, $this->getOwner()->fieldGet($name));
+            }
+        }
+    }
+
+    /**
      * @param SelectQuery $query
      * @param string $version
      * @param array|string $filter

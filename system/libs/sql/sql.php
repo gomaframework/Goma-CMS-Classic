@@ -102,6 +102,7 @@ class SQL
     /**
      * tests the connection
      * @name test
+     * @return bool|mixed
      */
     static function test($driver, $dbuser, $dbdb, $dbpass, $dbhost)
     {

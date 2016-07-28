@@ -21,7 +21,7 @@
  * @property Uploads avatar
  * @property bool groupadmin
  *
- * @method DataObjectSet<Group> groups() groups($filter, $sort, $limit)
+ * @method ManyMany_DataObjectSet groups($filter = null, $sort = null)
  */
 class User extends DataObject implements HistoryData, PermProvider, Notifier
 {
@@ -408,7 +408,7 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 	public static function _validateCode($obj)
 	{
 		$value = $obj->getForm()->result["code"];
-		if(is_string($value) && !defined("IS_BACKEND") && RegisterExtension::$registerCode != "" && RegisterExtension::$registerCode != $value) {
+		if(is_string($value) && RegisterExtension::$registerCode != "" && RegisterExtension::$registerCode != $value) {
 			throw new FormInvalidDataException("code", lang("register_code_wrong", "The Code was wrong!"));
 		}
 	}

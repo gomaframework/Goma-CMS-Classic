@@ -183,9 +183,9 @@ class GomaFormResponse extends GomaResponse {
      */
     public function getResponseBodyString()
     {
-        return !$this->isStringResponse() ? $this->renderedForm->getResponseBodyString() : $this->resolveRendering(
+        return (string) (!$this->isStringResponse() ? $this->renderedForm->getResponseBodyString() : $this->resolveRendering(
             parent::getResponseBodyString()
-        );
+        ));
     }
 
     /**

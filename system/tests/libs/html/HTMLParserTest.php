@@ -50,13 +50,15 @@ class HTMLParserTests extends GomaUnitTest {
 
 	public function testProcessLinks() {
 
+		$url = ((URL . URLEND) == "/") ? "" : URL . URLEND;
 		$this->unitProcessLinks('<a href="blah/test/notexisting">Test</a>', '<a href="index.php/blah/test/notexisting">Test</a>', "index.php/");
-		$this->unitProcessLinks('<a href="#test">Test</a>', '<a href="index.php/'.URL . URLEND.'#test" data-anchor="test">Test</a>', "index.php/");
+
+		$this->unitProcessLinks('<a href="#test">Test</a>', '<a href="index.php/'.$url.'#test" data-anchor="test">Test</a>', "index.php/");
 		$this->unitProcessLinks('<a href="http://192.168.2.1">Test</a>', '<a href="http://192.168.2.1">Test</a>', "index.php/");
 		$this->unitProcessLinks('<a HREF="http://192.168.2.1">Test</a>', '<a HREF="http://192.168.2.1">Test</a>', "index.php/");
 		$this->unitProcessLinks('<a title="blah" href="http://192.168.2.1">Test</a>', '<a title="blah" href="http://192.168.2.1">Test</a>', "index.php/");
 		$this->unitProcessLinks('<a alt="blah" HREF="http://192.168.2.1" myprop="2">Test</a>', '<a alt="blah" HREF="http://192.168.2.1" myprop="2">Test</a>', "index.php/");
-		$this->unitProcessLinks('<a alt="blah" HREF="#b123" myprop="2">Test</a>', '<a alt="blah" href="index.php/'.URL . URLEND.'#b123" data-anchor="b123" myprop="2">Test</a>', "index.php/");
+		$this->unitProcessLinks('<a alt="blah" HREF="#b123" myprop="2">Test</a>', '<a alt="blah" href="index.php/'.$url.'#b123" data-anchor="b123" myprop="2">Test</a>', "index.php/");
 		
 
 	}

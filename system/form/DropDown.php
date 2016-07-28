@@ -58,19 +58,18 @@ class DropDown extends FormField {
 
 	/**
 	 * field to show in dropdown
-	 *
-	 * @name showfield
-	 * @access public
 	 */
 	public $showfield = "title";
 
 	/**
 	 * info-field
-	 *
-	 *@name info_field
-	 *@access public
 	 */
 	public $info_field;
+
+	/**
+	 * key-field.
+	 */
+	public $keyField = "id";
 
 	/**
 	 * this field needs to have the full width.
@@ -513,15 +512,21 @@ class DropDown extends FormField {
 	 * @return string
 	 */
 	protected function getKeyFromInfo($dataSource, $key, $value) {
-		if(is_a($dataSource, "DataObjectSet")) {
-			return $value->id;
+		if(is_a($dataSource, "IDataSet")) {
+			return $value->{$this->keyField};
 		}
 
-		if(isset($result[0])) {
-			if(is_array($value) && isset($value[$this->showfield])) {
-				return convert::raw2text($value[$this->showfield]);
-			} else if(is_string($value)) {
-				return $value;
+		if(is_array($dataSource)) {
+			if (!ArrayLib::isAssocArray($dataSource)) {
+				if (ViewAccessableData::getItemProp($value, $this->keyField)) {
+					return convert::raw2text(ViewAccessableData::getItemProp($value, $this->keyField));
+				} else {
+					if(is_array($value) || is_object($value)) {
+						throw new InvalidArgumentException("Values must have either ID-Attribute or be string or int.");
+					}
+
+					return $value;
+				}
 			}
 		}
 
@@ -868,9 +873,29 @@ class DropDown extends FormField {
 
 	/**
 	 * @param array|DataObjectSet $options
+	 * @return $this
 	 */
 	public function setOptions($options)
 	{
 		$this->options = $options;
+		return $this;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getKeyField()
+	{
+		return $this->keyField;
+	}
+
+	/**
+	 * @param mixed $keyField
+	 * @return $this
+	 */
+	public function setKeyField($keyField)
+	{
+		$this->keyField = $keyField;
+		return $this;
 	}
 }

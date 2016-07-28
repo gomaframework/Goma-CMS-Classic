@@ -92,6 +92,10 @@ class GlobalSessionManager {
      * @return string
      */
     public static function getCookieHost($host = null) {
+        if(isCommandLineInterface()) {
+            return null;
+        }
+
         // set correct host, avoid problems with localhost
         if(!isset($host)) $host = $_SERVER["HTTP_HOST"];
 

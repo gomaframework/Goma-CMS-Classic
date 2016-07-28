@@ -425,12 +425,18 @@ class History extends DataObject {
 	/**
 	 * clean up DB
 	 *
-	 *@name cleanUpDB
-	 *@åccess public
+	 * @name cleanUpDB
+	 * @access public
 	 */
 	public function cleanUpDB($prefix = DB_PREFIX, &$log) {
 		parent::cleanUpDB();
 
+		if(self::$storeHistoryForDays > 0) {
+			register_shutdown_function(array($this, "cleanUpOnShutdown"));
+		}
+	}
+
+	public function cleanUpOnShutdown() {
 		if(self::$storeHistoryForDays > 0) {
 			$id = null;
 			$sql = "SELECT id FROM " . DB_PREFIX . $this->Table() . " WHERE last_modified < " . (NOW - self::$storeHistoryForDays * 60 * 60 * 24) . " ORDER BY id DESC LIMIT 1";

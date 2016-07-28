@@ -388,17 +388,30 @@ class ClassInfo extends gObject {
 
 	static $i = 0;
 
+	protected static function shouldRebuildClassInfo() {
+		$file = ROOT . CACHE_DIRECTORY . CLASS_INFO_DATAFILE;
+		$args = getCommandLineArgs();
+		return (
+			!file_exists($file) ||
+			filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") ||
+			filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist") ||
+			filemtime($file) + self::$expiringTime < NOW ||
+			isset($args["-rebuild"])
+		);
+	}
+
 	/**
 	 * loads the classinfo from file
-	 *@return null
+	 * @param IModelRepository|null $modelRepository
+	 * @return null
 	 */
-	public static function loadfile() {
+	public static function loadfile($modelRepository = null) {
 		self::$tables = array();
 		self::$database = array();
 		$file = ROOT . CACHE_DIRECTORY . CLASS_INFO_DATAFILE;
 
 		self::$i++;
-		if(((!file_exists($file) || filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") || filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist") || filemtime($file) + self::$expiringTime < NOW))) {
+		if(self::shouldRebuildClassInfo()) {
 			if(PROFILE)
 				Profiler::mark("generate_class_info");
 			defined(self::GENERATE_CLASS_INFO_KEY) OR define(self::GENERATE_CLASS_INFO_KEY, true);
@@ -422,11 +435,8 @@ class ClassInfo extends gObject {
 				self::raiseSoftwareError($dependencies);
 			}
 
-			// END TESTS
-
 			if(file_exists($file) && (filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") || filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist"))) {
 				if(!preg_match("/^dev/i", URL)) {
-
 					ClassManifest::tryToInclude("Dev", 'system/core/control/DevController.php');
 					Dev::redirectToDev();
 				}
@@ -473,7 +483,7 @@ class ClassInfo extends gObject {
 			self::checkForUpgradeScripts(ROOT . APPLICATION, self::appversion());
 
 			if(isset(self::$appENV["expansion"])) {
-				ClassManifest::tryToInclude("ExpansionManager", 'system/Core/CoreLibs/ExpansionManager.php');
+				ClassManifest::tryToInclude("ExpansionManager", 'system/core/CoreLibs/ExpansionManager.php');
 				// expansions
 				foreach(self::$appENV["expansion"] as $expansion => $data) {
 					self::checkForUpgradeScripts(ExpansionManager::getExpansionFolder($expansion), ExpansionManager::expVersion($expansion));
@@ -672,6 +682,12 @@ class ClassInfo extends gObject {
 
 			if(PROFILE)
 				Profiler::unmark("generate_class_info");
+
+			Core::__setRepo(isset($modelRepository) ? $modelRepository : new ModelRepository());
+
+			if(isCommandLineInterface()) {
+				Dev::buildDevCLI();
+			}
 		} else {
 			defined("CLASS_INFO_LOADED") OR define("CLASS_INFO_LOADED", true);
 
@@ -704,6 +720,8 @@ class ClassInfo extends gObject {
 					call_user_func_array($hook, array());
 				}
 			}
+
+			Core::__setRepo(isset($modelRepository) ? $modelRepository : new ModelRepository());
 		}
 
 		defined("APPLICATION_VERSION") OR define("APPLICATION_VERSION", self::$appENV["app"]["version"]);
@@ -877,26 +895,13 @@ class ClassInfo extends gObject {
 	 * this function checks for upgrade-scripts in a given folder with given current
 	 * version
 	 *
-	 *@param folder
-	 *@param version
+	 * @param $folder
+	 * @param $current_version
 	 */
 	public static function checkForUpgradeScripts($folder, $current_version) {
-
 		ClassManifest::tryToInclude("softwareupgrademanager", 'system/core/CoreLibs/SoftwareUpgradeManager.php');
 
-		if(SoftwareUpgradeManager::checkForUpgradeScripts($folder, $current_version)) {
-
-			// after upgrade reload.
-			ClassInfo::delete();
-
-			$http = (isset($_SERVER["HTTPS"])) ? "https" : "http";
-			$port = ":" . $_SERVER["SERVER_PORT"];
-			if(($http == "http" && $port == 80) || ($http == "https" && $port == 443)) {
-				$port = "";
-			}
-			header("Location: " . $http . "://" . $_SERVER["SERVER_NAME"] . $port . $_SERVER["REQUEST_URI"]);
-			exit;
-		}
+		SoftwareUpgradeManager::checkForUpgradeScripts($folder, $current_version);
 	}
 
 	/**

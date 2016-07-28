@@ -64,8 +64,8 @@ class contentControllerTest extends GomaUnitTest
         $this->assertEqual($page->read_permission->type, "password");
 
         $response = $controller->handleRequest($request);
-        $this->assertPattern("/prompt_text/", $response);
-        $this->assertNoPattern("/Hallo Welt/", $response);
+        $this->assertPattern("/prompt_text/", (string) $response);
+        $this->assertNoPattern("/Hallo Welt/", (string) $response);
 
         $chain->clear();
         // check if secret works

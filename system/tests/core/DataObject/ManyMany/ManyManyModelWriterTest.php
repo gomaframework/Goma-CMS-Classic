@@ -23,4 +23,8 @@ class ManyManyModelWriterTest extends GomaUnitTest implements TestAble
     /**
      *
      */
+    public function testInit() {
+        $model = new ManyManyModelWriter();
+        $this->assertIsA($model, ManyManyModelWriter::class);
+    }
 }

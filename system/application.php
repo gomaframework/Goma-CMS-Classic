@@ -21,11 +21,7 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE | E_COMPILE_ERROR | E_NOTICE);
 if (version_compare(phpversion(), "5.4.0", "<")) {
 	header("HTTP/1.1 500 Server Error");
 	echo file_get_contents(dirname(__FILE__) . "/templates/framework/php5.html");
-	die();
-}
-
-if (!isset($_SERVER["SERVER_NAME"], $_SERVER["DOCUMENT_ROOT"])) {
-	die("Goma needs the Server-Vars SERVER_NAME and DOCUMENT_ROOT");
+	exit(1);
 }
 
 if (function_exists("ini_set")) {
@@ -144,25 +140,27 @@ require_once (FRAMEWORK_ROOT . 'security/ISessionManager.php');
 require_once (FRAMEWORK_ROOT . 'core/CoreLibs/CacheManager.php');
 require_once (FRAMEWORK_ROOT . 'libs/sql/sql.php');
 
-
 if (PROFILE)
 	Profiler::unmark("core_requires");
-
-
 
 // set error-handler
 set_error_handler("Goma_ErrorHandler");
 
 set_exception_handler("Goma_ExceptionHandler");
 
-if (file_exists(ROOT . '_config.php')) {
+if(isCommandLineInterface()) {
+	$args = getCommandLineArgs();
+	if(isset($args["--configure"])) {
+		define("DEV_MODE", true);
+		include FRAMEWORK_ROOT . "installer/application/configure.php";
+	}
+}
 
+if (file_exists(ROOT . '_config.php')) {
 	// load configuration
-	// configuration
 	require (ROOT . '_config.php');
 
 	// define the defined vars in config
-
 	if (isset($logFolder)) {
 		define("LOG_FOLDER", $logFolder);
 	} else {
@@ -174,7 +172,7 @@ if (file_exists(ROOT . '_config.php')) {
 	define("URLEND", $urlend);
 	define("PROFILE_DETAIL", $profile_detail);
 
-	define("DEV_MODE", $dev);
+	defined("DEV_MODE") OR define("DEV_MODE", $dev || isPHPUnit() || isDevModeCLI());
 	define("BROWSERCACHE", $browsercache);
 
 	define('SQL_DRIVER', $sql_driver);
@@ -193,8 +191,6 @@ if (file_exists(ROOT . '_config.php')) {
 		ClassManifest::addUnitTest();
 	}
 
-	// END define vars
-
 	// get a temporary root_path
 	$root_path = str_replace("\\", "/", substr(__FILE__, 0, -22));
 	$root_path = substr($root_path, strlen(realpath($_SERVER["DOCUMENT_ROOT"])));
@@ -202,20 +198,27 @@ if (file_exists(ROOT . '_config.php')) {
 	/*
 	 * get the current application
 	 */
+	/** @var array $apps */
 	if ($apps) {
 		foreach ($apps as $data) {
-			$u = $root_path . "selectDomain/" . $data["directory"] . "/";
-			if (substr($_SERVER["REQUEST_URI"], 0, strlen($u)) == $u) {
-				$application = $data["directory"];
-				define("BASE_SCRIPT", "selectDomain/" . $data["directory"] . "/");
-				break;
-			}
-			if (isset($data['domain'])) {
-				if (preg_match('/' . str_replace($data['domain'], '/', '\\/') . '$/i', $_SERVER['SERVER_NAME'])) {
+			$subUrl = $root_path . "selectDomain/" . $data["directory"] . "/";
+			if(isCommandLineInterface()) {
+				if(isset($args["p"]) && $args["p"] == $data["directory"]) {
 					$application = $data["directory"];
-					define("DOMAIN_LOAD_DIRECTORY", $data["directory"]);
-
+				}
+			} else {
+				if (substr($_SERVER["REQUEST_URI"], 0, strlen($subUrl)) == $subUrl) {
+					$application = $data["directory"];
+					define("BASE_SCRIPT", "selectDomain/" . $data["directory"] . "/");
 					break;
+				}
+				if (isset($data['domain'])) {
+					if (preg_match('/' . str_replace($data['domain'], '/', '\\/') . '$/i', $_SERVER['SERVER_NAME'])) {
+						$application = $data["directory"];
+						define("DOMAIN_LOAD_DIRECTORY", $data["directory"]);
+
+						break;
+					}
 				}
 			}
 		}
@@ -245,8 +248,6 @@ define("SYSTEM_TPL_PATH", "system/templates");
 
 // set timezone for security
 date_default_timezone_set(DEFAULT_TIMEZONE);
-
-define("URL", parseUrl());
 
 if (!file_exists(ROOT . ".htaccess") && !file_exists(ROOT . "web.config")) {
 	writeServerConfig();

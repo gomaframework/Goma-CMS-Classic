@@ -23,19 +23,19 @@ class ClassManifestTest extends GomaUnitTest
         $method = new ReflectionMethod("ClassManifest", "parsePHPFile");
         $method->setAccessible(true);
         $method->invokeArgs(null, array(
-            "system/tests/core/ClassManifestTestPath/interfaceOnly.php", &$classes, &$class_info
+            "system/tests/core/ClassManifestTestPath/interfaceOnlyTest.php", &$classes, &$class_info
         ));
 
-        $this->assertEqual($classes, array(
-            "myinterface" => "system/tests/core/ClassManifestTestPath/interfaceOnly.php"
-        ));
+        $this->assertEqual(array(
+            "myinterface" => "system/tests/core/ClassManifestTestPath/interfaceOnlyTest.php"
+        ), $classes);
 
-        $this->assertEqual($class_info, array(
+        $this->assertEqual(array(
             "myinterface" => array(
                 "abstract" => true,
                 "interface" => true
             )
-        ));
+        ), $class_info);
     }
 
     public function testParseInterfaces()
@@ -45,18 +45,18 @@ class ClassManifestTest extends GomaUnitTest
         $method = new ReflectionMethod("ClassManifest", "parsePHPFile");
         $method->setAccessible(true);
         $method->invokeArgs(null, array(
-            "system/tests/core/ClassManifestTestPath/interfacesOnly.php", &$classes, &$class_info
+            "system/tests/core/ClassManifestTestPath/interfacesOnlyTest.php", &$classes, &$class_info
         ));
 
-        $this->assertEqual($classes, array(
-            "myinterface1" => "system/tests/core/ClassManifestTestPath/interfacesOnly.php",
-            "myinterface2" => "system/tests/core/ClassManifestTestPath/interfacesOnly.php",
-            "myinterface3" => "system/tests/core/ClassManifestTestPath/interfacesOnly.php",
-            "myinterface4" => "system/tests/core/ClassManifestTestPath/interfacesOnly.php",
-            "myinterface5" => "system/tests/core/ClassManifestTestPath/interfacesOnly.php"
-        ));
+        $this->assertEqual(array(
+            "myinterface1" => "system/tests/core/ClassManifestTestPath/interfacesOnlyTest.php",
+            "myinterface2" => "system/tests/core/ClassManifestTestPath/interfacesOnlyTest.php",
+            "myinterface3" => "system/tests/core/ClassManifestTestPath/interfacesOnlyTest.php",
+            "myinterface4" => "system/tests/core/ClassManifestTestPath/interfacesOnlyTest.php",
+            "myinterface5" => "system/tests/core/ClassManifestTestPath/interfacesOnlyTest.php"
+        ), $classes);
 
-        $this->assertEqual($class_info, array(
+        $this->assertEqual(array(
             "myinterface1" => array(
                 "abstract" => true,
                 "interface" => true
@@ -79,7 +79,7 @@ class ClassManifestTest extends GomaUnitTest
                 "interface" => true,
                 "parent" => "myinterface1"
             )
-        ));
+        ), $class_info);
     }
 
     public function testParseClassAndInterface()
@@ -89,10 +89,10 @@ class ClassManifestTest extends GomaUnitTest
         $method = new ReflectionMethod("ClassManifest", "parsePHPFile");
         $method->setAccessible(true);
         $method->invokeArgs(null, array(
-            "system/tests/core/ClassManifestTestPath/classAndInterface.php", &$classes, &$class_info
+            "system/tests/core/ClassManifestTestPath/classAndInterfaceTest.php", &$classes, &$class_info
         ));
 
-        $this->assertEqual($class_info, array (
+        $this->assertEqual(array (
             'test' =>
                 array (
                 ),
@@ -132,16 +132,16 @@ class ClassManifestTest extends GomaUnitTest
                     'abstract' => true,
                     'interface' => true,
                 ),
-        ));
+        ), $class_info);
 
-        $this->assertEqual($classes, array (
-            'test' => 'system/tests/core/ClassManifestTestPath/classAndInterface.php',
-            'test3' => 'system/tests/core/ClassManifestTestPath/classAndInterface.php',
-            'myclass' => 'system/tests/core/ClassManifestTestPath/classAndInterface.php',
-            'myclass2' => 'system/tests/core/ClassManifestTestPath/classAndInterface.php',
-            'i1' => 'system/tests/core/ClassManifestTestPath/classAndInterface.php',
-            'i3' => 'system/tests/core/ClassManifestTestPath/classAndInterface.php',
-            'i4' => 'system/tests/core/ClassManifestTestPath/classAndInterface.php',
-        ));
+        $this->assertEqual(array (
+            'test' => 'system/tests/core/ClassManifestTestPath/classAndInterfaceTest.php',
+            'test3' => 'system/tests/core/ClassManifestTestPath/classAndInterfaceTest.php',
+            'myclass' => 'system/tests/core/ClassManifestTestPath/classAndInterfaceTest.php',
+            'myclass2' => 'system/tests/core/ClassManifestTestPath/classAndInterfaceTest.php',
+            'i1' => 'system/tests/core/ClassManifestTestPath/classAndInterfaceTest.php',
+            'i3' => 'system/tests/core/ClassManifestTestPath/classAndInterfaceTest.php',
+            'i4' => 'system/tests/core/ClassManifestTestPath/classAndInterfaceTest.php',
+        ), $classes);
     }
 }

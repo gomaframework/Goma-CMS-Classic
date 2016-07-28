@@ -66,10 +66,14 @@ class adminItem extends AdminController implements PermProvider {
 	{
 		parent::__construct($keyChain);
 
+		$this->initModelFromModels();
+	}
+
+	protected function initModelFromModels() {
 		if(!$this->model) {
 			if (isset($this->models)) {
 				if (count($this->models) == 1) {
-					$this->model = $this->models[0];
+					$this->model = strtolower($this->models[0]);
 				} else if (count($this->models) > 1) {
 					throw new InvalidArgumentException("adminItem does not support more than 1 model.");
 				}

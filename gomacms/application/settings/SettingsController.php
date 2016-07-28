@@ -9,8 +9,8 @@
   * @Version 	1.2.9
 */
 
-Core::addToHook("loadedClassRegisterExtension", array(SettingsController::ID, "setRegisterVars"));
-Core::addCMSVarCallback(array(SettingsController::ID, "get"));
+Core::addToHook("loadedClassRegisterExtension", array(SettingsController::class, "setRegisterVars"));
+Core::addCMSVarCallback(array(SettingsController::class, "get"));
 
 class SettingsController extends gObject {
 	const ID = "SettingsController";
@@ -37,6 +37,11 @@ class SettingsController extends gObject {
 			self::$settingsCache = new newSettings($cacher->getData());
 		} else {
 			self::$settingsCache = DataObject::get("newsettings", array("id" => 1))->first();
+			if(!self::$settingsCache) {
+				self::$settingsCache = new Newsettings(array(
+
+				));
+			}
 			$cacher->write(self::$settingsCache->toArray(), 3600);
 		}
 

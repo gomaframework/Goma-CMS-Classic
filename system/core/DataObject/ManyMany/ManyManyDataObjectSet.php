@@ -597,20 +597,22 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
     {
         $join = parent::getJoinForQuery();
 
-        $relationTable = $this->relationShip->getTableName();
-        // search second join
-        foreach((array) $join as $table => $data) {
-            if(strpos($data, $relationTable)) {
-                unset($join[$table]);
+        if(!$this->manyManyData) {
+            $relationTable = $this->relationShip->getTableName();
+            // search second join
+            foreach ((array)$join as $table => $data) {
+                if (strpos($data, $relationTable)) {
+                    unset($join[$table]);
+                }
             }
-        }
 
-        $join[$relationTable] = array(
-            DataObject::JOIN_TYPE => "INNER",
-            DataObject::JOIN_TABLE => $relationTable,
-            DataObject::JOIN_STATEMENT => $relationTable . "." . $this->relationShip->getTargetField() . " = " . $this->dbDataSource()->table() . ".id AND " .
-                $relationTable . "." . $this->relationShip->getOwnerField() . " = '" . $this->getQueryVersionID() . "'"
-        );
+            $join[$relationTable] = array(
+                DataObject::JOIN_TYPE      => "INNER",
+                DataObject::JOIN_TABLE     => $relationTable,
+                DataObject::JOIN_STATEMENT => $relationTable . "." . $this->relationShip->getTargetField() . " = " . $this->dbDataSource()->table() . ".id AND " .
+                    $relationTable . "." . $this->relationShip->getOwnerField() . " = '" . $this->getQueryVersionID() . "'"
+            );
+        }
 
         return $join;
     }

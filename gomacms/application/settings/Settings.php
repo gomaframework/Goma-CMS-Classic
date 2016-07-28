@@ -24,7 +24,7 @@ class Newsettings extends DataObject implements HistoryData {
 		"register_email"	=> "Switch",
 		"gzip"				=> "Switch"
 	);
-	
+
 	/**
 	 * defaults of these fields
 	*/
@@ -34,7 +34,7 @@ class Newsettings extends DataObject implements HistoryData {
 		"register_email"	=> "1",
 		"register_enabled"	=> "0",
 		"status"			=> "1",
-		"stpl"				=> "default"
+		"stpl"				=> "goma_simple"
 	);
 	
 	/**

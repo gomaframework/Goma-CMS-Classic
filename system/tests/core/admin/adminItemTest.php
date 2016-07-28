@@ -3,7 +3,6 @@
 /**
  * Unit-Tests for AdminItem.
  *
- * @property 	AdminItem item
  * @package		Goma\Test
  *
  * @author		Goma-Team
@@ -22,18 +21,25 @@ class AdminItemTest extends GomaUnitTest implements TestAble {
 	*/
 	public $name = "AdminItem";
 
+	protected $item;
+	protected $itemWithoutController;
+
 	/**
 	 * setup.
 	*/
 	public function setUp() {
+		$reflectionMethod = new ReflectionMethod("adminItem", "initModelFromModels");
+		$reflectionMethod->setAccessible(true);
 
 		// we have admin-items, that manage models with controller...
 		$this->item = new AdminItem();
 		$this->item->models = array("Uploads");
+		$reflectionMethod->invoke($this->item);
 
 		// ... and without
 		$this->itemWithoutController = new AdminItem();
 		$this->itemWithoutController->models = array("Group");
+		$reflectionMethod->invoke($this->itemWithoutController);
 	}
 
 	/**
@@ -56,7 +62,7 @@ class AdminItemTest extends GomaUnitTest implements TestAble {
 
 		// checks for adminitems without controller
 		$this->assertEqual($this->itemWithoutController->model(), "group");
-		$this->assertFalse($this->itemWithoutController->getControllerInst());
+		$this->assertNull($this->itemWithoutController->getControllerInst());
 		$this->assertFalse($this->itemWithoutController->__cancall("handlerequest"));
 	}
 }

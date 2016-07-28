@@ -72,7 +72,8 @@ class Mail
     public function __construct($from = null, $html = true, $reply = null, $sendername = null)
     {
         if ($from === null) {
-            $from = "noreply@" . $_SERVER["SERVER_NAME"];
+            $server = isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"] : "localhost";
+            $from = "noreply@" . $server;
         }
 
         if (!empty($from)) {

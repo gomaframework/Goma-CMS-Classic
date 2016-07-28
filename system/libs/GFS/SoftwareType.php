@@ -11,8 +11,6 @@ define("DEFAULT_PACKAGE_FOLDER", FRAMEWORK_ROOT . "installer/data/apps");
  * @version	1.7.2
  */
 abstract class g_SoftwareType {
-
-
 	/**
 	 * session-var.
 	 */
@@ -20,25 +18,16 @@ abstract class g_SoftwareType {
 
 	/**
 	 * file-name of the current file
-	 *
-	 *@name file
-	 *@access protected
 	*/
 	protected $file;
 	
 	/**
 	 * value of the type-info.plist-attribute
-	 *
-	 *@name type
-	 *@access public
 	*/
 	public static $type;
 	
 	/**
 	 * cache if goma-cms.org is available
-	 *
-	 *@name gomaAvailable
-	 *@access protected
 	*/
 	protected static $gomaAvailable;
 
@@ -49,9 +38,6 @@ abstract class g_SoftwareType {
 	
 	/**
 	 * default __construct
-	 *
-	 *@name __construct
-	 *@access public
 	*/
 	public function __construct($file = null) {
 		$this->file = $file;
@@ -69,26 +55,21 @@ abstract class g_SoftwareType {
 	
 	/**
 	 * gets basic information about a package and validates basic info
-	 *
-	 *@name getPackageInfo
-	 *@access public
 	*/
 	abstract public function getPackageInfo();
-	
+
 	/**
 	 * with this method you can set some package-infos
-	 *
-	 *@name setPackageInfo
-	 *@access public
-	*/
+	 * @param $data
+	 * @return
+	 */
 	abstract public function setPackageInfo($data);
-	
+
 	/**
 	 * restores this piece of software
-	 *
-	 *@name restore
-	 *@access public
-	*/
+	 * @param bool $forceCompleteRestore
+	 * @return
+	 */
 	abstract public function getRestoreInfo($forceCompleteRestore = false);
 
 	/**
@@ -113,9 +94,6 @@ abstract class g_SoftwareType {
 	
 	/**
 	 * generates the filename for a distributable
-	 *
-	 *@name generateDistroFileName
-	 *@access public
 	*/
 	abstract public static function generateDistroFileName($name);
 	
@@ -125,9 +103,6 @@ abstract class g_SoftwareType {
 	 * array(
 	 *	'[name]' => array('canDisable' => false, 'version' => '1.0', 'icon' => 'mysite/icon.png', 'title' => 'Goma Framework')
 	 * )
-	 *
-	 *@name listSoftware
-	 *@access public
 	*/
 	abstract public static function listSoftware();
 
@@ -139,9 +114,6 @@ abstract class g_SoftwareType {
 	
 	/**
 	 * disables the software
-	 *
-	 *@name disable
-	 *@access public
 	*/
 	public static function disable($name) {
 	
@@ -149,9 +121,6 @@ abstract class g_SoftwareType {
 	
 	/**
 	 * enables the software
-	 *
-	 *@name enable
-	 *@access public
 	*/
 	public static function enable($name) {
 	
@@ -165,7 +134,7 @@ abstract class g_SoftwareType {
     public static function cleanUpUpdates() {
         FileSystem::Delete(ROOT . APPLICATION . "/uploads/e47ddedf1c2bd2d0006eae2d2eee39b4");
 
-        if(defined("SQL_LOADUP")) {
+        if(defined("SQL_LOADUP") && isset(ClassInfo::$database["uploads"])) {
             $query = new SelectQuery("uploads", array("recordid"), array("realfile" => array("LIKE", "%/e47ddedf1c2bd2d0006eae2d2eee39b4/%")));
             if ($query->execute()) {
                 $manipulation["uploads"] = array(

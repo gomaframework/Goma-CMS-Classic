@@ -1858,7 +1858,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
         foreach($query->getFrom() as $table => $data) {
             if (!isset(ClassInfo::$database[$data["table"]])) {
                 // try to create the tables
-                $this->buildDev();
+                $this->buildDB();
             }
         }
     }
@@ -2546,7 +2546,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
             }
         }
 
-        if ($this->Table() == $this->baseTable) {
+        if ($this->Table() && $this->Table() == $this->baseTable) {
             // clean-up recordid-0s
             $sql = "SELECT * FROM ".DB_PREFIX . $this->Table()." WHERE recordid = '0'";
             if ($result = SQL::Query($sql)) {

@@ -14,7 +14,7 @@ class RadioButton extends FormField
     /**
      * options for this set
      */
-    public $options;
+    protected $options;
 
     /**
      * which radio-buttons are disabled
@@ -171,11 +171,10 @@ class RadioButton extends FormField
     /**
      * adds an option
      *
-     * @name addOption
-     * @access public
-     * @param string - key
-     * @param mixed - val
-     * @param bool - if to prepend instead of append
+     * @param string $key
+     * @param mixed $val
+     * @param bool $prepend if to prepend instead of append
+     * @return $this
      */
     public function addOption($key, $val, $prepend = false)
     {
@@ -183,40 +182,41 @@ class RadioButton extends FormField
             $this->options[$key] = $val;
         else
             $this->options = array_merge(array($key => $val), $this->options);
+        return $this;
     }
 
     /**
      * removes an option
      *
-     * @name removeOption
-     * @access public
-     * @param string - key
+     * @param string $key
+     * @return $this
      */
     public function removeOption($key)
     {
         unset($this->options[$key]);
+        return $this;
     }
 
     /**
      * disables a specific radio-button
      *
-     * @name disableNode
-     * @access public
+     * @return $this
      */
     public function disableOption($id)
     {
         $this->disabledNodes[$id] = true;
+        return $this;
     }
 
     /**
      * enables a specific radio-button
      *
-     * @name enableNode
-     * @access public
+     * @return $this
      */
     public function enableOption($id)
     {
         unset($this->disabledNodes[$id]);
+        return $this;
     }
 
     /**

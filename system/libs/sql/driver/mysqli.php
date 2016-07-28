@@ -78,8 +78,12 @@ class mysqliDriver implements SQLDriver
             return true;
         } else {
             if ($test = new MySQLi($dbhost, $dbuser, $dbpass)) {
-                if ($test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_general_ci"))
+                logging("Create DataBase " . $dbdb);
+                if ($test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_general_ci")) {
                     return true;
+                } else {
+                    logging($test->error);
+                }
             }
             return false;
         }
@@ -505,6 +509,8 @@ class mysqliDriver implements SQLDriver
         if (!isset($prefix))
             $prefix = DB_PREFIX;
 
+        $this->tableStatuses = null;
+
         if ($tableInfo = $this->showTableDetails($table, true, $prefix)) {
             $this->updateTable($tableInfo, $table, $fields, $indexes, $defaults, $prefix);
         } else {
@@ -688,14 +694,19 @@ class mysqliDriver implements SQLDriver
                 $engines = $this->listStorageEngines();
                 $tableStatuses = $this->listStorageEnginesByTable();
 
-                if (!$forceUserMyISAM && version_compare($version, "5.6", ">=") && isset($engines["innodb"])) {
-                    if ($tableStatuses[strtolower($prefix . $table)]["Engine"] != "InnoDB") {
-                        $this->setStorageEngine($prefix . $table, "InnoDB");
+                if(isset($tableStatuses[strtolower($prefix . $table)])) {
+                    if (!$forceUserMyISAM && version_compare($version, "5.6", ">=") && isset($engines["innodb"])) {
+                        if ($tableStatuses[strtolower($prefix . $table)]["Engine"] != "InnoDB") {
+                            $this->setStorageEngine($prefix . $table, "InnoDB");
+                        }
+                    } else if (isset($engines["myisam"])) {
+                        if ($tableStatuses[strtolower($prefix . $table)]["Engine"] != "MyISAM") {
+                            $this->setStorageEngine($prefix . $table, "MyISAM");
+                        }
                     }
-                } else if (isset($engines["myisam"])) {
-                    if ($tableStatuses[strtolower($prefix . $table)]["Engine"] != "MyISAM") {
-                        $this->setStorageEngine($prefix . $table, "MyISAM");
-                    }
+                } else {
+                    log_error("Could not find Table {$prefix}{$table} in " . print_r($tableStatuses, true));
+                    throw new LogicException("Trying to update Table-Status of non-existing table {$prefix}{$table}.");
                 }
             }
 

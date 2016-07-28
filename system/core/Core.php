@@ -103,8 +103,8 @@ class Core extends gObject {
 
 		StaticsManager::addSaveVar("gObject", "extensions");
 		StaticsManager::addSaveVar("gObject", "extra_methods");
-		StaticsManager::AddSaveVar(Core::ID, "hooks");
-		StaticsManager::AddSaveVar(Core::ID, "cmsVarCallbacks");
+		StaticsManager::AddSaveVar(Core::class, "hooks");
+		StaticsManager::AddSaveVar(Core::class, "cmsVarCallbacks");
 		StaticsManager::AddSaveVar("Director", "rules");
 
 		self::callHook("beforeInitCore");
@@ -113,8 +113,6 @@ class Core extends gObject {
 			Resources::addData("goma.ENV.is_backend = true;");
 			define("IS_BACKEND", true);
 		}
-		
-		self::$repository = new ModelRepository();
 
 		// now init session
 		if(PROFILE)
@@ -142,16 +140,30 @@ class Core extends gObject {
 	}
 
 	/**
-	 * returns repository.
+	 * returns repository or throws error.
 	 *
 	 * @return IModelRepository
 	 */
 	public static function repository() {
+		if(!isset(self::$repository)) {
+			throw new LogicException("Repository not defined.");
+		}
+
+		return self::$repository;
+	}
+
+	/**
+	 * returns repository or null.
+	 *
+	 * @return IModelRepository|null
+	 */
+	public static function getRepository() {
 		return self::$repository;
 	}
 
 	/**
 	 * sets repository.
+	 * @param IModelRepository $repository
 	 */
 	public static function __setRepo($repository) {
 		self::$repository = $repository;

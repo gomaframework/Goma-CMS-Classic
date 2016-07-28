@@ -86,7 +86,7 @@ class ExpansionManagerTests extends GomaUnitTest
      */
     public function testFolders() {
         foreach(ClassInfo::$appENV["expansion"] as $expansion) {
-            $this->assertTrue($expansion["folder"]);
+            $this->assertTrue(!!$expansion["folder"]);
             $this->assertEqual(substr($expansion["folder"], -1), "/");
         }
     }
