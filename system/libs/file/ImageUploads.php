@@ -531,4 +531,27 @@ class ImageUploads extends Uploads {
             }
         }
     }
+
+    /**
+     * @return array
+     */
+    public function findLinkingModels() {
+        $models = array();
+        foreach(ClassInfo::getChildren(DataObject::class) as $model) {
+            if(isset(ClassInfo::$class_info[$model]["has_one"])) {
+                foreach(ClassInfo::$class_info[$model]["has_one"] as $linkingField => $linkingModel) {
+                    if(ClassManifest::isOfType($linkingModel, "ImageUploads")) {
+                        $models[$model][$linkingField] = "1";
+                    }
+                }
+            } else if(isset(ClassInfo::$class_info[$model]["has_many"])) {
+                foreach(ClassInfo::$class_info[$model]["has_many"] as $linkingField => $linkingModel) {
+                    if(ClassManifest::isOfType($linkingModel, "ImageUploads")) {
+                        $models[$model][$linkingField] = "n";
+                    }
+                }
+            }
+        }
+        return $models;
+    }
 }
