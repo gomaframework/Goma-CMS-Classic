@@ -672,10 +672,14 @@ class Form extends AbstractFormComponentWithChildren {
 
 			return $content;
 		} catch(Exception $e) {
-			if (is_a($e, "FormNotValidException")) {
+			if (is_a($e, FormNotValidException::class)) {
 				/** @var FormNotValidException $e */
 				$errors = $e->getErrors();
-			} else if (!is_a($e, "FormNotSubmittedException") || $this->getRequest()->canReplyJavaScript()) {
+			} else if (!is_a($e, FormNotSubmittedException::class) || $this->getRequest()->canReplyJavaScript()) {
+				if(!is_a($e, FormInvalidDataException::class)) {
+					log_exception($e);
+				}
+
 				$errors = array($e);
 			} else {
 				$errors = array();
