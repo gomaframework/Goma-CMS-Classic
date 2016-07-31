@@ -169,11 +169,11 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 			$this->setDbDataSource($class->getDbDataSource());
 			$this->setModelSource($class->getModelSource());
 		} else if(is_object($class)) {
-			if(is_a($class, "IDataObjectSetDataSource")) {
+			if(is_a($class, IDataObjectSetDataSource::class)) {
 				$this->setDbDataSource($class);
 			}
 
-			if(is_a($class, "IDataObjectSetModelSource")) {
+			if(is_a($class, IDataObjectSetModelSource::class)) {
 				$this->setModelSource($class);
 			}
 
@@ -185,7 +185,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 		}
 
 		if(is_array($class) && count($class) == 2) {
-			if(is_a($class[0], "IDataObjectSetDataSource")) {
+			if(is_a($class[0], IDataObjectSetDataSource::class)) {
 				$this->setDbDataSource($class[0]);
 			}
 
@@ -220,7 +220,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @return $this
 	 */
 	public function setDbDataSource($source) {
-		if(!is_a($source, "IDataObjectSetDataSource")) {
+		if(!is_a($source, IDataObjectSetDataSource::class)) {
 			throw new InvalidArgumentException("Argument must be type of IDataObjectSetDataSource.");
 		}
 
@@ -234,7 +234,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @return $this
 	 */
 	public function setModelSource($modelSource) {
-		if(!is_a($modelSource, "IDataObjectSetModelSource")) {
+		if(!is_a($modelSource, IDataObjectSetModelSource::class)) {
 			throw new InvalidArgumentException("Argument must be type of IDataObjectSetModelSource.");
 		}
 

@@ -152,7 +152,7 @@ class FileUploadSet extends FormField
     {
         $this->model = $this->getModel();
 
-        if(!is_a($this->model, DataObjectSet::ID)) {
+        if(!is_a($this->model, DataObjectSet::class)) {
             throw new InvalidArgumentException("FileUploadSet requires DataObjectSet as model.");
         }
     }
@@ -285,7 +285,7 @@ class FileUploadSet extends FormField
         /** @var DataObject $record */
         foreach ($this->model as $record) {
             if ($record->id == $id) {
-                if(is_a($this->model, RemoveStagingDataObjectSet::ID)) {
+                if(is_a($this->model, RemoveStagingDataObjectSet::class)) {
                     /** @var ManyMany_DataObjectSet $manyManySet */
                     $manyManySet = $this->model;
                     $manyManySet->removeFromSet($record);

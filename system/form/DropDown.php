@@ -501,7 +501,7 @@ class DropDown extends FormField {
 			"left" => $left,
 			"showStart" => $start,
 			"showEnd" => $end,
-			"whole" => !is_a($dataSource, "IDataSet") ? count($dataSource) : $dataSource->countWholeSet()
+			"whole" => !is_a($dataSource, IDataSet::class) ? count($dataSource) : $dataSource->countWholeSet()
 		);
 	}
 
@@ -511,7 +511,7 @@ class DropDown extends FormField {
 	 * @param mixed $value
 	 * @return string
 	 */
-	protected function getKeyFromInfo($dataSource, $key, $value) {
+	protected functionIDataSet::class($dataSource, $key, $value) {
 		if(is_a($dataSource, "IDataSet")) {
 			return $value->{$this->keyField};
 		}

@@ -23,15 +23,9 @@
  * last modified: 07.06.2015
  */
 class ImageUploads extends Uploads {
-
-    const ID = "ImageUploads";
-
     /**
      * add some db-fields
      * inherits fields from Uploads
-     *
-     *@name db
-     *@access public
      */
     static $db = array(
         "width"				=> "int(5)",
@@ -202,6 +196,18 @@ class ImageUploads extends Uploads {
         }
 
         return $file;
+    }
+
+    /**
+     * remove cache files after remove.
+     */
+    public function onAfterRemove()
+    {
+        parent::onAfterRemove();
+
+        if(is_dir(ROOT . $this->path)) {
+            FileSystem::delete(ROOT . $this->path);
+        }
     }
 
     /**
@@ -530,28 +536,5 @@ class ImageUploads extends Uploads {
                 throw $e;
             }
         }
-    }
-
-    /**
-     * @return array
-     */
-    public function findLinkingModels() {
-        $models = array();
-        foreach(ClassInfo::getChildren(DataObject::class) as $model) {
-            if(isset(ClassInfo::$class_info[$model]["has_one"])) {
-                foreach(ClassInfo::$class_info[$model]["has_one"] as $linkingField => $linkingModel) {
-                    if(ClassManifest::isOfType($linkingModel, "ImageUploads")) {
-                        $models[$model][$linkingField] = "1";
-                    }
-                }
-            } else if(isset(ClassInfo::$class_info[$model]["has_many"])) {
-                foreach(ClassInfo::$class_info[$model]["has_many"] as $linkingField => $linkingModel) {
-                    if(ClassManifest::isOfType($linkingModel, "ImageUploads")) {
-                        $models[$model][$linkingField] = "n";
-                    }
-                }
-            }
-        }
-        return $models;
     }
 }

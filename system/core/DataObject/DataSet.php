@@ -11,8 +11,6 @@
  * @version     2.0
  */
 class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
-    const ID = "DataSet";
-
     /**
      * how many items per page
      *

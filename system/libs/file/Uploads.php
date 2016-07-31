@@ -8,7 +8,7 @@ loadlang("files");
  *
  * @package 	goma framework
  * @link 		http://goma-cms.org
- * @license: 	LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
+ * @license 	LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
  * @author 	    Goma-Team
  * @version 	1.5.13
  *
@@ -18,16 +18,13 @@ loadlang("files");
  * @property string type
  * @property string md5
  * @property string url
- * @property bool deletable
  * @property string collectionid
  * @property Uploads|null collection
+ * @property int propLinks
  *
  * last modified: 25.08.2015
  */
 class Uploads extends DataObject {
-
-    const ID = "Uploads";
-
     /**
      * max-filesize for md5
      *
@@ -52,8 +49,8 @@ class Uploads extends DataObject {
         "realfile"	=> "varchar(300)",
         "path"		=> "varchar(400)",
         "type"		=> "enum('collection','file')",
-        "deletable"	=> "enum('0', '1')",
-        "md5"		=> "text"
+        "md5"		=> "text",
+        "propLinks" => "int(10)"
     );
 
     /**
@@ -92,17 +89,12 @@ class Uploads extends DataObject {
      * @param string $realfile
      * @param string $collectionPath
      * @param string $class_name
-     * @param boolean $deletable
      * @return Uploads
      * @throws FileCopyException
      */
-    public static function addFile($filename, $realfile, $collectionPath, $class_name = null, $deletable = null) {
+    public static function addFile($filename, $realfile, $collectionPath, $class_name = null) {
         if(!file_exists($realfile) || empty($collectionPath)) {
             return null;
-        }
-
-        if(!isset($deletable)) {
-            $deletable = false;
         }
 
         // get collection info
@@ -119,18 +111,13 @@ class Uploads extends DataObject {
         FileSystem::requireFolder(UPLOAD_DIR . "/" . md5($collectionPath));
 
         // generate instance of file.
-        $file = self::getFileInstance($realfile, $collection, $filename, $deletable);
+        $file = self::getFileInstance($realfile, $collection, $filename);
 
         // now reinit the file-object with maybe guessed class-name.
         /** @var Uploads $file */
         $file = $file->getClassAs(self::getFileClass($class_name, $filename));
 
         if(copy($realfile, $file->realfile)) {
-
-            if($deletable) {
-                $file->forceDeletable = true;
-            }
-
             $file->writeToDB(true, true);
 
             return $file;
@@ -171,12 +158,11 @@ class Uploads extends DataObject {
     /**
      * gets the object for the given file-path
      *
-     * @name getFile
-     * @access public
-     * @return Uploads|null
+     * @param string $path
+     * @return null|Uploads
+     * @throws Exception
      */
     public static function getFile($path) {
-
         if(!is_string($path)) {
             return null;
         }
@@ -190,10 +176,10 @@ class Uploads extends DataObject {
             $data = $cacher->getData();
             return new $data["class_name"]($data);
         } else {
-            if(($data = DataObject::get_one("Uploads", array("path" => $path))) !== null) {
+            if(($data = DataObject::get_one(Uploads::class, array("path" => $path))) !== null) {
                 $cacher->write($data->toArray(), 86400);
                 return $data;
-            } else if(($data = DataObject::get_one("Uploads", array("realfile" => $path))) !== null) {
+            } else if(($data = DataObject::get_one(Uploads::class, array("realfile" => $path))) !== null) {
                 $cacher->write($data->toArray(), 86400);
                 return $data;
             } else {
@@ -205,19 +191,17 @@ class Uploads extends DataObject {
     /**
      * guesses the file-class
      *
-     * @name guessFileClass
-     * @access public
      * @return string
      */
     public static function guessFileClass($filename) {
         $ext = strtolower(substr($filename, strrpos($filename, ".") + 1));
-        foreach(ClassInfo::getChildren("Uploads") as $child) {
+        foreach(ClassInfo::getChildren(Uploads::class) as $child) {
             if(in_array($ext, StaticsManager::getStatic($child, "file_extensions"))) {
                 return $child;
             }
         }
 
-        return "Uploads";
+        return Uploads::class;
     }
 
     /**
@@ -227,10 +211,9 @@ class Uploads extends DataObject {
      * @param    string $realfile
      * @param    Uploads $collection
      * @param    string $filename
-     * @param    boolean $deletable if file is auto-deletable or not
      * @return   Uploads
      */
-    public static function getFileInstance($realfile, $collection, $filename, $deletable) {
+    public static function getFileInstance($realfile, $collection, $filename) {
 
         // check for already existing file.
         if(filesize($realfile) < self::FILESIZE_MD5) {
@@ -248,7 +231,6 @@ class Uploads extends DataObject {
                     $file->collectionid = $collection->id;
                     $file->path = self::buildPath($collection, $filename);
                     $file->filename = $filename;
-                    $file->deletable = $deletable;
 
                     return $file;
                 } else {
@@ -267,7 +249,6 @@ class Uploads extends DataObject {
             "realfile"		=> UPLOAD_DIR . "/" . md5($collection->hash()) . "/" . randomString(8) . self::cleanUpURL($filename),
             "path"			=> self::buildPath($collection, $filename),
             "collectionid" 	=> $collection->id,
-            "deletable"		=> $deletable,
             "md5"			=> isset($md5) ? $md5 : null
         ));
     }
@@ -305,9 +286,8 @@ class Uploads extends DataObject {
     public static function getCollection($collectionPath, $useCache = true, $create = true) {
         if(!is_object($collectionPath)) {
             if(defined("SQL_LOADUP")) {
-
                 $cacher = new Cacher("uploads_collection_" . $collectionPath);
-                if($useCache && $cacher->checkValid() && $collectionObject = DataObject::get_by_id("Uploads", $cacher->getData())) {
+                if($useCache && $cacher->checkValid() && $collectionObject = DataObject::get_by_id(Uploads::class, $cacher->getData())) {
                     return $collectionObject;
                 } else {
                     $collection = self::generateCollectionTree($collectionPath, $create);
@@ -335,17 +315,15 @@ class Uploads extends DataObject {
      * @internal param $generateCollectionTree
      */
     public static function generateCollectionTree($collectionPath, $create) {
-
         $collectionObject = null;
         // determine id of collection
         $collectionTree = explode(".", $collectionPath);
 
         // check for each level of collection if it is existing.
         foreach($collectionTree as $collection) {
-
             /** @var Uploads $collectionObject */
             // find parent collection
-            if($data = DataObject::get_one("Uploads",
+            if($data = DataObject::get_one(Uploads::class,
                 array(
                     "filename" => $collection,
                     "collectionid" => isset($collectionObject) ? $collectionObject->id : 0,
@@ -366,11 +344,11 @@ class Uploads extends DataObject {
     /**
      * removes the file after remvoing from Database
      *
-     * @name onAfterRemove
-     * @access public
      * @return void
      */
     public function onAfterRemove() {
+        parent::onAfterRemove();
+
         if(file_exists($this->realfile)) {
             $data = DataObject::get("Uploads", array("realfile" => $this->realfile));
             if($data->Count() === 0) {
@@ -395,8 +373,6 @@ class Uploads extends DataObject {
                 $this->collection->remove(true);
             }
         }
-
-        parent::onAfterRemove();
     }
 
     /**
@@ -410,23 +386,6 @@ class Uploads extends DataObject {
 
         $CacheForRealfile = new Cacher("file_" . $this->fieldGet("realfile"));
         $CacheForRealfile->delete();
-    }
-
-    /**
-     * clean up DB
-     */
-    public function cleanUpDB($prefix = DB_PREFIX, &$log) {
-        parent::cleanUpDB($prefix, $log);
-
-        $data = DataObject::get("Uploads", array("deletable" => 1, "last_modified" => array(">", NOW - 120 * 60 * 24 * 14)));
-        foreach($data as $record) {
-            if(!file_exists($record->realfile)) {
-                $record->remove(true);
-                continue;
-            } else {
-                logging("Would delete file " . $record->path . ", but Goma beta does not allow ;)");
-            }
-        }
     }
 
     /**
@@ -445,9 +404,7 @@ class Uploads extends DataObject {
     /**
      * gets a subcollection with given name
      *
-     * @name getSubCollection
-     * @access public
-     * @param string - name
+     * @param string $name
      * @return Uploads
      */
     public function getSubCollection($name) {
@@ -468,14 +425,11 @@ class Uploads extends DataObject {
 
     /**
      * generates unique path for this collection
-     *
-     * @name hash
-     * @access public
      * @return string
      */
     public function hash() {
         if($this->realfile == "") {
-            return md5($this->identifier);
+            return md5($this->identifier());
         }
 
         $this->writeToDB(false, true);
@@ -485,8 +439,6 @@ class Uploads extends DataObject {
     /**
      * generates identifier for collection
      *
-     * @name identifier
-     * @access public
      * @return string
      */
     public function identifier() {
@@ -503,19 +455,12 @@ class Uploads extends DataObject {
      * @return string
      */
     public function raw() {
-        if($this->deletable) {
-            $this->deletable = false;
-            $this->writeToDB(false, true);
-        }
-
         return $this->path;
     }
 
     /**
      * returns the path
      *
-     * @name getPath
-     * @access public
      * @return string
      */
     public function getPath(){
@@ -560,9 +505,6 @@ class Uploads extends DataObject {
 
     /**
      * sets the path
-     *
-     *@name setPath
-     *@access public
      */
     public function setPath($path) {
         if(substr($path, 0, strlen(BASE_SCRIPT)) == BASE_SCRIPT) {
@@ -583,8 +525,6 @@ class Uploads extends DataObject {
     /**
      * to string
      *
-     * @name __toString
-     * @access public
      * @return null|string
      */
     public function __toString() {
@@ -598,8 +538,6 @@ class Uploads extends DataObject {
     /**
      * returns the path to the icon of the file
      *
-     * @name getIcon
-     * @access public
      * @param int $size; support for 16, 32, 64 and 128
      * @return string
      */
@@ -645,8 +583,6 @@ class Uploads extends DataObject {
     /**
      * gets the file-size nice written
      *
-     * @name filesize
-     * @access public
      * @return string
      */
     public function filesize() {
@@ -655,9 +591,6 @@ class Uploads extends DataObject {
 
     /**
      * returns if this dataobject is valid
-     *
-     * @name bool
-     * @access public
      * @return bool
      */
     public function bool() {
@@ -704,6 +637,9 @@ class Uploads extends DataObject {
 
     /**
      * creates a new collection with given name and id.
+     * @param string $name
+     * @param int $parentId
+     * @return Uploads
      */
     protected static function createCollection($name, $parentId) {
         $collection = new Uploads(array(
@@ -724,5 +660,90 @@ class Uploads extends DataObject {
         if($this->id != 0) {
             $this->writeToDB(false, true);
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function findLinkingModels() {
+        $models = array();
+        foreach(ClassInfo::getChildren(DataObject::class) as $model) {
+            if(isset(ClassInfo::$class_info[$model]["has_one"])) {
+                foreach(ClassInfo::$class_info[$model]["has_one"] as $linkingField => $linkingModel) {
+                    if(ClassManifest::isOfType($linkingModel, $this->class_name)) {
+                        $models[$model][$linkingField] = DataObject::get($model, array(
+                            $linkingField . "id" => $this->id
+                        ));
+                    }
+                }
+            } else if(isset(ClassInfo::$class_info[$model]["many_many"])) {
+                foreach(ClassInfo::$class_info[$model]["many_many"] as $linkingField => $linkingModel) {
+                    if(ClassManifest::isOfType($linkingModel, $this->class_name)) {
+                        $models[$model][$linkingField] = DataObject::get($model, array(
+                            $linkingField => array(
+                                "id" => $this->id
+                            )
+                        ));
+                    }
+                }
+            }
+
+            if(gObject::method_exists($model, "provideLinkingUploads")) {
+                call_user_func_array(array($model, "provideLinkingUploads"), array($model));
+            }
+        }
+
+        return $models;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasNoLinks() {
+        $models = $this->findLinkingModels();
+
+        foreach($models as $info) {
+            /** @var IDataSet $dataset */
+            foreach($info as $dataset) {
+                if(is_a($dataset, IDataSet::class)) {
+                    if($dataset->count() > 0) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     *
+     */
+    public function countLinks() {
+        $models = $this->findLinkingModels();
+        $i = 0;
+
+        foreach($models as $info) {
+            /** @var IDataSet $dataset */
+            foreach($info as $dataset) {
+                if(is_a($dataset, IDataSet::class)) {
+                    $i += $dataset->count();
+                }
+            }
+        }
+
+        $this->propLinks = $i;
+        $this->writeToDB(false, true);
+
+        return $i;
+    }
+
+    /**
+     * @param null $page
+     */
+    public function queryForLinkingModels($page = null) {
+        $page = RegexpUtil::isNumber($page) && $page > 0 ? $page : 1;
+
+
     }
 }

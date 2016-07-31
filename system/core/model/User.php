@@ -752,4 +752,4 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 	}
 }
 
-StaticsManager::AddSaveVar(User::ID, "useEmailAsNickname");
+StaticsManager::AddSaveVar(User::class, "useEmailAsNickname");

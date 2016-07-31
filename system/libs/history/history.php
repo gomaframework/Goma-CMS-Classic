@@ -1,7 +1,7 @@
 <?php
 defined("IN_GOMA") OR die();
 
-StaticsManager::addSaveVar(History::ID, "storeHistoryForDays");
+StaticsManager::addSaveVar(History::class, "storeHistoryForDays");
 
 /**
  * Model for History.
@@ -16,7 +16,6 @@ StaticsManager::addSaveVar(History::ID, "storeHistoryForDays");
  *
  * @version    1.0
  */
-
 class History extends DataObject {
 
 	const ID = "History";

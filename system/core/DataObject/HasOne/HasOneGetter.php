@@ -15,12 +15,6 @@ defined("IN_GOMA") OR die();
  * @method DataObject getOwner()
  */
 class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
-
-    /**
-     * id of class.
-     */
-    const ID = "HasOneGetter";
-
     /**
      * extra-methods.
      */
@@ -53,8 +47,8 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
     public function extendDefineStatics() {
         if ($has_one = $this->HasOne()) {
             foreach($has_one as $key => $val) {
-                $this->linkMethodWithInstance(self::ID, $key, $key, "getHasOne", "Something got wrong wiring the HasOne-Relationship.");
-                $this->linkMethodWithInstance(self::ID, "set" . $key, $key, "setHasOne", "Something got wrong wiring the HasOne-Relationship.");
+                $this->linkMethodWithInstance(self::class, $key, $key, "getHasOne", "Something got wrong wiring the HasOne-Relationship.");
+                $this->linkMethodWithInstance(self::class, "set" . $key, $key, "setHasOne", "Something got wrong wiring the HasOne-Relationship.");
             }
         }
     }

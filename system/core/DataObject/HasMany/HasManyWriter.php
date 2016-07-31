@@ -21,7 +21,7 @@ class HasManyWriter extends Extension {
 
         // has-many
         /** @var HasManyGetter $hasManyExtension */
-        $owner->getModel()->workWithExtensionInstance(HasManyGetter::ID, function($hasManyExtension) use($owner) {
+        $owner->getModel()->workWithExtensionInstance(HasManyGetter::class, function($hasManyExtension) use($owner) {
             $data = $owner->getData();
             /** @var HasManyGetter $hasManyExtension */
             if ($has_many = $hasManyExtension->hasMany()) {
@@ -135,7 +135,7 @@ class HasManyWriter extends Extension {
         /** @var ModelWriter $owner */
         $owner = $this->getOwner();
         /** @var HasManyGetter $extensionInstance */
-        $owner->getModel()->workWithExtensionInstance(HasManyGetter::ID, function($extensionInstance) use($changed, $owner) {
+        $owner->getModel()->workWithExtensionInstance(HasManyGetter::class, function($extensionInstance) use($changed, $owner) {
             // has-many
             if ($has_many = $extensionInstance->hasMany()) {
                 if ($owner->checkForChangeInRelationship(array_keys($has_many), true, "HasMany_DataObjectSet")) {
