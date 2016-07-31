@@ -55,7 +55,7 @@ class Uploads extends DataObject {
         "realfile"	=> "varchar(300)",
         "path"		=> "varchar(400)",
         "type"		=> "enum('collection','file')",
-        "md5"		=> "text",
+        "md5"		=> "varchar(100)",
         "propLinks" => "int(10)"
     );
 
@@ -84,6 +84,11 @@ class Uploads extends DataObject {
         array(
             "name"      => "pathlookup",
             "fields"    => "path,class_name",
+            "type"      => "INDEX"
+        ),
+        array(
+            "name"      => "md5",
+            "fields"    => "md5",
             "type"      => "INDEX"
         )
     );

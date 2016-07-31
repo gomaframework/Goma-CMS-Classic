@@ -86,11 +86,11 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
                 } else {
                     if($this->fetchMode == self::FETCH_MODE_SINGLE) {
                         $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field . ".md5" => $this->upload->md5
+                            $field . "id" => $this->upload->id
                         ));
                     } else {
                         $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field . "id" => $this->upload->id
+                            $field . ".md5" => $this->upload->md5
                         ));
                     }
                 }
@@ -177,11 +177,11 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
                     } else {
                         if($this->fetchMode == self::FETCH_MODE_SINGLE) {
                             $i += DataObject::get($model, $filter)->addFilter(array(
-                                $field . ".md5" => $this->upload->md5
+                                $field . "id" => $this->upload->id
                             ))->count();
                         } else {
                             $i += DataObject::get($model, $filter)->addFilter(array(
-                                $field . "id" => $this->upload->id
+                                $field . ".md5" => $this->upload->md5
                             ))->count();
                         }
                     }
