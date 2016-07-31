@@ -1092,7 +1092,11 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 */
 	public function getConverted($item) {
 		if(is_array($item)) {
-			$object = $this->modelSource()->createNew($item);
+			if($this->modelSource) {
+				$object = $this->modelSource()->createNew($item);
+			} else {
+				$object = ViewAccessableData::instance()->createNew($item);
+			}
 		} else if(is_object($item)) {
 			$object = $item;
 		} else if(is_null($item)) {

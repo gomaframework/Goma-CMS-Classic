@@ -20,8 +20,7 @@ $files_lang = array(
 	"upload"			=> "upload",
 	"no_file"			=> "There is not file visible here",
 	"upload_success"	=> "The file was uploaded successfully!",
-	"size"				=> "filesize",
-	"administrate"		=>
+	"size"				=> "filesize"
 );
 
 foreach($files_lang as $key => $value)

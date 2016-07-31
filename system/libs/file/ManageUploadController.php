@@ -74,7 +74,8 @@ class ManageUploadController extends FrontedController {
         foreach($set as $record) {
             $data[] = array(
                 "classname" => $record->classname,
-                "id"        => $record->id
+                "id"        => $record->id,
+                "representation"    => $record->generateRepresentation(true)
             );
         }
         return new JSONResponseBody(array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet()));
@@ -89,8 +90,9 @@ class ManageUploadController extends FrontedController {
         /** @var DataObject $record */
         foreach($set as $record) {
             $data[] = array(
-                "classname" => $record->classname,
-                "id"        => $record->id
+                "classname"         => $record->classname,
+                "id"                => $record->id,
+                "representation"    => $record->generateRepresentation(true)
             );
         }
         return new JSONResponseBody(array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet()));
@@ -115,6 +117,19 @@ class ManageUploadController extends FrontedController {
     }
 
     public function children() {
+        $data = array();
+        $set = $this->modelInst()->children();
 
+        /** @var Uploads $upload */
+        foreach($set as $upload) {
+            $data[] = array(
+                "filename" => $upload->filename,
+                "url"      => $upload->url,
+                "links" => array(
+                    "manage" => $upload->getManagePath()
+                )
+            );
+        }
+        return new JSONResponseBody(array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet()));
     }
 }

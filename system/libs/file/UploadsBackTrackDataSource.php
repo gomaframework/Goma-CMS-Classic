@@ -60,12 +60,12 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
      */
     public function getRecords($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $search = array())
     {
-        $limitLength = isset($limit[1]) ? $limit[1] : (is_int($limit)) ? $limit : PHP_INT_MAX;
+        $limitLength = isset($limit[1]) ? $limit[1] : ((is_int($limit)) ? $limit : PHP_INT_MAX);
         $start = isset($limit[0]) ? $limit[0] : 0;
 
         $records = array();
 
-        $models = self::findLinkingModels($this->upload->classname);
+        $models = self::findLinkingModels(Uploads::class);
         $i = 0;
         foreach ($models as $model => $info) {
             foreach ($info as $field => $fetchInfo) {
@@ -95,8 +95,9 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
                     }
                 }
 
-                if($currentData->count() > $limitLength - $i) {
-                    $records = array_merge($records, $currentData->getArrayRange(0, $limitLength - $i));
+                $remaining = ($limitLength - $i);
+                if($currentData->count() > $remaining) {
+                    $records = array_merge($records, $currentData->getArrayRange(0, $remaining));
                     break;
                 } else {
                     if($i > $start) {
@@ -154,7 +155,7 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
         $hash = md5(var_export($filter, true));
 
         if(!isset($this->countCache[$hash])) {
-            $models = self::findLinkingModels($this->upload->classname);
+            $models = self::findLinkingModels(Uploads::class);
             $i = 0;
 
             foreach ($models as $model => $info) {
