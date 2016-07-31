@@ -11,7 +11,7 @@
   *
   * last modified: 26.01.2015
 */
-class UploadController extends Controller {
+class UploadController extends FrontedController {
 	/**
 	 * handler
 	*/
@@ -98,7 +98,12 @@ class UploadController extends Controller {
 		));
 
 		if(!$upload) {
-			return false;
+			return DataObject::get(Uploads::class, array(
+				"type" => "collection",
+				"collectionid" => 0
+			))->customise(array(
+				"namespace" => $this->namespace
+			))->renderWith("uploads/collections.html");
 		}
 
 		GlobalSessionManager::globalSession()->stopSession();

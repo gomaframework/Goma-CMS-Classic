@@ -677,5 +677,6 @@ $lang = array(
 
 	"block_deleted"		=> "Block has been deleted",
 
-	"uploads_manage"	=> "Manage uploads"
+	"uploads_manage"	=> "Manage uploads",
+	"loadMore"			=> "Load more"
 );

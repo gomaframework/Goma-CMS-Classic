@@ -78,7 +78,11 @@ class ManageUploadController extends FrontedController {
                 "representation"    => $record->generateRepresentation(true)
             );
         }
-        return new JSONResponseBody(array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet()));
+        return GomaResponse::create(null,
+            new JSONResponseBody(
+                array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet())
+            )
+        )->setShouldServe(false);
     }
 
     public function backtrackAll() {
@@ -95,7 +99,10 @@ class ManageUploadController extends FrontedController {
                 "representation"    => $record->generateRepresentation(true)
             );
         }
-        return new JSONResponseBody(array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet()));
+
+        return GomaResponse::create(null,
+            new JSONResponseBody(array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet()))
+        )->setShouldServe(false);
     }
 
     public function allVersions() {
@@ -113,7 +120,10 @@ class ManageUploadController extends FrontedController {
                 )
             );
         }
-        return new JSONResponseBody(array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet()));
+
+        return GomaResponse::create(null,
+            new JSONResponseBody(array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet()))
+        )->setShouldServe(false);
     }
 
     public function children() {
@@ -130,6 +140,9 @@ class ManageUploadController extends FrontedController {
                 )
             );
         }
-        return new JSONResponseBody(array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet()));
+
+        return GomaResponse::create(null,
+            new JSONResponseBody(array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet()))
+        )->setShouldServe(false);
     }
 }

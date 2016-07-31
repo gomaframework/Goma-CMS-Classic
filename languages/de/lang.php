@@ -669,5 +669,6 @@ $lang = array(
 
 	"block_deleted"		=> "Block wurde gelöscht",
 
-	"uploads_manage"	=> "Medienbibliothek verwalten"
+	"uploads_manage"	=> "Medienbibliothek verwalten",
+	"loadMore"			=> "Weitere laden"
 );
