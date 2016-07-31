@@ -663,87 +663,16 @@ class Uploads extends DataObject {
     }
 
     /**
-     * @return array
-     */
-    public function findLinkingModels() {
-        $models = array();
-        foreach(ClassInfo::getChildren(DataObject::class) as $model) {
-            if(isset(ClassInfo::$class_info[$model]["has_one"])) {
-                foreach(ClassInfo::$class_info[$model]["has_one"] as $linkingField => $linkingModel) {
-                    if(ClassManifest::isOfType($linkingModel, $this->class_name)) {
-                        $models[$model][$linkingField] = DataObject::get($model, array(
-                            $linkingField . "id" => $this->id
-                        ));
-                    }
-                }
-            } else if(isset(ClassInfo::$class_info[$model]["many_many"])) {
-                foreach(ClassInfo::$class_info[$model]["many_many"] as $linkingField => $linkingModel) {
-                    if(ClassManifest::isOfType($linkingModel, $this->class_name)) {
-                        $models[$model][$linkingField] = DataObject::get($model, array(
-                            $linkingField => array(
-                                "id" => $this->id
-                            )
-                        ));
-                    }
-                }
-            }
-
-            if(gObject::method_exists($model, "provideLinkingUploads")) {
-                call_user_func_array(array($model, "provideLinkingUploads"), array($model));
-            }
-        }
-
-        return $models;
-    }
-
-    /**
      * @return bool
      */
     public function hasNoLinks() {
-        $models = $this->findLinkingModels();
-
-        foreach($models as $info) {
-            /** @var IDataSet $dataset */
-            foreach($info as $dataset) {
-                if(is_a($dataset, IDataSet::class)) {
-                    if($dataset->count() > 0) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
+        return $this->getLinkingModels()->first() == null;
     }
 
     /**
-     *
+     * @return DataObjectSet
      */
-    public function countLinks() {
-        $models = $this->findLinkingModels();
-        $i = 0;
-
-        foreach($models as $info) {
-            /** @var IDataSet $dataset */
-            foreach($info as $dataset) {
-                if(is_a($dataset, IDataSet::class)) {
-                    $i += $dataset->count();
-                }
-            }
-        }
-
-        $this->propLinks = $i;
-        $this->writeToDB(false, true);
-
-        return $i;
-    }
-
-    /**
-     * @param null $page
-     */
-    public function queryForLinkingModels($page = null) {
-        $page = RegexpUtil::isNumber($page) && $page > 0 ? $page : 1;
-
-
+    public function getLinkingModels() {
+        return new DataObjectSet(new UploadsBackTrackDataSource($this));
     }
 }
