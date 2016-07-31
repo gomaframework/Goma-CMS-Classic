@@ -14,8 +14,10 @@ require_once(ROOT . "/system/libs/thirdparty/simpletest/unit_tester.php");
  * @method void assertTrue($actual, $message = null)
  * @method void assertFalse($actual, $message = null)
  * @method void assertRegExp($actual, $regexp, $message = null)
- * @method void assertLessThanOrEqual($actual, $expected, $message = null)
- * @method void assertGreaterThanOrEqual($actual, $expected, $message = null)
+ * @method void assertLessThanOrEqual($expected, $actual, $message = null)
+ * @method void assertGreaterThanOrEqual($expected, $actual, $message = null)
+ * @method void assertInstanceOf($class, $object, $message = null)
+ * @method void assertNotInstanceOf($class, $object, $message = null)
  */
 abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAble {
 	/**

@@ -164,7 +164,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @param string|IDataObjectSetDataSource|IDataObjectSetModelSource|array $class
 	 */
 	protected function resolveSources($class) {
-		if(is_a($class, "DataObjectSet")) {
+		if(is_a($class, DataObjectSet::class)) {
 			/** @var DataObjectSet $class */
 			$this->setDbDataSource($class->getDbDataSource());
 			$this->setModelSource($class->getModelSource());
@@ -189,7 +189,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 				$this->setDbDataSource($class[0]);
 			}
 
-			if(is_a($class[1], "IDataObjectSetModelSource")) {
+			if(is_a($class[1], IDataObjectSetModelSource::class)) {
 				$this->setModelSource($class[1]);
 			}
 		} else if(is_string($class)) {

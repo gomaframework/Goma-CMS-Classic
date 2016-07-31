@@ -75,4 +75,15 @@ class ArrayLibTest extends GomaUnitTest {
 			array("title" => "deg", "ccc" => "def")
 		)));
 	}
+
+	public function testChangeKey() {
+		$this->assertEqual(array("test" => 123, "blub" => 234, "blah" => 234),
+			ArrayLib::change_key(array("test" => 123, "blub1" => 234, "blah" => 234), "blub1", "blub"));
+
+		$this->assertEqual(array("test" => 123, "blub" => 234, "blah" => 234),
+			ArrayLib::change_key(array("test1" => 123, "blub" => 234, "blah" => 234), "test1", "test"));
+
+		$this->assertEqual(array("test" => 123, "blub" => 234, "blah" => 234),
+			ArrayLib::change_key(array("test" => 123, "blub" => 234, "blah1" => 234), "blah1", "blah"));
+	}
 }

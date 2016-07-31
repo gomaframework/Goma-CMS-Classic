@@ -79,15 +79,15 @@ class ManyManyGetter extends AbstractGetterExtension implements ArgumentsQuery {
     protected function factorOutFilter($filterArray, $version, $forceClasses, $relationShips) {
         foreach($filterArray as $key => $value) {
             if(isset($relationShips[strtolower($key)])) {
-                unset($filterArray[$key]);
-                $filterArray[] = " EXISTS ( ".
+                $filterArray[$key] = " EXISTS ( ".
                     $this->buildRelationQuery($relationShips[strtolower($key)], $version, $value, $forceClasses)->build()
                     ." ) ";
+                $filterArray = ArrayLib::change_key($filterArray, $key, ArrayLib::findFreeInt($filterArray));
             } else if(strtolower(substr($key, -6)) == ".count" && isset($relationShips[strtolower(substr($key, 0, -6))])) {
-                unset($filterArray[$key]);
-                $filterArray[] = " (".
+                $filterArray[$key] = " (".
                     $this->buildRelationQuery($relationShips[strtolower(substr($key, 0, -6))], $version, array(), $forceClasses)->build("count(*)")
                     .") = " . $value;
+                $filterArray = ArrayLib::change_key($filterArray, $key, ArrayLib::findFreeInt($filterArray));
             } else {
                 if (is_array($value)) {
                     $filterArray[$key] = $this->factorOutFilter($filterArray[$key], $version, $forceClasses, $relationShips);

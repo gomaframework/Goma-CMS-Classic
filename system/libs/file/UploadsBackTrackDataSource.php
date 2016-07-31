@@ -222,7 +222,7 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
                     /** @var ModelManyManyRelationShipInfo $relationShip */
                     foreach (gObject::instance($model)->ManyManyRelationships() as $relationShip) {
                         if (ClassManifest::isOfType($relationShip->getTargetClass(), $class)) {
-                            $models[$model][$relationShip->getRelationShipName()] = "1";
+                            $models[$model][$relationShip->getRelationShipName()] = "n";
                         }
                     }
                 }

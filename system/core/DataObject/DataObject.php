@@ -1737,8 +1737,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      * @param SelectQuery $query
      * @param string $aggregateField
      * @param string $aggregate
+     * @param string $version
      */
-    protected function extendAggregate(&$query, &$aggregateField, &$aggregate) {
+    protected function extendAggregate(&$query, &$aggregateField, &$aggregate, $version) {
 
     }
 
@@ -1939,8 +1940,8 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
 
         $aggregates = (array) $aggregate;
 
-        $this->extendAggregate($query, $aggregateField, $aggregates);
-        $this->callExtending("extendAggregate", $query, $aggregateField, $aggregates);
+        $this->extendAggregate($query, $aggregateField, $aggregatesm, $version);
+        $this->callExtending("extendAggregate", $query, $aggregateField, $aggregates, $version);
 
         $distinctSQL = $distinct ? "distinct" : "";
 
