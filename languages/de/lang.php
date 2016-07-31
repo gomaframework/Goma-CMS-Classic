@@ -437,13 +437,15 @@ $lang = array(
 	"versions_javascript"							=> "Bitte aktivieren Sie JavaScript, um diese Funktion zu nutzen.",
 	"done"											=> "Fertig",
 	"undo"											=> "Rückgängig",
+	"this_version"									=> "Diese Version",
 	"restore"										=> "Wiederherstellen",
 	"restore_confirm"								=> "Wollen Sie wirklich zu dieser Version zurückkehren?",
 	"compare"										=> "Vergleichen",
 	"no_versions"									=> "Keine Version vorhanden",
 	"versions_timeline"								=> "Zeitleiste",
 	"backups"										=> "Sicherungen",
-	
+	"versions"										=> "Versionen",
+
 	"DELETED_PAGE"									=> "Gel&ouml;schte Seite",
 	"EDITED_PAGE"									=> "Geänderte Seite",
 	

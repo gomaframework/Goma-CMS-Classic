@@ -39,27 +39,48 @@ class ManageUploadController extends FrontedController {
         }
 
         Core::setTitle($this->modelInst()->filename);
-        Core::addBreadcrumb($this->modelInst()->filename, URL);
+        $this->addBreadcrumb();
+
         if($this->request->canReplyJavaScript()) {
-            return new JSONResponseBody(array_merge(
-                array(
-                    "path"      => BASE_URI . BASE_SCRIPT . $this->modelInst()->path,
-                    "filename"  => $this->modelInst()->filename,
-                    "icon"      => $this->modelInst()->icon,
-                    "url"       => $this->modelInst()->url
-                ),
-                array(
-                    "links" => array(
-                        "backtrack" => BASE_URI . BASE_SCRIPT . $this->namespace . "/backtrack/\$page" . URLEND,
-                        "backtrackAll"  => BASE_URI . BASE_SCRIPT . $this->namespace . "/backtrackAll/\$page" . URLEND,
-                        "allVersions"   => BASE_URI . BASE_SCRIPT . $this->namespace . "/allVersions/\$page" . URLEND,
-                        "children"      => BASE_URI . BASE_SCRIPT . $this->namespace . "/children/\$page" . URLEND
+            return GomaResponse::create(null,
+                new JSONResponseBody(array_merge(
+                    array(
+                        "path"      => BASE_URI . BASE_SCRIPT . $this->modelInst()->path,
+                        "filename"  => $this->modelInst()->filename,
+                        "icon"      => $this->modelInst()->icon,
+                        "url"       => $this->modelInst()->url
+                    ),
+                    array(
+                        "links" => array(
+                            "backtrack" => BASE_URI . BASE_SCRIPT . $this->namespace . "/backtrack/\$page" . URLEND,
+                            "backtrackAll"  => BASE_URI . BASE_SCRIPT . $this->namespace . "/backtrackAll/\$page" . URLEND,
+                            "allVersions"   => BASE_URI . BASE_SCRIPT . $this->namespace . "/allVersions/\$page" . URLEND,
+                            "children"      => BASE_URI . BASE_SCRIPT . $this->namespace . "/children/\$page" . URLEND
+                        )
                     )
-                )
-            ));
+                ))
+            )->setShouldServe(false);
         }
 
         return parent::index();
+    }
+
+    /**
+     *
+     */
+    protected function addBreadcrumb() {
+        $breads = array();
+        $current = $this->modelInst();
+        while($current->collection) {
+            $breads[] = array($current->collection->filename, $current->collection->getManagePath());
+            $current = $current->collection;
+        }
+        array_reverse($breads);
+        Core::addBreadcrumb(lang("filemanager_collection"), "Uploads/manageCollection");
+        foreach($breads as $bread) {
+            Core::addBreadcrumb($bread[0], $bread[1]);
+        }
+        Core::addBreadcrumb($this->modelInst()->filename, URL);
     }
 
     /**
@@ -113,6 +134,8 @@ class ManageUploadController extends FrontedController {
         /** @var Uploads $upload */
         foreach($set as $upload) {
             $data[] = array(
+                "id"       => $upload->id,
+                "isThis"   => $this->modelInst()->id == $upload->id,
                 "filename" => $upload->filename,
                 "url"      => $upload->url,
                 "links" => array(

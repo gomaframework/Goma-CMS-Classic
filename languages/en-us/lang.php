@@ -415,7 +415,6 @@ $lang = array(
 	
 	/* versions */
 	"preview"										=> "preview",
-	"publish"										=> "publish",
 	"published_site"								=> "published page",
 	"draft"											=> "draft",
 	"draft_save"									=> "save draft",
@@ -424,6 +423,7 @@ $lang = array(
 	"current_state"									=> "Current State",
 	"open_in_new_tab"								=> "Open in new window",
 	"browse_versions"								=> "Browse all Versions",
+	"this_version"									=> "This version",
 	"revert_changes"								=> "Revert changes",
 	"revert_changes_confirm"						=> "Do you really want to revert changes and go back to the last published version?",
 	"revert"										=> "reverted",
@@ -446,6 +446,7 @@ $lang = array(
 	"no_versions"									=> "No version found",
 	"versions_timeline"								=> "Timeline",
 	"backups"										=> "Backups",
+	"versions"										=> "Versions",
 	
 	"DELETED_PAGE"									=> "Deleted page",
 	"EDITED_PAGE"									=> "Edited page",
