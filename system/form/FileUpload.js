@@ -170,6 +170,9 @@ function FileUpload(form, field, formelement, url, size, types) {
 
 		failExt: function() {
 			$this.infoZone.html('<div class="error">'+lang("files.filetype_failure")+'</div>');
+		},
+		fail: function(status, response) {
+			$this.infoZone.html('<div class="error">'+response+'</div>');
 		}
 
 	});

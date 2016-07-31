@@ -400,6 +400,14 @@ class RequestHandler extends gObject {
 			throw $e;
 		}
 
+		if($this->request->canReplyJavaScript()) {
+			return new JSONResponseBody(array(
+				"status" => $e->getCode(),
+				"error" => $e->getMessage(),
+				"errorClass" => get_class($e)
+			));
+		}
+
 		return $e->getCode() . ": " . get_class($e) . "\n" . $e->getMessage();
 	}
 

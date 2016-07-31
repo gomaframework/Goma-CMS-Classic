@@ -675,5 +675,7 @@ $lang = array(
 	"toLabel"     => "To",
 	"customLabel" => "Custom",
 
-	"block_deleted"		=> "Block has been deleted"
+	"block_deleted"		=> "Block has been deleted",
+
+	"uploads_manage"	=> "Manage uploads"
 );

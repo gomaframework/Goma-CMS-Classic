@@ -43,7 +43,8 @@
 							 'unzip_bad'       => "failed to extract archive!",
 							 'filesize'        => "Filesize",
 							 'fileext'         => "File-extension",
-							 'last_modified'   => "Last modfied",
+							 'last_modified'   => "Last modified",
+							 "created"		   => "Created",
 							 'show_file'       => "show file",
 							 'auswahl'         => "select file",
 							 'js_noauswahl'    => "You're not allowed to select a file!",
@@ -58,14 +59,13 @@
 							 'copy_ok'         => "The file/folder was successfully copied!",
 							 'copy'            => "copy",
 							 "too_big"		   => "The file is too big!",
-							 'view'			   => "browse file",
+							 'view'			   => "view file",
 							 'resize'		   => 'Resize Image',
 							 'height'	  	   => 'height',
 							 'width'	       => 'width',
 							 'original'		   => 'orginal',
 							 '_new'			   => 'new',
-							 'save'			   => $GLOBALS["lang"]["save"],
-							 'cancel'		   => $GLOBALS["lang"]["cancel"]);
+							 "collection"	   => "Collection");
 					
 					
 foreach($filemanager_lang as $key => $value)

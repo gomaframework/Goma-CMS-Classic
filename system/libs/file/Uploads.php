@@ -3,6 +3,7 @@
 defined("UPLOAD_DIR") OR die('Constant UPLOAD_DIR not defined, Please define UPLOAD_DIR to proceed.');
 
 loadlang("files");
+loadlang("filemanager");
 
 /**
  *
@@ -31,6 +32,11 @@ class Uploads extends DataObject {
      * @var int
      */
     const FILESIZE_MD5 = 52428800; // 50 MB
+
+    /**
+     * @var string
+     */
+    const PERMISSION_ADMIN = "UPLOADS_MANAGE";
 
     /**
      * max cache lifetime
@@ -65,6 +71,10 @@ class Uploads extends DataObject {
      */
     static $has_one = array(
         "collection"		=> "Uploads"
+    );
+
+    static $has_many = array(
+        "children" => "Uploads"
     );
 
     /**
@@ -674,5 +684,25 @@ class Uploads extends DataObject {
      */
     public function getLinkingModels() {
         return new DataObjectSet(new UploadsBackTrackDataSource($this));
+    }
+
+    public function getManagePath() {
+        if($this->type == "collection") {
+            return "Uploads/manageCollection/" . $this->id . URLEND;
+        }
+
+        return "Uploads/manage/" . $this->fieldGet("path");
+    }
+
+    public function providePerms()
+    {
+        return array(
+            self::PERMISSION_ADMIN	=> array(
+                "title"		=> '{$_lang_uploads_manage}',
+                "default"	=> array(
+                    "type" => "admins"
+                )
+            )
+        );
     }
 }

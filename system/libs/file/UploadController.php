@@ -5,7 +5,7 @@
   *
   *	@package 	goma framework
   *	@link 		http://goma-cms.org
-  *	@license: 	LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
+  *	@license 	LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
   *	@author 	Goma-Team
   * @Version 	1.5
   *
@@ -14,22 +14,20 @@
 class UploadController extends Controller {
 	/**
 	 * handler
-	 *
-	 *@name url_handlers
-	 *@access public
 	*/
 	public $url_handlers = array(
+		"manage/\$collection/\$hash/\$filename" => "manageFile",
+		"manageCollection/\$collection" => "manageCollection",
 		"\$collection/\$hash/\$filename" => "handleFile"
 	);
 	
 	/**
 	 * allow action
-	 *
-	 *@name allowed_actions
-	 *@access public
 	*/
 	public $allowed_actions = array(
-		"handleFile"
+		"handleFile",
+		"manageFile",
+		"manageCollection"
 	);
 	
 	/**
@@ -42,8 +40,6 @@ class UploadController extends Controller {
     /**
      * handles a file
      *
-     * @name handleFile
-     * @access public
      * @return mixed
      */
 	public function handleFile() {
@@ -66,5 +62,48 @@ class UploadController extends Controller {
 		GlobalSessionManager::globalSession()->stopSession();
 
 		return ControllerResolver::instanceForModel($upload)->handleRequest($this->request);
-	}	
+	}
+
+	/**
+	 * @return string
+	 * @throws Exception
+	 * @throws MySQLException
+	 */
+	public function manageFile() {
+		$upload = Uploads::getFile($this->getParam("collection") . "/" . $this->getParam("hash") . "/" . $this->getParam("filename"));
+
+		if(!$upload) {
+			return false;
+		}
+
+		if(!file_exists($upload->realfile)) {
+			$upload->remove(true);
+			return false;
+		}
+
+		GlobalSessionManager::globalSession()->stopSession();
+
+		$controller = new ManageUploadController();
+		return $controller->getWithModel($upload)->handleRequest($this->request);
+	}
+
+	/**
+	 * @return string
+	 * @throws Exception
+	 * @throws MySQLException
+	 */
+	public function manageCollection() {
+		$upload = DataObject::get_one(Uploads::class, array(
+			"id" => $this->getParam("collection")
+		));
+
+		if(!$upload) {
+			return false;
+		}
+
+		GlobalSessionManager::globalSession()->stopSession();
+
+		$controller = new ManageUploadController();
+		return $controller->getWithModel($upload)->handleRequest($this->request);
+	}
 }

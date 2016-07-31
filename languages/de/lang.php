@@ -667,5 +667,7 @@ $lang = array(
 	"toLabel"     => "Bis",
 	"customLabel" => "Eigenes",
 
-	"block_deleted"		=> "Block wurde gelöscht"
+	"block_deleted"		=> "Block wurde gelöscht",
+
+	"uploads_manage"	=> "Medienbibliothek verwalten"
 );

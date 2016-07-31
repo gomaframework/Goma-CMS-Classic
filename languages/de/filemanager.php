@@ -44,6 +44,7 @@
 							 'filesize'        => "Dateigr&ouml;&szlig;e",
 							 'fileext'         => "Dateiendung",
 							 'last_modified'   => "Letzte &Auml;nderung",
+							 "created"		   => "Erstellt",
 							 'show_file'       => "Datei anzeigen",
 							 'auswahl'         => "Datei w&auml;hlen",
 							 'js_noauswahl'    => "Sie können leider keine Datei wählen!",
@@ -64,8 +65,7 @@
 							 'width'	       => 'Breite',
 							 'original'		   => 'Orginal',
 							 '_new'			   => 'Neu',
-							 'save'			   => $GLOBALS["lang"]["save"],
-							 'cancel'		   => $GLOBALS["lang"]["cancel"]);
+							 "collection"	   => "Sammlung");
 					
 					
 foreach($filemanager_lang as $key => $value)
