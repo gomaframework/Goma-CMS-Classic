@@ -10,7 +10,7 @@ require_once(ROOT . "/system/libs/thirdparty/simpletest/unit_tester.php");
  * @author		Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  *
- * @method void assertIsNull($actual, $message = null)
+ * @method void assertNull($actual, $message = null)
  * @method void assertTrue($actual, $message = null)
  * @method void assertFalse($actual, $message = null)
  * @method void assertRegExp($actual, $regexp, $message = null)

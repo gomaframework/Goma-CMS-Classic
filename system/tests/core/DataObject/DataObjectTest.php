@@ -85,8 +85,8 @@ class DataObjectTests extends GomaUnitTest
     }
 
     public function testModelCreation() {
-        $this->assertIsNull(DataObject::getModelDataSource("DataObject"));
-        $this->assertIsNull(DataObject::getDbDataSource("DataObject"));
+        $this->assertNull(DataObject::getModelDataSource("DataObject"));
+        $this->assertNull(DataObject::getDbDataSource("DataObject"));
 
         $this->assertInstanceOf(IDataObjectSetModelSource::class, DataObject::getModelDataSource("User"));
         $this->assertInstanceOf(IDataObjectSetDataSource::class, DataObject::getDbDataSource("User"));
