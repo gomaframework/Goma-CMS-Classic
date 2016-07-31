@@ -511,7 +511,7 @@ class DropDown extends FormField {
 	 * @param mixed $value
 	 * @return string
 	 */
-	protected functionIDataSet::class($dataSource, $key, $value) {
+	protected function getKeyFromInfo($dataSource, $key, $value) {
 		if(is_a($dataSource, "IDataSet")) {
 			return $value->{$this->keyField};
 		}
