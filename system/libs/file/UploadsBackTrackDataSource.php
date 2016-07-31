@@ -210,22 +210,26 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
 
         $models = array();
         foreach(ClassInfo::getChildren(DataObject::class) as $model) {
-            if(isset(ClassInfo::$class_info[$model]["has_one"])) {
-                foreach(ClassInfo::$class_info[$model]["has_one"] as $linkingField => $linkingModel) {
-                    if(ClassManifest::isOfType($linkingModel, $class)) {
-                        $models[$model][$linkingField] = "1";
+            if(!ClassManifest::isOfType($model, Uploads::class)) {
+                if (isset(ClassInfo::$class_info[$model]["has_one"])) {
+                    /** @var ModelHasOneRelationshipInfo $relationShip */
+                    foreach (gObject::instance($model)->hasOne() as $relationShip) {
+                        if (ClassManifest::isOfType($relationShip->getTargetClass(), $class)) {
+                            $models[$model][$relationShip->getRelationShipName()] = "1";
+                        }
+                    }
+                } else if (isset(ClassInfo::$class_info[$model]["many_many"])) {
+                    /** @var ModelManyManyRelationShipInfo $relationShip */
+                    foreach (gObject::instance($model)->ManyManyRelationships() as $relationShip) {
+                        if (ClassManifest::isOfType($relationShip->getTargetClass(), $class)) {
+                            $models[$model][$relationShip->getRelationShipName()] = "1";
+                        }
                     }
                 }
-            } else if(isset(ClassInfo::$class_info[$model]["many_many"])) {
-                foreach(ClassInfo::$class_info[$model]["many_many"] as $linkingField => $linkingModel) {
-                    if(ClassManifest::isOfType($linkingModel, $class)) {
-                        $models[$model][$linkingField] = "n";
-                    }
-                }
-            }
 
-            if(gObject::method_exists($model, "provideLinkingUploads")) {
-                call_user_func_array(array($model, "provideLinkingUploads"), array($model));
+                if (gObject::method_exists($model, "provideLinkingUploads")) {
+                    call_user_func_array(array($model, "provideLinkingUploads"), array($model));
+                }
             }
         }
 

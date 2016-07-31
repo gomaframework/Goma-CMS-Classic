@@ -201,8 +201,8 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
             );
             $query->innerJoin(
                 $hasOneBaseTable . '_state',
-                $hasOneBaseTable . '_state.publishedid = ' . $hasOneKey . '.id',
-                $hasOneBaseTable . '_state',
+                $hasOneBaseTable . "_" . $hasOneKey . '_state.publishedid = ' . $hasOneKey . '.id',
+                $hasOneBaseTable . "_" . $hasOneKey . '_state',
                 false
             );
         }

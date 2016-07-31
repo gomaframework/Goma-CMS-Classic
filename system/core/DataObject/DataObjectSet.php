@@ -192,27 +192,29 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 			if(is_a($class[1], "IDataObjectSetModelSource")) {
 				$this->setModelSource($class[1]);
 			}
-		} else
-
-			if(is_string($class)) {
-				if(ClassInfo::exists($class)) {
-					if(method_exists($class, "getDbDataSource") && !isset($this->dbDataSource)) {
-						$this->setDbDataSource(call_user_func_array(array($class, "getDbDataSource"), array($class)));
+		} else if(is_string($class)) {
+			if(ClassInfo::exists($class)) {
+				if(method_exists($class, "getDbDataSource") && !isset($this->dbDataSource)) {
+					if($source = call_user_func_array(array($class, "getDbDataSource"), array($class))) {
+						$this->setDbDataSource($source);
 					}
+				}
 
-					if(method_exists($class, "getModelDataSource") && !isset($this->modelSource)) {
-						$this->setModelSource(call_user_func_array(array($class, "getModelDataSource"), array($class)));
+				if(method_exists($class, "getModelDataSource") && !isset($this->modelSource)) {
+					if($source = call_user_func_array(array($class, "getModelDataSource"), array($class))) {
+						$this->setModelSource($source);
 					}
+				}
 
-					if(!isset($this->dbDataSource) && !isset($this->modelSource)) {
-						throw new InvalidArgumentException("Class " . $class . " does not integrate method getDbDataSource or getModelDataSource.");
-					}
-				} else {
-					throw new InvalidArgumentException("Class " . $class . " does not exist.");
+				if(!isset($this->dbDataSource) && !isset($this->modelSource)) {
+					throw new InvalidArgumentException("Class " . $class . " does not integrate method getDbDataSource or getModelDataSource.");
 				}
 			} else {
-				throw new InvalidArgumentException("\$class must be either String or IDataObjectSetDataSource or IDataObjectSetModelSource or array of both.");
+				throw new InvalidArgumentException("Class " . $class . " does not exist.");
 			}
+		} else {
+			throw new InvalidArgumentException("\$class must be either String or IDataObjectSetDataSource or IDataObjectSetModelSource or array of both.");
+		}
 	}
 
 	/**

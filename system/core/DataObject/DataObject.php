@@ -128,7 +128,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      * @return DataObject
      */
     public static function getModelDataSource($class) {
-        return gObject::instance($class);
+        return !ClassInfo::isAbstract($class) ? gObject::instance($class) : null;
     }
 
     /**
@@ -136,7 +136,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      * @return DataObject
      */
     public static function getDbDataSource($class) {
-        return gObject::instance($class);
+        return !ClassInfo::isAbstract($class) ?  gObject::instance($class) : null;
     }
 
     /**
