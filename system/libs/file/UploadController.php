@@ -81,8 +81,6 @@ class UploadController extends FrontedController {
 			return false;
 		}
 
-		GlobalSessionManager::globalSession()->stopSession();
-
 		$controller = new ManageUploadController();
 		return $controller->getWithModel($upload)->handleRequest($this->request);
 	}

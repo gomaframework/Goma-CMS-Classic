@@ -136,6 +136,10 @@ class SessionManager implements ISessionManager {
      * @return void
      */
     public function set($key, $value) {
+        if(!self::$existing) {
+            throw new InvalidArgumentException("Session has been stopped.");
+        }
+
         $matchValue = (is_array($value) || is_object($value)) ? serialize($value) : $value;
 
         if(strlen($matchValue) > self::FILE_THRESHOLD || is_object($value)) {
