@@ -53,12 +53,6 @@ class UploadsTest extends GomaUnitTest {
 		// store first file.
 		$file = Uploads::addFile("1" . $this->filename, $this->testfile, "FormUpload", null, true);
 
-		// file1: Tests Deletable and some basics
-		$this->assertEqual($file->deletable, "1");
-		$file->deletable = false;
-		$file->writeToDB(false, true);
-
-		$this->assertEqual(false, $file->deletable);
 		$this->assertEqual("1" . $this->filename, $file->filename);
 		$this->assertEqual("imageuploads", $file->classname);
 		$this->assertTrue(file_exists($file->realfile));
@@ -70,9 +64,6 @@ class UploadsTest extends GomaUnitTest {
 		// file2 test: Tests deletable for same file and some tests with same file/collection
 		// check for second file, which should be stored.
 		$file2 = Uploads::addFile($this->filename . ".jpg", $this->testfile, "FormUpload", null, true);
-
-		// should be 0, cause its same like file and should not be deletable.
-		$this->assertEqual($file2->deletable, "1");
 
 		$this->assertTrue(file_exists($file2->realfile));
 		$this->assertEqual($file->realfile, $file2->realfile);
@@ -165,7 +156,6 @@ class UploadsTest extends GomaUnitTest {
 			"realfile"		=> $this->testTextFile,
 			"path"			=> "",
 			"collectionid" 	=> 0,
-			"deletable"		=> true,
 			"md5"			=> null
 		));
 
