@@ -237,4 +237,44 @@ class UploadsTest extends GomaUnitTest {
 
 		return $path;
 	}
+
+	public function testFileVersions() {
+		$file1 = Uploads::addFile("blub.jpg", $this->testfile, "testCollection");
+		$file2 = Uploads::addFile("blah.jpg", $this->testfile, "testCollection");
+
+		$this->assertEqual($file1->getFileVersions()->count(), 2);
+		$this->assertEqual($file1->getFileVersions()->first()->id, $file1->id);
+		$this->assertEqual($file1->getFileVersions()->last()->id, $file2->id);
+
+		$file1->remove(true);
+		$file2->remove(true);
+	}
+
+	public function testBacktrack() {
+		$file = Uploads::addFile("blub.jpg", $this->testfile, "testCollection");
+
+		$this->assertIsA($file->getLinkingModels()->getDbDataSource(), UploadsBackTrackDataSource::class);
+		$this->assertEqual($file->getLinkingModels()->count(), 0);
+		$this->assertNull($file->getLinkingModels()->getModelSource());
+
+		$model = new MockBacktrackModel(array(
+			"file" => $file
+		));
+		$model->writeToDB(false, true);
+
+		$this->assertEqual($file->getLinkingModels()->count(), 1);
+
+		$linkingModel = $file->getLinkingModels()->first();
+		$this->assertEqual($linkingModel->id, $model->id);
+		$this->assertEqual($linkingModel->classname, $model->classname);
+
+		$model->remove(true);
+		$file->remove(true);
+	}
+}
+
+class MockBacktrackModel extends DataObject {
+	static $has_one = array(
+		"file" => "Uploads"
+	);
 }
