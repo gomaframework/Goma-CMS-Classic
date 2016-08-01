@@ -61,7 +61,6 @@ var HistoryLib = {
 	},
 	
 	push: function(url) {
-		
 		HistoryLib.lastPush = true;
 		if(HistoryLib.mode == "history") {
 			window.history.pushState({}, null, url);
@@ -89,7 +88,7 @@ var HistoryLib = {
 				if(HistoryLib.lastPush) {
 					HistoryLib.lastPush = false;
 				} else {
-					var path = document.location.pathname;
+					var path = document.location.pathname + document.location.search;
 					// now strip path with root_path
 					if(path.substring(0, ROOT_PATH.length) == ROOT_PATH) {
 						path = path.substr(ROOT_PATH.length);
