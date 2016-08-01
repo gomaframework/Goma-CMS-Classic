@@ -30,17 +30,11 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 
 	/**
 	 * the name of this dataobject
-	 *
-	 *@name name
-	 *@access public
 	 */
 	public static $cname = '{$_lang_user}';
 
 	/**
 	 * the database fields of a user
-	 *
-	 *@name db
-	 *@access public
 	 */
 	static $db = array(
 		'nickname'		=> 'varchar(200)',
@@ -60,9 +54,6 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 
 	/**
 	 * we add an index to username and password, because of logins
-	 *
-	 *@name index
-	 *@access public
 	 */
 	static $index = array(
 		"login"	=> array("type"	=> "INDEX", "fields" => 'nickname, password')
@@ -70,9 +61,6 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 
 	/**
 	 * fields which are searchable
-	 *
-	 *@name search_fields
-	 *@access public
 	 */
 	static $search_fields = array(
 		"nickname", "name", "email", "signatur"
@@ -80,9 +68,6 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 
 	/**
 	 * the table is users not user
-	 *
-	 *@name table
-	 *@access public
 	 */
 	static $table = "users";
 

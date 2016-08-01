@@ -25,7 +25,9 @@ class members extends Page
 		*/
 		public function member()
 		{
-			return DataObject::get("user", array(), array(), array(), array(), null, true);
+			return DataObject::get("user", array(
+				"status" => 1
+			), array(), array(), array(), null, true);
 		}
 
 		/**
