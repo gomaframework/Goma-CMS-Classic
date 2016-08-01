@@ -147,7 +147,6 @@ var LaM_type_timeout;
 		if(getInternetExplorerVersion() > 7 || getInternetExplorerVersion() == -1) {
 			goma.ui.loadAsync("history").done(function(){
 				HistoryLib.bind(function(url){
-
 					if($(".treewrapper a[href='"+url+"']").length > 0) {
 						var $this = $(".treewrapper a[href='"+url+"']");
 						$this.addClass("loading");
