@@ -82,7 +82,11 @@ class ProfileController extends FrontedController {
 		}
 
 		// get info-tab
-		$userdata = DataObject::get_one("user", array("id" => $id));
+		$userdata = DataObject::get_one(User::class, array("id" => $id));
+		if(!$userdata || $userdata->status != 1) {
+			return false;
+		}
+
 		$userdata->editable = ((isset(member::$id) && $id == member::$id)) ? true : false;
 		$info = $userdata->renderWith("profile/info.html");
 		$this->tabs->addTab(lang("general", "General Information"), $info, "info");
