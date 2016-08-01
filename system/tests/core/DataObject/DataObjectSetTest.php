@@ -77,7 +77,7 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertIsA($set->getDbDataSource(), "MockIDataObjectSetDataSource");
         $this->assertIsA($set->getModelSource(), "MockIModelSource");
 
-        $emptySet = new DataObjectSet("DataObject");
+        $emptySet = new DataObjectSet(new MockIModelSource("DataObject"));
         $this->assertThrows(function() use($emptySet) {
             $emptySet->getDbDataSource();
         }, "InvalidArgumentException");
