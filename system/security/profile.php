@@ -84,7 +84,7 @@ class ProfileController extends FrontedController {
 		// get info-tab
 		$userdata = DataObject::get_one(User::class, array("id" => $id));
 		if(!$userdata || $userdata->status != 1) {
-			return false;
+			return null;
 		}
 
 		$userdata->editable = ((isset(member::$id) && $id == member::$id)) ? true : false;
