@@ -56,5 +56,7 @@ class GlobalSessionTests extends GomaUnitTest
         $this->assertThrows(function() use($session) {
             $session->set("blub", 123);
         }, "InvalidArgumentException");
+
+        GlobalSessionManager::Init(session_id());
     }
 }

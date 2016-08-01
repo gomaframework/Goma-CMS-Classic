@@ -91,6 +91,8 @@ class SessionManager implements ISessionManager {
                 $this->id = session_id();
                 self::$existing = $this->id;
             }
+        } else {
+            self::$existing = true;
         }
     }
 

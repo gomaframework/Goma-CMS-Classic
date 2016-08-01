@@ -361,7 +361,12 @@ class GomaFormResponse extends GomaResponse {
 
     public function __toString()
     {
-        return $this->getResponseBodyString();
+        try {
+            return $this->getResponseBodyString();
+        } catch(Exception $e) {
+            log_exception($e);
+            return $e->getCode() . ": " . $e->getMessage();
+        }
     }
 
     /**
