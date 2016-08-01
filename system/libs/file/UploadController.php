@@ -104,8 +104,6 @@ class UploadController extends FrontedController {
 			))->renderWith("uploads/collections.html");
 		}
 
-		GlobalSessionManager::globalSession()->stopSession();
-
 		$controller = new ManageUploadController();
 		return $controller->getWithModel($upload)->handleRequest($this->request);
 	}

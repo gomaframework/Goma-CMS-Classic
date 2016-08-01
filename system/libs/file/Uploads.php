@@ -376,7 +376,7 @@ class Uploads extends DataObject {
 
         $cacher = new Cacher("file_" . $this->fieldGet("realfile"));
         $cacher->delete();
-
+        
         if(file_exists($this->path)) {
             FileSystem::delete($this->path);
         }
@@ -718,5 +718,11 @@ class Uploads extends DataObject {
                 )
             )
         );
+    }
+
+    public function getFileVersions() {
+        return DataObject::get(Uploads::class, array(
+            "md5" => $this->md5
+        ));
     }
 }

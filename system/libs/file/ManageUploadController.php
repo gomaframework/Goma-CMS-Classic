@@ -25,7 +25,8 @@ class ManageUploadController extends FrontedController {
         "allVersions"   => Uploads::PERMISSION_ADMIN,
         "backtrack"     => Uploads::PERMISSION_ADMIN,
         "backtrackAll"  => Uploads::PERMISSION_ADMIN,
-        "children"      => Uploads::PERMISSION_ADMIN
+        "children"      => Uploads::PERMISSION_ADMIN,
+        "deleteAll"     => Uploads::PERMISSION_ADMIN
     );
 
     /**
@@ -128,9 +129,7 @@ class ManageUploadController extends FrontedController {
 
     public function allVersions() {
         $data = array();
-        $set = DataObject::get(Uploads::class, array(
-            "md5" => $this->modelInst()->md5
-        ))->activatePagination($this->getParam("page"));
+        $set = $this->modelInst()->getFileVersions()->activatePagination($this->getParam("page"));
         /** @var Uploads $upload */
         foreach($set as $upload) {
             $data[] = array(
@@ -167,5 +166,47 @@ class ManageUploadController extends FrontedController {
         return GomaResponse::create(null,
             new JSONResponseBody(array("data" => $data, "hasNextPage" => $set->isNextPage(), "wholeCount" => $set->countWholeSet()))
         )->setShouldServe(false);
+    }
+
+    public function deleteAll() {
+        if($model = $this->getSingleModel()) {
+            if(!$model->can("Delete")) {
+                return $this->actionComplete("less_rights");
+            }
+
+            $description = $this->generateRepresentation($model);
+
+            if ($this->confirm(lang("filemanager_deleteall_confirm", "Do you really want to delete this record?"), null, null, $description)) {
+                $preservedModel = clone $model;
+                /** @var Uploads $preservedModel */
+                /** @var Uploads $version */
+                foreach($preservedModel->getFileVersions() as $version) {
+                    $version->remove();
+                }
+                if ($this->getRequest()->isJSResponse() || isset($this->getRequest()->get_params["dropdownDialog"])) {
+                    $response = new AjaxResponse();
+                    $data = $this->hideDeletedObject($response, $preservedModel);
+
+                    return $data;
+                } else {
+                    return $this->actionComplete("delete_success", $preservedModel);
+                }
+            }
+        }
+    }
+
+    /**
+     * @param string $action
+     * @param Uploads|null $record
+     * @return string
+     */
+    public function actionComplete($action, $record = null)
+    {
+        switch ($action) {
+            case "delete_success":
+                return GomaResponse::redirect($record && $record->collection ? $record->collection->getManagePath() : BASE_URI . BASE_SCRIPT . "Uploads/manageCollections" . URLEND);
+        }
+
+       return parent::actionComplete($action, $record);
     }
 }
