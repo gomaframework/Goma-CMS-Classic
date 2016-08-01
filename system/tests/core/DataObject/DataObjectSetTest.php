@@ -76,6 +76,10 @@ class DataObjectSetTests extends GomaUnitTest
         $set = $this->unittestAssignFields("DumpDBElementPerson");
         $this->assertIsA($set->getDbDataSource(), "MockIDataObjectSetDataSource");
         $this->assertIsA($set->getModelSource(), "MockIModelSource");
+
+        $emptySet = new DataObjectSet($modelSource = new MockIModelSource("DataObject"));
+        $this->assertNull($emptySet->getDbDataSource());
+        $this->assertEqual($emptySet->getModelSource(), $modelSource);
     }
 
     public function unittestAssignFields($object, $inExpansion = null) {

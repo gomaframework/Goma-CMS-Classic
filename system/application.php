@@ -15,10 +15,9 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE | E_COMPILE_ERROR | E_NOTICE);
 /*
  * first check if we use a good version ;)
  *
- * PHP 5.4 is necessary
+ * PHP 5.5 is necessary
  */
-
-if (version_compare(phpversion(), "5.4.0", "<")) {
+if (version_compare(phpversion(), "5.5.0", "<")) {
 	header("HTTP/1.1 500 Server Error");
 	echo file_get_contents(dirname(__FILE__) . "/templates/framework/php5.html");
 	exit(1);

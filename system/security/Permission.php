@@ -20,8 +20,6 @@
  */
 class Permission extends DataObject
 {
-    const ID = "Permission";
-
     /**
      * disable sort
      * @var bool
@@ -276,7 +274,7 @@ class Permission extends DataObject
     {
         $this->setField("parentid", $parentid);
         /** @var Permission $perm */
-        if ($this->parentid != 0 && $perm = DataObject::get_by_id(self::ID, $this->parentid)) {
+        if ($this->parentid != 0 && $perm = DataObject::get_by_id(self::class, $this->parentid)) {
             if ($this->hasChanged()) {
                 $this->type = $perm->type;
                 $this->password = $perm->password;

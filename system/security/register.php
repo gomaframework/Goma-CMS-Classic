@@ -21,7 +21,6 @@ defined('IN_GOMA') OR die();
  */
 class RegisterExtension extends ControllerExtension
 {
-	const ID = "RegisterExtension";
 	/**
 	 * a bool which indicates whether registration is enabled or disabled
 	 *
@@ -296,7 +295,7 @@ class RegisterExtension extends ControllerExtension
 	}
 }
 
-gObject::extend("ProfileController", RegisterExtension::ID);
-StaticsManager::AddSaveVar(RegisterExtension::ID, "enabled");
-StaticsManager::AddSaveVar(RegisterExtension::ID, "validateMail");
-StaticsManager::AddSaveVar(RegisterExtension::ID, "registerCode");
+gObject::extend("ProfileController", RegisterExtension::class);
+StaticsManager::AddSaveVar(RegisterExtension::class, "enabled");
+StaticsManager::AddSaveVar(RegisterExtension::class, "validateMail");
+StaticsManager::AddSaveVar(RegisterExtension::class, "registerCode");

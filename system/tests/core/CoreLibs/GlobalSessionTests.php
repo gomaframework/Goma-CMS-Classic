@@ -48,4 +48,15 @@ class GlobalSessionTests extends GomaUnitTest
 
         $this->assertIdentical(Core::globalSession(), GlobalSessionManager::globalSession());
     }
+
+    public function testStopAndSet() {
+        $session = SessionManager::startWithIdAndName("test", "blub");
+        $session->stopSession();
+
+        $this->assertThrows(function() use($session) {
+            $session->set("blub", 123);
+        }, "InvalidArgumentException");
+
+        GlobalSessionManager::Init(session_id());
+    }
 }

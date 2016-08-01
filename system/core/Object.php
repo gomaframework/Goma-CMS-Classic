@@ -308,11 +308,13 @@ abstract class gObject
      *
      * @param string|gObject $class Name of the class.
      *
-     * @return gObject The singleton.
+     * @return static The singleton.
      */
-    public static function instance($class)
+    public static function instance($class = null)
     {
-        if (is_object($class)) {
+        if(!isset($class)) {
+            $class = static::class;
+        } else if (is_object($class)) {
             return clone $class;
         }
 

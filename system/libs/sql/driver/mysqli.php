@@ -26,6 +26,9 @@ class mysqliDriver implements SQLDriver
     public $engines;
     public $tableStatuses;
 
+    protected $error;
+    protected $errno;
+
     /**
      * @access public
      * @use: connect to db
@@ -61,15 +64,10 @@ class mysqliDriver implements SQLDriver
             die(str_replace('{BASE_URI}', BASE_URI, file_get_contents(ROOT . 'system/templates/framework/database_connect_error.html')));
         }
     }
+
     /**
-     * tests the connection
-     * @name test
-     * @access public
+     *
      */
-    /**
-     * @access public
-     * @use: connect to db
-     **/
     public static function test($dbuser, $dbdb, $dbpass, $dbhost)
     {
         $test = new MySQLi($dbhost, $dbuser, $dbpass, $dbdb);
@@ -104,6 +102,9 @@ class mysqliDriver implements SQLDriver
         if ($result = $this->_db->query($sql, $unbuffered ? MYSQLI_ASYNC : MYSQLI_STORE_RESULT))
             return $result;
         else {
+            $this->error = $this->_db->error;
+            $this->errno = $this->_db->errno;
+
             if ($debug) {
                 $trace = debug_backtrace();
                 log_error('SQL-Error in Statement: ' . $sql . ' in ' . $trace[1]["file"] . ' on line ' . $trace[1]["line"] . '.');
@@ -213,26 +214,23 @@ class mysqliDriver implements SQLDriver
     }
 
     /**
-     * @access public
-     * @use to fetch error
+     *
      */
     public function error()
     {
-        return $this->_db->error;
+        return $this->error;
     }
 
     /**
-     * @access public
-     * @use to fetch errno
+     *
      */
     public function errno()
     {
-        return $this->_db->errno;
+        return $this->errno;
     }
 
     /**
-     * @access public
-     * @use to fetch insert id
+     *
      */
     public function insert_id()
     {

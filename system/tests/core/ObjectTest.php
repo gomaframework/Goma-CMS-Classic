@@ -13,7 +13,7 @@ class ObjectTest extends GomaUnitTest implements TestAble {
 	/**
 	 * name
 	*/
-	public $name = gObject::ID;
+	public $name = gObject::class;
 
 	/**
 	 * @var gObject

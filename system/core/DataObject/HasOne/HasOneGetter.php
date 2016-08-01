@@ -15,12 +15,6 @@ defined("IN_GOMA") OR die();
  * @method DataObject getOwner()
  */
 class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
-
-    /**
-     * id of class.
-     */
-    const ID = "HasOneGetter";
-
     /**
      * extra-methods.
      */
@@ -53,8 +47,8 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
     public function extendDefineStatics() {
         if ($has_one = $this->HasOne()) {
             foreach($has_one as $key => $val) {
-                $this->linkMethodWithInstance(self::ID, $key, $key, "getHasOne", "Something got wrong wiring the HasOne-Relationship.");
-                $this->linkMethodWithInstance(self::ID, "set" . $key, $key, "setHasOne", "Something got wrong wiring the HasOne-Relationship.");
+                $this->linkMethodWithInstance(self::class, $key, $key, "getHasOne", "Something got wrong wiring the HasOne-Relationship.");
+                $this->linkMethodWithInstance(self::class, "set" . $key, $key, "setHasOne", "Something got wrong wiring the HasOne-Relationship.");
             }
         }
     }
@@ -75,19 +69,23 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
 
         if(!isset(self::$relationShips[$owner->classname]) ||
             (!self::$relationShips[$owner->classname] && ClassInfo::ClassInfoHasBeenRegenerated())) {
+            $hasOneClasses = array();
             $has_one = isset(ClassInfo::$class_info[$owner->classname]["has_one"]) ? ClassInfo::$class_info[$owner->classname]["has_one"] : array();
+
+            foreach($has_one as $name => $value) {
+                $hasOneClasses[$name] = new ModelHasOneRelationshipInfo($owner->classname, $name, $value);
+            }
 
             if ($classes = ClassInfo::dataclasses($owner->classname)) {
                 foreach($classes as $class) {
                     if (isset(ClassInfo::$class_info[$class]["has_one"])) {
                         $has_one = array_merge(ClassInfo::$class_info[$class]["has_one"], $has_one);
+
+                        foreach(ClassInfo::$class_info[$class]["has_one"] as $name => $value) {
+                            $hasOneClasses[$name] = new ModelHasOneRelationshipInfo($class, $name, $value);
+                        }
                     }
                 }
-            }
-
-            $hasOneClasses = array();
-            foreach($has_one as $name => $value) {
-                $hasOneClasses[$name] = new ModelHasOneRelationshipInfo($owner->classname, $name, $value);
             }
 
             self::$relationShips[$owner->classname] = $hasOneClasses;
@@ -176,51 +174,35 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
     {
         if (is_array($query->filter))
         {
-            $hasOnes = array();
             $has_one = $this->hasOne();
-            $query->filter = $this->parseHasOnes($query->filter, $has_one, $hasOnes);
-
-            if (count($hasOnes) > 0) {
-                foreach($hasOnes as $hasOneKey) {
-                    $relationShip = $has_one[$hasOneKey];
-                    $this->addJoinForRelationship($query, $hasOneKey, $relationShip);
-                }
-            }
+            $query->filter = $this->parseHasOnes($query->filter, $has_one, $version, $forceClasses);
         }
     }
 
     /**
-     * @param SelectQuery $query
-     * @param string $hasOneKey
      * @param ModelHasOneRelationshipInfo $relationShip
+     * @param string $version
+     * @param array $filter
+     * @param bool $forceClasses
+     * @return SelectQuery
      */
-    protected function addJoinForRelationship($query, $hasOneKey, $relationShip) {
-        $table = ClassInfo::$class_info[$relationShip->getTargetClass()]["table"];
-        $hasOneBaseTable = (ClassInfo::$class_info[ClassInfo::$class_info[$relationShip->getTargetClass()]["baseclass"]]["table"]);
+    protected function buildRelationQuery($relationShip, $version, $filter, $forceClasses) {
+        $target = $relationShip->getTargetClass();
+        /** @var DataObject $targetObject */
+        $targetObject = new $target();
+        $ownerTableName = ClassInfo::$class_info[$relationShip->getOwner()]["table"];
+        $query = $targetObject->buildExtendedQuery($version, $filter, array(), array(), array(), $forceClasses);
+        $query->addFilter($targetObject->baseTable . ".recordid = " . $ownerTableName . "." . $relationShip->getRelationShipName() . "id");
 
-        if(!$query->aliasExists($hasOneKey)) {
-            $query->innerJoin(
-                $table,
-                $hasOneKey . '.recordid = ' . $this->getOwner()->Table() . '.' . $hasOneKey . 'id',
-                $hasOneKey,
-                false
-            );
-            $query->innerJoin(
-                $hasOneBaseTable . '_state',
-                $hasOneBaseTable . '_state.publishedid = ' . $hasOneKey . '.id',
-                $hasOneBaseTable . '_state',
-                false
-            );
-        }
+        return $query;
     }
 
     /**
      * @param array $filter
      * @param ModelHasOneRelationshipInfo[] $has_one
-     * @param array $hasOnes
      * @return array
      */
-    protected function parseHasOnes($filter, $has_one, &$hasOnes) {
+    protected function parseHasOnes($filter, $has_one, $version, $forceClasses) {
         if (is_array($filter))
         {
             foreach($filter as $key => $value)
@@ -229,11 +211,14 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
                     // has one
                     $hasOnePrefix = strtolower(substr($key, 0, strpos($key, ".")));
                     if (isset($has_one[$hasOnePrefix])) {
-                        $hasOnes[$hasOnePrefix] = $hasOnePrefix;
+                        $filter[$key] = " EXISTS ( ".
+                            $this->buildRelationQuery($has_one[$hasOnePrefix], $version, array(substr($key, strlen($hasOnePrefix) + 1) => $value), $forceClasses)->build()
+                            ." ) ";
+                        $filter = ArrayLib::change_key($filter, $key, ArrayLib::findFreeInt($filter));
                     }
                 } else {
                     if(is_array($value)) {
-                        $filter[$key] = $this->parseHasOnes($value, $has_one, $hasOnes);
+                        $filter[$key] = $this->parseHasOnes($value, $has_one, $version, $forceClasses);
                     }
                 }
             }
@@ -247,13 +232,43 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
      * @param string $aggregateField
      * @param array $aggregates
      */
-    public function extendAggregate(&$query, &$aggregateField, &$aggregates) {
+    public function extendAggregate(&$query, &$aggregateField, &$aggregates, $version) {
         if (strpos($aggregateField, ".") !== false) {
             $has_one = $this->hasOne();
 
+            $versionField = $version == DataObject::VERSION_STATE ? "stateid" : "publishedid";
             $hasOnePrefix = strtolower(substr($aggregateField, 0, strpos($aggregateField, ".")));
             if (isset($has_one[$hasOnePrefix])) {
-                $this->addJoinForRelationship($query, $hasOnePrefix, $has_one[$hasOnePrefix]);
+                $baseClass = ClassInfo::$class_info[$has_one[$hasOnePrefix]->getTargetClass()]["baseclass"];
+                $baseTable = (ClassInfo::$class_info[$baseClass]["table"]);
+                if(!$query->aliasExists($baseTable . "_" . $hasOnePrefix . "_state")) {
+                    $query->innerJoin(
+                        $baseTable . '_state',
+                        $baseTable . "_" . $hasOnePrefix . '_state.'.$versionField.' = ' . $hasOnePrefix . '.id',
+                        $baseTable . "_" . $hasOnePrefix . '_state',
+                        false
+                    );
+                }
+
+                // find table which maps the field
+                $found = false;
+                foreach(array_merge(array($baseTable), ClassInfo::DataClasses($baseClass)) as $table) {
+                    if(isset(ClassInfo::$database[$table][substr($aggregateField, strlen($hasOnePrefix) + 1)])) {
+                        if(!$query->aliasExists($hasOnePrefix . "_" . $table)) {
+                            $query->leftJoin(
+                                $table,
+                                $hasOnePrefix . "_" . $table . ".id = " . $baseTable . "_" . $hasOnePrefix . '_state.' . $versionField,
+                                $hasOnePrefix . "_" . $table
+                            );
+                        }
+                        $found = true;
+                        $aggregateField = $hasOnePrefix . "_" . $table . "." . substr($aggregateField, strlen($hasOnePrefix) + 1);
+                    }
+                }
+
+                if(!$found) {
+                    throw new InvalidArgumentException("Could not find field " . $aggregateField . " for has-one-relationship " . $hasOnePrefix);
+                }
             }
         }
     }

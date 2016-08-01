@@ -501,7 +501,7 @@ class DropDown extends FormField {
 			"left" => $left,
 			"showStart" => $start,
 			"showEnd" => $end,
-			"whole" => !is_a($dataSource, "IDataSet") ? count($dataSource) : $dataSource->countWholeSet()
+			"whole" => !is_a($dataSource, IDataSet::class) ? count($dataSource) : $dataSource->countWholeSet()
 		);
 	}
 

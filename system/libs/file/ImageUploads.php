@@ -23,15 +23,9 @@
  * last modified: 07.06.2015
  */
 class ImageUploads extends Uploads {
-
-    const ID = "ImageUploads";
-
     /**
      * add some db-fields
      * inherits fields from Uploads
-     *
-     *@name db
-     *@access public
      */
     static $db = array(
         "width"				=> "int(5)",
@@ -202,6 +196,18 @@ class ImageUploads extends Uploads {
         }
 
         return $file;
+    }
+
+    /**
+     * remove cache files after remove.
+     */
+    public function onAfterRemove()
+    {
+        parent::onAfterRemove();
+
+        if(is_dir(ROOT . $this->path)) {
+            FileSystem::delete(ROOT . $this->path);
+        }
     }
 
     /**

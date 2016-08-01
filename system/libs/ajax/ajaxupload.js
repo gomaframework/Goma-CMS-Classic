@@ -258,13 +258,18 @@ AjaxUpload.prototype = {
      *@name _drop
      */
     _drop: function(event) {
-        if(this.multiple || !this.loading) {
-            this.dragLeaveDocument();
-            this.newFilesDropped();
-            var dt = event.dataTransfer;
-            var files = dt.files;
-            this.transferAjax(files);
+        try {
+            if (this.multiple || !this.loading) {
+                this.dragLeaveDocument();
+                this.newFilesDropped();
+                var dt = event.dataTransfer;
+                var files = dt.files;
+                this.transferAjax(files);
+            }
+        } catch(e) {
+            this._fail(e, e, -1, null);
         }
+
 
         event.stopPropagation();
         event.preventDefault();
@@ -285,8 +290,10 @@ AjaxUpload.prototype = {
             this.placeBrowseHandler();
         }
 
-        this.queue[fileIndex].loading = false;
-        this.queue[fileIndex].loaded = true;
+        if(this.queue[fileIndex]) {
+            this.queue[fileIndex].loading = false;
+            this.queue[fileIndex].loaded = true;
+        }
 
         this.loading = false;
         this.always(timeDiff, fileIndex, upload);
@@ -423,9 +430,6 @@ AjaxUpload.prototype = {
 
     /**
      * starts the upload
-     *
-     *@name processQueue
-     *@access public
      */
     processQueue: function() {
         for(var i in this.queue) {

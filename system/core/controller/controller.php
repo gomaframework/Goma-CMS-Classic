@@ -346,7 +346,7 @@ class Controller extends RequestHandler
      */
     public function record()
     {
-        if (is_a($this->modelInst(), "IDataSet")) {
+        if (is_a($this->modelInst(), IDataSet::class)) {
             $data = clone $this->modelInst();
             $data->addFilter(array("id" => $this->getParam("id")));
             $this->callExtending("decorateRecord", $model);
@@ -368,7 +368,7 @@ class Controller extends RequestHandler
      */
     public function version()
     {
-        if (is_a($this->modelInst(), "IDataSet")) {
+        if (is_a($this->modelInst(), IDataSet::class)) {
             $data = clone $this->modelInst();
             $data->addFilter(array("versionid" => $this->getParam("id")));
             $this->callExtending("decorateRecord", $model);
@@ -527,7 +527,7 @@ class Controller extends RequestHandler
      * @return DataObject|ViewAccessableData|null
      */
     protected function getSingleModel() {
-        if(is_a($this->modelInst(), "IDataSet")) {
+        if(is_a($this->modelInst(), IDataSet::class)) {
             return $this->getParam("id") ? $this->modelInst()->find("id", $this->getParam("id")) : null;
         } else {
             return $this->modelInst();

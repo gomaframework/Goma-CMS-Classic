@@ -164,16 +164,16 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @param string|IDataObjectSetDataSource|IDataObjectSetModelSource|array $class
 	 */
 	protected function resolveSources($class) {
-		if(is_a($class, "DataObjectSet")) {
+		if(is_a($class, DataObjectSet::class)) {
 			/** @var DataObjectSet $class */
 			$this->setDbDataSource($class->getDbDataSource());
 			$this->setModelSource($class->getModelSource());
 		} else if(is_object($class)) {
-			if(is_a($class, "IDataObjectSetDataSource")) {
+			if(is_a($class, IDataObjectSetDataSource::class)) {
 				$this->setDbDataSource($class);
 			}
 
-			if(is_a($class, "IDataObjectSetModelSource")) {
+			if(is_a($class, IDataObjectSetModelSource::class)) {
 				$this->setModelSource($class);
 			}
 
@@ -185,34 +185,36 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 		}
 
 		if(is_array($class) && count($class) == 2) {
-			if(is_a($class[0], "IDataObjectSetDataSource")) {
+			if(is_a($class[0], IDataObjectSetDataSource::class)) {
 				$this->setDbDataSource($class[0]);
 			}
 
-			if(is_a($class[1], "IDataObjectSetModelSource")) {
+			if(is_a($class[1], IDataObjectSetModelSource::class)) {
 				$this->setModelSource($class[1]);
 			}
-		} else
-
-			if(is_string($class)) {
-				if(ClassInfo::exists($class)) {
-					if(method_exists($class, "getDbDataSource") && !isset($this->dbDataSource)) {
-						$this->setDbDataSource(call_user_func_array(array($class, "getDbDataSource"), array($class)));
+		} else if(is_string($class)) {
+			if(ClassInfo::exists($class)) {
+				if(method_exists($class, "getDbDataSource") && !isset($this->dbDataSource)) {
+					if($source = call_user_func_array(array($class, "getDbDataSource"), array($class))) {
+						$this->setDbDataSource($source);
 					}
+				}
 
-					if(method_exists($class, "getModelDataSource") && !isset($this->modelSource)) {
-						$this->setModelSource(call_user_func_array(array($class, "getModelDataSource"), array($class)));
+				if(method_exists($class, "getModelDataSource") && !isset($this->modelSource)) {
+					if($source = call_user_func_array(array($class, "getModelDataSource"), array($class))) {
+						$this->setModelSource($source);
 					}
+				}
 
-					if(!isset($this->dbDataSource) && !isset($this->modelSource)) {
-						throw new InvalidArgumentException("Class " . $class . " does not integrate method getDbDataSource or getModelDataSource.");
-					}
-				} else {
-					throw new InvalidArgumentException("Class " . $class . " does not exist.");
+				if(!isset($this->dbDataSource) && !isset($this->modelSource)) {
+					throw new InvalidArgumentException("Class " . $class . " does not integrate method getDbDataSource or getModelDataSource.");
 				}
 			} else {
-				throw new InvalidArgumentException("\$class must be either String or IDataObjectSetDataSource or IDataObjectSetModelSource or array of both.");
+				throw new InvalidArgumentException("Class " . $class . " does not exist.");
 			}
+		} else {
+			throw new InvalidArgumentException("\$class must be either String or IDataObjectSetDataSource or IDataObjectSetModelSource or array of both.");
+		}
 	}
 
 	/**
@@ -220,7 +222,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @return $this
 	 */
 	public function setDbDataSource($source) {
-		if(!is_a($source, "IDataObjectSetDataSource")) {
+		if(!is_a($source, IDataObjectSetDataSource::class)) {
 			throw new InvalidArgumentException("Argument must be type of IDataObjectSetDataSource.");
 		}
 
@@ -234,7 +236,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @return $this
 	 */
 	public function setModelSource($modelSource) {
-		if(!is_a($modelSource, "IDataObjectSetModelSource")) {
+		if(!is_a($modelSource, IDataObjectSetModelSource::class)) {
 			throw new InvalidArgumentException("Argument must be type of IDataObjectSetModelSource.");
 		}
 
@@ -1090,7 +1092,11 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 */
 	public function getConverted($item) {
 		if(is_array($item)) {
-			$object = $this->modelSource()->createNew($item);
+			if($this->modelSource) {
+				$object = $this->modelSource()->createNew($item);
+			} else {
+				$object = ViewAccessableData::instance()->createNew($item);
+			}
 		} else if(is_object($item)) {
 			$object = $item;
 		} else if(is_null($item)) {

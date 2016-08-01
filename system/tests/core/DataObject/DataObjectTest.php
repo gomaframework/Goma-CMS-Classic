@@ -83,6 +83,14 @@ class DataObjectTests extends GomaUnitTest
         $this->assertTrue(isset($emptyModel->test));
         $this->assertNotNull($model->test);
     }
+
+    public function testModelCreation() {
+        $this->assertNull(DataObject::getModelDataSource("DataObject"));
+        $this->assertNull(DataObject::getDbDataSource("DataObject"));
+
+        $this->assertInstanceOf(IDataObjectSetModelSource::class, DataObject::getModelDataSource("User"));
+        $this->assertInstanceOf(IDataObjectSetDataSource::class, DataObject::getDbDataSource("User"));
+    }
 }
 
 class MockWriteEntity extends DataObject {}

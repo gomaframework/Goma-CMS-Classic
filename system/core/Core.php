@@ -9,8 +9,6 @@
  */
 class Core extends gObject {
 	const HEADER_HTML_HOOK = "getHeaderHTML";
-	const ID = "Core";
-
 	/**
 	 *@var array
 	 */

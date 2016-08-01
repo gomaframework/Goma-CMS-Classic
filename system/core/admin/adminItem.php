@@ -355,7 +355,7 @@ class adminItem extends AdminController implements PermProvider {
 	 * @return string
 	 */
 	public function record() {
-		if (is_a($this->modelInst(), "IDataSet")) {
+		if (is_a($this->modelInst(), IDataSet::class)) {
 			$data = clone $this->modelInst();
 			$data->addFilter(array("id" => $this->getParam("id")));
 			$this->callExtending("decorateRecord", $model);

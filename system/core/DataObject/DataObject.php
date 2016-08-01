@@ -128,7 +128,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      * @return DataObject
      */
     public static function getModelDataSource($class) {
-        return gObject::instance($class);
+        return !ClassInfo::isAbstract($class) ? gObject::instance($class) : null;
     }
 
     /**
@@ -136,7 +136,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      * @return DataObject
      */
     public static function getDbDataSource($class) {
-        return gObject::instance($class);
+        return !ClassInfo::isAbstract($class) ?  gObject::instance($class) : null;
     }
 
     /**
@@ -604,16 +604,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
     }
 
     /**
-     * right-management
-     */
-
-    //!Events
-    /**
-     * events
-     */
-    /**
-     *@name onBeforeDelete
-     *@return bool
+     *
      */
     public function onBeforeRemove(&$manipulation)
     {
@@ -621,19 +612,14 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
     }
 
     /**
-     *@name onAfterRemove
-     *@return bool
+     *
      */
     public function onAfterRemove()
     {
 
     }
 
-    /**
-     *@name beforeRead
-     *@return bool
-     */
-    public function onbeforeRead(&$data)
+    public function onBeforeRead(&$data)
     {
         $this->callExtending("onBeforeRead", $data);
     }
@@ -671,11 +657,10 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
     /**
      * before manipulating the data
      *
-     *@name onbeforeManipulate
-     *@access public
-     *@param manipulation
+     * @param array $manipulation
+     * @param string $job
      */
-    public function onbeforeManipulate(&$manipulation, $job)
+    public function onBeforeManipulate(&$manipulation, $job)
     {
 
     }
@@ -683,7 +668,10 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
     /**
      * before manipulating many-many data over @link ManyMany_DataObjectSet::write
      *
-     *@name onBeforeManipulateManyMany
+     * @param array $manipulation
+     * @param ManyMany_DataObjectSet $dataset
+     * @param array $writeData
+     * @return mixed|void
      */
     public function onBeforeManipulateManyMany(&$manipulation, $dataset, $writeData) {
 
@@ -700,7 +688,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
     /**
      * is called before unpublish
      */
-    public function onBeforeUnpublish() {
+    public function onBeforeUnPublish() {
 
     }
 
@@ -710,8 +698,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
     public function onBeforePublish() {
 
     }
-
-    //!Data-Manipulation
 
     /**
      * writes changed data without throwing exceptions.
@@ -1751,8 +1737,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      * @param SelectQuery $query
      * @param string $aggregateField
      * @param string $aggregate
+     * @param string $version
      */
-    protected function extendAggregate(&$query, &$aggregateField, &$aggregate) {
+    protected function extendAggregate(&$query, &$aggregateField, &$aggregate, $version) {
 
     }
 
@@ -1953,8 +1940,8 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
 
         $aggregates = (array) $aggregate;
 
-        $this->extendAggregate($query, $aggregateField, $aggregates);
-        $this->callExtending("extendAggregate", $query, $aggregateField, $aggregates);
+        $this->extendAggregate($query, $aggregateField, $aggregatesm, $version);
+        $this->callExtending("extendAggregate", $query, $aggregateField, $aggregates, $version);
 
         $distinctSQL = $distinct ? "distinct" : "";
 

@@ -53,12 +53,6 @@ class UploadsTest extends GomaUnitTest {
 		// store first file.
 		$file = Uploads::addFile("1" . $this->filename, $this->testfile, "FormUpload", null, true);
 
-		// file1: Tests Deletable and some basics
-		$this->assertEqual($file->deletable, "1");
-		$file->deletable = false;
-		$file->writeToDB(false, true);
-
-		$this->assertEqual(false, $file->deletable);
 		$this->assertEqual("1" . $this->filename, $file->filename);
 		$this->assertEqual("imageuploads", $file->classname);
 		$this->assertTrue(file_exists($file->realfile));
@@ -70,9 +64,6 @@ class UploadsTest extends GomaUnitTest {
 		// file2 test: Tests deletable for same file and some tests with same file/collection
 		// check for second file, which should be stored.
 		$file2 = Uploads::addFile($this->filename . ".jpg", $this->testfile, "FormUpload", null, true);
-
-		// should be 0, cause its same like file and should not be deletable.
-		$this->assertEqual($file2->deletable, "1");
 
 		$this->assertTrue(file_exists($file2->realfile));
 		$this->assertEqual($file->realfile, $file2->realfile);
@@ -165,7 +156,6 @@ class UploadsTest extends GomaUnitTest {
 			"realfile"		=> $this->testTextFile,
 			"path"			=> "",
 			"collectionid" 	=> 0,
-			"deletable"		=> true,
 			"md5"			=> null
 		));
 
@@ -247,4 +237,44 @@ class UploadsTest extends GomaUnitTest {
 
 		return $path;
 	}
+
+	public function testFileVersions() {
+		$file1 = Uploads::addFile("blub.jpg", $this->testfile, "testCollection");
+		$file2 = Uploads::addFile("blah.jpg", $this->testfile, "testCollection");
+
+		$this->assertEqual($file1->getFileVersions()->count(), 2);
+		$this->assertEqual($file1->getFileVersions()->first()->id, $file1->id);
+		$this->assertEqual($file1->getFileVersions()->last()->id, $file2->id);
+
+		$file1->remove(true);
+		$file2->remove(true);
+	}
+
+	public function testBacktrack() {
+		$file = Uploads::addFile("blub.jpg", $this->testfile, "testCollection");
+
+		$this->assertIsA($file->getLinkingModels()->getDbDataSource(), UploadsBackTrackDataSource::class);
+		$this->assertEqual($file->getLinkingModels()->count(), 0);
+		$this->assertNull($file->getLinkingModels()->getModelSource());
+
+		$model = new MockBacktrackModel(array(
+			"file" => $file
+		));
+		$model->writeToDB(false, true);
+
+		$this->assertEqual($file->getLinkingModels()->count(), 1);
+
+		$linkingModel = $file->getLinkingModels()->first();
+		$this->assertEqual($linkingModel->id, $model->id);
+		$this->assertEqual($linkingModel->classname, $model->classname);
+
+		$model->remove(true);
+		$file->remove(true);
+	}
+}
+
+class MockBacktrackModel extends DataObject {
+	static $has_one = array(
+		"file" => "Uploads"
+	);
 }

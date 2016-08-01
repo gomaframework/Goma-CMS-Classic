@@ -8,16 +8,13 @@ defined("IN_GOMA") OR die();
  *
  * @author Goma Team
  * @copyright 2016 Goma-Team
+ * @license GPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
  *
  * @version 1.0
  *
  * @method DataObject getOwner()
  */
-class ManyManyGetter extends AbstractGetterExtension implements ArgumentsQuery
-{
-
-    const ID = "ManyManyGetter";
-
+class ManyManyGetter extends AbstractGetterExtension implements ArgumentsQuery {
     /**
      * extra-methods.
      */
@@ -33,10 +30,10 @@ class ManyManyGetter extends AbstractGetterExtension implements ArgumentsQuery
     public function extendDefineStatics() {
         if ($manyMany = $this->getOwner()->ManyManyRelationships()) {
             foreach ($manyMany as $key => $val) {
-                $this->linkMethodWithInstance(self::ID, "set" . $key . "ids", $key, "setManyManyIDs", "Something got wrong wiring the ManyMany-Relationship.");
-                $this->linkMethodWithInstance(self::ID, "set" . $key, $key, "setManyMany", "Something got wrong wiring the ManyMany-Relationship.");
+                $this->linkMethodWithInstance(self::class, "set" . $key . "ids", $key, "setManyManyIDs", "Something got wrong wiring the ManyMany-Relationship.");
+                $this->linkMethodWithInstance(self::class, "set" . $key, $key, "setManyMany", "Something got wrong wiring the ManyMany-Relationship.");
                 gObject::LinkMethod($this->getOwner()->classname, $key . "ids", array("this", "getRelationIDs"), true);
-                $this->linkMethodWithInstance(self::ID, $key, $key, "getManyMany", "Something got wrong wiring the ManyMany-Relationship.");
+                $this->linkMethodWithInstance(self::class, $key, $key, "getManyMany", "Something got wrong wiring the ManyMany-Relationship.");
             }
         }
     }
@@ -82,15 +79,15 @@ class ManyManyGetter extends AbstractGetterExtension implements ArgumentsQuery
     protected function factorOutFilter($filterArray, $version, $forceClasses, $relationShips) {
         foreach($filterArray as $key => $value) {
             if(isset($relationShips[strtolower($key)])) {
-                unset($filterArray[$key]);
-                $filterArray[] = " EXISTS ( ".
+                $filterArray[$key] = " EXISTS ( ".
                     $this->buildRelationQuery($relationShips[strtolower($key)], $version, $value, $forceClasses)->build()
                     ." ) ";
+                $filterArray = ArrayLib::change_key($filterArray, $key, ArrayLib::findFreeInt($filterArray));
             } else if(strtolower(substr($key, -6)) == ".count" && isset($relationShips[strtolower(substr($key, 0, -6))])) {
-                unset($filterArray[$key]);
-                $filterArray[] = " (".
+                $filterArray[$key] = " (".
                     $this->buildRelationQuery($relationShips[strtolower(substr($key, 0, -6))], $version, array(), $forceClasses)->build("count(*)")
                     .") = " . $value;
+                $filterArray = ArrayLib::change_key($filterArray, $key, ArrayLib::findFreeInt($filterArray));
             } else {
                 if (is_array($value)) {
                     $filterArray[$key] = $this->factorOutFilter($filterArray[$key], $version, $forceClasses, $relationShips);

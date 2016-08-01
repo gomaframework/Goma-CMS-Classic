@@ -10,12 +10,14 @@ require_once(ROOT . "/system/libs/thirdparty/simpletest/unit_tester.php");
  * @author		Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  *
- * @method void assertIsNull($actual, $message = null)
+ * @method void assertNull($actual, $message = null)
  * @method void assertTrue($actual, $message = null)
  * @method void assertFalse($actual, $message = null)
  * @method void assertRegExp($actual, $regexp, $message = null)
- * @method void assertLessThanOrEqual($actual, $expected, $message = null)
- * @method void assertGreaterThanOrEqual($actual, $expected, $message = null)
+ * @method void assertLessThanOrEqual($expected, $actual, $message = null)
+ * @method void assertGreaterThanOrEqual($expected, $actual, $message = null)
+ * @method void assertInstanceOf($class, $object, $message = null)
+ * @method void assertNotInstanceOf($class, $object, $message = null)
  */
 abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAble {
 	/**
@@ -42,6 +44,9 @@ abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAb
 
             $this->assertFalse(true, "Expected Exception $exceptionName, but no Exception were thrown.");
         } catch(Exception $e) {
+			if(!is_a($e, $exceptionName)) {
+				$this->assertFalse(true, $e->getMessage());
+			}
             $this->assertIsA($e, $exceptionName);
         }
     }

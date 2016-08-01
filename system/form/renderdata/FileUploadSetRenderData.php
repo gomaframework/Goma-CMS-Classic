@@ -45,7 +45,7 @@ class FileUploadSetRenderData extends FormFieldRenderData {
      */
     public function setUploads($uploads)
     {
-        if(!is_a($uploads, DataObjectSet::ID)) {
+        if(!is_a($uploads, DataObjectSet::class)) {
             throw new InvalidArgumentException("Uploads must be an DataObjectSet of uploads.");
         }
 
@@ -111,7 +111,7 @@ class FileUploadSetRenderData extends FormFieldRenderData {
                     "icon128"    => $upload->getIcon(128),
                     "icon128_2x" => $upload->getIcon(128, true),
                     "icon"       => $upload->getIcon(),
-                    "canDelete"  => is_a($this->uploads, RemoveStagingDataObjectSet::ID) || $this->uploads->getStaging()->itemExists($upload)
+                    "canDelete"  => is_a($this->uploads, RemoveStagingDataObjectSet::class) || $this->uploads->getStaging()->itemExists($upload)
                 );
             }
         }

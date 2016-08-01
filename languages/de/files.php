@@ -14,14 +14,15 @@ $files_lang = array(
 	"filetype_failure"	=> "Dieser Dateityp ist an dieser Stelle nicht erlaubt!",
 	"filesize_failure"	=> "Diese Datei ist f&uuml;r diesen Ort zu gro&szlig;!",
 	"upload_failure"	=> "Die Datei konnte nicht auf den Server geladen werden.",
-	"browse"			=> "Durchsuchen",
+	"browse"			=> "Hochladen",
 	"replace"			=> "Datei ersetzen",
 	"delete"			=> "Datei löschen",
 	"filename"			=> "Dateiname",
 	"upload"			=> "Hochladen",
 	"no_file"			=> "Keine Datei vorhanden",
 	"upload_success"	=> "Die Datei wurde erfolgreich hochgeladen!",
-	"size"				=> "Dateigröße"
+	"size"				=> "Dateigröße",
+	"backtrack"			=> "Verwendung"
 );
 
 foreach($files_lang as $key => $value)
