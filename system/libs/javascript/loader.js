@@ -559,7 +559,7 @@ if (goma.ui === undefined) {
 						regexp = new RegExp("<body"),
 						id = randomString(5);
 
-					if (content_type == "text/javascript") {
+					if (content_type.indexOf("text/javascript") != -1) {
 						if (object !== undefined) {
 							var method = new Function(html);
 							method.call(object);
