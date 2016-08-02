@@ -599,7 +599,7 @@ $lang = array(
 	
 	"error_disk_space"		=> "There's not enough disk space on the webserver available.",
 	
-	"help"					=> "help",
+	"help"					=> "Help",
 	"video"					=> "video",
 	"help_article"			=> "help-article",
 	
