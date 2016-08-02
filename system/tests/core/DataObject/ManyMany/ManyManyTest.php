@@ -236,7 +236,6 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
  * @property string random
  */
 class ManyManyTestObjectOne extends DataObject {
-
     static $version = true;
 
     static $db = array(
@@ -252,7 +251,8 @@ class ManyManyTestObjectOne extends DataObject {
 
     static $many_many_extra_fields = array(
         "twos"  => array(
-            "extra" => "varchar(100)"
+            "extra"         => "varchar(100)",
+            "extraCasted"   => "MockStringCasting"
         )
     );
 }
@@ -283,4 +283,8 @@ class ManyManyTestObjectTwo extends DataObject {
             DataObject::RELATION_INVERSE    => "twos"
         )
     );
+}
+
+class MockStringCasting extends DBField {
+
 }

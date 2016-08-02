@@ -589,7 +589,6 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess {
      * @return   string
      */
 	public function getOffset($name, $args = array()) {
-
 		if(PROFILE)
 			Profiler::mark("ViewAccessableData::getOffset");
 
