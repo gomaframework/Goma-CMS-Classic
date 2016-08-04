@@ -16,6 +16,17 @@ defined("IN_GOMA") OR die();
 class JSONResponseBody extends GomaResponseBody
 {
     /**
+     * JSONResponseBody constructor.
+     * @param null|string $body
+     */
+    public function __construct($body)
+    {
+        parent::__construct($body);
+
+        $this->isFullPage = false;
+    }
+
+    /**
      * @param GomaResponse $response
      * @return string
      */

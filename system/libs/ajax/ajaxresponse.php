@@ -23,6 +23,18 @@ class AjaxResponse extends GomaResponse
      */
     protected $shouldServe = false;
 
+    /**
+     * AjaxResponse constructor.
+     * @param array|null $header
+     * @param null|string $body
+     */
+    public function __construct($header, $body)
+    {
+        parent::__construct($header, $body);
+
+        $this->body->setIsFullPage(false);
+    }
+
     public function setDefaultHeader()
     {
         parent::setDefaultHeader();

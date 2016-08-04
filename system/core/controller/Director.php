@@ -12,14 +12,11 @@ class Director extends gObject {
 
     /**
      * addon urls by modules or others
-     *@name urls
-     *@var array
      */
     public static $rules = array();
 
     /**
      * Controllers used in this Request
-     *@name Controllers
      */
     public static $controller = array();
 
@@ -89,10 +86,16 @@ class Director extends gObject {
             if(is_a($output, "GomaResponse")) {
                 /** @var GomaResponse $output */
                 if($output->shouldServe()) {
-                    $output->setBodyString(self::$requestController->serve($output->getResponseBodyString()));
+                    $body = $output->getBody();
+                    $output->setBodyString(self::$requestController->serve($output->getResponseBodyString(), $body));
                 }
             } else {
-                $output = self::$requestController->serve($output);
+                if(is_a($output, "GomaResponseBody")) {
+                    /** @var GomaResponseBody $output */
+                    $output->setBody(self::$requestController->serve($output->getBody(), $output));
+                } else {
+                    $output = self::$requestController->serve($output, new GomaResponseBody($output));
+                }
             }
         }
         if(PROFILE)

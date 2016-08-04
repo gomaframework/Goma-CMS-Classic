@@ -923,7 +923,7 @@ class Form extends AbstractFormComponentWithChildren {
 		if (is_callable($submission) || gObject::method_exists($this->controller, $submission)) {
 			$this->submission = $submission;
 		} else {
-			throw new LogicException("Unknown Function '$submission'' for Controller {$this->controller}.");
+			throw new LogicException("Unknown Function '$submission'' for Controller {$this->controller->classname}.");
 		}
 	}
 

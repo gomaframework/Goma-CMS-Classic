@@ -213,9 +213,10 @@ class RequestHandler extends gObject {
 	 * in the end this function is called to do last modifications
 	 *
 	 * @param   string $content
+	 * @param GomaResponseBody $body
 	 * @return  string
 	 */
-	public function serve($content) {
+	public function serve($content, $body) {
 		return $content;
 	}
 
