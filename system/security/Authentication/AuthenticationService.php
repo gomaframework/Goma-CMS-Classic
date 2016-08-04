@@ -183,7 +183,7 @@ class AuthenticationService extends gObject {
             }
         }
 
-        $this->callExtending("resolveUser", $currentUserObject);
+        $this->callExtending("resolveUser", $currentUserObject, $user, $pwd);
 
         return $currentUserObject;
     }

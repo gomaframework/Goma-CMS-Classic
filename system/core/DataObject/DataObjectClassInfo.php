@@ -213,7 +213,7 @@ class DataObjectClassInfo extends Extension
      * @param string $class
      */
     protected static function generateModelClassInfo($class) {
-        if (!ClassInfo::isAbstract($class)) {
+        if (!ClassInfo::isAbstract($class) && class_exists($class, false)) {
             $casting = ModelInfoGenerator::generateCasting($class);
             if (count($casting) > 0) {
                 ClassInfo::$class_info[$class]["casting"] = $casting;
