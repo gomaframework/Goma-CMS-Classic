@@ -738,7 +738,7 @@ class mysqliDriver implements SQLDriver
                 $sql .= ",";
             }
             $sql .= ' ' . $name . ' ' . $value . ' ';
-            if (isset($defaults[$name])) {
+            if (isset($defaults[$name]) && trim(strtolower($value)) != "text" && trim(strtolower($value)) != "blob") {
                 $sql .= " DEFAULT '" . addslashes($defaults[$name]) . "'";
             } else {
                 $sql .= " NOT NULL";
