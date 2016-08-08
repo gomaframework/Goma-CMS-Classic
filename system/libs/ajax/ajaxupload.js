@@ -267,6 +267,7 @@ AjaxUpload.prototype = {
                 this.transferAjax(files);
             }
         } catch(e) {
+            console.log(e);
             this._fail(e, e, -1, null);
         }
 

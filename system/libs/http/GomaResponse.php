@@ -332,8 +332,10 @@ class GomaResponse extends gObject {
             $isPermanent = $this->status == 301;
             Core::callHook("beforeRedirect", $this->header["location"], $isPermanent, $this);
 
-            // TODO: Fix this hack.
-            addcontent::add(addcontent::get());
+            try {
+                // TODO: Fix this hack.
+                addcontent::add(addcontent::get());
+            } catch(Exception $e) {}
         }
 
         $content = $this->render();
