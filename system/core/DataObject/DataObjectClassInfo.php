@@ -169,7 +169,7 @@ class DataObjectClassInfo extends Extension
                         if (preg_match('/\(\s*([0-9]+)\s*\)/Us', $db_fields[$field], $matches)) {
                             $fields_ordered[$field] = $matches[1] - 1;
                         } else {
-                            $fields_ordered[$field] = $maxlength;
+                            $fields_ordered[$field] = PHP_INT_MAX;
                         }
                     }
                 }
