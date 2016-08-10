@@ -142,6 +142,7 @@ class DataObjectClassInfo extends Extension
     /**
      * @param array $indexes
      * @param array $db_fields
+     * @param null $class
      * @return mixed
      */
     protected static function parseIndexes($indexes, $db_fields, $class = null) {
@@ -166,7 +167,7 @@ class DataObjectClassInfo extends Extension
                 foreach ($fields as $field) {
                     if (isset($db_fields[$field])) {
                         if (preg_match('/\(\s*([0-9]+)\s*\)/Us', $db_fields[$field], $matches)) {
-                            $fields_ordered[$field] = $matches[1];
+                            $fields_ordered[$field] = $matches[1] - 1;
                         } else {
                             $fields_ordered[$field] = $maxlength;
                         }
@@ -181,7 +182,7 @@ class DataObjectClassInfo extends Extension
                         if ($length < $maxlength) {
                             $maxlength = floor($indexlength / (count($fields) - $i));
                             $indexlength -= $length;
-                            $indexes[$key]["fields"][] = $field . " ($length)";
+                            $indexes[$key]["fields"][] = $field;
                         } else if (preg_match('/enum/i', $db_fields[$field]) ||strpos($db_fields[$field], ",")) {
                             $indexes[$key]["fields"][] = $field;
                         } else {

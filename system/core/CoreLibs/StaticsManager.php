@@ -174,4 +174,29 @@ class StaticsManager {
         }
         return array();
     }
+
+    /**
+     * gets static property while checking if it is only extended property.
+     *
+     * @param string $class
+     * @param string $staticProp
+     * @param bool $filterParent
+     * @return mixed
+     */
+    public static function getNotExtendedStatic($class, $staticProp, $filterParent = true)
+    {
+        if (StaticsManager::hasStatic($class, $staticProp)) {
+            // validates that it is not just the extended property.
+            $parent = get_parent_class($class);
+            $fields = StaticsManager::getStatic($class, $staticProp);
+
+            if ($filterParent && $parent && self::getNotExtendedStatic($parent, $staticProp, false) === $fields) {
+                return null;
+            }
+
+            return $fields;
+        }
+
+        return null;
+    }
 }
