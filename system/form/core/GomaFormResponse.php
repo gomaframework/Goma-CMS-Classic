@@ -103,12 +103,6 @@ class GomaFormResponse extends GomaResponse {
             } else if(!isset($this->renderedForm)) {
                 throw new LogicException("Form response can't be null.");
             }
-
-            foreach($this->functionsForRendering as $function) {
-                if(is_callable($function)) {
-                    call_user_func_array($function, array($this));
-                }
-            }
         }
     }
 
@@ -131,8 +125,15 @@ class GomaFormResponse extends GomaResponse {
             $content = $this->serveWithModel->customise(array(
                 $this->templateName => $content
             ))->renderWith($this->template);
+        }
 
-            $this->template = null;
+        foreach($this->functionsForRendering as $function) {
+            if(is_callable($function)) {
+                $newContent = call_user_func_array($function, array($content, $this));
+                if($newContent) {
+                    $content = $newContent;
+                }
+            }
         }
 
         $this->resolveCache[$key] = $content;
@@ -175,7 +176,11 @@ class GomaFormResponse extends GomaResponse {
      */
     public function getBody()
     {
-        return $this->isStringResponse()  ? $this->resolveRendering(parent::getBody()) : $this->renderedForm->getBody();
+        if($this->isStringResponse()) {
+            $body = clone parent::getBody();
+            return $body->setBody($this->resolveRendering($body->getBody()));
+        }
+        return $this->renderedForm->getBody();
     }
 
     /**
@@ -199,6 +204,10 @@ class GomaFormResponse extends GomaResponse {
         } else {
             parent::setBodyString($body);
         }
+
+        $this->template = null;
+        $this->functionsForRendering = array();
+        $this->prependString = array();
 
         return $this;
     }
@@ -391,6 +400,7 @@ class GomaFormResponse extends GomaResponse {
         }
 
         $this->functionsForRendering[] = $function;
+        $this->resolveCache = array();
         return $this;
     }
 }

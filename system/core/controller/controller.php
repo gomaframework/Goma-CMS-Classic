@@ -820,10 +820,10 @@ class Controller extends RequestHandler
 
         $data = $form->render();
         $data->addRenderFunction(
-            function($data){
+            function($responseString, $data){
                 /** @var GomaFormResponse $data */
                 if($data->shouldServe()) {
-                    $data->setBodyString($this->showWithDialog($data->getResponseBodyString(), lang("confirm", "Confirm...")));
+                    return $this->showWithDialog($responseString, lang("confirm", "Confirm..."));
                 }
             });
         return $data;
@@ -910,12 +910,12 @@ class Controller extends RequestHandler
 
         $data = $form->render();
         $data->addRenderFunction(
-            function($data){
+            function($responseString, $data){
                 /** @var GomaFormResponse $data */
                 if($data->shouldServe()) {
-                    $data->setBodyString($this->showWithDialog($data->getResponseBodyString(), lang("prompt", "Insert Text...")));
+                    return $this->showWithDialog($responseString, lang("prompt", "Insert Text..."));
                 }
-        });
+            });
         return $data;
     }
 

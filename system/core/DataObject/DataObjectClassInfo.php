@@ -47,75 +47,7 @@ class DataObjectClassInfo extends Extension
 
             $searchable_fields = ModelInfoGenerator::generate_search_fields($class);
 
-            $indexes = ModelInfoGenerator::generateIndexes($class);
-
-            /* --- */
-
-            foreach ($indexes as $key => $value) {
-                if (is_array($value)) {
-                    $fields = $value["fields"];
-                    $indexes[$key]["fields"] = array();
-                    if (!is_array($fields))
-                        $fields = explode(",", $fields);
-
-                    if(strtolower($value["type"]) == "unique" || $value["type"] === true) {
-                        $value["type"] = "index";
-                    }
-
-                    $maxlength = $length = floor(333 / count($fields));
-                    $fields_ordered = array();
-
-                    foreach ($fields as $field) {
-                        if (isset($db_fields[$field])) {
-                            if (preg_match('/\(\s*([0-9]+)\s*\)/Us', $db_fields[$field], $matches)) {
-                                $fields_ordered[$field] = $matches[1] - 1;
-                            } else {
-                                $fields_ordered[$field] = $maxlength;
-                            }
-                        } else {
-                            unset($indexes[$key]);
-                            unset($fields_ordered);
-                            break;
-                        }
-                    }
-                    if (isset($fields_ordered)) {
-                        $indexlength = 333;
-
-                        $i = 0;
-                        foreach ($fields_ordered as $field => $length) {
-                            if ($length < $maxlength) {
-                                $maxlength = floor($indexlength / (count($fields) - $i));
-                                $indexlength -= $length;
-                                $indexes[$key]["fields"][] = $field;
-                            } else if (preg_match('/enum/i', $db_fields[$field]) ||strpos($db_fields[$field], ",")) {
-                                $indexes[$key]["fields"][] = $field;
-                            } else {
-                                $length = $maxlength;
-                                // support for ASC/DESC
-                                if (preg_match("/ (ASC|DESC)/i", $field, $matches)) {
-                                    $field = preg_replace("/ (ASC|DESC)/i", "", $field);
-                                    $indexes[$key]["fields"][] = $field . " (" . $length . ") " . $matches[1] . "";
-                                } else {
-                                    $indexes[$key]["fields"][] = $field . " (" . $length . ")";
-                                }
-                                unset($matches);
-                            }
-
-
-                            $i++;
-                        }
-                    }
-                } else if (isset($db_fields[$key])) {
-                    $indexes[$key] = $value;
-
-                    if(strtolower($value) == "unique" || $value === true) {
-                        $indexes[$key] = "index";
-                    }
-                } else if (!$value) {
-                    unset($db_fields[$key]);
-                }
-                unset($key, $value, $fields, $maxlength, $fields_ordered, $i);
-            }
+            $indexes = self::parseIndexes(ModelInfoGenerator::generateIndexes($class), $db_fields);
 
             if (count($has_one) > 0) ClassInfo::$class_info[$class]["has_one"] = $has_one;
             if (count($has_many) > 0) ClassInfo::$class_info[$class]["has_many"] = $has_many;
@@ -205,6 +137,83 @@ class DataObjectClassInfo extends Extension
             unset($currentClass, $parent, $classInstance);
         }
         if (PROFILE) Profiler::unmark("DataObjectClassInfo::generate");
+    }
+
+    /**
+     * @param array $indexes
+     * @param array $db_fields
+     * @return mixed
+     */
+    protected static function parseIndexes($indexes, $db_fields) {
+        foreach ($indexes as $key => $value) {
+            if (is_array($value)) {
+                if(!isset($value["name"])) {
+                    $indexes[$key]["name"] = RegexpUtil::isNumber($key) ? "index_" . $key : $key;
+                }
+
+                $fields = $value["fields"];
+                $indexes[$key]["fields"] = array();
+                if (!is_array($fields))
+                    $fields = array_map("trim", explode(",", $fields));
+
+                if(!isset($value["type"]) || strtolower($value["type"]) == "unique" || $value["type"] === true) {
+                    $indexes[$key]["type"] = "index";
+                }
+
+                $maxlength = $length = floor(1000 / count($fields));
+                $fields_ordered = array();
+
+                foreach ($fields as $field) {
+                    if (isset($db_fields[$field])) {
+                        if (preg_match('/\(\s*([0-9]+)\s*\)/Us', $db_fields[$field], $matches)) {
+                            $fields_ordered[$field] = $matches[1];
+                        } else {
+                            $fields_ordered[$field] = $maxlength;
+                        }
+                    }
+                }
+
+                if ($fields_ordered) {
+                    $indexlength = 1000;
+
+                    $i = 0;
+                    foreach ($fields_ordered as $field => $length) {
+                        if ($length < $maxlength) {
+                            $maxlength = floor($indexlength / (count($fields) - $i));
+                            $indexlength -= $length;
+                            $indexes[$key]["fields"][] = $field . " ($length)";
+                        } else if (preg_match('/enum/i', $db_fields[$field]) ||strpos($db_fields[$field], ",")) {
+                            $indexes[$key]["fields"][] = $field;
+                        } else {
+                            $length = $maxlength;
+                            // support for ASC/DESC
+                            if (preg_match("/ (ASC|DESC)/i", $field, $matches)) {
+                                $field = preg_replace("/ (ASC|DESC)/i", "", $field);
+                                $indexes[$key]["fields"][] = $field . " (" . $length . ") " . $matches[1] . "";
+                            } else {
+                                $indexes[$key]["fields"][] = $field . " (" . $length . ")";
+                            }
+                            unset($matches);
+                        }
+
+                        $i++;
+                    }
+                } else {
+                    throw new InvalidArgumentException("Invalid Index " . $key . " with data " . var_export($value, true));
+                }
+            } else if (isset($db_fields[$key])) {
+                $indexes[$key] = $value;
+
+                if(strtolower($value) == "unique" || $value === true) {
+                    $indexes[$key] = "index";
+                }
+            } else if (!$value) {
+                unset($db_fields[$key]);
+            }
+            unset($key, $value, $fields, $maxlength, $fields_ordered, $i);
+        }
+
+        return $indexes;
     }
 
     /**

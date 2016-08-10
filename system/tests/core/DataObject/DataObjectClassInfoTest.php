@@ -78,6 +78,68 @@ class DataObjectClassInfoTest extends GomaUnitTest implements TestAble
             unset(ClassInfo::$class_info[$class]["many_many_relations"]);
         }
     }
+
+    public function testParseIndexes() {
+        $this->assertEqual(array(
+            array(
+                "name"  => "index_0",
+                "type"  => "index",
+                "fields"=> array(
+                    "name (200)", "zip (200)"
+                )
+            )
+        ), $this->unittestParseIndexes(
+            array(array(
+                      "fields" => array("name", "zip")
+                  )),
+            array(
+                "name"  => "varchar(200)",
+                "zip"   => "varchar(200)"
+            )
+        ));
+
+        $this->assertEqual(array(
+            array(
+                "name"  => "index_0",
+                "type"  => "index",
+                "fields"=> array(
+                    "name (200)", "zip (200)"
+                )
+            )
+        ), $this->unittestParseIndexes(
+            array(array(
+                      "fields" => "name,zip"
+                  )),
+            array(
+                "name"  => "varchar(200)",
+                "zip"   => "varchar(200)"
+            )
+        ));
+
+        $this->assertEqual(array(
+            array(
+                "name"  => "index_0",
+                "type"  => "index",
+                "fields"=> array(
+                    "name (200)", "zip (200)"
+                )
+            )
+        ), $this->unittestParseIndexes(
+            array(array(
+                      "fields" => "name,    zip"
+                  )),
+            array(
+                "name"  => "varchar(200)",
+                "zip"   => "varchar(200)"
+            )
+        ));
+    }
+
+    protected function unittestParseIndexes($indexes, $db_fields) {
+        $reflectionMethod = new ReflectionMethod("DataObjectClassInfo", "ParseIndexes");
+        $reflectionMethod->setAccessible(true);
+        return $reflectionMethod->invoke(null, $indexes, $db_fields);
+    }
 }
 
 class DataObjectClassInfoTest_BaseMockupclass {

@@ -330,8 +330,8 @@ class ModelInfoGenerator {
     protected static function validateIndexes($indexes) {
         foreach($indexes as $name => $type) {
             if (is_array($type)) {
-                if (!isset($type["type"]) || !isset($type["fields"])) {
-                    throw new LogicException("Index $name in DataObject $class is invalid. Type and Fields are required.", ExceptionManager::INDEX_INVALID);
+                if (!isset($type["fields"])) {
+                    throw new LogicException("Index $name in DataObject $class is invalid. Fields are required.", ExceptionManager::INDEX_INVALID);
                 }
             }
         }

@@ -78,12 +78,17 @@ class FrontedController extends Controller
     /**
      * handles the request with showing as site
      * @param string $content
+     * @param GomaResponseBody $body
      * @return mixed|string
      */
-    public function serve($content)
+    public function serve($content, $body)
     {
-        if (Core::is_ajax() && isset($_GET["dropdownDialog"])) {
+        if ((Core::is_ajax() && isset($_GET["dropdownDialog"])) || !$body->isFullPage()) {
             return $content;
+        }
+
+        if(strpos(strtolower($content), "</body") !== false) {
+            throw new LogicException("Before FrontedController serve, no HTML-Body should be generated. Seems like somebody called serve twice.");
         }
 
         if (SITE_MODE == STATUS_MAINTANANCE && !Permission::check("ADMIN")) {
