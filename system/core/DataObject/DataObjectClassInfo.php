@@ -161,7 +161,7 @@ class DataObjectClassInfo extends Extension
                     $indexes[$key]["type"] = "index";
                 }
 
-                $maxlength = $length = floor(1000 / count($fields));
+                $maxlength = $length = floor(333 / count($fields));
                 $fields_ordered = array();
 
                 foreach ($fields as $field) {
@@ -175,12 +175,11 @@ class DataObjectClassInfo extends Extension
                 }
 
                 if ($fields_ordered) {
-                    $indexlength = 1000;
+                    $indexlength = 333;
 
                     $i = 0;
                     foreach ($fields_ordered as $field => $length) {
                         if ($length < $maxlength) {
-                            $maxlength = floor($indexlength / (count($fields) - $i));
                             $indexlength -= $length;
                             $indexes[$key]["fields"][] = $field;
                         } else if (preg_match('/enum/i', $db_fields[$field]) ||strpos($db_fields[$field], ",")) {

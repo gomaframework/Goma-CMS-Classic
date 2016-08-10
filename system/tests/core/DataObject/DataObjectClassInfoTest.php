@@ -85,7 +85,7 @@ class DataObjectClassInfoTest extends GomaUnitTest implements TestAble
                 "name"  => "index_0",
                 "type"  => "index",
                 "fields"=> array(
-                    "name (200)", "zip (200)"
+                    "name", "zip"
                 )
             )
         ), $this->unittestParseIndexes(
@@ -93,8 +93,8 @@ class DataObjectClassInfoTest extends GomaUnitTest implements TestAble
                       "fields" => array("name", "zip")
                   )),
             array(
-                "name"  => "varchar(200)",
-                "zip"   => "varchar(200)"
+                "name"  => "varchar(100)",
+                "zip"   => "varchar(100)"
             )
         ));
 
@@ -103,7 +103,7 @@ class DataObjectClassInfoTest extends GomaUnitTest implements TestAble
                 "name"  => "index_0",
                 "type"  => "index",
                 "fields"=> array(
-                    "name (200)", "zip (200)"
+                    "name", "zip"
                 )
             )
         ), $this->unittestParseIndexes(
@@ -111,8 +111,8 @@ class DataObjectClassInfoTest extends GomaUnitTest implements TestAble
                       "fields" => "name,zip"
                   )),
             array(
-                "name"  => "varchar(200)",
-                "zip"   => "varchar(200)"
+                "name"  => "varchar(100)",
+                "zip"   => "varchar(100)"
             )
         ));
 
@@ -121,7 +121,7 @@ class DataObjectClassInfoTest extends GomaUnitTest implements TestAble
                 "name"  => "index_0",
                 "type"  => "index",
                 "fields"=> array(
-                    "name (200)", "zip (200)"
+                    "name", "zip"
                 )
             )
         ), $this->unittestParseIndexes(
@@ -129,8 +129,26 @@ class DataObjectClassInfoTest extends GomaUnitTest implements TestAble
                       "fields" => "name,    zip"
                   )),
             array(
-                "name"  => "varchar(200)",
-                "zip"   => "varchar(200)"
+                "name"  => "varchar(100)",
+                "zip"   => "varchar(100)"
+            )
+        ));
+
+        $this->assertEqual(array(
+            array(
+                "name"  => "index_0",
+                "type"  => "index",
+                "fields"=> array(
+                    "name (166)", "zip (166)"
+                )
+            )
+        ), $this->unittestParseIndexes(
+            array(array(
+                      "fields" => "name,    zip"
+                  )),
+            array(
+                "name"  => "varchar(600)",
+                "zip"   => "varchar(600)"
             )
         ));
     }
