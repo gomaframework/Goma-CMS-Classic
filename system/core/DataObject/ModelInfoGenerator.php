@@ -40,10 +40,6 @@ class ModelInfoGenerator {
 
         $fields = ArrayLib::map_key("strtolower", $fields, false);
 
-        if(!$useParents && $parent && self::generate_combined_array($parent, $staticProp, $extensionMethod, false) == $fields) {
-            return array();
-        }
-
         return $fields;
     }
 
@@ -61,7 +57,7 @@ class ModelInfoGenerator {
             $parent = get_parent_class($class);
             $fields = (array)StaticsManager::getStatic($class, $staticProp);
 
-            if($parent && (array) StaticsManager::getStatic($parent, $staticProp) == $fields) {
+            if($parent && (array) self::getNotExtendedStatic($parent, $staticProp) == $fields) {
                 return array();
             }
 
