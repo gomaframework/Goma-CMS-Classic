@@ -40,6 +40,10 @@ class ModelInfoGenerator {
 
         $fields = ArrayLib::map_key("strtolower", $fields, false);
 
+        if(!$useParents && self::generate_combined_array($parent, $staticProp, $extensionMethod, false) == $fields) {
+            return array();
+        }
+
         return $fields;
     }
 

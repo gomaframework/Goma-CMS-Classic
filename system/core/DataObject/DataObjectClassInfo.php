@@ -198,6 +198,8 @@ class DataObjectClassInfo extends Extension
 
                         $i++;
                     }
+                } else {
+                    throw new InvalidArgumentException("Invalid Index " . $key . " with data " . var_export($value, true));
                 }
             } else if (isset($db_fields[$key])) {
                 $indexes[$key] = $value;
