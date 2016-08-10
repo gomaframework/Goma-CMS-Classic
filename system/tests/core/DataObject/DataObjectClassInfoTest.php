@@ -151,6 +151,24 @@ class DataObjectClassInfoTest extends GomaUnitTest implements TestAble
                 "zip"   => "varchar(600)"
             )
         ));
+
+        $this->assertEqual(array(
+            array(
+                "name"  => "index_0",
+                "type"  => "index",
+                "fields"=> array(
+                    "name (166)", "zip (166)"
+                )
+            )
+        ), $this->unittestParseIndexes(
+            array(array(
+                      "fields" => "NAME,    ZIP"
+                  )),
+            array(
+                "name"  => "varchar(600)",
+                "zip"   => "varchar(600)"
+            )
+        ));
     }
 
     protected function unittestParseIndexes($indexes, $db_fields) {

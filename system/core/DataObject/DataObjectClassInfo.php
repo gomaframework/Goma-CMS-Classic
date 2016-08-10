@@ -155,7 +155,9 @@ class DataObjectClassInfo extends Extension
                 $fields = $value["fields"];
                 $indexes[$key]["fields"] = array();
                 if (!is_array($fields))
-                    $fields = array_map("trim", explode(",", $fields));
+                    $fields = explode(",", $fields);
+
+                $fields = array_map("trim", array_map("strtolower", $fields));
 
                 if(!isset($value["type"]) || strtolower($value["type"]) == "unique" || $value["type"] === true) {
                     $indexes[$key]["type"] = "index";
