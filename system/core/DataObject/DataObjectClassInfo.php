@@ -47,7 +47,7 @@ class DataObjectClassInfo extends Extension
 
             $searchable_fields = ModelInfoGenerator::generate_search_fields($class);
 
-            $indexes = self::parseIndexes(ModelInfoGenerator::generateIndexes($class), $db_fields);
+            $indexes = self::parseIndexes(ModelInfoGenerator::generateIndexes($class), $db_fields, $class);
 
             if (count($has_one) > 0) ClassInfo::$class_info[$class]["has_one"] = $has_one;
             if (count($has_many) > 0) ClassInfo::$class_info[$class]["has_many"] = $has_many;
@@ -144,7 +144,7 @@ class DataObjectClassInfo extends Extension
      * @param array $db_fields
      * @return mixed
      */
-    protected static function parseIndexes($indexes, $db_fields) {
+    protected static function parseIndexes($indexes, $db_fields, $class = null) {
         foreach ($indexes as $key => $value) {
             if (is_array($value)) {
                 if(!isset($value["name"])) {
@@ -199,7 +199,7 @@ class DataObjectClassInfo extends Extension
                         $i++;
                     }
                 } else {
-                    throw new InvalidArgumentException("Invalid Index " . $key . " with data " . var_export($value, true));
+                    throw new InvalidArgumentException("Invalid Index " . $key . " with data " . var_export($value, true) . " on class $class");
                 }
             } else if (isset($db_fields[$key])) {
                 $indexes[$key] = $value;
