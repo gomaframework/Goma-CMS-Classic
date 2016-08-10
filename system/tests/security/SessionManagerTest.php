@@ -20,7 +20,7 @@ class SessionManagerTests extends GomaUnitTest {
      */
     public $name = "SessionManager";
 
-    public function TestClass() {
+    public function testClass() {
         $inst = new ISessionTests("SessionManager", $this);
 
         $inst->executeTests();
