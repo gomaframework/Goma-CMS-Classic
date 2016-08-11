@@ -60,8 +60,15 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
                 $this->removeStaging->add($record);
             }
 
-            if ($this->staging->find("id", $record->id)) {
-                $this->staging->remove($record);
+
+            if($this->fetchMode == self::FETCH_MODE_EDIT) {
+                if ($this->staging->find("id", $record->id)) {
+                    $this->staging->remove($record);
+                }
+
+                $this->clearCache();
+            } else {
+                $this->removeFromItems($record);
             }
         }
     }
@@ -73,8 +80,16 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
     {
         if($record->id != 0 && $recordToRemove = $this->removeStaging->find("id", $record->id)) {
             $this->removeStaging->remove($recordToRemove);
+
+            if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
+                $this->add($recordToRemove);
+            }
         } else {
             parent::removeFromStage($record);
+        }
+
+        if($this->fetchMode == self::FETCH_MODE_EDIT) {
+            $this->clearCache();
         }
     }
 

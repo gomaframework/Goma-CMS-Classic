@@ -1216,16 +1216,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 			$this->staging->remove($record);
 		}
 
-		if(isset($this->items)) {
-			foreach ($this->items as $key => $item) {
-				if ($item === $record) {
-					$this->position--;
-					unset($this->items[$key]);
-				}
-			}
-
-			$this->items = array_values($this->items);
-		}
+		$this->removeFromItems($record);
 
 		if($this->firstCache === $record) {
 			$this->firstCache = null;
@@ -1237,6 +1228,22 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		if(isset($this->count)) {
 			$this->count--;
+		}
+	}
+
+	/**
+	 * @param DataObject $record
+	 */
+	protected function removeFromItems($record) {
+		if(isset($this->items)) {
+			foreach ($this->items as $key => $item) {
+				if ($item === $record) {
+					$this->position--;
+					unset($this->items[$key]);
+				}
+			}
+
+			$this->items = array_values($this->items);
 		}
 	}
 
