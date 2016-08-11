@@ -335,7 +335,15 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 */
 	public function ToArray()
 	{
+		$this->forceData();
 		return $this->items;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isDataLoaded() {
+		return isset($this->items);
 	}
 
 	/**

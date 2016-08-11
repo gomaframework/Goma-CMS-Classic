@@ -388,9 +388,33 @@ class DataObjectSetTests extends GomaUnitTest
             $this->kathi
         );
 
+        $this->assertFalse($set->isDataLoaded());
+
         $this->assertIsA($set->getRange(0, 1), DataSet::class);
         $this->assertIsA($set->getRange(0, 1)->ToArray(), "array");
         $this->assertIsA($set->getArrayRange(0, 1), "array");
+
+        $this->assertFalse($set->isDataLoaded());
+
+        $this->assertIsA($set->ToArray(), "array");
+        $this->assertEqual($source->records, $set->ToArray());
+
+        $this->assertTrue($set->isDataLoaded());
+
+        $this->assertEqual(array($this->julian), $set->getArrayRange(0, 1));
+
+        $set->add($this->patrick);
+        $this->assertTrue($set->isDataLoaded());
+
+        $merged = array_merge($source->records, array($this->patrick));
+        $this->assertIsA($merged, "array");
+
+        $this->assertEqual($merged, $set->ToArray());
+        $this->assertEqual($merged, $set->getArrayRange(0, 5));
+
+        $set->removeFromStage($this->patrick);
+        $this->assertEqual($source->records, $set->ToArray());
+        $this->assertEqual($source->records, $set->getArrayRange(0, 5));
     }
 
     public function testRangesNew() {
