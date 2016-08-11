@@ -1212,11 +1212,14 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @param DataObject $record
 	 */
 	public function removeFromStage($record) {
-		$this->staging->remove($record);
+		if($this->fetchMode == self::FETCH_MODE_EDIT) {
+			$this->staging->remove($record);
+		}
 
 		if(isset($this->items)) {
 			foreach ($this->items as $key => $item) {
 				if ($item === $record) {
+					$this->position--;
 					unset($this->items[$key]);
 				}
 			}

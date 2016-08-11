@@ -718,6 +718,32 @@ class DataObjectSetTests extends GomaUnitTest
         }
         $this->assertEqual(count($this->allPersons), $i);
     }
+
+    public function testRemoveInLoop() {
+        $set = new DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $this->assertTrue(count($this->allPersons) > 10);
+
+        foreach($this->allPersons as $person) {
+            $set->add($person);
+        }
+
+        $this->assertEqual(count($this->allPersons), $set->count());
+        $this->assertEqual(count($this->allPersons), count($set->ToArray()));
+
+        $i = 0;
+        foreach($set as $record) {
+            $this->assertEqual($this->allPersons[$i], $record);
+            if($i == 3) {
+                $set->removeFromStage($record);
+            }
+            $i++;
+        }
+        $this->assertEqual(count($this->allPersons), $i);
+        $this->assertEqual(count($this->allPersons) - 1, $set->count());
+        $this->assertEqual(count($this->allPersons) - 1, count($set->ToArray()));
+    }
 }
 
 class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
