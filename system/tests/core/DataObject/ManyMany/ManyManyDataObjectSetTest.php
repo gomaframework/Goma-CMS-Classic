@@ -25,6 +25,13 @@ class ManyManyDataObjectSet extends GomaUnitTest implements TestAble {
     protected $janine;
     protected $nik;
     protected $julian;
+    protected $fabian;
+    protected $franz;
+    protected $lisa;
+    protected $julia;
+    protected $jenny;
+
+    protected $allPersons;
 
     public function setUp()
     {
@@ -34,9 +41,20 @@ class ManyManyDataObjectSet extends GomaUnitTest implements TestAble {
         $this->janine = new DumpDBElementPerson("Janine", 19, "W");
         $this->nik = new DumpDBElementPerson("Nik", 21, "M");
         $this->julian = new DumpDBElementPerson("Julian", 20, "M");
+        $this->fabian = new DumpDBElementPerson("Fabian", 22, "M");
+        $this->franz = new DumpDBElementPerson("Franz", 56, "M");
+        $this->lisa = new DumpDBElementPerson("Lisa", 18, "W");
+        $this->julia = new DumpDBElementPerson("Julia", 25, "W");
+        $this->jenny = new DumpDBElementPerson("Jenny", 35, "W");
 
-        $this->daniel->queryVersion = $this->kathi->queryVersion = $this->patrick->queryVersion = $this->janine->queryVersion =
-        $this->nik->queryVersion = $this->julian->queryVersion = DataObject::VERSION_PUBLISHED;
+        $this->allPersons = array($this->daniel, $this->kathi, $this->patrick, $this->nik,
+                                  $this->julian, $this->janine, $this->fabian, $this->franz,
+                                  $this->lisa, $this->julia, $this->jenny);
+
+
+        foreach($this->allPersons as $person) {
+            $person->queryVersion = DataObject::VERSION_PUBLISHED;
+        }
     }
 
     /**
@@ -92,6 +110,32 @@ class ManyManyDataObjectSet extends GomaUnitTest implements TestAble {
 
         $this->assertEqual(3, $set->count());
         $this->assertEqual(3, count($set->ToArray()));
+
+        $set->sortCallback(function($a, $b) {
+            if($a->age == $b->age) {
+                return 0;
+            }
+
+            return $a->age > $b->age ? 1 : -1;
+        });
+
+        $firstAge = $set[0]->age;
+        foreach($set as $current) {
+            $this->assertTrue($current->age >= $firstAge);
+            $firstAge = $current->age;
+        }
+    }
+
+    public function testSortBig() {
+        $set = new ManyMany_DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        foreach($this->allPersons as $person) {
+            $set->add($person);
+        }
+
+        $this->assertEqual(count($this->allPersons), $set->count());
+        $this->assertEqual(count($this->allPersons), count($set->ToArray()));
 
         $set->sortCallback(function($a, $b) {
             if($a->age == $b->age) {

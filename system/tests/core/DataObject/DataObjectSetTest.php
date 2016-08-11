@@ -23,6 +23,13 @@ class DataObjectSetTests extends GomaUnitTest
     protected $janine;
     protected $nik;
     protected $julian;
+    protected $fabian;
+    protected $franz;
+    protected $lisa;
+    protected $julia;
+    protected $jenny;
+
+    protected $allPersons;
 
     public function setUp()
     {
@@ -32,9 +39,20 @@ class DataObjectSetTests extends GomaUnitTest
         $this->janine = new DumpDBElementPerson("Janine", 19, "W");
         $this->nik = new DumpDBElementPerson("Nik", 21, "M");
         $this->julian = new DumpDBElementPerson("Julian", 20, "M");
+        $this->fabian = new DumpDBElementPerson("Fabian", 22, "M");
+        $this->franz = new DumpDBElementPerson("Franz", 56, "M");
+        $this->lisa = new DumpDBElementPerson("Lisa", 18, "W");
+        $this->julia = new DumpDBElementPerson("Julia", 25, "W");
+        $this->jenny = new DumpDBElementPerson("Jenny", 35, "W");
 
-        $this->daniel->queryVersion = $this->kathi->queryVersion = $this->patrick->queryVersion = $this->janine->queryVersion =
-            $this->nik->queryVersion = $this->julian->queryVersion = DataObject::VERSION_PUBLISHED;
+        $this->allPersons = array($this->daniel, $this->kathi, $this->patrick, $this->nik,
+                                  $this->julian, $this->janine, $this->fabian, $this->franz,
+                                  $this->lisa, $this->julia, $this->jenny);
+
+
+        foreach($this->allPersons as $person) {
+            $person->queryVersion = DataObject::VERSION_PUBLISHED;
+        }
     }
 
     /**
@@ -679,6 +697,26 @@ class DataObjectSetTests extends GomaUnitTest
 
         $this->assertEqual($this->kathi, $set->last());
         $this->assertEqual($this->patrick, $set[2]);
+    }
+
+    public function testCreateNewBig() {
+        $set = new DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $this->assertTrue(count($this->allPersons) > 10);
+
+        foreach($this->allPersons as $person) {
+            $set->add($person);
+        }
+
+        $this->assertEqual(count($this->allPersons), $set->count());
+        $this->assertEqual(count($this->allPersons), count($set->ToArray()));
+
+        $i = 0;
+        foreach($set as $record) {
+            $i++;
+        }
+        $this->assertEqual(count($this->allPersons), $i);
     }
 }
 
