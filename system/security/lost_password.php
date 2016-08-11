@@ -66,7 +66,7 @@ class lost_passwordExtension extends ControllerExtension {
             }
         }
 
-        return $this->getLostPwdForm()->render();
+        return $this->getLostPwdForm()->renderWith(new ViewAccessableData(), "profile/lostPasswordForm.html");
 
     }
 
@@ -77,7 +77,6 @@ class lost_passwordExtension extends ControllerExtension {
      */
     public function getLostPwdForm() {
         $form = new Form($this, "lost_password", array(
-            new HTMLField("heading","<h3>".lang("lost_password", "lost password")."</h3>"),
             new TextField("email", lang("lp_email_or_user", "E-Mail or Username"))
         ), array(
             new FormAction("lp_submit", lang("lp_submit", "Send"))
