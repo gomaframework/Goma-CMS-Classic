@@ -182,6 +182,7 @@ abstract class AbstractFormComponent extends RequestHandler {
      * @return null
      */
     public function getFieldPost($field) {
+        $field = strtolower($field);
         if($this->parent) {
             return $this->parent->getFieldPost($field);
         }
