@@ -91,7 +91,7 @@ $lang = array(
 	/* ACCOUNT START */
 	"signatur"                                     	=> "Signatur",
 	"passwords_not_match"                          	=> "Die Passwörter stimmen nicht überein!",
-    "password_cannot_be_empty"                      => "Das Passwort darf nicht leer sein.",
+	"password_cannot_be_empty"                      => "Das Passwort darf nicht leer sein.",
 	"password_wrong"                               	=> "Das Passwort ist falsch!",
 	"new_password"                                 	=> "Neues Passwort",
 	"old_password"                                 	=> "Altes Passwort",
@@ -336,14 +336,14 @@ $lang = array(
 	"CREATE"										=> "Erstellen",
 	"no_result"										=> "Keine Elemente",
 	"delete_okay"									=> "Der Eintrag wurden erfolgreich entfernt!",
-	
+
 	/*mobile*/
 	"classic_version"								=> "Klassische Ansicht",
 	"mobile_version"								=> "Mobile Ansicht",
-	
+
 	/* new groups*/
 	"groups"										=> "Gruppen",
-	
+
 	/*check*/
 	"checkall"										=> "Alle auswählen",
 	"uncheckall"									=> "Alle abwählen",
@@ -372,15 +372,15 @@ $lang = array(
 	"register_require_email_info"					=> "Es wird bei der Registrierung eine Bestätigungs-E-Mail gesendet, um die E-Mail-Adresse zu validieren.",
 	"register_require_acitvation"					=> "Ihr Account wurde erfolgreich registriert. Ein Administrator muss ihn nun nur noch aktivieren.",
 	"sitestatus_info"								=> "Wenn sich die Seite im Wartungsmodus befindet, kann Sie nur von Mitgliedern angezeigt werden, die auch die Administration aufrufen können. Sie können diese Funktion z.B. verwenden, wenn Sie Wartungsarbeiten durchführen.",
-	
+
 	/* users and groups */
 	"grouptype"										=> "Gruppentyp",
-	
+
 	/* global things */
 	"add_data"										=> "Eintrag hinzuf&uuml;gen...",
 	"download"										=> "Herunterladen",
 	"submit"										=> "Absenden",
-	
+
 	/* contact-form */
 	"contact_introduction"							=> "Sehr geehrter Seiten-Betreiber, <br /><br /> Die Folgenden Daten wurden &uuml;ber das Goma-Kontakt-Formular abgesendet:",
 	"contact_greetings"								=> "Beste Gr&uuml;&szlig;e<br /><br />Goma-Auto-Messenger",
@@ -400,17 +400,17 @@ $lang = array(
 	"notice"										=> "Hinweis",
 	"notice_site_disabled"							=> "Diese Seite ist deaktiviert.",
 	"delete_selected"								=> "Ausgewählte löschen",
-	
+
 	"menupoint_add"									=> "Im Men&uuml; anzeigen",
-	
-	
+
+
 	"database"										=> "Datenbank",
-	
+
 	"login_required"								=> "Sie müssen sich einloggen, um diese Seite zu sehen!",
-	
+
 	/**
 	 * versions
-	*/
+	 */
 	"preview"										=> "Vorschau",
 	"publish"										=> "Veröffentlichen",
 	"published_site"								=> "Veröffentlichte Seite",
@@ -437,22 +437,20 @@ $lang = array(
 	"versions_javascript"							=> "Bitte aktivieren Sie JavaScript, um diese Funktion zu nutzen.",
 	"done"											=> "Fertig",
 	"undo"											=> "Rückgängig",
-	"this_version"									=> "Diese Version",
 	"restore"										=> "Wiederherstellen",
 	"restore_confirm"								=> "Wollen Sie wirklich zu dieser Version zurückkehren?",
 	"compare"										=> "Vergleichen",
 	"no_versions"									=> "Keine Version vorhanden",
 	"versions_timeline"								=> "Zeitleiste",
 	"backups"										=> "Sicherungen",
-	"versions"										=> "Versionen",
 
 	"DELETED_PAGE"									=> "Gel&ouml;schte Seite",
 	"EDITED_PAGE"									=> "Geänderte Seite",
-	
+
 	"CHANGED"										=> "Geändert",
 	"NEW"											=> "Neu",
-	
-	
+
+
 	/* goma welcome */
 	"before_you_begin"								=> "Bevor Sie beginnen",
 	"create_user"									=> "Benutzer erstellen...",
@@ -460,14 +458,14 @@ $lang = array(
 	"install_success"								=> "Ihre Goma Installation war erfolgreich. Bitte nehmen Sie sich noch ein wenig Zeit, um Ihre Grundeinstellungen zu setzen.",
 	"next_step"										=> "Weiter zum nächsten Schritt",
 	"goma_let's_start"								=> "Goma - Los Gehts!",
-	
+
 	"file_perm_error"								=> "Konnte Datei aufgrund fehlender Berechtigungen nicht öffnen!",
-	
+
 	"info"											=> "Informationen",
 	"unknown"										=> "Unbekannt",
-	
+
 	/* update algorythm */
-	
+
 	"update"										=> "Aktualisierung",
 	"updates"										=> "Aktualisierungen",
 	"update_install"								=> "Aktualisieren",
@@ -493,39 +491,39 @@ $lang = array(
 	"update_checking"								=> "Prüfe auf Aktualisierung",
 	"update_upload"									=> "Aktualisierungsdatei hochladen",
 	"update_connection_failed"						=> "Die Verbindung zum Goma-Server ist fehlgeschlagen. Bitte aktivieren Sie Allow-URL-fopen in Ihren PHP-Einstellungen. goma-cms.org könnte auch offline sein.",
-	
+
 	// permissions
 	"admins"										=> "Administratoren",
 	"invert_groups"									=> "Gruppen ausschliessen",
 	"require_login"									=> "Sie müssen sich anmelden, um die Seite anzuzeigen.",
-	
+
 	/* distro-building */
 	"distro_build"									=> "Version exportieren",
 	"distro_changelog"								=> "Was haben Sie zur vorherigen Version geändert?",
-	
+
 	"install_advanced_options"						=> "Erweiterte Installationsoptionen",
 	"install_option_preflight"						=> "postflight-PHP-Skript",
 	"install_option_postflight"						=> "preflight-PHP-Skript",
 	"install_option_getinfo"						=> "getinfo-PHP-Skript",
-	
+
 	"install_invalid_file"							=> "Sie können diese Datei nicht installieren.",
 	"install_not_update"							=> "Sie können diese Datei nur installieren, da diese Software noch nicht installiert ist.",
-	
-	
+
+
 	"gfs_invalid"									=> "Das GFS-Archiv ist beschädigt oder kann nicht geöffnet werden.",
-	
+
 	"inherit_from_parent"							=> "Von übergeordnetem Objekt übernehmen",
 	"hierarchy"										=> "Hierarchie",
-	
+
 	"full_admin_permissions"						=> "Volle Admin-Rechte",
 	"full_admin_permissions_info"					=> "Alle Rechte werden automatisch gewährt, auch wenn eines deaktiviert wird.",
 	"signed"										=> "Signatur",
 	"signed_true"									=> "Dieses Paket wurde vom Goma-Team geprüft und ist freigegeben!",
 	"signed_false"									=> "Dieses Paket wurde nicht vom Goma-Team geprüft. Die Installation erfolgt auf eigene Gefahr!",
 	"signed_false_ssl"								=> "Das Paket konnte nicht vom Goma-Team geprüft werden. Open-SSL ist nicht auf Ihrem Server installiert. Bitte kontaktieren Sie den Server-Administrator oder holen Sie sich Support auf der <a href=\"http://goma-cms.org\" target=\"_blank\">Goma-Seite</a>.",
-	
+
 	/* date for ago */
-	
+
 	"ago.seconds"			=> "vor %d Sekunden",
 	"ago.minute"			=> "vor etwa einer Minute",
 	"ago.minutes"			=> "vor %d Minuten",
@@ -533,21 +531,21 @@ $lang = array(
 	"ago.hours"				=> "vor %d Stunden",
 	"ago.day"				=> "vor etwa einem Tag",
 	"ago.weekday"			=> "%s um %s",
-	
+
 	"domain"				=> "Domain",
 	"restoreType"			=> "Wiederherstellungsmethode",
 	"restore_currentapp"	=> "Aktuelle Installation",
 	"restore_newapp"		=> "Neue Installation",
 	"restore_sql_sure"		=> "Sind Sie sicher, dass Sie die Datenbank auf den Stand vom %s zurücksetzen wollen?",
 	"restore_destination"	=> "Wiederherstellungsverzeichnis",
-	
+
 	"error_page_self"		=> "Sie können eine Seite nicht unter sich selbst anordnen.",
-	
+
 	"virtual_page"			=> "Klon-Seite",
 	"requireEmailField"		=> "E-Mail ist erforderlich",
-	
+
 	"author"				=> "Autor",
-	
+
 	"flush_log"				=> "Alte Log-Dateien löschen",
 	"flush_log_success"		=> "Alte Log-Dateien wurde erfolgreich gelöscht.",
 	"flush_log_recommended"	=> "Es sind zu viele Log-Dateien auf dem Server. Es wird Ihnen empfohlen alte Log-Dateien zu löschen.",
@@ -564,25 +562,25 @@ $lang = array(
 	"h_user_logout"			=> '<a href="$userUrl">$euser</a> hat sich ausgeloggt',
 	"h_user_locked"			=> '$user sperrte den Benutzer <a href="$userUrl">$euser</a>',
 	"h_user_unlocked"		=> '$user entsperrte den Benutzer <a href="$userUrl">$euser</a>',
-	
+
 	"h_settings"			=> '$user aktualisierte die <a href="$url">Einstellungen</a>',
-	
+
 	"h_group_update"		=> '$user bearbeitete die Gruppe <a href="$groupUrl">$group</a>',
 	"h_group_remove"		=> '$user löschte die Gruppe $group',
 	"h_group_create"		=> '$user erstellte die Gruppe <a href="$groupUrl">$group</a>',
-	
+
 	"h_all_events"			=> "Alle Datenquellen",
 	"h_relevant"			=> "Wichtige",
 	"h_all"					=> "Alle Ereignisse",
-	
+
 	"older"					=> "Ältere Einträge",
 	"newer"					=> "Neuere Einträge",
-	
+
 	"notification"			=> "Mitteilung",
 	"alert_big_image"		=> "Achtung:\n\nIhre hochgeladene Bilddatei ist zu groß für eine Webseite. Sie wird möglicherweise sehr lange laden.\n\nBitte reduzieren Sie die Bildgröße mit einem Bildbearbeitungsprogramm und laden Sie die Datei erneut hoch.",
-	
+
 	"wrapper_page"			=> "Liste mit Unterseiten",
-	
+
 	"toggle_navigation"		=> "Navigation umschalten",
 	"toggle_sidebar"		=> "Seitenleiste umschalten",
 	"time_not_in_range"		=> "Die Zeit muss zwischen \$start und \$end liegen.",
@@ -590,46 +588,46 @@ $lang = array(
 	"no_valid_time"			=> "Die eingegebene Zeit ist nicht im richtigen Format.",
 	"no_valid_date"			=> "Das angegebene Datum ist nicht im richtigen Format.",
 	"mail_successful_sent"	=> "Die E-Mail wurde erfolgreich gesendet.",
-	
+
 	"error_disk_space"		=> "Es ist nicht genügend freier Speicherplatz auf dem Webserver verfügbar.",
-	
+
 	"help"					=> "Hilfe",
 	"video"					=> "Video",
 	"help_article"			=> "Hilfe-Artikel",
-	
+
 	"useSSL"				=> "SSL benutzen",
 	"useSSL_info"			=> "Sie sollten diese Option nur aktivieren, wenn Ihr Server SSL unterstützt und Sie ein SSL-Zertifikat besitzen.",
 	"useSSL_unsupported"	=> "Um SSL zu aktivieren, rufen Sie diese Seite via SSL auf: <a href='\$link'>Einstellungen SSL</a>",
-	
+
 	"push"					    => "Push",
 	"p_app_key"				    => "App-Key",
 	"p_app_secret"			    => "App-Secret",
 	"p_app_id"				    => "App-ID",
 	"push_info"				    => 'API-Informationen <a target="_blank" href="http://pusher.com?utm_source=badge"><img src="http://pusher.com/images/badges/pusher_badge_light_1.png"></a>.',
-    "google-site-verification"  => "Google-Webmaster-Key",
-    
-    "no_value"					=> "Kein Wert",
-    "favicon"					=> "Lesezeichen-Symbol",
-    
-    "user_defaultgroup"			=> "Standard-Gruppe neuer Nutzer",
-    
-    "on"						=> "An",
-    "off"						=> "Aus",
-    
-    "DAYLY"						=> "täglich",
-    "DAY"						=> "Tag",
-    "WEEKLY"					=> "wöchentlich",
-    "WEEK"						=> "Woche",
-    "MONTHLY"					=> "monatlich",
-    "MONTH"						=> "Monat",
-    "YEARLY"					=> "jährlich",
-    "YEAR"						=> "Jahr",
-    
-    "NO_EDITOR"					=> "Kein grafischer Editor",
-    "EDITOR"					=> "Editor",
-    "EDITOR_TOGGLE"             => "Editor an/aus",
+	"google-site-verification"  => "Google-Webmaster-Key",
+
+	"no_value"					=> "Kein Wert",
+	"favicon"					=> "Lesezeichen-Symbol",
+
+	"user_defaultgroup"			=> "Standard-Gruppe neuer Nutzer",
+
+	"on"						=> "An",
+	"off"						=> "Aus",
+
+	"DAYLY"						=> "täglich",
+	"DAY"						=> "Tag",
+	"WEEKLY"					=> "wöchentlich",
+	"WEEK"						=> "Woche",
+	"MONTHLY"					=> "monatlich",
+	"MONTH"						=> "Monat",
+	"YEARLY"					=> "jährlich",
+	"YEAR"						=> "Jahr",
+
+	"NO_EDITOR"					=> "Kein grafischer Editor",
+	"EDITOR"					=> "Editor",
+	"EDITOR_TOGGLE"             => "Editor an/aus",
 	"JS_DISABLE_EDITOR"        	=> "Sie m&uuml;ssen Javascript aktivieren um den Editor zu benutzen!",
-	
+
 	"HELP.SHOW-MENU"			=> "Klicken, um das Menü anzuzeigen.",
 	"HELP.ADD-NEW-PAGE"			=> "Neue Seite erstellen",
 	"HELP.HISTORY"				=> "In der Änderungshistorie sehen Sie, was in letzter Zeit auf der Seite geändert wurde.",
@@ -671,6 +669,5 @@ $lang = array(
 
 	"block_deleted"		=> "Block wurde gelöscht",
 
-	"uploads_manage"	=> "Medienbibliothek verwalten",
-	"loadMore"			=> "Weitere laden"
+	"ADD_CONTENT"		=> "Inhalt hinzufügen"
 );

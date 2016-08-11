@@ -92,7 +92,7 @@ $lang = array(
 	/* ACCOUNT START */
 	"signatur"                                     	=> "Signature",
 	"passwords_not_match"                          	=> "The passwords don't match.",
-    "password_cannot_be_empty"                      => "You need to enter a password.",
+	"password_cannot_be_empty"                      => "You need to enter a password.",
 	"password_wrong"                               	=> "The password is wrong.",
 	"new_password"                                 	=> "New password",
 	"old_password"                                 	=> "Old Password",
@@ -339,14 +339,14 @@ $lang = array(
 	"Create"										=> "Create",
 	"no_result"										=> "No result",
 	"delete_okay"									=> "The record was successfully deleted!",
-	
+
 	/*mobile*/
 	"classic_version"								=> "standard view",
 	"mobile_version"								=> "mobile view",
-	
+
 	/* new groups*/
 	"groups"										=> "Groups",
-	
+
 	/*check*/
 	"checkall"										=> "Select all",
 	"uncheckall"									=> "Unselect all",
@@ -378,15 +378,15 @@ $lang = array(
 	"register_require_email_info"					=> "Send out validation-emails to validate email-adresse.",
 	"register_require_acitvation"					=> "You're account was registered successfully. An administrator needs to activate it.",
 	"sitestatus_info"								=> "If site is under maintenance, only admins can view the site.",
-	
+
 	/* users and groups */
 	"grouptype"										=> "group-type",
-	
+
 	/* global things */
 	"add_data"										=> "Add entry..",
 	"download"										=> "Download",
 	"submit"										=> "submit",
-	
+
 	/* contact-form */
 	"contact_introduction"							=> "Dear Site-Administrator, <br /><br />The following data was submitted via your contact-form:",
 	"contact_greetings"								=> "Best Regards<br /><br />Goma-Auto-Messenger",
@@ -406,15 +406,16 @@ $lang = array(
 	"notice"										=> "Notice",
 	"notice_site_disabled"							=> "This page is disabled.",
 	"delete_selected"								=> "Delete Selected",
-	
+
 	"menupoint_add"									=> "Show in navigation",
-	
+
 	"database"										=> "Database",
-	
+
 	"login_required"								=> "Please login to view this page!",
-	
+
 	/* versions */
 	"preview"										=> "preview",
+	"publish"										=> "publish",
 	"published_site"								=> "published page",
 	"draft"											=> "draft",
 	"draft_save"									=> "save draft",
@@ -423,7 +424,6 @@ $lang = array(
 	"current_state"									=> "Current State",
 	"open_in_new_tab"								=> "Open in new window",
 	"browse_versions"								=> "Browse all Versions",
-	"this_version"									=> "This version",
 	"revert_changes"								=> "Revert changes",
 	"revert_changes_confirm"						=> "Do you really want to revert changes and go back to the last published version?",
 	"revert"										=> "reverted",
@@ -446,14 +446,13 @@ $lang = array(
 	"no_versions"									=> "No version found",
 	"versions_timeline"								=> "Timeline",
 	"backups"										=> "Backups",
-	"versions"										=> "Versions",
-	
+
 	"DELETED_PAGE"									=> "Deleted page",
 	"EDITED_PAGE"									=> "Edited page",
-	
+
 	"CHANGED"										=> "changed",
 	"NEW"											=> "new",
-	
+
 	/* goma welcome */
 	"before_you_begin"								=> "Before you begin...",
 	"create_user"									=> "Create your Account...",
@@ -461,14 +460,14 @@ $lang = array(
 	"install_success"								=> "Your installation of Goma was successful. Please follow these steps to finalize the installation.",
 	"next_step"										=> "Next step",
 	"goma_let's_start"								=> "Goma - Let's start!",
-	
+
 	"file_perm_error"								=> "Couldn't open file caused of missing permission!",
-	
+
 	"info"											=> "information",
 	"unknown"										=> "unknown",
-	
+
 	/* update algorythm */
-	
+
 	"update"										=> "Update",
 	"updates"										=> "Updates",
 	"update_install"								=> "Install updates",
@@ -489,37 +488,37 @@ $lang = array(
 	"update_expansion"								=> "expansion",
 	"update_no_available"							=> "There are no updates available!",
 	"update_checking"								=> "Checking for updates",
-	
+
 	"updateSuccess"									=> "Goma was updated successfully.",
 	"update_frameworkError"							=> "This update requires a newer version of the Goma-Base-system. Please update the base-system first.",
-	
+
 	"update_changelog"								=> "Changelog",
 	"update_upload"									=> "Upload update-file",
 	"update_connection_failed"						=> "The connection to the goma-server failed. Please activate Allow-URL-fopen in your PHP-Settings. Goma-cms.org could be offline, too.",
-	
+
 	// permissions
 	"admins"										=> "administrators",
 	"invert_groups"									=> "invert groups",
 	"require_login"									=> "You have to login to view this page.",
-	
-	
+
+
 	/* distro-building */
 	"distro_build"									=> "Build a Version",
 	"distro_changelog"								=> "What has changed?",
-	
+
 	"install_advanced_options"						=> "Advanced install-options",
 	"install_option_preflight"						=> "preflight-PHP-script",
 	"install_option_postflight"						=> "postflight-PHP-script",
 	"install_option_getinfo"						=> "getinfo-PHP-script",
-	
+
 	"install_invalid_file"							=> "This is not an installable file.",
 	"install_not_update"							=> "You can install this software, only.",
-	
+
 	"gfs_invalid"									=> "The GFS-archive is damaged or not openable.",
-	
+
 	"inherit_from_parent"							=> "inherit from parent",
 	"hierarchy"										=> "Hierarchy",
-	
+
 	"full_admin_permissions"						=> "Full admin permissions",
 	"full_admin_permissions_info"					=> "Everything is allowed, also if some rights are disabled.",
 	"signed"										=> "signature",
@@ -528,7 +527,7 @@ $lang = array(
 	"signed_false_ssl"								=> "The package could not be validated, because Open-SSL is not installed on this server. Please contact your Server-administrator or get help at the <a href=\"http://goma-cms.org\" target=\"_blank\">Goma-Page</a>.",
 
 	/* date for ago */
-	
+
 	"ago.seconds"			=> "%d seconds ago",
 	"ago.minute"			=> "about one minute ago",
 	"ago.minutes"			=> "%d minutes ago",
@@ -536,32 +535,32 @@ $lang = array(
 	"ago.hours"				=> "%d hours ago",
 	"ago.day"				=> "about one day ago",
 	"ago.weekday"			=> "%s at %s",
-	
+
 	"domain"				=> "Domain",
 	"restoreType"			=> "Restoremethod",
 	"restore_currentapp"	=> "Current installation",
 	"restore_newapp"		=> "new installation",
 	"restore_sql_sure"		=> "Are you sure, you want to restore the database to the state of %s?",
 	"restore_destination"	=> "Restore-Folder",
-	
+
 	"error_page_self"		=> "You are not allowed to arrange a page under itself.",
-	
+
 	"virtual_page"			=> "Clone-page",
 	"requireEmailField"		=> "email is required",
-	
+
 	"author"				=> "author",
-	
+
 	"flush_log"				=> "Delete old log-files",
 	"flush_log_success"		=> "All old log-files were deleted successfully.",
 	"flush_log_recommended"	=> "There are too many log-files on this server. It's recommended to delete old ones.",
 
 	"tablefield_out_of"		=> "out of",
-	
+
 	"history"				=> "Modification-History",
-	
+
 	// history
 	"h_settings"			=> '$user updated the <a href="$url">settings</a>',
-	
+
 	"h_user_update"			=> '$user updated the user <a href="$userUrl">$euser</a>',
 	"h_profile_update"		=> '$user updated the own profile.',
 	"h_user_remove"			=> '$user removed the user $euser',
@@ -574,69 +573,69 @@ $lang = array(
 	"h_group_update"		=> '$user updated the group <a href="$groupUrl">$group</a>',
 	"h_group_remove"		=> '$user removed the group $group',
 	"h_group_create"		=> '$user created the group <a href="$groupUrl">$group</a>',
-	
+
 	"h_all"					=> "all events",
 	"h_all_events"			=> "all sources",
 	"h_relevant"			=> "important",
-	
+
 	"older"					=> "older entries",
 	"newer"					=> "newer entries",
-	
+
 	"notification"			=> "notification",
 	"alert_big_image"		=> "Warning:\n\nYour uploaded image is too big for a website. It may load a long time.\n\nPlease reduce the image-size and try again.",
-	
+
 	"wrapper_page"			=> "list with subpages",
-	
+
 	"toggle_navigation"		=> "toggle navigation",
 	"toggle_sidebar"		=> "toggle sidebar",
-	
+
 	"time_not_in_range"		=> "The time must be between \$start and \$end.",
 	"date_not_in_range"		=> "The date must be in the range of \$start and \$end.",
 	"no_valid_time"			=> "The given time is not valid.",
 	"no_valid_date"			=> "The given date is not valid.",
-	
+
 	"mail_successful_sent"	=> "The mail was sent successfully.",
-	
+
 	"error_disk_space"		=> "There's not enough disk space on the webserver available.",
-	
-	"help"					=> "Help",
+
+	"help"					=> "help",
 	"video"					=> "video",
 	"help_article"			=> "help-article",
-	
+
 	"useSSL"				=> "use SSL",
 	"useSSL_info"			=> "You should only use SSL if the Server supports SSL and you've got a SSL-certificate.",
 	"useSSL_unsupported"	=> "To activate SSL visit this page via SSL: <a href='\$link'>Settings via SSL</a>",
-	
+
 	"push"					    => "Push",
 	"p_app_key"				    => "App-Key",
 	"p_app_secret"			    => "App-Secret",
 	"p_app_id"				    => "App-ID",
 	"push_info"				    => 'API-information <a target="_blank" href="http://pusher.com?utm_source=badge"><img src="http://pusher.com/images/badges/pusher_badge_light_1.png"></a>.',
-    "google-site-verification"  => "Google-Webmaster-Key",
-    
-    "no_value"					=> "no value",
-    "favicon"					=> "Bookmark-icon",
-    
-    "user_defaultgroup"			=> "default group of new users",
-    
-    "on"						=> "on",
-    "off"						=> "off",
-    
-    
-    "DAYLY"						=> "dayly",
-    "DAY"						=> "day",
-    "WEEKLY"					=> "weekly",
-    "WEEK"						=> "week",
-    "MONTHLY"					=> "monthly",
-    "MONTH"						=> "month",
-    "YEARLY"					=> "yearly",
-    "YEAR"						=> "year",
-    
+	"google-site-verification"  => "Google-Webmaster-Key",
+
+	"no_value"					=> "no value",
+	"favicon"					=> "Bookmark-icon",
+
+	"user_defaultgroup"			=> "default group of new users",
+
+	"on"						=> "on",
+	"off"						=> "off",
+
+
+	"DAYLY"						=> "dayly",
+	"DAY"						=> "day",
+	"WEEKLY"					=> "weekly",
+	"WEEK"						=> "week",
+	"MONTHLY"					=> "monthly",
+	"MONTH"						=> "month",
+	"YEARLY"					=> "yearly",
+	"YEAR"						=> "year",
+
 	"JS_DISABLE_EDITOR"         => "You have to activate JavaScript to user the Editor.",
 	"EDITOR_TOGGLE"             => "Toggle editor",
 	"EDITOR"					=> "Editor",
 	"NO_EDITOR"					=> "No WYSIWYG-Editor.",
-	
+
 	"HELP.SHOW-MENU"			=> "click to show menu.",
 	"HELP.ADD-NEW-PAGE"			=> "create new page.",
 	"HELP.HISTORY"				=> "The history is about what has changed last time on your website.",
@@ -678,6 +677,5 @@ $lang = array(
 
 	"block_deleted"		=> "Block has been deleted",
 
-	"uploads_manage"	=> "Manage uploads",
-	"loadMore"			=> "Load more"
+	"ADD_CONTENT"		=> "Add content"
 );
