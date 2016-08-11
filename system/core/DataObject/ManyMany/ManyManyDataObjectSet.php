@@ -682,7 +682,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
     {
         $this->setModifyAllMode();
         $this->staging->move($item, $position);
-        $this->items = $this->staging->ToArray();
+        $this->items =& $this->staging->ToArray();
         return $this;
     }
 
@@ -737,6 +737,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
 
         uasort($items, $callback);
         $this->staging = new ArrayList($items);
+        $this->items =& $this->staging->ToArray();
 
         return $this;
     }

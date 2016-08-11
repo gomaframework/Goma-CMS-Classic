@@ -329,13 +329,13 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	}
 
 	/**
-	 * this function returns the data as an array
+	 * this function returns the current data as an array
 	 *
 	 * @return array
 	 */
 	public function ToArray()
 	{
-		return array_merge((array) $this->items, $this->staging->ToArray());
+		return $this->items;
 	}
 
 	/**
@@ -1031,9 +1031,9 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		$this->staging->add($record);
 
-		if(($this->page === null || count($this->items) == $this->perPage)) {
-			if(count($this->items) < $this->perPage || $matchesFilter) {
-				if ($this->items !== null) {
+		if (($this->page === null || count($this->items) == $this->perPage)) {
+			if (count($this->items) < $this->perPage || $matchesFilter) {
+				if ($this->items !== null && $this->fetchMode == self::FETCH_MODE_EDIT) {
 					$this->items[] = $record;
 				}
 

@@ -630,6 +630,32 @@ class DataObjectSetTests extends GomaUnitTest
         $set->addFilter(array("true"));
         $this->assertEqual($set->count(), 0);
     }
+
+    public function testCreateNew() {
+        $set = new DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $set->add($this->nik);
+        $set->add($this->janine);
+        $set->add($this->patrick);
+
+        $this->assertEqual(3, $set->count());
+        $this->assertEqual(3, count($set->ToArray()));
+        $this->assertEqual(3, $set->getStaging()->count());
+        $this->assertEqual(3, count($set->getStaging()->ToArray()));
+
+        $this->assertEqual($this->nik, $set[0]);
+        $this->assertEqual($this->janine, $set[1]);
+        $this->assertEqual($this->patrick, $set[2]);
+
+        $this->assertEqual($this->nik, $set->first());
+        $this->assertEqual($this->patrick, $set->last());
+
+        $set->add($this->kathi);
+
+        $this->assertEqual($this->kathi, $set->last());
+        $this->assertEqual($this->patrick, $set[2]);
+    }
 }
 
 class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
