@@ -81,11 +81,9 @@ multiFormFieldController.prototype = {
     updateOrder: function() {
         var i = 0;
         this.element.find(".form-component").each(function(){
-            if(!$(this).parent().hasClass("part-hidden")) {
-                $(this).attr("order", i);
-                $(this).find("input[name*=__sortpart]").val(i);
-                i++;
-            }
+            $(this).attr("order", i);
+            $(this).find("input[name*=__sortpart]").val(i);
+            i++;
         });
     },
 

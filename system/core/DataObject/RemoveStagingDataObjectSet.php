@@ -54,15 +54,15 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
      */
     public function removeFromSet($record) {
         if($record->id == 0) {
-            throw new InvalidArgumentException("You can not remove a not written DataObject from Set, please use removeFromStaging instead.");
-        }
+            $this->removeFromStage($record);
+        } else {
+            if (!$this->removeStaging->find("id", $record->id)) {
+                $this->removeStaging->add($record);
+            }
 
-        if(!$this->removeStaging->find("id", $record->id)) {
-            $this->removeStaging->add($record);
-        }
-
-        if($this->staging->find("id", $record->id)) {
-            $this->staging->remove($record);
+            if ($this->staging->find("id", $record->id)) {
+                $this->staging->remove($record);
+            }
         }
     }
 

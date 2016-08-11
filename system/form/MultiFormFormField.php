@@ -194,6 +194,7 @@ class MultiFormFormField extends ClusterFormField {
                 if($this->getField($record->{$this->modelKeyField})) {
                     $this->getField($record->{$this->modelKeyField})->argumentResult($record);
                     if ($record->__shouldDeletePart) {
+                        /** @var RemoveStagingDataObjectSet $result */
                         $result->removeFromSet($record);
                     } else {
                         $sortInfo[$record->{$this->modelKeyField}] = $record->__sortPart;
@@ -213,7 +214,17 @@ class MultiFormFormField extends ClusterFormField {
 
                     return $sortInfo[$a->{$keyField}] < $sortInfo[$b->{$keyField}] ? -1 : 1;
                 } else {
-                    throw new LogicException("Sort-Information not available.");
+                    $fieldA = $this->getField($a->{$keyField});
+                    $fieldB = $this->getField($b->{$keyField});
+                    $hasFieldA = $fieldA != null;
+                    $hasFieldB = $fieldB != null;
+                    $infoA = array();
+                    $infoB = array();
+                    $fieldA->argumentResult($infoA);
+                    $fieldB->argumentResult($infoB);
+                    throw new LogicException("Sort-Information not available. Query for: {$a->{$keyField}}: $hasFieldA, " .
+                    " {$b->{$keyField}}: $hasFieldB | Data for: " . print_r($sortInfo, true) . " A: " . print_r($infoA, true) .
+                    "B: " . print_r($infoB, true));
                 }
             });
         }
