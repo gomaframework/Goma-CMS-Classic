@@ -151,4 +151,56 @@ class ManyManyDataObjectSet extends GomaUnitTest implements TestAble {
             $firstAge = $current->age;
         }
     }
+
+    public function testRemoveInLoop() {
+        $set = new ManyMany_DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $this->assertTrue(count($this->allPersons) > 10);
+
+        foreach($this->allPersons as $person) {
+            $set->add($person);
+        }
+
+        $this->assertEqual(count($this->allPersons), $set->count());
+        $this->assertEqual(count($this->allPersons), count($set->ToArray()));
+
+        $i = 0;
+        foreach($set as $record) {
+            $this->assertEqual($this->allPersons[$i], $record);
+            if($i == 3) {
+                $set->removeFromStage($record);
+            }
+            $i++;
+        }
+        $this->assertEqual(count($this->allPersons), $i);
+        $this->assertEqual(count($this->allPersons) - 1, $set->count());
+        $this->assertEqual(count($this->allPersons) - 1, count($set->ToArray()));
+    }
+
+    public function testRemoveFromSetInLoop() {
+        $set = new ManyMany_DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $this->assertTrue(count($this->allPersons) > 10);
+
+        foreach($this->allPersons as $person) {
+            $set->add($person);
+        }
+
+        $this->assertEqual(count($this->allPersons), $set->count());
+        $this->assertEqual(count($this->allPersons), count($set->ToArray()));
+
+        $i = 0;
+        foreach($set as $record) {
+            $this->assertEqual($this->allPersons[$i], $record);
+            if($i == 3) {
+                $set->removeFromSet($record);
+            }
+            $i++;
+        }
+        $this->assertEqual(count($this->allPersons), $i);
+        $this->assertEqual(count($this->allPersons) - 1, $set->count());
+        $this->assertEqual(count($this->allPersons) - 1, count($set->ToArray()));
+    }
 }

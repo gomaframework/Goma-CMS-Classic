@@ -1606,6 +1606,14 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		return $this;
 	}
+
+	/**
+	 * @param DataObject $record
+	 * @return bool
+	 */
+	public function isInStage($record) {
+		return $record->id != 0 ? $this->staging->find("id", $record->id) != null : $this->staging->itemExists($record);
+	}
 }
 
 class DataObjectSetCommitException extends GomaException {

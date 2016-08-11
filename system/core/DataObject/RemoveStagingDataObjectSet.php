@@ -94,6 +94,16 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
     }
 
     /**
+     * @param DataObject $record
+     * @return bool
+     */
+    public function isInStage($record) {
+        return $record->id != 0 ?
+            $this->staging->find("id", $record->id) != null || $this->removeStaging->find("id", $record->id) != null :
+            $this->staging->itemExists($record) || $this->removeStaging->itemExists($record);
+    }
+
+    /**
      * @param bool $forceInsert
      * @param bool $forceWrite
      * @param int $snap_priority

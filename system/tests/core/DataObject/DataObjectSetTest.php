@@ -424,6 +424,9 @@ class DataObjectSetTests extends GomaUnitTest
         $set->add($this->patrick);
         $this->assertTrue($set->isDataLoaded());
 
+        $this->assertTrue($set->isInStage($this->patrick));
+        $this->assertFalse($set->isInStage($this->daniel));
+
         $merged = array_merge($source->records, array($this->patrick));
         $this->assertIsA($merged, "array");
 
@@ -734,9 +737,11 @@ class DataObjectSetTests extends GomaUnitTest
 
         $i = 0;
         foreach($set as $record) {
+            $this->assertTrue($set->isInStage($record));
             $this->assertEqual($this->allPersons[$i], $record);
             if($i == 3) {
                 $set->removeFromStage($record);
+                $this->assertFalse($set->isInStage($record));
             }
             $i++;
         }
