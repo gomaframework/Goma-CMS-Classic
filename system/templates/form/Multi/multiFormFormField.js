@@ -69,6 +69,13 @@ multiFormFieldController.prototype = {
                 return false;
             });
         }
+
+        this.element.find("input[name*=__shoulddeletepart]").each(function(){
+            if($(this).val() == 1) {
+                var cluster = $(this).parent().parent().parent();
+                _this.hideCluster(cluster);
+            }
+        });
     },
 
     updateOrder: function() {
