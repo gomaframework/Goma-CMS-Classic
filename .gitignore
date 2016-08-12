@@ -21,6 +21,7 @@ system/temp/*
 system/installer/log/*
 system/installer/temp/*
 system/version.php
+!system/_config.php
 
 # Goma Application
 gomacms/*
