@@ -151,7 +151,7 @@ class MultiFormRenderData extends FormFieldRenderData {
         }
 
         $data["addable"] = $addable;
-        $data["addedNewField"] = $this->addedNewField;
+        $data["addedNewField"] = var_export($this->addedNewField, true);
 
         return $data;
     }

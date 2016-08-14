@@ -77,11 +77,13 @@ multiFormFieldController.prototype = {
             }
         });
 
-        if(this.options.addedNewField) {
+        if(this.addedNewField) {
+            setTimeout(function(){
+                scrollToHash(_this.element.find(" > .clusterformfield").last().attr("id"));
+            }, 200);
             this.element.parents(".tab").each(function(){
                 $("#" + $(this).attr("id") + "_tab").click();
             });
-            scrollToHash(this.element.attr("id"));
         }
     },
 
