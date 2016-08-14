@@ -50,6 +50,11 @@ class MultiFormFormField extends ClusterFormField {
     protected $loadedFromSession = false;
 
     /**
+     * @var bool
+     */
+    protected $addedNewField = false;
+
+    /**
      * @return DataObjectSet|IDataSet|RemoveStagingDataObjectSet|ISortableDataObjectSet
      */
     public function getModel() {
@@ -93,8 +98,12 @@ class MultiFormFormField extends ClusterFormField {
 
     /**
      * modify add and sort.
+     *
+     * @return bool
      */
     protected function modifyAddAndSort() {
+        $hasBeenAddedNewField = false;
+
         foreach($this->getAddableClasses() as $class) {
             if($this->parent->getFieldPost($this->PostName() . "_add_" . $class)) {
                 $this->getModel()->add(
@@ -102,6 +111,7 @@ class MultiFormFormField extends ClusterFormField {
                         "class_name" => $class
                     ))
                 );
+                $hasBeenAddedNewField = true;
             }
         }
 
@@ -127,6 +137,8 @@ class MultiFormFormField extends ClusterFormField {
                 }
             });
         }
+
+        return $hasBeenAddedNewField;
     }
 
     /**
@@ -142,7 +154,7 @@ class MultiFormFormField extends ClusterFormField {
             $this->getModel()->setModifyAllMode();
         }
 
-        $this->modifyAddAndSort();
+        $this->addedNewField = $this->modifyAddAndSort();
 
         /** @var DataObject $record */
         $i = 0;
@@ -244,7 +256,8 @@ class MultiFormFormField extends ClusterFormField {
         return $data
             ->setSortable(is_a($this->getModel(), "ISortableDataObjectSet"))
             ->setDeletable(is_a($this->getModel(), "RemoveStagingDataObjectSet"))
-            ->setAddAble($this->getAddableClasses());
+            ->setAddAble($this->getAddableClasses())
+            ->setAddedNewField($this->addedNewField);
     }
 
     public function addRenderData($info, $notifyField = true)

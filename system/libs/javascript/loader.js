@@ -1592,12 +1592,14 @@ if (window.loader === undefined) {
 	}
 
 	var scrollToHash = function (hash) {
-		if ($("#" + hash).length > 0) {
-			var scrollPosition = $("#" + hash).offset().top;
+		var scrollPosition,
+			hashJqueryById = $("#" + hash);
+		if (hashJqueryById.length > 0) {
+			scrollPosition = hashJqueryById.offset().top;
 		} else if ($("a[name="+hash+"]").length > 0) {
-			var scrollPosition = $("a[name="+hash+"]").offset().top;
+			scrollPosition = $("a[name="+hash+"]").offset().top;
 		} else {
-			var scrollPosition = 0;
+			scrollPosition = 0;
 		}
 
 		scrollPosition = Math.round(scrollPosition);
@@ -1613,11 +1615,11 @@ if (window.loader === undefined) {
 		$("html, body").animate({
 			"scrollTop": scrollPosition
 		}, 200);
-	}
+	};
 
 	var now = function () {
 		return Math.round(+new Date()/1000);
-	}
+	};
 
 	/**
 	 * returns a string like 2 seconds ago

@@ -30,6 +30,11 @@ class MultiFormRenderData extends FormFieldRenderData {
     protected $addAble = array();
 
     /**
+     * @var bool
+     */
+    protected $addedNewField = false;
+
+    /**
      * @return boolean
      */
     public function isSortable()
@@ -107,6 +112,24 @@ class MultiFormRenderData extends FormFieldRenderData {
     }
 
     /**
+     * @return boolean
+     */
+    public function isAddedNewField()
+    {
+        return $this->addedNewField;
+    }
+
+    /**
+     * @param boolean $addedNewField
+     * @return $this
+     */
+    public function setAddedNewField($addedNewField)
+    {
+        $this->addedNewField = $addedNewField;
+        return $this;
+    }
+
+    /**
      * @param bool $includeRendered
      * @param bool $includeChildren
      * @return array
@@ -128,6 +151,7 @@ class MultiFormRenderData extends FormFieldRenderData {
         }
 
         $data["addable"] = $addable;
+        $data["addedNewField"] = $this->addedNewField;
 
         return $data;
     }
