@@ -76,6 +76,15 @@ multiFormFieldController.prototype = {
                 _this.hideCluster(cluster);
             }
         });
+
+        if(this.addedNewField) {
+            setTimeout(function(){
+                scrollToHash(_this.element.find(" > .clusterformfield").last().attr("id"));
+            }, 200);
+            this.element.parents(".tab").each(function(){
+                $("#" + $(this).attr("id") + "_tab").click();
+            });
+        }
     },
 
     updateOrder: function() {
