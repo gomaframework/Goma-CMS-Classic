@@ -172,7 +172,7 @@ if(typeof goma == "undefined")
 			} else {
 				for (var i in fields) {
 					if (fields.hasOwnProperty(i)) {
-						if (fields[i].name.toLowerCase() == name.toLowerCase()) {
+						if (fields[i].name && fields[i].name.toLowerCase() == name.toLowerCase()) {
 							return fields[i];
 						}
 

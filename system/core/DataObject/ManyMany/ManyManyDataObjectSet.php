@@ -539,8 +539,15 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             $this->relationShip->getOwnerSortField()    => $sort
         );
 
-        foreach($this->relationShip->getExtraFields() as $field => $type) {
-            $newRecord[$field] = isset($record[$field]) ? $record[$field] : "";
+        /** @var DataObject $changedRecord */
+        if(($changedRecord = $this->updateExtraFieldsStage->find("versionid", $id)) && $changedRecord->hasChanged()) {
+            foreach($this->relationShip->getExtraFields() as $field => $type) {
+                $newRecord[$field] = isset($changedRecord->{$field}) ? $changedRecord->{$field} : "";
+            }
+        } else {
+            foreach($this->relationShip->getExtraFields() as $field => $type) {
+                $newRecord[$field] = isset($record[$field]) ? $record[$field] : "";
+            }
         }
 
         return $newRecord;
