@@ -102,6 +102,13 @@ class SelectQuery {
 	protected static $new_field_cache = array();
 
 	/**
+	 * order by rand.
+	 *
+	 * @var bool
+	 */
+	protected $orderByRand = false;
+
+	/**
 	 * from-hash.
 	 */
 	private $fromHash;
@@ -239,6 +246,10 @@ class SelectQuery {
 	 * @return $this
 	 */
 	public function sort($field, $type = "ASC", $order = 0) {
+		if($field == "rand") {
+			$this->orderByRand = true;
+			return $this;
+		}
 
 		$collate = null;
 
@@ -381,8 +392,10 @@ class SelectQuery {
 	public function join($type, $table, $statement, $alias = "", $includeFields = true) {
 		$this->getAliasAndStatement($table, $statement, $alias);
 
+		// allow subqueries here
+		$tableWithPrefix = trim($table)[0] == "(" ? $table : DB_PREFIX . $table;
 		$this->from($table, $includeFields, $alias,
-			$type . " JOIN " . DB_PREFIX . $table . " AS " . $alias . " ON " . $statement . " ");
+			$type . " JOIN " . $tableWithPrefix . " AS " . $alias . " ON " . $statement . " ");
 
 		return $this;
 	}
@@ -660,7 +673,7 @@ class SelectQuery {
 				$table = $alias;
 			}
 
-			if(is_string($table)) {
+			if(is_string($table) && !trim($table)[0] == "(") {
 				if(ClassInfo::$database && !isset(ClassInfo::$database[$table])) {
 					throw new Exception("Table " . $table . " does not exist! " . print_r($fromHash, true));
 				}
@@ -690,9 +703,14 @@ class SelectQuery {
 
 		ksort($this->orderby);
 		// ORDER BY
-		if(count($this->orderby) > 0) {
+		if(count($this->orderby) > 0 || $this->orderByRand) {
 			$sql .= " ORDER BY ";
 			$i = 0;
+			if($this->orderByRand) {
+				$sql .= "RAND(), ";
+				$i++;
+			}
+
 			foreach($this->orderby as $data) {
 				if($i == 0) {
 					$i++;

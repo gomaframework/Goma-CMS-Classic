@@ -12,11 +12,9 @@
  * @version     1.5.2
  */
 class DataObjectSet extends ViewAccessableData implements IDataSet {
-
-	const ID = "DataObjectSet";
-
 	const FETCH_MODE_CREATE_NEW = "fetch_create_new";
 	const FETCH_MODE_EDIT = "fetch_mode_edit";
+	const POOL_PROP_SIZE = 2;
 
 	/**
 	 * how many items per page
@@ -1613,6 +1611,57 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 */
 	public function isInStage($record) {
 		return $record->id != 0 ? $this->staging->find("id", $record->id) != null : $this->staging->itemExists($record);
+	}
+
+	/**
+	 * picks n records randomly.
+	 *
+	 * @param int $n
+	 * @return ArrayList
+	 */
+	public function pickRandomly($n) {
+		$set = new ArrayList();
+		$propability = 1 / $this->countWholeSet() * $n;
+		if($this->staging->count() == $this->countWholeSet()) {
+			return $this->staging->pickRandomly($n);
+		}
+		foreach($this->staging as $record) {
+			if($set->count() < $n && rand(0, 1) < $propability) {
+				$set->add($record);
+			}
+		}
+
+		if($set->count() < $n) {
+			/*
+			 * we limit the propability of the pool, so mysql does not need to sort
+			 * the whole table, but just a small amount of that.
+			 * the POOL_PROP_SIZE defines the factor how much greater the pool is than the set we want to get.
+			 * It's a good compromise to use something like 2 here.
+			 */
+			$poolPropability = ($n - $set->count()) / $this->countWholeSet() * self::POOL_PROP_SIZE;
+			$subQuery = $this->dbDataSource()->buildExtendedQuery($this->version, array_merge(
+				$this->getFilterForQuery(),
+				array(" RAND() < {$poolPropability} ")
+			), array(), array(), $this->getJoinForQuery(), true);
+
+			$join = $this->getJoinForQuery();
+			$join[] = array(
+				DataObject::JOIN_TYPE => "INNER",
+				DataObject::JOIN_TABLE => "(".$subQuery->build($this->dbDataSource()->baseTable() . ".id").")",
+				DataObject::JOIN_STATEMENT => $this->dbDataSource()->baseTable() . ".id = " .
+					$this->dbDataSource()->baseTable() . "_randompool.id",
+				DataObject::JOIN_ALIAS => $this->dbDataSource()->baseTable() . "_randompool"
+			);
+			foreach($this->dbDataSource()->getRecords($this->version, $this->getFilterForQuery(), array(),
+				array(0, $n - $set->count()), $join, $this->search) as $record) {
+				$set->add($this->getConverted($record));
+			}
+		}
+
+		$items = $set->ToArray();
+		shuffle($items);
+
+		return new ArrayList($items);
 	}
 }
 

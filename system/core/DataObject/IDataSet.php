@@ -164,4 +164,10 @@ interface IDataSet extends Countable {
      * @return bool
      */
     public function canFilterBy($field);
+
+    /**
+     * @param int $n
+     * @return ArrayList
+     */
+    public function pickRandomly($n);
 }

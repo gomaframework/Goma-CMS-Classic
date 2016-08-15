@@ -421,15 +421,11 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
     }
 
     /**
-     * public function to make permission-calls
+     * checks if one of the given permissions is allowed for the current user.
      *
-     * @name can
-     * @access public
      * @param string|array $permissions name(s) of permission
      * @param DataObject $record optional
      * @return bool
-     *
-     * TODO: Check if this makes sense by only having required one permission to have to be true
      */
     public function can($permissions, $record = null) {
 
@@ -472,7 +468,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
     /**
      * returns if you can access a specific history-record
      *
-     * @param string|gObject $record
+     * @param History $record
      * @return bool
      */
     public static function canViewHistory($record = null) {
@@ -1569,10 +1565,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
         // limiting
         $query->limit($limit);
 
-        if ($join)
-            foreach($join as $currentJoin)
-            {
-                if(isset($currentJoin[self::JOIN_TYPE], $currentJoin[self::JOIN_TABLE], $currentJoin[self::JOIN_STATEMENT])) {
+        if ($join) {
+            foreach ($join as $currentJoin) {
+                if (isset($currentJoin[self::JOIN_TYPE], $currentJoin[self::JOIN_TABLE], $currentJoin[self::JOIN_STATEMENT])) {
                     $query->join(
                         $currentJoin[self::JOIN_TYPE],
                         $currentJoin[self::JOIN_TABLE],
@@ -1581,9 +1576,10 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
                         isset($currentJoin[self::JOIN_INCLUDEDATA]) ? $currentJoin[self::JOIN_INCLUDEDATA] : true
                     );
                 } else {
-                    throw new InvalidArgumentException("Joins must follow Join-Format. array(type=>,table=>,statement=>,[alias=>],[includeFields=>}), got " . print_r($currentJoin, true));
+                    throw new InvalidArgumentException("Joins must follow Join-Format. array(type=>,table=>,statement=>[,alias=>][,includeFields=>]), got " . print_r($currentJoin, true));
                 }
             }
+        }
 
         // don't forget filtering on class-name
         if ($forceClasses) {

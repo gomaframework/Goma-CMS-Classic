@@ -105,6 +105,17 @@ interface IDataObjectSetDataSource {
      * @return bool
      */
     public function manipulate($manipulation);
+
+    /**
+     * @param $version
+     * @param array $filter
+     * @param array $sort
+     * @param array $limit
+     * @param array $joins
+     * @param bool $forceClasses
+     * @return SelectQuery
+     */
+    public function buildExtendedQuery($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $forceClasses = true);
 }
 
 interface IDataObjectSetModelSource {
