@@ -1645,12 +1645,13 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 			), array(), array(), $this->getJoinForQuery(), true);
 
 			$join = $this->getJoinForQuery();
+			$randomPoolId = "randompool_" . randomString(5);
 			$join[] = array(
 				DataObject::JOIN_TYPE => "INNER",
 				DataObject::JOIN_TABLE => "(".$subQuery->build($this->dbDataSource()->baseTable() . ".id").")",
 				DataObject::JOIN_STATEMENT => $this->dbDataSource()->baseTable() . ".id = " .
-					$this->dbDataSource()->baseTable() . "_randompool.id",
-				DataObject::JOIN_ALIAS => $this->dbDataSource()->baseTable() . "_randompool"
+					$this->dbDataSource()->baseTable() . "_".$randomPoolId.".id",
+				DataObject::JOIN_ALIAS => $this->dbDataSource()->baseTable() . "_" . $randomPoolId
 			);
 			foreach($this->dbDataSource()->getRecords($this->version, $this->getFilterForQuery(), array(),
 				array(0, $n - $set->count()), $join, $this->search) as $record) {
