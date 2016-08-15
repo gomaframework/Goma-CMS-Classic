@@ -887,6 +887,19 @@ class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
     {
         // TODO: Implement manipulate() method.
     }
+
+    /**
+     * @param $version
+     * @param array $filter
+     * @param array $sort
+     * @param array $limit
+     * @param array $joins
+     * @param bool $forceClasses
+     * @return SelectQuery
+     */
+    public function buildExtendedQuery($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $forceClasses = true) {
+        
+    }
 }
 
 class MockIModelSource implements IDataObjectSetModelSource {

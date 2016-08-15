@@ -173,7 +173,6 @@ class History extends DataObject {
 	/**
 	 * if we can this history-event
 	 *
-	 * @name canSeeEvent
 	 * @return bool
 	 */
 	public function canSeeEvent() {
