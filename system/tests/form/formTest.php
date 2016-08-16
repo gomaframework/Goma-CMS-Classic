@@ -11,17 +11,17 @@
 class FormTest extends GomaUnitTest implements TestAble {
 	/**
 	 * area
-	*/
+	 */
 	static $area = "Form";
 
 	/**
 	 * internal name.
-	*/
+	 */
 	public $name = "Form";
 
 	/**
 	 * tests form RequestHandler connection.
-	*/
+	 */
 	public function testFormRequestHandler() {
 		$form = new Form($c = new Controller(), "test");
 
@@ -55,13 +55,13 @@ class FormTest extends GomaUnitTest implements TestAble {
 
 	/**
 	 * tests if fields are accessable by name.
-	*/
+	 */
 	public function testFieldAccessable() {
 		$this->caseFieldAccessable("name", new TextField("name", "name"));
 		$this->caseFieldAccessable("surname", new TextField("surname", "name"));
 		$this->caseFieldAccessable("address1", new TextField("address1", "name"));
 		$this->caseFieldAccessable("_1", new TextField("_1", "name"));
-        $this->caseFieldAccessable("test", new TextField("test", "blub"));
+		$this->caseFieldAccessable("test", new TextField("test", "blub"));
 
 		$this->caseFieldAccessable("test", new FieldSet("test", array(), "blub"));
 		$this->caseFieldAccessable("blah", new FieldSet("BLAH", array(), "blub"));
@@ -177,7 +177,7 @@ class FormTest extends GomaUnitTest implements TestAble {
 
 	/**
 	 * @param FormValidator $obj
-     */
+	 */
 	public function validateFieldsActive($obj) {
 		$this->validationCalled = true;
 		$result = $obj->getForm()->result;
@@ -249,9 +249,12 @@ class FormTest extends GomaUnitTest implements TestAble {
 					$reflectionProp->setAccessible(true);
 					$tpl = $reflectionProp->getValue($inst);
 
+					$expansion = isset(ClassInfo::$class_info[$field]["inExpansion"]) ?
+						ClassInfo::$class_info[$field]["inExpansion"] : null;
+
 					if ($tpl) {
-						$this->assertTrue(!!tpl::getFilename($tpl), "Template $tpl for class $field %s");
-						$this->assertTrue(file_exists(tpl::getFilename($tpl)), "Template $tpl exists for class $field %s");
+						$this->assertTrue(!!tpl::getFilename($tpl, "", false, $expansion), "Template $tpl for class $field %s");
+						$this->assertTrue(file_exists(tpl::getFilename($tpl, "", false, $expansion)), "Template $tpl exists for class $field %s");
 					}
 				}
 			}

@@ -669,5 +669,8 @@ $lang = array(
 
 	"block_deleted"		=> "Block wurde gelöscht",
 
-	"ADD_CONTENT"		=> "Inhalt hinzufügen"
+	"ADD_CONTENT"		=> "Inhalt hinzufügen",
+
+	"this_version"		=> "Diese Version",
+	"versions"			=> "Versionen"
 );

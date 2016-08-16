@@ -415,7 +415,6 @@ $lang = array(
 
 	/* versions */
 	"preview"										=> "preview",
-	"publish"										=> "publish",
 	"published_site"								=> "published page",
 	"draft"											=> "draft",
 	"draft_save"									=> "save draft",
@@ -677,5 +676,8 @@ $lang = array(
 
 	"block_deleted"		=> "Block has been deleted",
 
-	"ADD_CONTENT"		=> "Add content"
+	"ADD_CONTENT"		=> "Add content",
+
+	"this_version"		=> "This version",
+	"versions"			=> "Versions"
 );
