@@ -22,7 +22,8 @@ $files_lang = array(
 	"no_file"			=> "Keine Datei vorhanden",
 	"upload_success"	=> "Die Datei wurde erfolgreich hochgeladen!",
 	"size"				=> "Dateigröße",
-	"backtrack"			=> "Verwendung"
+	"backtrack"			=> "Verwendung",
+	"manage_file"		=> "Datei administrieren"
 );
 
 foreach($files_lang as $key => $value)

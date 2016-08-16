@@ -67,6 +67,10 @@ var AjaxUpload = function(DropZone, options) {
     if(typeof this.browse !== "undefined") {
         this.browse = $(this.browse);
         this.placeBrowseHandler();
+
+        this.browse.on("click touchend", function(){
+            $("#" + $this.id + "_uploadForm").find("input").trigger("click");
+        });
     }
 
     return this;
@@ -575,15 +579,17 @@ AjaxUpload.prototype = {
         var $this = this;
 
         // now create the form
-        if($("#" + this.id + "_uploadForm").length == 0) {
+        var $form = $("#" + this.id + "_uploadForm");
+        if($form.length == 0) {
             $("body").append('<form id="' + this.id+'_uploadForm" style="position: absolute; left: -500px;z-index: 900;" method="post" action="'+this.url+'" enctype="multipart/form-data"><input name="file" style="font-size: 200px;float: right;" type="file" class="fileSelectInput" /></form>');
-            $("#" + this.id + "_uploadForm").find(".fileSelectInput").change(function(){
+            $form = $("#" + this.id + "_uploadForm");
+            $form.find(".fileSelectInput").change(function(){
                 $this.transportFrame(this);
             });
 
             if(this.multiple) {
-                $("#" + this.id + "_uploadForm").find(".fileSelectInput").attr("multiple", "multiple");
-                $("#" + this.id + "_uploadForm").find(".fileSelectInput").attr("name", "file[]");
+                $form.find(".fileSelectInput").attr("multiple", "multiple");
+                $form.find(".fileSelectInput").attr("name", "file[]");
             }
         }
 
@@ -593,17 +599,15 @@ AjaxUpload.prototype = {
             $this.browse.attr("disabled", "disabled");
         }
 
-        var $form = $("#" + this.id + "_uploadForm");
         $form.css("display", "block");
         $form.css({
-            top: this.browse.offset().top,
-            left: this.browse.offset().left + this.browse.outerWidth() - $form.width(),
-            width: this.browse.outerWidth(),
-            height: this.browse.outerHeight(), overflow: "hidden"
+            top: "-100px",
+            left: "auto",
+            width: "50px",
+            height: "50px",
+            overflow: "hidden"
         });
         $form.fadeTo(0, 0);
-
-        setTimeout(this.placeBrowseHandler.bind(this), 500);
     },
 
     /**

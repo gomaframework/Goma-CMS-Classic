@@ -21,7 +21,8 @@ $files_lang = array(
 	"no_file"			=> "There is not file visible here",
 	"upload_success"	=> "The file was uploaded successfully!",
 	"size"				=> "filesize",
-	"backtrack"			=> "Backlinks"
+	"backtrack"			=> "Backlinks",
+	"manage_file"		=> "Manage uploaded file"
 );
 
 foreach($files_lang as $key => $value)

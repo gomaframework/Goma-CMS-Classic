@@ -373,6 +373,7 @@ class FileUpload extends FormField {
 		$info = parent::exportBasicInfo($fieldErrors);
 
 		$info->setShowDeleteButton($this->showDeleteButton);
+		$info->setShowManagePath(Permission::check(Uploads::PERMISSION_ADMIN));
 
 		return $info;
 	}

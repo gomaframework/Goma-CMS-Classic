@@ -37,6 +37,10 @@ function FileUpload(form, field, formelement, url, size, types) {
 		$this.formelement.find(".delete-file-button").hide();
 	}
 
+	if(!field.upload || !field.upload.managePath) {
+		$this.formelement.find(".manage-file-button").hide();
+	}
+
 	this.uploader = new AjaxUpload("#" + this.element.id, {
 		url: url + "/frameUpload/",
 		ajaxurl: url + "/ajaxUpload/",
@@ -132,6 +136,7 @@ function FileUpload(form, field, formelement, url, size, types) {
 				$($this.element).find("a").removeAttr("href");
 				$($this.element).find("span").html("");
 				$this.formelement.find(".delete-file-button").hide();
+				$this.formelement.find(".manage-file-button").hide();
 
 				$this.field.upload = null;
 			} else if(data.status == 0) {
@@ -139,6 +144,10 @@ function FileUpload(form, field, formelement, url, size, types) {
 			} else {
 				if(field.showDeleteButton) {
 					$this.formelement.find(".delete-file-button").show();
+				}
+
+				if(data.file.managePath) {
+					$this.formelement.find(".manage-file-button").attr("href", data.file.managePath).show();
 				}
 
 				$this.field.upload = data.file;
