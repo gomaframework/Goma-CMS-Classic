@@ -897,8 +897,9 @@ class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
      * @param bool $forceClasses
      * @return SelectQuery
      */
-    public function buildExtendedQuery($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $forceClasses = true) {
-        
+    public function buildExtendedQuery($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $forceClasses = true)
+    {
+        // TODO: Implement buildExtendedQuery() method.
     }
 }
 

@@ -28,7 +28,7 @@ class AjaxResponse extends GomaResponse
      * @param array|null $header
      * @param null|string $body
      */
-    public function __construct($header, $body)
+    public function __construct($header = null, $body = null)
     {
         parent::__construct($header, $body);
 

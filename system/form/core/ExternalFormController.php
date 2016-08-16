@@ -43,6 +43,7 @@ class ExternalFormController extends RequestHandler {
         /** @var Form $formInstance */
         if($formInstance = GlobalSessionManager::globalSession()->get(Form::SESSION_PREFIX . "." . strtolower($form))) {
             if(isset($formInstance->$field)) {
+                $formInstance->checkForStateRestore();
                 $oldRequest = $formInstance->getRequest();
                 $oldControllerRequest = $formInstance->controller->getRequest();
 

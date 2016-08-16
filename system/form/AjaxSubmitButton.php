@@ -106,6 +106,8 @@ class AjaxSubmitButton extends FormAction {
     {
         $response = new FormAjaxResponse($form, $this);
 
+        $response->exec("console.log('" . $form->getSecretKey() . "');");
+        $response->exec("console.log(" . json_encode(GlobalSessionManager::globalSession()->get("form_state_" . strtolower($form->getName()))) . ");");
         $response->exec('$("#' . $form->{"secret_" . $form->id()}->id() . '").val("' . convert::raw2js($form->getSecretKey()) . '");');
 
         try {

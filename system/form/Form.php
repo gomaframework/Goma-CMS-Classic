@@ -231,14 +231,20 @@ class Form extends AbstractFormComponentWithChildren {
 			$this->session->remove("form_restore." . $this->name());
 		} else {
 			// get form-state
-			if($this->session->hasKey("form_state_" . $this->name)) {
-				$this->state = new FormState($this->session->get("form_state_" . $this->name));
-				$this->activateSecret($this->state->secret);
-			} else {
+			if(!$this->checkForStateRestore()) {
 				$this->state = new FormState();
 				$this->activateSecret();
 			}
 		}
+	}
+
+	public function checkForStateRestore() {
+		if($this->session->hasKey("form_state_" . $this->name)) {
+			$this->state = new FormState($this->session->get("form_state_" . $this->name));
+			$this->activateSecret($this->state->secret);
+			return true;
+		}
+		return false;
 	}
 
 	/**
