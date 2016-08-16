@@ -190,14 +190,14 @@ class FormAjaxResponse extends AjaxResponse
         $this->renderItems($this->errors, "error");
         $this->renderItems($this->success, "success");
 
-        if($this->errors) {
-            $this->exec('form.errorsRaised();');
-        }
-
         foreach($this->errorFields as $field) {
             if($this->form->getField($field)) {
                 $this->exec("$('#" . $this->form->getField($field)->divID() . "').addClass('form-field-has-error');");
             }
+        }
+
+        if($this->errors) {
+            $this->exec('form.errorsRaised();');
         }
 
         return parent::render();
