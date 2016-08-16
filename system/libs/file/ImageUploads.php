@@ -143,11 +143,8 @@ class ImageUploads extends Uploads {
     public function getIcon($size = 128, $retina = false) {
         $ext = substr($this->filename, strrpos($this->filename, "."));
         if ($this->width() >= $size) {
-            if ($retina && $this->width() >= $size * 2) {
-                $icon = $this->path;
-            } else {
-                $icon = $this->path . "/setSize/" . $size . "/" . $size . $ext;
-            }
+            $realSize = $retina ? $size * 2 : $size;
+            $icon = $this->path . "/setSize/" . $realSize . "/" . $realSize . $ext;
         } else {
             switch ($size) {
                 case 16:
