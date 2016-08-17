@@ -16,6 +16,8 @@ class lost_passwordExtension extends ControllerExtension {
      */
     const LOST_PASSWORD_SENT = "profile/lostPasswordSent.html";
     const LOST_PASSWORD_MAIL = "mail/lostPassword.html";
+    const LOST_PASSWORD_TPL = "profile/lostPasswordForm.html";
+    const LOST_PASSWORD_EDIT_PASSWORD = "profile/lostPasswordEditPassword.html";
 
     /**
      * add url-handler
@@ -43,7 +45,9 @@ class lost_passwordExtension extends ControllerExtension {
         Core::addBreadCrumb(lang("lost_password", "lost password"), URL . URLEND);
         if(member::login())
         {
-            return "<h1>".lang("lost_password", "lost password")."</h1>" . lang("lp_know_password", "You know your password, else you would not be logged in!");
+            return ViewAccessableData::instance()
+                ->customise(array("form" => lang("lp_know_password", "You know your password, else you would not be logged in!")))
+                ->renderWith(self::LOST_PASSWORD_TPL);
         }
 
         if($this->getParam("code") != "" || $this->getParam("deny"))
@@ -59,14 +63,14 @@ class lost_passwordExtension extends ControllerExtension {
                     return lang("lp_deny_okay");
                 }
 
-                return $this->getEditPasswordForm($data)->render();
+                return $this->getEditPasswordForm($data)->renderWith(new ViewAccessableData(), self::LOST_PASSWORD_EDIT_PASSWORD);
             } else {
                 $view = new ViewAccessableData();
                 return $view->customise(array("codeWrong" => true))->renderWith(self::LOST_PASSWORD_SENT);
             }
         }
 
-        return $this->getLostPwdForm()->renderWith(new ViewAccessableData(), "profile/lostPasswordForm.html");
+        return $this->getLostPwdForm()->renderWith(new ViewAccessableData(), self::LOST_PASSWORD_TPL);
 
     }
 
@@ -94,7 +98,6 @@ class lost_passwordExtension extends ControllerExtension {
      */
     public function getEditPasswordForm($user) {
         $pwdform = new Form($this, "editpwd", array(
-            new HTMLField("heading","<h3>".lang("lost_password", "lost password")."</h3>"),
             new HiddenField("id", $user->id),
             new PasswordField("password",lang("NEW_PASSWORD")),
             new PasswordField("repeat", lang("REPEAT"))
@@ -120,14 +123,14 @@ class lost_passwordExtension extends ControllerExtension {
 
         Core::repository()->write($user, true);
 
-        return "<h1>".lang("lost_password", "lost password")."</h1>" . lang("lp_update_ok", "Your password was updated successful!");
+        return ViewAccessableData::instance()
+            ->customise(array("form" => lang("lp_update_ok", "Your password was updated successful!")))
+            ->renderWith(self::LOST_PASSWORD_TPL);
     }
 
     /**
      * validates data
-     * @name validate
      * @param FormValidator $obj
-     * @access public
      * @return bool|string
      */
     public function validate($obj) {
