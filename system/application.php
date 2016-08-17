@@ -73,7 +73,7 @@ define("DEFAULT_TIMEZONE", "Europe/Berlin");
 /**
  * the language-directory
  */
-define('LANGUAGE_DIRECTORY', 'languages/');
+define('LANGUAGE_DIRECTORY', 'system/lang/');
 
 /**
  * you shouldn't edit anything below this if you don't know, what you do
