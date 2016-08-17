@@ -1,0 +1,44 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# Aptana
+.settings/
+.project
+
+# Netbeans
+nbproject/
+
+# Goma files
+/_config.php
+.index-db
+.htaccess
+web.config
+
+# Goma Core
+system/installer/log_*****/*
+system/temp/*
+system/installer/log/*
+system/installer/temp/*
+system/version.php
+!system/_config.php
+
+# User files
+Uploads
+Uploads/*
+images/resampled
+images/resampled/*
+
+# Developer
+tpl/
+!tpl/goma_simple/*
+!tpl/goma_simple/
+!tpl/smoothOrange/*
+!tpl/smoothOrange/
+*.permit
+
+#sublime
+*.sublime-workspace
+
+.idea
+.idea/*
