@@ -7,3 +7,5 @@ cd ..
 git branch -D backport-system
 git subtree split -P system -b backport-system
 git push framework backport-system:develop
+git branch -D backport-system
+sleep 2
