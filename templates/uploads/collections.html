@@ -1,0 +1,11 @@
+<% INCLUDE_CSS "filemanager.less" %>
+<h1><% lang("filemanager_collection") %></h1>
+<div class="collections">
+    <ul>
+        <% CONTROL this() %>
+        <li>
+            <a href="$this.managePath"><img src="$this.icon" width="16" height="16" /> $this.filename <em>$this.children.count <% lang("filemanager_files") %></em></a>
+        </li>
+        <% ENDCONTROL %>
+    </ul>
+</div>
