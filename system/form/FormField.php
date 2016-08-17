@@ -200,6 +200,12 @@ class FormField extends AbstractFormComponent {
 
         $this->input->placeholder = $this->placeholder;
 
+        if($this->isDisabled()) {
+            $this->input->disabled = "disabled";
+        } else {
+            $this->input->removeAttr("disabled");
+        }
+
         $this->container->append($this->input);
 
         if($this->errors) {
@@ -409,28 +415,5 @@ class FormField extends AbstractFormComponent {
     {
         $this->placeholder = $placeholder;
         return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    public function disable()
-    {
-        if(is_a($this->input, "HTMLNode")) {
-            $this->input->disabled = "disabled";
-        }
-
-        return parent::disable();
-    }
-
-    /**
-     * @return $this
-     */
-    public function enable()
-    {
-        if(is_a($this->input, "HTMLNode")) {
-            $this->input->removeAttr("disabled");
-        }
-        return parent::enable();
     }
 }

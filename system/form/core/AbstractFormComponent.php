@@ -272,7 +272,7 @@ abstract class AbstractFormComponent extends RequestHandler {
     /**
      * disables this field
      */
-    public function disable()
+    final public function disable()
     {
         $this->disabled = true;
         return $this;
@@ -281,7 +281,7 @@ abstract class AbstractFormComponent extends RequestHandler {
     /**
      * reenables the field
      */
-    public function enable()
+    final public function enable()
     {
         $this->disabled = false;
         return $this;

@@ -56,10 +56,17 @@ class FormFieldTest extends GomaUnitTest implements TestAble {
 
         $field->disable();
         $this->assertTrue($field->disabled);
+        $this->assertEqual($field->input->disabled, null);
+        $this->assertEqual($field->isDisabled(), true);
+
+        $field->field($field->exportBasicInfo());
         $this->assertEqual($field->input->disabled, "disabled");
 
         $field->enable();
         $this->assertFalse($field->disabled);
+        $this->assertEqual($field->isDisabled(), false);
+
+        $field->field($field->exportBasicInfo());
         $this->assertEqual($field->input->disabled, null);
     }
 

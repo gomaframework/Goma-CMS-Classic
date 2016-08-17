@@ -478,7 +478,7 @@ class Controller extends RequestHandler
         /** @var DataObject $model */
         if($model = $this->getSingleModel()) {
             if (!$model->can("Write")) {
-                if (StaticsManager::getStatic($this->classname, "showWithoutRight") || $this->modelInst()->showWithoutRight) {
+                if ($this->showWithoutRight()) {
                     $disabled = true;
                 } else {
                     return $this->actionComplete("less_rights");
@@ -489,6 +489,13 @@ class Controller extends RequestHandler
 
             return $this->form("edit_" . $this->classname . $model->id, $model, array(), true, "safe", $disabled);
         }
+    }
+
+    /**
+     * @return bool
+     */
+    protected function showWithoutRight() {
+        return StaticsManager::getStatic($this->classname, "showWithoutRight") || $this->modelInst()->showWithoutRight;
     }
 
     /**
