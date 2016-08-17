@@ -44,7 +44,7 @@ class FormFieldTest extends GomaUnitTest implements TestAble {
         }
 
         $this->assertEqual($field->PostName(), $name);
-        $this->assertEqual($field->disabled, false);
+        $this->assertEqual($field->isDisabled(), false);
         $this->assertIsA($field->container, "HTMLNode");
         $this->assertIsA($field->input, "HTMLNode");
         $this->assertEqual($field->input->name, $name);
@@ -52,10 +52,10 @@ class FormFieldTest extends GomaUnitTest implements TestAble {
 
     public function testDisable() {
         $field = new FormField();
-        $this->assertFalse($field->disabled);
+        $this->assertFalse($field->isDisabled());
 
         $field->disable();
-        $this->assertTrue($field->disabled);
+        $this->assertTrue($field->isDisabled());
         $this->assertEqual($field->input->disabled, null);
         $this->assertEqual($field->isDisabled(), true);
 
@@ -63,7 +63,6 @@ class FormFieldTest extends GomaUnitTest implements TestAble {
         $this->assertEqual($field->input->disabled, "disabled");
 
         $field->enable();
-        $this->assertFalse($field->disabled);
         $this->assertEqual($field->isDisabled(), false);
 
         $field->field($field->exportBasicInfo());
@@ -87,10 +86,10 @@ class FormFieldTest extends GomaUnitTest implements TestAble {
         $field->enable();
         $this->assertEqual($field->result(), "123");
 
-        $form->disabled = true;
+        $form->disable();
         $this->assertEqual($field->result(), "1234");
 
-        $form->disabled = false;
+        $form->enable();
         $this->assertEqual($field->result(), "123");
 
         $prop = new ReflectionProperty("FormField", "POST");
