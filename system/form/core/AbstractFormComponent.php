@@ -73,7 +73,7 @@ abstract class AbstractFormComponent extends RequestHandler {
      *
      * @var bool
      */
-    public $disabled = false;
+    private $disabled = false;
 
     /**
      * overrides the post-name
@@ -356,7 +356,7 @@ abstract class AbstractFormComponent extends RequestHandler {
         }
 
         return $this->createsRenderDataClass()
-            -> setIsDisabled($this->disabled)
+            -> setIsDisabled($this->isDisabled())
             -> setField($this)
             -> setHasError(count($this->errors) > 0)
             -> setPostName($this->PostName());

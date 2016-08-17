@@ -380,7 +380,7 @@ class DropDown extends FormField {
 			gloader::load("sortable");
 		}
 
-		if($this->disabled) {
+		if($this->isDisabled()) {
 			$this->field->disabled = "disabled";
 			$this->container->addClass("disabled", "disabled");
 		}
@@ -404,7 +404,7 @@ class DropDown extends FormField {
 	}
 
 	public function JS() {
-		if($this->disabled) {
+		if($this->isDisabled()) {
 			return parent::JS();
 		}
 
@@ -699,7 +699,7 @@ class DropDown extends FormField {
 	 * @return string rendered dropdown-input
 	 */
 	public function uncheckValue() {
-		if(!$this->disabled) {
+		if(!$this->isDisabled()) {
 			if ($this->multiselect) {
 				$key = array_search($this->getParam("value"), $this->dataset);
 				unset($this->dataset[$key]);

@@ -16,8 +16,15 @@
  */
 class TableFieldDeleteButton implements TableField_ColumnProvider, TableField_ActionProvider, TableField_URLHandler {
 
-	protected $title;
-	protected $requirePerm;
+	/**
+	 * @var null|string
+	 */
+	public $title;
+
+	/**
+	 * @var bool|null|string
+	 */
+	public $requirePerm;
 
 	/**
 	 * constructor.
@@ -94,9 +101,9 @@ class TableFieldDeleteButton implements TableField_ColumnProvider, TableField_Ac
 		if($this->requirePerm) {
 			if(is_callable($this->requirePerm)) {
 				if(!call_user_func_array($this->requirePerm, array($tableField, $record)))
-					return;
+					return "";
 			} else if(!$record->can($this->requirePerm)){
-				return;
+				return "";
 			}
 		}
 

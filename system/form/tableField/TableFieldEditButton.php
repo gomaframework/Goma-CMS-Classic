@@ -1,19 +1,27 @@
-<?php
+<?php defined("IN_GOMA") OR die();
+
 /**
  * inspiration by Silverstripe 3.0 GridField
  * http://silverstripe.org
  *
- *@package goma framework
- *@link http://goma-cms.org
- *@license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
- *@author Goma-Team
+ * @package goma framework
+ * @link http://goma-cms.org
+ * @license LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
+ * @author Goma-Team
  * last modified: 25.07.2014
  * $Version - 1.1
  */
-
-defined('IN_GOMA') OR die('<!-- restricted access -->'); // silence is golden ;)
-
 class TableFieldEditButton implements TableField_ColumnProvider, TableField_URLHandler {
+
+	/**
+	 * @var null|string
+	 */
+	public $requirePerm;
+
+	/**
+	 * @var null|string
+	 */
+	public $title;
 
 	/**
 	 * constructor.
@@ -89,9 +97,9 @@ class TableFieldEditButton implements TableField_ColumnProvider, TableField_URLH
 		if($this->requirePerm) {
 			if(is_callable($this->requirePerm)) {
 				if(!call_user_func_array($this->requirePerm, array($tableField, $record)))
-					return;
+					return "";
 			} else if(!$record->can($this->requirePerm)){
-				return;
+				return "";
 			}
 		}
 

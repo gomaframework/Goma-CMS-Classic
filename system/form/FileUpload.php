@@ -134,7 +134,7 @@ class FileUpload extends FormField {
 	{
 		$model = parent::getModel();
 
-		if(!$this->disabled) {
+		if(!$this->isDisabled()) {
 			if (is_array($model) && !empty($model["name"])) {
 				try {
 					$this->model = $model = $this->handleUpload($model);

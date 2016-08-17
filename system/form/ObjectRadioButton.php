@@ -104,7 +104,7 @@ class ObjectRadioButton extends RadioButton  {
 
         $node = new HTMLNode("div");
 
-        if ($this->disabled) {
+        if ($this->isDisabled()) {
             $this->hideDisabled = false;
         }
 
@@ -135,7 +135,7 @@ class ObjectRadioButton extends RadioButton  {
                     $value,
                     $title,
                     $value == $this->value,
-                    $this->disabled || isset($this->disabledNodes[$value]),
+                    $this->isDisabled() || isset($this->disabledNodes[$value]),
                     $childToRender,
                     $info
                 )
