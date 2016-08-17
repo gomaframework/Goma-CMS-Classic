@@ -4,6 +4,7 @@ echo "Script location: ${BASEDIR}"
 cd $BASEDIR
 cd ..
 
+git fetch framework
 git branch -D backport-system
 git subtree split -P system -b backport-system
 git push framework backport-system:develop
