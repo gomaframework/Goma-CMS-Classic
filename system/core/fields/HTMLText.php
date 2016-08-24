@@ -103,6 +103,8 @@ class HTMLText extends Varchar {
             }
         }
 
+        $value = str_replace('${__REDIRECT__}', getRedirect(), $value);
+
         return (string) $value;
     }
 

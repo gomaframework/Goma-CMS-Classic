@@ -680,5 +680,11 @@ $lang = array(
 	"ADD_CONTENT"		=> "Add content",
 
 	"this_version"		=> "This version",
-	"versions"			=> "Versions"
+	"versions"			=> "Versions",
+
+	"optional"					=> "optional",
+
+
+    "moveContentBlock"  => "Move content-block",
+    "removeContentBlock"=> "Delete content-block"
 );

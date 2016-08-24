@@ -91,7 +91,7 @@ class TabSet extends FieldSet
                 $i = 0;
                 /** @var TabRenderData $item */
                 foreach ($children as $item) {
-                    if ($item->getName()== "tabs_" . $active) {
+                    if ($item->getName() == $active) {
                         $item->setTabActive(true);
                         $activeTabFound = true;
                         break;
@@ -110,13 +110,30 @@ class TabSet extends FieldSet
 
     /**
      * generates js
-     * @name JS
-     * @access public
+     *
      * @return string
      */
     public function JS()
     {
         return '$(function(){ $("#' . $this->divID() . '").gtabs({"animation": true, "cookiename": "tabs_' . $this->name . '"}); });' .
             parent::JS();
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getActiveTab()
+    {
+        return $this->activeTab;
+    }
+
+    /**
+     * @param null|string $activeTab
+     * @return $this
+     */
+    public function setActiveTab($activeTab)
+    {
+        $this->activeTab = $activeTab;
+        return $this;
     }
 }
