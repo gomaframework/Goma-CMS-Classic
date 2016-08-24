@@ -92,9 +92,9 @@ class RegisterExtension extends ControllerExtension
 			exit;
 
 			// check if link from e-mail
-		} else if (isset($_GET["activate"])) {
+		} else if (isset($this->getRequest()->get_params["activate"])) {
 			/** @var User $data */
-			$data = DataObject::get_one("user", array("code" => $_GET["activate"]));
+			$data = DataObject::get_one("user", array("code" => $this->getRequest()->get_params["activate"]));
 
 			if ($data && $data->status != 2) {
 				$data->code = randomString(10); // new code

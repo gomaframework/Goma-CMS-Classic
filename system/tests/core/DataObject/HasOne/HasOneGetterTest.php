@@ -31,6 +31,20 @@ class HasOneGetterTest extends GomaUnitTest implements TestAble
         $this->assertEqual($mockDBObject1->hasone, $mockDBObject2);
         $this->assertEqual($mockDBObject2->hasone, null);
     }
+
+    public function testSetId() {
+        $mockDBObject1 = new MockDBObjectHasOne();
+        $mockDBObject2 = new MockDBObjectHasOne();
+
+        $this->assertEqual($mockDBObject1->hasone, null);
+
+        $mockDBObject1->hasone = $mockDBObject2;
+
+        $this->assertEqual($mockDBObject1->hasone, $mockDBObject2);
+        $mockDBObject1->hasoneid = 0;
+
+        $this->assertEqual($mockDBObject1->hasone, null);
+    }
 }
 
 /**

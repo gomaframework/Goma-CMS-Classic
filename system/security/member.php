@@ -64,7 +64,6 @@ class Member extends gObject {
 			$user = $auth->user;
 
 			if($user) {
-
 				if ($user["timezone"]) {
 					Core::setCMSVar("TIMEZONE", $user["timezone"]);
 					date_default_timezone_set(Core::getCMSVar("TIMEZONE"));
@@ -173,11 +172,13 @@ class Member extends gObject {
 
 	/**
 	 * require login
+	 * @deprecated
+	 * @param string|null $lang
 	 * @return bool
 	 */
-	public static function require_login() {
+	public static function require_login($lang = null) {
 		if(!self::login()) {
-			AddContent::addNotice(lang("require_login"));
+			AddContent::addNotice(isset($lang) ? $lang : lang("require_login"));
 			self::redirectToLogin();
 		}
 		return true;

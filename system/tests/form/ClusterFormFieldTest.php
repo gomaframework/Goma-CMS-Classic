@@ -53,4 +53,18 @@ class ClusterFormFieldTest extends GomaUnitTest {
 
         $this->assertEqual($clusterFormField->result(), $newClass);
     }
+
+    public function testintegrationTest() {
+        $form = new Form(new Controller(), "test", array(
+            $text1 = new TextField("text", "text 1"),
+            new ClusterFormField("blah", "blub", array(
+                $text2 = new TextField("text", "text 2")
+            ))
+        ));
+
+        $this->assertNotEqual($text1, $text2);
+        $this->assertEqual($form->text->getTitle(), $text1->getTitle());
+        $this->assertEqual($form->text, $text1);
+        $this->assertEqual($form->blah->text, $text2);
+    }
 }

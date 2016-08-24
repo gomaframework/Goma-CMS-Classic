@@ -781,6 +781,13 @@ class ArrayList extends ViewAccessableData implements Countable {
 
 		return $list;
 	}
+
+	/**
+	 * clears data.
+	 */
+	public function clear() {
+		$this->items = array();
+	}
 }
 
 class ItemNotFoundException extends GomaException {

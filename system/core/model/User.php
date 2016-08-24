@@ -124,18 +124,6 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 	static $useEmailAsNickname = false;
 
 	/**
-	 * gets all groups if a object
-	 *
-	 *@name getAllGroups
-	 *@access public
-	 */
-	public function getAllGroups() {
-		$groups = $this->groups();
-		$groups->add($this->group());
-		return $groups;
-	}
-
-	/**
 	 * returns true if you can write
 	 * @param User $data
 	 * @return bool
@@ -207,7 +195,7 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 					lang("email_correct_info")
 				),
 				new PasswordField("password", lang("PASSWORD"), ""),
-				new PasswordField("repeat", lang("REPEAT"), ""),
+				new PasswordField("repeat", lang("REPEAT_PASSWORD"), ""),
 				new langSelect("custom_lang", lang("lang"), Core::$lang)
 			), lang("GENERAL"))
 		)));

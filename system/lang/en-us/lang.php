@@ -66,6 +66,8 @@ $lang = array(
 	"users"											=> "Users",
 	"groups"										=> "Groups",
 	"upload file"                                  	=> "Upload a file",
+	"drag_file_here"								=> "Drag file here",
+	"drop_file_here"								=> "Drop to upload",
 	"crop_image"									=> "Crop image",
 	"plaese insert text into the mandatory field." 	=> "Please enter text in all mandatory fields.",
 	"subject"                                      	=> "Subject",
@@ -99,6 +101,7 @@ $lang = array(
 	/* ACCOUNT END REGISTRATION START */
 	"register_code_ok"                             	=> "The Registration-Code is correct!",
 	"repeat"                                       	=> "Repeat",
+	"REPEAT_PASSWORD"								=> "Repeat password",
 	"reg_code"                                     	=> "Registration-code",
 	"register_code_wrong"                          	=> "The Registration-Code is wrong!",
 	"register_username_bad"                        	=> "The username is already assigned.",
@@ -345,16 +348,14 @@ $lang = array(
 	"mobile_version"								=> "mobile view",
 
 	/* new groups*/
-	"groups"										=> "Groups",
-
 	/*check*/
 	"checkall"										=> "Select all",
 	"uncheckall"									=> "Unselect all",
-	"checked"										=> "Selected",
 	"edit_record"									=> "Edit Record",
 	"add_record"									=> "Add Record",
 	"del_record"									=> "Delete Record",
 	"loading"										=> "loading...",
+	"loadMore"										=> "load more",
 	"waiting"										=> "waiting…",
 	"view_website"									=> "Visit Page",
 	"preview_website"								=> "preview website",

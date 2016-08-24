@@ -129,6 +129,7 @@ class HasManyGetter extends AbstractGetterExtension {
      */
     public function setHasManyIDs($name, $ids) {
         $this->getHasMany($name)->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+        $this->getHasMany($name)->clearStaging();
         /** @var DataObject $record */
         foreach(DataObject::get($this->getOwner(), array("id" => $ids)) as $record) {
             $this->getHasMany($name)->add($record);

@@ -129,7 +129,7 @@ class ManageUploadController extends FrontedController {
 
     public function allVersions() {
         $data = array();
-        $set = $this->modelInst()->getFileVersions()->activatePagination($this->getParam("page"));
+        $set = $this->modelInst()->getFileVersions()->activatePagination($this->getParam("id"));
         /** @var Uploads $upload */
         foreach($set as $upload) {
             $data[] = array(

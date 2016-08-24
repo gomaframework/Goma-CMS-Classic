@@ -710,4 +710,11 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
         uasort($this->items, $callback);
         return $this;
     }
+
+    /**
+     * clears data.
+     */
+    public function clear() {
+        $this->items = array();
+    }
 }

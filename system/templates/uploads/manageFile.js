@@ -4,10 +4,11 @@
  * @param backtrackSpace
  */
 var fileManagerController = function(namespace, backtrackSpace, differentVersions) {
-    var backtrackSpaceQuery = $(backtrackSpace);
-    var versions = $(differentVersions);
-    var backtrackPage = 1;
-    var versionPage = 1;
+    var backtrackSpaceQuery = $(backtrackSpace),
+        versions = $(differentVersions),
+        backtrackPage = 1,
+        versionPage = 1;
+
     var loadBacktrack = function() {
         backtrackSpaceQuery.addClass("loading");
         backtrackSpaceQuery.removeClass("has-more");
@@ -72,4 +73,6 @@ var fileManagerController = function(namespace, backtrackSpace, differentVersion
     };
     $(loadBacktrack);
     $(loadVersions);
+    backtrackSpaceQuery.find(".load-more").click(loadBacktrack);
+    versions.find(".load-more").click(loadVersions);
 };

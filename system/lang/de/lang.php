@@ -98,6 +98,7 @@ $lang = array(
 	/* ACCOUNT END REGISTRATION START */
 	"register_code_ok"                             	=> "Der Registrierungscode ist richtig!",
 	"repeat"                                       	=> "Wiederholen",
+	"REPEAT_PASSWORD"								=> "Passwort wiederholen",
 	"reg_code"                                     	=> "Registrierungscode",
 	"register_code_wrong"                          	=> "Der Registrierungscode ist falsch!",
 	"register_username_bad"                        	=> "Der Benutzername ist bereits vergeben!",
@@ -292,6 +293,8 @@ $lang = array(
 	'welcome_content_area'							=> "<h3>Willkommen</h3><p>Hier finden Sie den Inhalt ihrer Website. Dr&uuml;cken Sie auf eine Seite, um diese zu bearbeiten.</p>",
 	'db_update'										=> "Datenbanktabellen validieren",
 	'upload'										=> "Hochladen",
+	"drag_file_here"								=> "Datei hierher ziehen",
+	"drop_file_here"								=> "Loslassen um hochzuladen",
 	'db_update_info'								=> "Goma generiert dadurch die Datenbank neu, das bedeutete nicht installiere Module werden installiert.",
 	'online'										=> "Online",
 	'offline'										=> "Offline",
@@ -341,17 +344,14 @@ $lang = array(
 	"classic_version"								=> "Klassische Ansicht",
 	"mobile_version"								=> "Mobile Ansicht",
 
-	/* new groups*/
-	"groups"										=> "Gruppen",
-
 	/*check*/
 	"checkall"										=> "Alle auswählen",
 	"uncheckall"									=> "Alle abwählen",
-	"checked"										=> "Ausgewählte",
 	"edit_record"									=> "Eintrag bearbeiten",
 	"add_record"									=> "Eintrag hinzufügen",
 	"del_record"									=> "Eintrag löschen",
 	"loading"										=> "Laden...",
+	"loadMore"										=> "Mehr laden",
 	"waiting"										=> "Warten...",
 	"view_website"									=> "Seite aufrufen",
 	"preview_website"								=> "Vorschau aufrufen",

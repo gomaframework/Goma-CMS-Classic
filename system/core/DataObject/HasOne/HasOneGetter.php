@@ -49,6 +49,7 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
             foreach($has_one as $key => $val) {
                 $this->linkMethodWithInstance(self::class, $key, $key, "getHasOne", "Something got wrong wiring the HasOne-Relationship.");
                 $this->linkMethodWithInstance(self::class, "set" . $key, $key, "setHasOne", "Something got wrong wiring the HasOne-Relationship.");
+                $this->linkMethodWithInstance(self::class, "set" . $key . "id", $key, "setHasOneId", "Something got wrong wiring the HasOne-Relationship.");
             }
         }
     }
@@ -313,6 +314,14 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
         }
 
         if(PROFILE) Profiler::unmark("HasOneGetter::argumentQueryResult");
+    }
+
+    /**
+     * @param string $value
+     */
+    public function setHasOneId($name, $value) {
+        $this->getOwner()->setField($name . "id", $value);
+        $this->getOwner()->setField($name, null);
     }
 
     /**

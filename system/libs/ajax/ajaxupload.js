@@ -271,10 +271,11 @@ AjaxUpload.prototype = {
                 this.transferAjax(files);
             }
         } catch(e) {
-            console.log(e);
             this._fail(e, e, -1, null);
+            setTimeout(function(){
+                throw e
+            });
         }
-
 
         event.stopPropagation();
         event.preventDefault();
@@ -292,7 +293,6 @@ AjaxUpload.prototype = {
 
         if(this.browse) {
             this.browse.removeAttr("disabled");
-            this.placeBrowseHandler();
         }
 
         if(this.queue[fileIndex]) {

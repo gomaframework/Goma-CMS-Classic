@@ -182,6 +182,19 @@ abstract class AbstractFormComponentWithChildren extends AbstractFormComponent {
     {
         parent::setForm($form);
 
+        $this->setFormRegisterOnParent();
+
+        if($this->_state) {
+            $this->parent->state->{$this->classname . $this->name} = $this->_state;
+        }
+
+        return $this;
+    }
+
+    /**
+     * registers existing fields on parent.
+     */
+    protected function setFormRegisterOnParent() {
         if($this->fields) {
             foreach ($this->fields as $name => $field) {
                 $this->parent->registerField($name, $field);
@@ -193,12 +206,6 @@ abstract class AbstractFormComponentWithChildren extends AbstractFormComponent {
                 $this->parent->registerRendered($field);
             }
         }
-
-        if($this->_state) {
-            $this->parent->state->{$this->classname . $this->name} = $this->_state;
-        }
-
-        return $this;
     }
 
     /**
@@ -291,12 +298,8 @@ abstract class AbstractFormComponentWithChildren extends AbstractFormComponent {
      *
      * @param string $name
      */
-    public function unRegister($name) {
-        if($this->parent) {
-            $this->parent->unregisterField($name);
-        }
-
-        unset($this->fields[strtolower($name)]);
+    final public function unRegister($name) {
+        $this->unregisterField($name);
     }
 
     /**

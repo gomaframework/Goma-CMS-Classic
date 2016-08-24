@@ -320,6 +320,10 @@ class FileUpload extends FormField {
 	 */
 	public function js()
 	{
+		if($this->isDisabled()) {
+			return parent::js();
+		}
+
 		return "$(function(){ new FileUpload(
 		form, field,
 		$('#" . $this->divID() . "'), '" . $this->externalURL() . "', " . var_export($this->max_filesize, true) . ", ".json_encode($this->allowed_file_types).");});" .

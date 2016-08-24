@@ -101,7 +101,7 @@ class FileUploadRenderData extends FormFieldRenderData {
      * @param boolean $showManagePath
      * @return $this
      */
-    public function setShowManagePath($showManagePath)
+    public function  setShowManagePath($showManagePath)
     {
         $this->showManagePath = $showManagePath;
         return $this;
@@ -133,7 +133,7 @@ class FileUploadRenderData extends FormFieldRenderData {
             $data["upload"] = null;
         }
 
-        if($this->showManagePath) {
+        if($this->showManagePath && isset($data["upload"])) {
             $data["upload"]["managePath"] = isset($this->upload) ? $this->upload->getManagePath() : null;
         }
 

@@ -691,8 +691,8 @@ class Form extends AbstractFormComponentWithChildren {
 				$errors = array();
 			}
 
-			$this->state = $data->state;
-			$this->state->secret = $this->secretKey;
+			$this->activatesecret();
+			$this->session->set("form_state_" . $this->name, $this->state->ToArray());
 
 			return $this->renderForm($errors);
 		}

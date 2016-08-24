@@ -1,39 +1,78 @@
 <label for="$id">$title</label>
-<div class="FileUpload_left" style="float: left;">
-    <div class="icon" id="{$id}_upload">
-        <% IF $upload %>
-        <a target="_blank" href="$upload.path">
-            <div class="img">
-                <img src="$upload.icon128" data-retina="$upload.icon128_2x" alt="$upload.name" />
-            </div>
-            <span>$upload.name</span>
-        </a>
-        <% ELSE %>
-        <a target="_blank">
-            <div class="img">
-                <img src="$defaultIcon" alt="" />
-            </div>
-            <span></span>
-        </a>
-        <% END %>
+<div class="fileupload-advanced">
+    <div class="top-actions fileupload-actions">
+        <button class="button delete-file-button red"><i class="fa fa-trash delete-icon" type="button"></i>
+        </button>
+        <a class="button manage-file-button" target="_blank" href="$upload.managePath"><% lang('files.manage_file') %></a>
+        <input type="button"  class="button fileSelect" id="{$id}" value="<% lang('files.browse') %>" />
     </div>
-    <input name="avatar_file" id="{$id}_hidden"
-           type="hidden" value="" class="FileUploadValue"/>
-</div>
-<div class="FileUpload_right">
-    <div class="wrapper">
-        <div class="actions">
-            <div class="progress_info"></div>
-            <button class="button show-on-js delete-file-button red"><i class="fa fa-trash delete-icon" type="button"></i>
-            </button>
-            <input type="button" class="button fileSelect" id="$id" value="<% lang('files.browse') %>" />
-            <a class="button manage-file-button" target="_blank" href="$upload.managePath"><% lang('files.manage_file') %></a>
+    <input name="{$postname}_file" id="{$id}_hidden"
+           type="hidden" value="$upload.realpath" class="FileUploadValue"/>
+    <input name="{$postname}_thumbleft" id="{$id}_thumbleft"
+           type="hidden" value="$upload.thumbLeft" class="ThumbLeftValue"/>
+    <input name="{$postname}_thumbtop" id="{$id}_thumbtop"
+           type="hidden" value="$upload.thumbTop" class="ThumbTopValue"/>
+    <input name="{$postname}_thumbwidth" id="{$id}_thumbwidth"
+           type="hidden" value="$upload.thumbWidth" class="ThumbWidthValue"/>
+    <input name="{$postname}_thumbheight" id="{$id}_thumbheight"
+           type="hidden" value="$upload.thumbHeight" class="ThumbHeightValue"/>
+    <div class="progress_info"></div>
+    <div class="fileupload-tabs tabs">
+        <ul>
+            <li><a href="javascript:;" id="{$id}_tabpreview_tab" class="active preview-button"><% lang("preview") %></a></li>
+            <li><a href="javascript:;" id="{$id}_tabcrop_tab" class="show-on-js crop-button"><% lang("crop_image") %></a></li>
+        </ul>
+        <% IF $upload %>
+        <div class="with-upload tab-wrapper image-area">
+            <% ELSE %>
+            <div class="image-area tab-wrapper">
+                <% END %>
+                <div class="preview drop-area active" id="{$id}_tabpreview">
+                    <a target="_blank" href="$upload.path" class="upload-link image-preview">
+                        <img class="image-preview-img" src="$upload.imageHeight400" data-retina="$upload.imageHeight400" alt="$upload.name" />
+                        <div class="filename-wrapper">
+                            <span class="filename">$upload.name</span>
+                        </div>
+                    </a>
+                    <div class="fileSelect drop-here show-on-js">
+                        <i class="fa fa-picture-o" aria-hidden="true"></i>
+                        <p class="drag"><% lang("drag_file_here") %></p>
+                        <p class="drop"><% lang("drop_file_here") %></p>
+                        <a class="button"><% lang("files.browse") %></a>
+                    </div>
+                </div>
+                <div class="crop-wrapper" id="{$id}_tabcrop">
+                    <% IF $upload %>
+                    <% IF $upload.sourceImageHeight400 %>
+                    <img class="image-source-preview-img" src="$upload.sourceImageHeight400" data-retina="$upload.sourceImageHeight400" alt="$upload.name" />
+                    <% ELSE %>
+                    <img class="image-source-preview-img" src="$upload.imageHeight400" data-retina="$upload.imageHeight400" alt="$upload.name" />
+                    <% END %>
+                    <% ELSE %>
+                    <img class="image-source-preview-img" />
+                    <% END %>
+                </div>
+                <div class="tab-browser" id="{$id}_tabbrowser">
+                    <div class="sidebar">
+                        <ul class="sources">
+
+                        </ul>
+                    </div>
+                    <div class="loading">
+                        <img src="images/loading.gif" alt="{$_lang_loading}" />
+                    </div>
+                    <div class="images">
+
+                    </div>
+                    <div class="clear"></div>
+                </div>
+            </div>
+        </div>
+        <div class="no-js-fallback hide-on-js">
+            <h3><% lang("replace_file") %></h3>
+            <input name="$name" class="input" type="file" title="$title"/>
+        </div>
+        <div class="info-bottom">
+
         </div>
     </div>
-    <div class="no-js-fallback hide-on-js">
-        <h3><% lang("replace_file") %></h3>
-        <input name="$name" class="input" type="file" title="$title"
-               id="{$id}"/>
-    </div>
-</div>
-<div class="clear"></div>

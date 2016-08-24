@@ -21,12 +21,15 @@ function ImageUploadController(field, updateUrl, options) {
     this.widget.find(".buttons .save").click(this.saveCrop.bind(this));
 
     this.super = this.field.fileUpload;
+    this.fieldElement = this.super.fieldElement;
 
     this.registerEventHandler();
     this.updateCropArea({
         status: this.field.upload != null,
         file: this.field.upload
     });
+
+    this.aspectRatio = field.aspect;
 
     if(typeof options == "object") {
         for(var i in options) {
@@ -36,11 +39,22 @@ function ImageUploadController(field, updateUrl, options) {
         }
     }
 
+    this.super.actions.find(".crop").click(this.cropButtonClicked.bind(this));
+
+    if(this.fieldElement.find(".fileupload-tabs").length > 0) {
+        this.fieldElement.find(".fileupload-tabs").gtabs();
+    }
+
+    this.fieldElement.find(".crop-button").click(function(){
+        if(this.field.upload != null) {
+            this.placeCropButton();
+        }
+    }.bind(this));
+
     return this;
 }
 
 ImageUploadController.prototype = {
-    cropAreaPlaced: false,
     internalLeft: null,
     internalTop: null,
     internalWidth: null,
@@ -48,97 +62,153 @@ ImageUploadController.prototype = {
     jcropInstance: null,
     factor: 1,
     aspectRatio: null,
+    internalSize: null,
+    saveCropTimeout: null,
+    initingJCrop: false,
 
     updateCropArea: function(data) {
+        if (this.jcropInstance != null) {
+            this.jcropInstance.destroy();
+            this.jcropInstance = null;
+        }
+
         if(data == null || !data.status) {
-            if(this.cropAreaPlaced) {
-                this.super.actions.find(".crop").remove();
-                this.cropAreaPlaced = false;
-                this.super.uploader.placeBrowseHandler();
+            this.super.actions.find(".crop").hide();
+            this.fieldElement.find(".crop-button").hide();
+            if(this.fieldElement.find(".crop-button").hasClass("active")) {
+                this.fieldElement.find(".preview-button").click();
             }
         } else {
-            if(!this.cropAreaPlaced) {
-                this.placeCropButton();
-            }
+            this.placeCropButton();
         }
     },
 
     placeCropButton: function() {
-        this.super.actions.append('<button class="button crop">'+lang("crop_image")+'</button>');
-        this.super.actions.find(".crop").click(this.cropButtonClicked.bind(this));
+        this.super.actions.find(".crop").show();
+        this.fieldElement.find(".crop-button").show();
 
-        this.super.uploader.placeBrowseHandler();
-
-        this.cropAreaPlaced = true;
+        if(this.fieldElement.find(".crop-button").length > 0 && this.fieldElement.find(".crop-button").hasClass("active")) {
+            this.initCropArea(
+                {
+                    width: this.fieldElement.find(".crop-wrapper > img").width(),
+                    height: this.fieldElement.find(".crop-wrapper > img").height()
+                },
+                this.fieldElement.find(".crop-wrapper > img"),
+                this.field.upload.orgImageSize.width
+            );
+        }
     },
 
-    cropButtonClicked: function() {
-        if(this.jcropInstance != null) {
+    initCropArea: function(size, image, imageWidth) {
+        if(this.initingJCrop) {
+            return;
+        }
+
+        this.initingJCrop = true;
+        if (this.jcropInstance != null) {
             this.jcropInstance.destroy();
             this.jcropInstance = null;
         }
+
+        var $this = this,
+            options = {
+                onChange: $this.updateCoords.bind($this),
+                onSelect: $this.updateCoords.bind($this),
+                onRelease: function() {
+                    if($this.aspectRatio != null) {
+                        $this.jcropInstance.setSelect($this.setSelectForAspect(size));
+                    }
+                }
+            };
+
+        this.internalSize = size;
+
+        $this.factor = size.width / imageWidth;
+
+        var upload = $this.field.upload, thumbSelectionW = size.width, thumbSelectionH = size.height, y = 0, x = 0;
+
+        if (this.aspectRatio != null) {
+            options.aspectRatio = this.aspectRatio;
+        }
+
+        if (upload.thumbLeft != 50 || upload.thumbTop != 50 || upload.thumbWidth != 100 || upload.thumbHeight != 100) {
+            thumbSelectionW = upload.thumbWidth / 100 * size.width;
+            thumbSelectionH = upload.thumbHeight / 100 * size.height;
+            y = (size.height - thumbSelectionH) * upload.thumbTop / 100;
+            x = (size.width - thumbSelectionW) * upload.thumbLeft / 100;
+
+            options.setSelect = [
+                x, y, x + thumbSelectionW, y + thumbSelectionH
+            ];
+
+            this.updateCoords({
+                h: thumbSelectionH,
+                w: thumbSelectionW,
+                x: x,
+                y: y
+            });
+        } else
+
+        if (this.aspectRatio != null && thumbSelectionW / thumbSelectionH != this.aspectRatio) {
+            options.setSelect = this.setSelectForAspect(size);
+        }
+
+        if(this.aspectRatio != null) {
+            options.aspectRatio = this.aspectRatio;
+        }
+
+        image.Jcrop(options, function () {
+            $this.jcropInstance = this;
+            $this.initingJCrop = false;
+        });
+    },
+
+    setSelectForAspect: function(size) {
+        var thumbSelectionW = size.width, thumbSelectionH = size.height, y = 0, x = 0;
+        if (thumbSelectionW / thumbSelectionH > this.aspectRatio) {
+            x = (size.width - thumbSelectionH * this.aspectRatio) / 2;
+            thumbSelectionW = thumbSelectionH * this.aspectRatio;
+        } else {
+            y = (size.height - size.width / this.aspectRatio) / 2;
+            thumbSelectionH = size.width / this.aspectRatio;
+        }
+
+        this.updateCoords({
+            h: thumbSelectionH,
+            w: thumbSelectionW,
+            x: x,
+            y: y
+        });
+
+        return [
+            x, y, x + thumbSelectionW, y + thumbSelectionH
+        ];
+    },
+
+    cropButtonClicked: function() {
+        var $this = this;
 
         this.widget.fadeIn("fast");
 
         this.widget.find(".loading").show(0);
         this.widget.find(".image").hide(0);
 
-        var $this = this,
-            src = this.field.upload.sourceImage != null ? this.field.upload.sourceImage : this.field.upload.path,
+        var src = this.field.upload.sourceImage != null ? this.field.upload.sourceImage : this.field.upload.path,
             image = new Image();
 
-        image.onload = function() {
+        image.onload = function () {
             $this.widget.find(".image img").attr("src", src);
             $this.widget.find(".loading").hide(0);
             $this.widget.find(".image").show(0);
 
-            var size = $this.getSize(image),
-                options = {
-                    onChange: $this.updateCoords.bind($this),
-                    onSelect: $this.updateCoords.bind($this)
-                };
+            var size = $this.getSize(image);
 
             $this.widget.find(".image img").attr({
                 height: size.height,
                 width: size.width
             });
 
-            $this.factor = size.width / image.width;
-
-            var upload = $this.field.upload, thumbSelectionW = size.width, thumbSelectionH = size.height, y = 0, x = 0;
-
-            if(this.aspectRatio != null) {
-                options.aspectRatio = this.aspectRatio;
-            }
-
-            if(upload.thumbLeft != 50 || upload.thumbTop != 50 || upload.thumbWidth != 100 || upload.thumbHeight != 100) {
-                thumbSelectionW = upload.thumbWidth / 100 * size.width;
-                thumbSelectionH = upload.thumbHeight / 100 * size.height;
-                y = (size.height - thumbSelectionH) * upload.thumbTop / 100;
-                x = (size.width - thumbSelectionW) * upload.thumbLeft / 100;
-
-                options.setSelect = [
-                    x, y, x + thumbSelectionW, y + thumbSelectionH
-                ];
-            }
-
-            if(this.aspectRatio != null && thumbSelectionW / thumbSelectionH != this.aspectRatio) {
-                if(thumbSelectionW / thumbSelectionH > this.aspectRatio) {
-                    x = (size.width - thumbSelectionH * this.aspectRatio) / 2;
-                    thumbSelectionW = thumbSelectionH * this.aspectRatio;
-                } else {
-                    y = (size.height - size.width / this.aspectRatio) / 2;
-                    thumbSelectionH = size.width / this.aspectRatio;
-                }
-
-                options.setSelect = [
-                    x, y, x + thumbSelectionW, y + thumbSelectionH
-                ];
-            }
-
-            $this.widget.find(".image img").Jcrop(options, function() {
-                $this.jcropInstance = this;
-            });
+            $this.initCropArea(size, $this.widget.find(".image img"), image.width);
         };
 
         image.src = src;
@@ -146,6 +216,11 @@ ImageUploadController.prototype = {
         return false;
     },
 
+    /**
+     * calculates maximum possible height and width for widget.
+     * @param image
+     * @returns {*}
+     */
     getSize: function(image) {
         var maxWidth = this.widget.find(".image").width();
         var maxHeight = this.widget.height() - this.widget.find(".buttons").outerHeight() - 32;
@@ -175,6 +250,28 @@ ImageUploadController.prototype = {
         this.internalWidth = data.w  / this.factor;
         this.internalLeft = data.x  / this.factor;
         this.internalTop = data.y  / this.factor;
+
+        this.fieldElement.find(".ThumbLeftValue").val(this.internalLeft);
+        this.fieldElement.find(".ThumbTopValue").val(this.internalTop);
+        this.fieldElement.find(".ThumbHeightValue").val(this.internalHeight);
+        this.fieldElement.find(".ThumbWidthValue").val(this.internalWidth);
+
+        if(data.w == 0 || data.h == 0) {
+            this.field.upload.thumbWidth = this.field.upload.thumbHeight = 100;
+            this.field.upload.thumbLeft = this.field.upload.thumbTop = 50;
+        } else {
+            this.field.upload.thumbWidth = Math.min(this.internalWidth / this.field.upload.orgImageSize.width * 100, 100);
+            this.field.upload.thumbHeight = Math.min(this.internalHeight / this.field.upload.orgImageSize.height * 100, 100);
+            this.field.upload.thumbLeft = this.field.upload.orgImageSize.width - this.internalWidth > 1 ?
+                Math.min(Math.max(this.internalLeft / (this.field.upload.orgImageSize.width - this.internalWidth) * 100, 0), 100) : 50;
+            this.field.upload.thumbTop = this.field.upload.orgImageSize.height - this.internalHeight > 1 ?
+                Math.min(Math.max(this.internalTop / (this.field.upload.orgImageSize.height - this.internalHeight) * 100, 0), 100) : 50;
+        }
+
+        clearTimeout(this.saveCropTimeout);
+        if(this.fieldElement.find(".crop-button").length > 0) {
+            this.saveCropTimeout = setTimeout(this.saveCrop.bind(this, true), 200);
+        }
     },
 
     hideCrop: function() {
@@ -186,10 +283,10 @@ ImageUploadController.prototype = {
         return false;
     },
 
-    saveCrop: function() {
+    saveCrop: function(updatePreviewOnly) {
         var $this = this;
 
-        if(this.jcropInstance != null) {
+        if(this.jcropInstance != null && updatePreviewOnly !== true) {
             this.jcropInstance.destroy();
         }
         this.widget.fadeOut("fast");
@@ -206,7 +303,21 @@ ImageUploadController.prototype = {
             },
             datatype: "json"
         }).done(function(data){
-            $this.super.uploader.updateFile(data);
+            console.log(updatePreviewOnly);
+            if(updatePreviewOnly === true) {
+                if(data.file.imageHeight400) {
+                    $this.super.formelement.find(".image-preview-img").css({
+                        width: "",
+                        height: ""
+                    }).attr({
+                        "src": data.file.imageHeight400,
+                        "data-retina": null
+                    });
+                    $this.super.formelement.find(".upload-link").attr("href", data.file.path);
+                }
+            } else {
+                $this.super.uploader.updateFile(data);
+            }
         }).fail(function(jqxhr){
             var data = $.parseJSON(jqxhr.responseText);
             if(data.error) {
@@ -225,8 +336,8 @@ ImageUploadController.prototype = {
         var oldUpdateFile = this.field.fileUpload.uploader.updateFile;
 
         this.super.uploader.updateFile = function(data) {
-            $this.updateCropArea(data);
             oldUpdateFile.apply(this, arguments);
+            $this.updateCropArea(data);
         };
     }
 };

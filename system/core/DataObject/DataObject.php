@@ -971,7 +971,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
             if (StaticsManager::getStatic($this->classname, "history") && $history) {
                 History::push($this->classname, $this->versionid, 0, $this->id, "remove");
             }
-            $this->onAfterRemove($this);
+            $this->onAfterRemove();
             $this->callExtending("onAfterRemove", $this);
             unset($this->data);
             return true;

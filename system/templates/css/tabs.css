@@ -6,13 +6,6 @@
   * last modified: 06.10.2013
 */
 
-.tabs > div {
-	display: none;
-}
-.tabs > .active {
-	display: block;
-}
-
 
 .tabs > ul {
 	padding: 0;
@@ -92,7 +85,17 @@
 	cursor: text;
 	margin-top: 0;
 }
-.tabs > .active {
+
+.tabs > div, .tabs > .tab-wrapper > div {
+	display: none;
+}
+.tabs > .active, .tabs > .tab-wrapper > .active {
+	display: block;
+}
+.tabs > .tab-wrapper {
+	display: block;
+}
+.tabs > .active, .tabs > .tab-wrapper > .active {
 	position: static;
 	clear: left;
 	border-top: 1px solid #ccc;

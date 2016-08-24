@@ -205,6 +205,10 @@ class ImageUploads extends Uploads {
         if(is_dir(ROOT . $this->path)) {
             FileSystem::delete(ROOT . $this->path);
         }
+
+        foreach($this->imageVersions() as $childImage) {
+            $childImage->remove(true);
+        }
     }
 
     /**
@@ -222,11 +226,11 @@ class ImageUploads extends Uploads {
 
         // get action
         $action = ($noCrop === true) ? "NoCrop" : "";
-        if($desiredWidth == -1 && $desiredHeight == -1) {
+        if((!isset($desiredWidth) || $desiredWidth == -1) && ($desiredHeight == -1 || !isset($desiredHeight))) {
             throw new InvalidArgumentException("At least one of the size-parameters should be set.");
-        } else if($desiredHeight == -1) {
+        } else if(!isset($desiredHeight) || $desiredHeight == -1) {
             $action .= "SetWidth";
-        } else if($desiredWidth == -1) {
+        } else if(!isset($desiredWidth) || $desiredWidth == -1) {
             $action .= "SetHeight";
         } else {
             $action .= "SetSize";
@@ -443,6 +447,10 @@ class ImageUploads extends Uploads {
      * @return ImageUploads
      */
     public function addImageVersionBySizeInPx($left, $top, $width, $height, $write = true) {
+        if($this->sourceImage) {
+            throw new InvalidArgumentException("Transitive source-images are not allowed.");
+        }
+
         $imageUploads = clone $this;
         $imageUploads->thumbHeight = min($height / $imageUploads->height * 100, 100);
         $imageUploads->thumbWidth = min($width / $imageUploads->width * 100, 100);

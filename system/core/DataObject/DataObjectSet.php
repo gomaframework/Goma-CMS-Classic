@@ -591,7 +591,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * gets the current value
 	 *
 	 * @name current
-	 * @return mixed|ViewAccessableData
+	 * @return DataObject
 	 */
 	public function current($position = null)
 	{
@@ -1663,6 +1663,13 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 		shuffle($items);
 
 		return new ArrayList($items);
+	}
+
+	/**
+	 * clears staging.
+	 */
+	public function clearStaging() {
+		$this->staging->clear();
 	}
 }
 

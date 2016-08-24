@@ -73,24 +73,32 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
                     if($this->fetchMode == self::FETCH_MODE_SINGLE) {
                         $currentData = DataObject::get($model, $filter)->addFilter(array(
                             $field => array(
-                                "id" => $this->upload->id
+                                "id" => $this->upload->id,
+                                "OR",
+                                "sourceImageId" => $this->upload->id
                             )
                         ));
                     } else {
                         $currentData = DataObject::get($model, $filter)->addFilter(array(
                             $field => array(
-                                "md5" => $this->upload->md5
+                                "md5" => $this->upload->md5,
+                                "OR",
+                                "sourceImageId" => $this->upload->id
                             )
                         ));
                     }
                 } else {
                     if($this->fetchMode == self::FETCH_MODE_SINGLE) {
                         $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field . "id" => $this->upload->id
+                            $field . "id"           => $this->upload->id,
+                            "OR",
+                            $field .".sourceImageId" => $this->upload->id
                         ));
                     } else {
                         $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field . ".md5" => $this->upload->md5
+                            $field . ".md5" => $this->upload->md5,
+                            "OR",
+                            $field.".sourceImageId" => $this->upload->id
                         ));
                     }
                 }
@@ -107,6 +115,26 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
                     }
 
                     $i += $currentData->count();
+                }
+            }
+
+            if (gObject::method_exists($model, "provideLinkingUploads")) {
+                $data = call_user_func_array(array($model, "provideLinkingUploads"), array($model, $this->upload));
+                if(is_array($data)) {
+                    /** @var IDataSet $source */
+                    foreach($data as $source) {
+                        if(!is_a($source, IDataSet::class)) {
+                            throw new InvalidArgumentException();
+                        }
+
+                        $i += $source->count();
+                    }
+                } else {
+                    if(!is_a($data, IDataSet::class)) {
+                        throw new InvalidArgumentException();
+                    }
+
+                    $i += $data->count();
                 }
             }
         }
@@ -186,6 +214,26 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
                         }
                     }
                 }
+
+                if (gObject::method_exists($model, "provideLinkingUploads")) {
+                    $data = call_user_func_array(array($model, "provideLinkingUploads"), array($model, $this->upload));
+                    if(is_array($data)) {
+                        /** @var IDataSet $source */
+                        foreach($data as $source) {
+                            if(!is_a($source, IDataSet::class)) {
+                                throw new InvalidArgumentException();
+                            }
+
+                            $i += $source->count();
+                        }
+                    } else {
+                        if(!is_a($data, IDataSet::class)) {
+                            throw new InvalidArgumentException();
+                        }
+
+                        $i += $data->count();
+                    }
+                }
             }
 
             $this->upload->propLinks = $i;
@@ -229,7 +277,7 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
                 }
 
                 if (gObject::method_exists($model, "provideLinkingUploads")) {
-                    call_user_func_array(array($model, "provideLinkingUploads"), array($model));
+                    $model[$model] = array();
                 }
             }
         }
