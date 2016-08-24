@@ -13,17 +13,11 @@ class Textarea extends FormField
 {
     /**
      * height of this textarea
-     *
-     * @name height
-     * @access public
      */
     public $height = "200px";
 
     /**
      * width of this textarea
-     *
-     * @name width
-     * @access public
      */
     public $width = "100%";
 
@@ -100,8 +94,6 @@ class Textarea extends FormField
     public function createNode()
     {
         $node = parent::createNode();
-        $node->css("height", $this->height);
-        $node->css("width", $this->width);
         $node->removeAttr("type");
         $node->setTag("textarea");
         return $node;
@@ -117,10 +109,12 @@ class Textarea extends FormField
 
     /**
      * @param boolean $autoResize
+     * @return $this
      */
     public function setAutoResize($autoResize)
     {
         $this->autoResize = $autoResize;
+        return $this;
     }
 
     /**
@@ -129,6 +123,9 @@ class Textarea extends FormField
      */
     public function addRenderData($info, $notifyField = true)
     {
+        $this->input->css("height", $this->height);
+        $this->input->css("width", $this->width);
+
         if($this->autoResize) {
             $info->addJSFile("system/form/Textarea.js");
         }
@@ -143,5 +140,41 @@ class Textarea extends FormField
         if($this->autoResize) {
             return '$(function(){ new resizableTextarea('.var_export($this->ID(), true).'); });';
         }
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getWidth()
+    {
+        return $this->width;
+    }
+
+    /**
+     * @param mixed $width
+     * @return $this
+     */
+    public function setWidth($width)
+    {
+        $this->width = $width;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getHeight()
+    {
+        return $this->height;
+    }
+
+    /**
+     * @param mixed $height
+     * @return $this
+     */
+    public function setHeight($height)
+    {
+        $this->height = $height;
+        return $this;
     }
 }

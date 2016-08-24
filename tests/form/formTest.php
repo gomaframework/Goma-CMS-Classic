@@ -328,4 +328,25 @@ class FormTest extends GomaUnitTest implements TestAble {
 
 		$this->assertEqual($form->action1, $action1);
 	}
+
+	public function testSwitchState() {
+		$form = new Form(new Controller(), "blub", array(), array(
+			new FormAction("test", "test", array($this, "manipulateState"))
+		));
+		$form->state->blah = 123;
+		$form->render()->render();
+
+		$this->assertEqual($form->state->blah, 123);
+
+		$form->setRequest(new Request("post", "test", array(), array(
+			"test" => "test"
+		)));
+		$form->trySubmit();
+		$this->assertEqual($form->state->blah, 321);
+	}
+
+	public function manipulateState($data, $form) {
+		$this->assertEqual($form->state->blah, 123);
+		$form->state->blah = 321;
+	}
 }

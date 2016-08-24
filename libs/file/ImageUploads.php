@@ -474,6 +474,23 @@ class ImageUploads extends Uploads {
     }
 
     /**
+     * @param ModelWriter $modelWriter
+     */
+    public function onBeforeWrite($modelWriter)
+    {
+        parent::onBeforeWrite($modelWriter);
+
+        $gd = new GD($this->realfile);
+        $gd->fixRotation()->toFile($this->realfile);
+
+        $this->md5 = md5_file($this->realfile);
+
+        DataObject::update(Uploads::class, array("md5" => $this->md5), array(
+            "realfile" => $this->realfile
+        ));
+    }
+
+    /**
      * gets best version of file for given aspect-ratio.
      * aspect is width / height.
      *

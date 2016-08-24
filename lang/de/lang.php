@@ -650,6 +650,7 @@ $lang = array(
 	"smtp_port"					=> "Port",
 	"smtp_connect_failure"		=> "Die SMTP-Verbindung konnte nicht überprüft werden.",
 	"smtp_from"					=> "Absender-E-Mail (optional)",
+	"optional"					=> "Optional",
 	"validating_smtp"			=> "Validiere SMTP-Einstellungen...",
 	"validating_submit"			=> "Es wird funktionieren, jetzt sichern.",
 	"smtp_status"				=> "SMTP-Verbindung",
@@ -672,5 +673,8 @@ $lang = array(
 	"ADD_CONTENT"		=> "Inhalt hinzufügen",
 
 	"this_version"		=> "Diese Version",
-	"versions"			=> "Versionen"
+	"versions"			=> "Versionen",
+
+    "moveContentBlock"  => "Inhaltsblock verschieben",
+    "removeContentBlock"=> "Inhaltsblock löschen"
 );

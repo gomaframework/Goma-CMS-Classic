@@ -8,87 +8,73 @@ class DBField extends gObject implements IDataBaseField
 {
     /**
      * this var contains the value
-     *@name value
-     *@var mixed
      */
     protected $value;
 
     /**
      * this field contains the field-name of this object
-     *@name name
-     *@access protected
+     * @var string
      */
     protected $name;
 
     /**
      * args
-     *
-     *@name args
-     *@access public
      */
     public $args = array();
 
     /**
      * cache for casting
-     *
-     *@name castingCache
-     *@access private
      */
     private static $castingCache = array();
 
     /**
-     *@name __construct
-     *@access public
-     *@param mixed - value
+     * @param string $name
+     * @param mixed $value
+     * @param array $args
      */
     public function __construct($name, $value, $args = array())
     {
+        parent::__construct();
+
         $this->name = $name;
         $this->value = $value;
         $this->args = $args;
-        parent::__construct();
     }
 
     /**
      * sets the value
-     *@name setvalue
-     *@access public
+     * @param mixed $value
+     * @return $this
      */
-    public function setValue($value)
-    {
+    public function setValue($value) {
         $this->value = $value;
+        return $this;
     }
     /**
      * gets the value
-     *@name getValue
-     *@access public
      */
-    public function getValue()
-    {
+    public function getValue() {
         return $this->value;
     }
+
     /**
      * sets the name
-     *@name setName
-     *@access public
+     * @param string $name
+     * @return $this
      */
-    public function setName($name)
-    {
+    public function setName($name) {
         $this->name = $name;
+        return $this;
     }
     /**
      * gets the anme
-     *@name getName
-     *@access public
      */
-    public function getName()
-    {
+    public function getName() {
         return $this->name;
     }
 
     /**
-     *@name raw
-     *@access public
+     * @return mixed
      */
     public function raw()
     {
@@ -97,8 +83,8 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * get it as text
-     *@name text
-     *@access public
+     *
+     * @return string
      */
     public function text()
     {
@@ -107,8 +93,8 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * get it as text and correct  linebreaks
-     *@name textLines
-     *@access public
+     *
+     * @return string
      */
     public function textLines()
     {
@@ -117,8 +103,8 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * get this as url
-     *@name url
-     *@access public
+     *
+     * @return string
      */
     public function url()
     {
@@ -126,8 +112,8 @@ class DBField extends gObject implements IDataBaseField
     }
     /**
      * for js
-     *@name JS
-     *@access public
+     *
+     * @return string
      */
     public function js()
     {
@@ -135,8 +121,8 @@ class DBField extends gObject implements IDataBaseField
     }
     /**
      * converts string to uppercase
-     *@name uppercase
-     *@access public
+     *
+     * @return string
      */
     public function UpperCase()
     {
@@ -145,8 +131,7 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * converts string to lowerase
-     * @name uppercase
-     * @access public
+     *
      * @return string
      */
     public function LowerCase()
@@ -187,14 +172,13 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * this function uses more than one convert-method
-     *@name convertMulti
-     *@access public
-     *@param array - methods
+     * @param array $methods
+     * @return mixed
      */
-    public function convertMulti($arr)
+    public function convertMulti($methods)
     {
         $new = clone $this;
-        foreach($arr as $method)
+        foreach($methods as $method)
         {
             if(gObject::method_exists($new, $method))
             {
@@ -207,8 +191,6 @@ class DBField extends gObject implements IDataBaseField
     /**
      * gets the field-type
      *
-     * @name getFieldType
-     * @access public
      * @return string
      */
     static public function getFieldType($args = array()) {
@@ -217,8 +199,6 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * toString-Method
-     * @name __toString
-     * @access public
      * @return string
      */
     public function __toString()
@@ -229,7 +209,6 @@ class DBField extends gObject implements IDataBaseField
     /**
      * gets Data Converted for Template
      *
-     * @name forTemplate
      * @return string
      */
     public function forTemplate() {
@@ -239,8 +218,6 @@ class DBField extends gObject implements IDataBaseField
     /**
      * bool - for IF in template
      *
-     * @name toBool
-     * @access public
      * @return bool
      */
     public function toBool() {

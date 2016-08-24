@@ -252,7 +252,8 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
      * @param TableField $tableField
      * @param string $actionName
      * @param string $arguments
-     * @param $data
+     * @param mixed $data
+     * @return mixed|void
      */
     public function handleAction($tableField, $actionName, $arguments, $data)
     {
@@ -276,7 +277,7 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
     /**
      * Add a column 'Actions'
      *
-     * @param type $tableField
+     * @param TableField $tableField
      * @param array $columns
      */
     public function augmentColumns($tableField, &$columns)

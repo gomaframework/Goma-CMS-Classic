@@ -661,7 +661,7 @@ class Form extends AbstractFormComponentWithChildren {
 		$data->request = $this->request;
 		$data->submitRequest = $this->submitRequest;
 		$data->secretKey = $this->secretKey;
-		$data->state->secret = $this->secretKey;
+		$data->state = $this->state;
 
 		$this->session->set("form_state_" . $this->name, $this->state->ToArray());
 
@@ -690,6 +690,8 @@ class Form extends AbstractFormComponentWithChildren {
 			} else {
 				$errors = array();
 			}
+
+			$this->state = $data->state;
 
 			$this->activatesecret();
 			$this->session->set("form_state_" . $this->name, $this->state->ToArray());

@@ -40,7 +40,7 @@ class GD extends gObject
     /**
      * type of the image
      *
-     * @var Array
+     * @var array
      */
     protected $type;
 
@@ -66,11 +66,18 @@ class GD extends gObject
     public $gd;
 
     /**
+     * @var array
+     */
+    protected $info;
+
+    /**
      * filename used to send to browser. if null, filename in storage is used or no filename is used.
      *
      * @var string
      */
     public $filename;
+
+    protected $originalOrientedBy = 0;
 
     /**
      * file types supported.
@@ -163,6 +170,27 @@ class GD extends gObject
             $this->height = $this->info[1];
             $type = $this->info[2];
 
+            // fix for some devices
+            // see http://stackoverflow.com/questions/29301931/php-getimagesize-mixes-up-width-and-height
+            $exif = exif_read_data($this->pic);
+            if(!empty($exif['Orientation'])) {
+                switch($exif['Orientation']) {
+                    case 8:
+                        $this->originalOrientedBy = 90;
+                        $this->width = $this->info[1];
+                        $this->height = $this->info[0];
+                        break;
+                    case 3:
+                        $this->originalOrientedBy = 180;
+                        break;
+                    case 6:
+                        $this->originalOrientedBy = -90;
+                        $this->width = $this->info[1];
+                        $this->height = $this->info[0];
+                        break;
+                }
+            }
+
             if(isset(self::$supported_types[$type])) {
                 $this->type = self::$supported_types[$type];
             } else {
@@ -221,6 +249,10 @@ class GD extends gObject
             $old = $this->gd();
             $newgd = clone $this;
 
+            if($this->originalOrientedBy != 0) {
+                $old = imagerotate($old, $this->originalOrientedBy, 0);
+            }
+
             if($crop) {
                 $new = $this->resizeCropped($old, $width, $height, $cropPosition, $cropSize);
             } else {
@@ -241,6 +273,24 @@ class GD extends gObject
         {
             return null;
         }
+    }
+
+    /**
+     * fixes problems with rotation.
+     */
+    public function fixRotation() {
+        if($this->originalOrientedBy != 0) {
+            $old = $this->gd();
+            $newgd = clone $this;
+
+            $old = imagerotate($old, $this->originalOrientedBy, 0);
+
+            $newgd->gd($old);
+
+            return $newgd;
+        }
+
+        return $this;
     }
 
     /**

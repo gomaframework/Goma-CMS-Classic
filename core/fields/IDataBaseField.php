@@ -73,7 +73,7 @@ interface IDataBaseField {
      *@access public
      *@param array - methods
      */
-    public function convertMulti($arr);
+    public function convertMulti($methods);
 
     /**
      * gets the field-type for the database, for example if you want to have the type varchar instead of the name of this class
