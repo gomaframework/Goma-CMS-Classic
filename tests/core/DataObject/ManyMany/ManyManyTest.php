@@ -224,6 +224,50 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         $this->assertEqual($firstOne->twos(array("two" => $this->twos[0]->two))->count(), 1);
         $this->assertEqual($firstOne->twos()->filter(array("two" => $this->twos[0]->two))->count(), 1);
     }
+
+    public function testUpgradeStateToPublish() {
+        $newOne = new ManyManyTestObjectOne(array(
+            "one" => 10
+        ));
+        $newOne->twos()->add(new ManyManyTestObjectTwo(array(
+            "two" => 10
+        )));
+        $newOne->twos()->add(new ManyManyTestObjectTwo(array(
+            "two" => 11
+        )));
+        $newOne->writeToDB(true, true, 1);
+
+        /** @var ManyManyTestObjectOne $stateOne */
+        $stateOne = DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
+            "one" => 10
+        ))->first();
+        $this->assertEqual(DataObject::VERSION_STATE, $stateOne->queryVersion);
+
+        $this->assertIsA($stateOne, ManyManyTestObjectOne::class);
+        $this->assertEqual(2, $stateOne->twos()->count());
+        $this->assertEqual(0, DataObject::get(ManyManyTestObjectTwo::class, array(
+            "two" => array(10, 11)
+        ))->count());
+
+        $stateOne->writeToDB(false, true, 2);
+        $this->assertEqual(2, DataObject::get(ManyManyTestObjectTwo::class, array(
+            "two" => array(10, 11)
+        ))->count());
+
+        $this->assertEqual(2, $stateOne->twos()->count());
+        foreach($stateOne->twos() as $two) {
+            $two->remove(true);
+        }
+
+        $this->assertEqual(0, DataObject::get(ManyManyTestObjectTwo::class, array(
+            "two" => array(10, 11)
+        ))->count());
+
+        $stateOne->remove(true);
+        $this->assertNull(DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
+            "one" => 10
+        ))->first());
+    }
 }
 
 /**
@@ -237,7 +281,7 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
  */
 class ManyManyTestObjectOne extends DataObject {
 
-    static $version = true;
+    static $versions = true;
 
     static $db = array(
         "one"       => "varchar(200)",
@@ -268,7 +312,7 @@ class ManyManyTestObjectOne extends DataObject {
  */
 class ManyManyTestObjectTwo extends DataObject {
 
-    static $version;
+    static $versions = true;
 
     static $db = array(
         "two"   => "varchar(200)",

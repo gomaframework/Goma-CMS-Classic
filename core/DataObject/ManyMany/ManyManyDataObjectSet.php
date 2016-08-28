@@ -435,6 +435,9 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             throw new PermissionException();
         }
 
+        $copyOfAddStage = $this->staging->ToArray();
+        parent::commitStaging($forceInsert, $forceWrite, $snap_priority, $repository);
+
         $manipulation = array();
         $sort = 0;
         $addedRecords = array();
@@ -476,9 +479,6 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                 }
             }
         }
-
-        $copyOfAddStage = $this->staging->ToArray();
-        parent::commitStaging($forceInsert, $forceWrite, $snap_priority, $repository);
 
         /** @var DataObject $record */
         foreach($copyOfAddStage as $record) {

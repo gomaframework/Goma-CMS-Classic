@@ -396,7 +396,7 @@ class ClassInfo extends gObject {
 			filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") ||
 			filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist") ||
 			filemtime($file) + self::$expiringTime < NOW ||
-			isset($args["-rebuild"])
+			isset($args["-rebuild"]) || isset($args["--rebuild"])
 		);
 	}
 

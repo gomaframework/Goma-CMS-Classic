@@ -78,10 +78,17 @@ class ClassManifest {
 	*/
 	protected static function loadInterface($class) {
 		if(isset(ClassInfo::$interfaces[$class]) && !interface_exists($class, false)) {
+            if(strpos($class, "\\") !== false) {
+                $namespace = 'namespace ' . substr($class, 0, strrpos($class, "\\")) . ";";
+                $class = substr($class, strrpos($class, "\\") + 1);
+            } else {
+                $namespace = "";
+            }
+
 			if(ClassInfo::$interfaces[$class]) {
-				eval('interface '.$class.' extends '.ClassInfo::$interfaces[$class].' {}');
+				eval($namespace . 'interface '.$class.' extends '.ClassInfo::$interfaces[$class].' {}');
 			} else {
-				eval('interface '.$class.' {}');
+				eval($namespace . 'interface '.$class.' {}');
 			}
 			
 			return true;

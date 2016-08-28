@@ -350,7 +350,6 @@ class ModelWriter extends gObject {
      * @throws MySQLException
      */
     protected function checkForChanges() {
-
         if(!$this->getObjectToUpdate()) {
             return true;
         }
@@ -359,7 +358,6 @@ class ModelWriter extends gObject {
 
         // try and find out whether to write cause of state
         if (!$this->hasBeenWritten($this->model)) {
-
             if($oldData = $this->getObjectToUpdate()->ToArray()) {
                 // first check for raw data.
                 foreach ($oldData as $key => $val) {
@@ -420,6 +418,17 @@ class ModelWriter extends gObject {
 
             $this->callPostFlightEvents();
         }
+    }
+
+    /**
+     * publish without writing.
+     */
+    public function publish() {
+        $this->callPreflightEvents();
+
+        $this->databaseWriter->publish();
+
+        $this->callPostFlightEvents();
     }
 
     /**

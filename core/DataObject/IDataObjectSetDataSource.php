@@ -12,7 +12,6 @@ defined("IN_GOMA") OR die();
  * @version 1.0
  */
 interface IDataObjectSetDataSource {
-
     /**
      * gets records.
      *
