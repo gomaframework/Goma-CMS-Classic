@@ -426,7 +426,7 @@ class ClassInfo extends gObject {
 				header("content-type: text/html;charset=UTF-8");
 				header("X-Powered-By: Goma Framework " . GOMA_VERSION . "-" . BUILD_VERSION);
 				echo $data;
-				exit;
+				exit(5);
 			}
 
 			// some global tests for the framework to run
@@ -515,7 +515,8 @@ class ClassInfo extends gObject {
 			// check for disk-quote
 			if(GOMA_FREE_SPACE / 1024 / 1024 < 20) {
 				header("HTTP/1.1 500 Server Error");
-				die(file_get_contents(ROOT . "system/templates/framework/disc_quota_exceeded.html"));
+				echo (file_get_contents(ROOT . "system/templates/framework/disc_quota_exceeded.html"));
+				exit(10);
 			}
 
 			// register shutdown hook
