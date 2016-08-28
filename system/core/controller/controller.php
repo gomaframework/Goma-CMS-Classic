@@ -542,6 +542,32 @@ class Controller extends RequestHandler
     }
 
     /**
+     * @param string $action
+     * @param null $id
+     * @return string
+     * @throws DataNotFoundException
+     */
+    protected function buildUrlForActionAndModel($action, $id = null) {
+        if(is_a($this->modelInst(), IDataSet::class)) {
+            if(isset($id) && $this->modelInst()->find("id", $id)) {
+                return $this->namespace . "/record/" . $id . "/" . $action . URLEND;
+            } else {
+                throw new DataNotFoundException();
+            }
+        } else {
+            if(!isset($id) && $this->modelInst()->id != $id) {
+                if(preg_match('/record\/([0-9]+)$/i', $this->namespace, $matches)) {
+                    return substr($this->namespace, 0, 0 - strlen($matches[0])) . "/record/" . $id . "/" . $action . URLEND;
+                }
+
+                throw new DataNotFoundException();
+            }
+
+            return $this->namespace . "/" . $action;
+        }
+    }
+
+    /**
      * @param DataObject $model
      * @param bool $link
      * @return string
@@ -596,7 +622,15 @@ class Controller extends RequestHandler
     public function safe($data, $form = null, $controller = null, $overrideCreated = false, $priority = 1, $action = 'save_success')
     {
         $givenModel = isset($form) ? $form->getModel() : null;
-        if (($model = $this->save($data, $priority, false, false, $overrideCreated, $givenModel)) !== false) {
+        if(isset($givenModel) && is_a($givenModel, DataObject::class)) {
+            unset($data["id"], $data["versionid"]);
+            /** @var DataObject $givenModel */
+            $model = $this->saveModel($givenModel, $data, $priority, false, false, $overrideCreated);
+        } else {
+            $model = $this->save($data, $priority, false, false, $overrideCreated, $givenModel);
+        }
+
+        if ($model !== false) {
             return $this->actionComplete($action, $model);
         } else {
             throw new Exception('Could not save data');
@@ -633,6 +667,7 @@ class Controller extends RequestHandler
      * @param bool $overrideCreated
      * @param null|DataObject $givenModel
      * @return bool|DataObject
+     * @deprecated
      */
     public function save($data, $priority = 1, $forceInsert = false, $forceWrite = false, $overrideCreated = false, $givenModel = null)
     {
@@ -655,6 +690,51 @@ class Controller extends RequestHandler
         if (PROFILE) Profiler::unmark("Controller::save");
 
         return $model;
+    }
+
+    /**
+     * @param DataObject $model
+     * @param array $data
+     * @param int $priority
+     * @param bool $forceInsert
+     * @param bool $forceWrite
+     * @param bool $overrideCreated
+     * @return DataObject
+     */
+    public function saveModel($model, $data, $priority = 1, $forceInsert = false, $forceWrite = false, $overrideCreated = false) {
+        if (PROFILE) Profiler::mark("Controller::save");
+
+        $this->callExtending("onBeforeSave", $data, $priority);
+
+        if(!isset($model)) {
+            $model = $this->getModelToWrite();
+            foreach ($data as $key => $value) {
+                if(in_array(strtolower($key), array("id", "versionid"))) {
+                    throw new InvalidArgumentException("Controller::saveModel does not use id and versionid.");
+                }
+
+                $model->$key = $value;
+            }
+        }
+
+        $model->writeToDB($forceInsert, $forceWrite, $priority, false, true, false, $overrideCreated);
+
+        $this->callExtending("onAfterSave", $model, $priority);
+
+        if (PROFILE) Profiler::unmark("Controller::save");
+
+        return $model;
+    }
+
+    /**
+     * @return ViewAccessableData
+     */
+    protected function getModelToWrite() {
+        if(is_a($this->modelInst(), IDataSet::class)) {
+            return $this->modelInst()->createNew();
+        }
+
+        return $this->modelInst();
     }
 
     /**

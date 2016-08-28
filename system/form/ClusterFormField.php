@@ -165,7 +165,7 @@ class ClusterFormField extends FieldSet {
             if($this->POST) {
                 if (!$this->isDisabled() && $this->parent && ($postData = $this->parent->getFieldPost($this->PostName()))) {
                     return $postData;
-                } else if ($this->model == null) {
+                } else if ($this->model === null) {
                     $this->model = $this->parent ? $this->parent->getFieldValue($this->dbname) : null;
                 }
             }

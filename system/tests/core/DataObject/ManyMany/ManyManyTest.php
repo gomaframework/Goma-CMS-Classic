@@ -237,6 +237,9 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         )));
         $newOne->writeToDB(true, true, 1);
 
+        $this->assertEqual($newOne, $newOne->twos()->getOwnRecord());
+        $this->assertEqual(2, $newOne->twos()->count());
+
         /** @var ManyManyTestObjectOne $stateOne */
         $stateOne = DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
             "one" => 10

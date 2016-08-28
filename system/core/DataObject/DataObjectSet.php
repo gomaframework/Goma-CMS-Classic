@@ -1161,41 +1161,56 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @param null|IModelRepository $repository
 	 * @throws DataObjectSetCommitException
 	 */
-	public function commitStaging($forceInsert = false, $forceWrite = false, $snap_priority = 2, $repository = null) {
+	final public function commitStaging($forceInsert = false, $forceWrite = false, $snap_priority = 2, $repository = null, $options = array()) {
 		$exceptions = array();
 		$errorRecords = array();
 
 		$repository = isset($repository) ? $repository : Core::repository();
 
-		if($this->queryVersion() == "state" && $snap_priority > 1) {
-			$this->publishStateRecords($repository, $forceWrite, $exceptions, $errorRecords);
-		}
+		$this->writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, (array) $options, $exceptions, $errorRecords);
 
-		/** @var DataObject $record */
-		foreach($this->staging as $record) {
-			if(is_array($record)) {
-				$record = $this->getConverted($record);
-			}
+        $this->setFetchMode(DataObjectSet::FETCH_MODE_EDIT);
+        $this->clearCache();
 
-			try {
-				$record->writeToDBInRepo($repository, $forceInsert, $forceWrite, $snap_priority);
+        $this->version = $snap_priority <= 1 ? DataObject::VERSION_STATE : DataObject::VERSION_PUBLISHED;
 
-				$this->staging->remove($record);
-			} catch(Exception $e) {
-				$exceptions[] = $e;
-				$errorRecords[] = $record;
-			}
-		}
-
-		$this->setFetchMode(DataObjectSet::FETCH_MODE_EDIT);
-		$this->clearCache();
-
-		if(count($exceptions) > 0) {
+        if(count($exceptions) > 0) {
 			throw new DataObjectSetCommitException($exceptions, $errorRecords, count($errorRecords) . " could not be written.");
 		}
 
 		$this->dbDataSource()->clearCache();
 	}
+
+    /**
+     * @param bool $forceInsert
+     * @param bool $forceWrite
+     * @param int $snap_priority
+     * @param IModelRepository $repository
+     * @param array $options
+     * @param array $exceptions
+     * @param array $errorRecords
+     */
+    protected function writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, &$exceptions, &$errorRecords) {
+        if($this->queryVersion() == "state" && $snap_priority > 1) {
+            $this->publishStateRecords($repository, $forceWrite, $exceptions, $errorRecords);
+        }
+
+        /** @var DataObject $record */
+        foreach($this->staging as $record) {
+            if(is_array($record)) {
+                $record = $this->getConverted($record);
+            }
+
+            try {
+                $record->writeToDBInRepo($repository, $forceInsert, $forceWrite, $snap_priority);
+
+                $this->staging->remove($record);
+            } catch(Exception $e) {
+                $exceptions[] = $e;
+                $errorRecords[] = $record;
+            }
+        }
+    }
 
     /**
      * @param IModelRepository $repository
