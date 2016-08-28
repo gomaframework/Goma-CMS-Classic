@@ -287,11 +287,16 @@ class LeftAndMain extends AdminItem {
 	 *
 	 * @param array $data
 	 * @param FormAjaxResponse $response
+	 * @param Form $form
+	 * @param null $controller
+	 * @param bool $forceInsert
+	 * @param bool $forceWrite
+	 * @param bool $overrideCreated
 	 * @return FormAjaxResponse
 	 */
 	public function ajaxSave($data, $response, $form = null, $controller = null, $forceInsert = false, $forceWrite = false, $overrideCreated = false) {
 		try {
-			$model = $this->save($data, 1, $forceInsert, $forceWrite, $overrideCreated);
+			$model = $this->save($data, 1, $forceInsert, $forceWrite, $overrideCreated, $form->getModel());
 			// notify the user
 			Notification::notify($model->classname, lang("SUCCESSFUL_SAVED", "The data was successfully written!"), lang("SAVED"));
 
@@ -336,13 +341,13 @@ class LeftAndMain extends AdminItem {
 	 * publishes data for editing a site via ajax
 	 * @param array $data
 	 * @param AjaxResponse $response
-	 * @param null $form
+	 * @param Form $form
 	 * @param null $controller
 	 * @param bool $overrideCreated
 	 * @return AjaxResponse
 	 */
 	public function ajaxPublish($data, $response, $form = null, $controller = null, $overrideCreated = false) {
-		if($model = $this->save($data, 2, false, false, $overrideCreated)) {
+		if($model = $this->save($data, 2, false, false, $overrideCreated, $form->getModel())) {
 			// notify the user
 			Notification::notify($model->classname, lang("successful_published", "The data was successfully published!"), lang("published"));
 

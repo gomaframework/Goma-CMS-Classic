@@ -349,4 +349,64 @@ class FormTest extends GomaUnitTest implements TestAble {
 		$this->assertEqual($form->state->blah, 123);
 		$form->state->blah = 321;
 	}
+
+	public function testChangeModel() {
+		$form = new Form(new Controller(), "blub", array(), array(
+			new FormAction("test", "test")
+		));
+        $form->setSubmission(array($this, "manipulateModel"));
+		$form->setModel($model = new StdClass());
+		$form->state->blah = 123;
+		$form->render()->render();
+
+		$this->assertEqual(123, $form->state->blah);
+		$this->assertEqual($model, $form->getModel());
+
+		$form->setRequest(new Request("post", "test", array(), array(
+			"test" => "test"
+		)));
+		$form->trySubmit();
+		$this->assertEqual(1, $form->getModel()->test);
+		$this->assertEqual(321, $form->state->blah);
+
+        $form->getModel()->test = 0;
+        $form->state->blah = 123;
+        $this->assertNotEqual(321, $form->state->blah);
+        $this->assertEqual(0, $form->getModel()->test);
+        $form->setSubmission(array($this, "manipulateModelException"));
+
+        $form->setRequest(new Request("post", "test", array(), array(
+            "test" => "test"
+        )));
+        $form->trySubmit();
+        $this->assertEqual(1, $form->getModel()->test);
+        $this->assertEqual(321, $form->state->blah);
+	}
+
+	/**
+	 * @param $data
+	 * @param Form $form
+     */
+	public function manipulateModel($data, $form) {
+		$this->assertEqual($form->state->blah, 123);
+		$form->state->blah = 321;
+
+		$form->getModel()->test = 1;
+        $this->assertEqual(1, $form->getModel()->test);
+	}
+
+
+    /**
+     * @param $data
+     * @param Form $form
+     * @throws Exception
+     */
+    public function manipulateModelException($data, $form) {
+        $this->assertEqual($form->state->blah, 123);
+        $form->state->blah = 321;
+
+        $form->getModel()->test = 1;
+        $this->assertEqual(1, $form->getModel()->test);
+        throw new Exception("blub");
+    }
 }

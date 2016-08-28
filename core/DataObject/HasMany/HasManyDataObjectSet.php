@@ -86,8 +86,11 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
      * @param bool $forceWrite
      * @param int $snap_priority
      * @param null|IModelRepository $repository
+     * @param array $options
+     * @param array $exceptions
+     * @param array $errorRecords
      */
-    public function commitStaging($forceInsert = false, $forceWrite = false, $snap_priority = 2, $repository = null)
+    public function writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, &$exceptions, &$errorRecords)
     {
         if($this->fetchMode == DataObjectSet::FETCH_MODE_CREATE_NEW) {
             $records = $this->dbDataSource()->getRecords($this->version, array(
@@ -106,7 +109,7 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
             }
         }
 
-        parent::commitStaging($forceInsert, $forceWrite, $snap_priority, $repository);
+        parent::writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, $exceptions, $errorRecords);
     }
 
     /**

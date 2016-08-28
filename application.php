@@ -54,13 +54,15 @@ if (isset($_REQUEST["profile"]) || defined("PROFILE")) {
 // check if we are running on nginx without mod_rewrite
 if (isset($_SERVER["SERVER_SOFTWARE"]) && preg_match('/nginx/i', $_SERVER["SERVER_SOFTWARE"]) && !MOD_REWRITE) {
 	header("HTTP/1.1 500 Server Error");
-	die(file_get_contents(dirname(__FILE__) . "/templates/framework/nginx_no_rewrite.html"));
+	echo (file_get_contents(dirname(__FILE__) . "/templates/framework/nginx_no_rewrite.html"));
+	exit(2);
 }
 
 // check if we are running without mod-php-xml
 if (!class_exists("DOMDocument")) {
 	header("HTTP/1.1 500 Server Error");
-	die(file_get_contents(dirname(__FILE__) . "/templates/framework/no_php_xml.html"));
+	echo (file_get_contents(dirname(__FILE__) . "/templates/framework/no_php_xml.html"));
+	exit(3);
 }
 
 /* --- */

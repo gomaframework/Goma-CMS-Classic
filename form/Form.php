@@ -26,6 +26,7 @@ class Form extends AbstractFormComponentWithChildren {
 	 * session-prefix for form.
 	 */
 	const SESSION_PREFIX = "form";
+    const SESSION_STATE_PREFIX = "form_state_";
 	const DEFAULT_SUBMSSION = "@default";
 
 	/**
@@ -224,7 +225,7 @@ class Form extends AbstractFormComponentWithChildren {
 			$this->state = $data->state;
 			$this->restorer = $data;
 
-			if($data->secret) {
+			if($data->secretKey) {
 				$this->activateSecret($data->secretKey);
 			}
 
@@ -239,8 +240,8 @@ class Form extends AbstractFormComponentWithChildren {
 	}
 
 	public function checkForStateRestore() {
-		if($this->session->hasKey("form_state_" . $this->name)) {
-			$this->state = new FormState($this->session->get("form_state_" . $this->name));
+		if($this->session->hasKey(self::SESSION_STATE_PREFIX . $this->name)) {
+			$this->state = new FormState($this->session->get(self::SESSION_STATE_PREFIX . $this->name));
 			$this->activateSecret($this->state->secret);
 			return true;
 		}
@@ -464,7 +465,7 @@ class Form extends AbstractFormComponentWithChildren {
 		if(PROFILE)
 			Profiler::unmark("Form::renderForm::render");
 
-		$this->session->set("form_state_" . $this->name, $this->state->ToArray());
+		$this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
 
 		$this->saveToSession();
 
@@ -663,10 +664,15 @@ class Form extends AbstractFormComponentWithChildren {
 		$data->secretKey = $this->secretKey;
 		$data->state = $this->state;
 
-		$this->session->set("form_state_" . $this->name, $this->state->ToArray());
+		$this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
 
 		try {
-			$content = $data->handleSubmit();
+            try {
+                $content = $data->handleSubmit();
+            } finally {
+                $this->model = $data->model;
+                $data->saveToSession();
+            }
 
 			/** @var Form|GomaFormResponse $content */
 			if(is_a($content, "Form")) {
@@ -691,10 +697,8 @@ class Form extends AbstractFormComponentWithChildren {
 				$errors = array();
 			}
 
-			$this->state = $data->state;
-
 			$this->activatesecret();
-			$this->session->set("form_state_" . $this->name, $this->state->ToArray());
+			$this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
 
 			return $this->renderForm($errors);
 		}

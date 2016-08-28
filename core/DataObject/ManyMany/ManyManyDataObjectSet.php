@@ -420,23 +420,25 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
     }
 
     /**
-     * write to DB
-     *
-     * @param bool $forceInsert to force insert
-     * @param bool $forceWrite to force write
-     * @param int $snap_priority of the snapshop: autosave 0, save 1, publish 2
-     * @param null|IModelRepository $repository
-     * @param null $oldId
+     * @param bool $forceInsert
+     * @param bool $forceWrite
+     * @param int $snap_priority
+     * @param IModelRepository $repository
+     * @param array $options
+     * @param array $exceptions
+     * @param array $errorRecords
      * @throws MySQLException
      * @throws PermissionException
      */
-    public function commitStaging($forceInsert = false, $forceWrite = false, $snap_priority = 2, $repository = null, $oldId = null) {
+    protected function writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, &$exceptions, &$errorRecords)
+    {
         if(!$forceWrite && !$this->ownRecord->can("Write")) {
             throw new PermissionException();
         }
 
         $copyOfAddStage = $this->staging->ToArray();
-        parent::commitStaging($forceInsert, $forceWrite, $snap_priority, $repository);
+
+        parent::writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, $exceptions, $errorRecords);
 
         $manipulation = array();
         $sort = 0;
@@ -451,8 +453,8 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                 )
             );
         } else {
-            if($this->ownRecord->versionid != $this->ownRecord->publishedid || $oldId || $this->manyManyData || $this->updateExtraFieldsStage->count() > 0) {
-                $relationData = $this->getRelationshipDataFromDB($oldId);
+            if($this->ownRecord->versionid != $this->ownRecord->publishedid || isset($options["oldid"]) || $this->manyManyData || $this->updateExtraFieldsStage->count() > 0) {
+                $relationData = $this->getRelationshipDataFromDB(isset($options["oldid"]) ? $options["oldid"] : null);
 
                 $manipulation[self::MANIPULATION_DELETE_EXISTING] = array(
                     "command"		=> "delete",
@@ -519,7 +521,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
         $this->dbDataSource()->onBeforeManipulateManyMany($manipulation, $this, $addedRecords);
         $this->modelSource()->callExtending("onBeforeManipulateManyMany", $manipulation, $this, $addedRecords);
         if(!$this->dbDataSource()->manipulate($manipulation)) {
-            throw new LogicException("Could not manipulate Database. Manipulation corrupted. <pre>" . print_r($manipulation, true) . "</pre>");
+            $exceptions[] = new LogicException("Could not manipulate Database. Manipulation corrupted. <pre>" . print_r($manipulation, true) . "</pre>");
         }
     }
 

@@ -420,7 +420,8 @@ function writeProjectConfig($data = array(), $project = CURRENT_PROJECT) {
 		@chmod($config, 0644);
 		return true;
 	} else {
-		die("6: Could not write Project-Config '" . $config . "'. Please set Permissions to 0777!");
+		echo ("6: Could not write Project-Config '" . $config . "'. Please set Permissions to 0777!");
+		exit(6);
 	}
 }
 
@@ -655,7 +656,7 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 				$content = str_replace('$uri', $uri, $content);
 				echo $content;
 			}
-			exit(2);
+			exit(7);
 			break;
 
 		case E_WARNING:
@@ -698,7 +699,7 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 				$content = str_replace('$uri', $uri, $content);
 				echo $content;
 			}
-			exit(2);
+			exit(4);
 	}
 
 	// block PHP's internal Error-Handler
@@ -740,7 +741,7 @@ function Goma_ExceptionHandler($exception) {
 		echo $content;
 	}
 
-	exit(2);
+	exit(8);
 }
 
 
@@ -1047,7 +1048,7 @@ function loadApplication($directory) {
 				require (ROOT . $directory . "/application/cli-application.php");
 			} else {
 				echo("CLI is not supported by that project.\n");
-				exit(1);
+				exit(9);
 			}
 		} else {
 			require (ROOT . $directory . "/application/application.php");
