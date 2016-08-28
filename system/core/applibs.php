@@ -238,7 +238,8 @@ function goma_date($format, $date = NOW) {
 function makeProjectUnavailable($project = APPLICATION, $ip = null) {
 	$ip = isCommandLineInterface() ? "cli" : (isset($ip) ? $ip : $_SERVER["REMOTE_ADDR"]);
 	if(!file_put_contents(ROOT . $project . "/503.goma", $ip, LOCK_EX)) {
-		die("Could not make project unavailable.");
+		echo ("Could not make project unavailable.");
+		exit(11);
 	}
 	chmod(ROOT . $project . "/503.goma", 0777);
 }
@@ -896,7 +897,8 @@ function writeServerConfig() {
 	require (ROOT . "system/resources/" . $file . ".php");
 
 	if(!file_put_contents(ROOT . $toFile, $serverconfig, FILE_APPEND | LOCK_EX)) {
-		die("Could not write " . $file);
+		echo ("Could not write " . $file);
+		exit(6);
 	}
 }
 
@@ -1040,7 +1042,8 @@ function loadApplication($directory) {
 			header('HTTP/1.1 503 Service Temporarily Unavailable');
 			header('Status: 503 Service Temporarily Unavailable');
 			header('Retry-After: 10');
-			die($content);
+			echo ($content);
+			exit(503);
 		}
 
 		if(isCommandLineInterface()) {
