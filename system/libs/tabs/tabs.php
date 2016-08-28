@@ -141,7 +141,7 @@ class Tabs extends gObject {
                 if(isset($data["title"], $data["content"])) {
                     $id = isset($data["name"]) ? "tab_" . $this->name . "_" . $data["name"] : md5($data["title"]);
                     
-                    $this->tabNavi->append(new HTMLNode("li", array(), $point = new HTMLNode("a", array("href" => URL . URLEND . "?" . $this->name . "=" . $id, "name" => $id, "id" => $id . "_tab"), $data["title"])));
+                    $this->tabNavi->append(new HTMLNode("li", array(), $point = new HTMLNode("a", array("href" => URL . URLEND . "?" . $this->name . "=" . $id, "name" => $id, "id" => $id . "_tab", "class" => "tab"), $data["title"])));
                     $this->tabContainer->append($content = new HTMLNode("div", array("id" => $id), $data["content"]));
                     if(!$activeFound && ((isset($_GET[$this->name]) && $_GET[$this->name] == $id) || (!isset($_GET[$this->name]) && isset($_COOKIE["tabs_" . $this->name]) && $_COOKIE["tabs_" . $this->name] = $id))) {
                         
@@ -179,12 +179,12 @@ class Tabs extends gObject {
                         }
                         
                         // render to tabs
-                        $this->tabNavi->append(new HTMLNode("li", array(), new HTMLNode("a", array("class" => "active ajax", "name" => $id, "href" => URL . URLEND . "?" . $this->name . "=" . $id, "name" => $id, "id" => $id . "_tab"), $data["title"])));
+                        $this->tabNavi->append(new HTMLNode("li", array(), new HTMLNode("a", array("class" => "active tab ajax", "name" => $id, "href" => URL . URLEND . "?" . $this->name . "=" . $id, "name" => $id, "id" => $id . "_tab"), $data["title"])));
                         $this->tabContainer->append(new HTMLNode("div", array("class" => "active", "id" => $id), $data["content"]));
                         unset($_data);
                     } else {
                         // in case the ajax-tab is not selected, we just draw the menu
-                        $this->tabNavi->append(new HTMLNode("li", array(), new HTMLNode("a", array("class" => "ajax", "name" => $id, "href" => URL . URLEND . "?" . $this->name . "=" . $id, "id" => $id . "_tab"), $data["title"])));
+                        $this->tabNavi->append(new HTMLNode("li", array(), new HTMLNode("a", array("class" => "ajax tab", "name" => $id, "href" => URL . URLEND . "?" . $this->name . "=" . $id, "id" => $id . "_tab"), $data["title"])));
                         $this->tabContainer->append(new HTMLNode("div", array("id" => $id), '<div style="text-align: center;"><img src="images/loading.gif" alt="loading..." /></div>'));
                     }
                 }

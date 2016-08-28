@@ -37,7 +37,6 @@ class ManyManyModelWriter extends Extension {
         if ($many_many) {
             /** @var ModelManyManyRelationshipInfo $relationShip */
             foreach($many_many as $name => $relationShip) {
-
                 /** @var ModelManyManyRelationShipInfo $relationShip */
                 $relationShip = $this->getOwner()->getModel()->getManyManyInfo($name);
 

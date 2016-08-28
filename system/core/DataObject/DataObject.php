@@ -147,6 +147,12 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      * @return array|DataObjectSet|DataObject[]
      */
     public static function get_versioned($class, $version = null, $filter = array(), $sort = array(), $limits = array(), $joins = array(), $group = false, $pagination = false) {
+        if(!is_null($version) && !is_bool($version) &&
+            $version != self::VERSION_PUBLISHED && $version != self::VERSION_STATE
+            && $version != self::VERSION_GROUP) {
+            throw new InvalidArgumentException("Version must be boolean, null or valid string.");
+        }
+
         $data = self::get($class, $filter, $sort, $limits, $joins, $version, $pagination);
         if ($group !== false) {
             return $data->groupBy($group);

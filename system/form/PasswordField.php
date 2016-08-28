@@ -37,7 +37,7 @@ class PasswordField extends FormField {
 		$result = parent::result();
 
 		if(!$result) {
-			return $this->value;
+			return $this->parent->getFieldValue($this->name);
 		}
 
 		return $result;

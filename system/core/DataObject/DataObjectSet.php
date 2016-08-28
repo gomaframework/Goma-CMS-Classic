@@ -740,7 +740,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		if(isset($filter)) {
 			$this->filter = array_merge((array) $this->filter, (array) $filter);
-			$this->clearCache();
+            $this->clearCache();
 		}
 		return $this;
 	}
@@ -1167,6 +1167,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		$repository = isset($repository) ? $repository : Core::repository();
 
+		if($this->queryVersion() == "state" && $snap_priority > 1) {
+			$this->publishStateRecords($repository, $forceWrite, $exceptions, $errorRecords);
+		}
+
 		/** @var DataObject $record */
 		foreach($this->staging as $record) {
 			if(is_array($record)) {
@@ -1191,6 +1195,30 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 		}
 
 		$this->dbDataSource()->clearCache();
+	}
+
+    /**
+     * @param IModelRepository $repository
+     * @param bool $forceWrite
+     * @param Exception[] $exceptions
+     * @param DataObject[] $errorRecords
+     */
+	protected function publishStateRecords($repository, $forceWrite, &$exceptions, &$errorRecords) {
+        if($this->fetchMode == self::FETCH_MODE_EDIT) {
+            $info = clone $this;
+            $info->addFilter(array(
+                "publishedid" => 0
+            ));
+
+            foreach ($info as $record) {
+                try {
+                    $repository->publish($record, $forceWrite);
+                } catch (Exception $e) {
+                    $exceptions[] = $e;
+                    $errorRecords = $record;
+                }
+            }
+        }
 	}
 
 	/**

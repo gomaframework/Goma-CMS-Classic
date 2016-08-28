@@ -665,9 +665,9 @@ class Controller extends RequestHandler
      * @param    ViewAccessableData $givenModel
      * @return ViewAccessableData
      */
-    public function getSafableModel($data, ViewAccessableData $givenModel = null)
+    public function getSafableModel($data, $givenModel = null)
     {
-        $model = isset($givenModel) ? $givenModel->_clone() : $this->modelInst()->_clone();
+        $model = isset($givenModel) ? clone $givenModel : $this->modelInst()->_clone();
 
         if(isset($data["class_name"])) {
             if(!ClassManifest::classesRelated($data["class_name"], $model)) {

@@ -23,25 +23,16 @@ class RegisterExtension extends ControllerExtension
 {
 	/**
 	 * a bool which indicates whether registration is enabled or disabled
-	 *
-	 * @name enabled
-	 * @access public
 	 */
 	public static $enabled = false;
 
 	/**
 	 * a bool which indicates whether a new user needs to validate his email-adresse or not
-	 *
-	 * @name validateMail
-	 * @access public
 	 */
 	public static $validateMail = true;
 
 	/**
 	 * registration code, if set to null or "" no code is required
-	 *
-	 * @name registerCode
-	 * @access public
 	 */
 	public static $registerCode;
 
@@ -88,9 +79,7 @@ class RegisterExtension extends ControllerExtension
 
 		// check if logged in
 		if (member::login()) {
-			HTTPResponse::Redirect(BASE_URI);
-			exit;
-
+			return GomaResponse::redirect(BASE_URI);
 			// check if link from e-mail
 		} else if (isset($this->getRequest()->get_params["activate"])) {
 			/** @var User $data */
@@ -112,7 +101,11 @@ class RegisterExtension extends ControllerExtension
 					return $this->renderView($data, lang("register_ok"));
 				}
 			} else {
-				return $this->renderView(isset($_GET["email"]) ? $_GET["email"] : "", lang("register_not_found"), isset($_GET["email"]));
+				return $this->renderView(
+					isset($this->getRequest()->get_params["email"]) ? $this->getRequest()->get_params["email"] : "",
+					lang("register_not_found"),
+					isset($this->getRequest()->get_params["email"])
+				);
 			}
 
 			// check if registering is not available on this page
@@ -125,7 +118,7 @@ class RegisterExtension extends ControllerExtension
 
 			$this->callExtending("extendNewUserForRegistration", $user);
 
-			return $user->controller($this->getOwner())->form(false, false, array(), false, "doregister");
+			return $this->getOwner()->getWithModel($user)->form(false, false, array(), false, "doregister");
 		}
 	}
 
@@ -214,7 +207,8 @@ class RegisterExtension extends ControllerExtension
 			member::redirectToLogin();
 		}
 
-		if (isset($_GET["activate"]) && $data = DataObject::get_one("user", array("code" => $_GET["activate"]))) {
+		if (isset($this->getRequest()->get_params["activate"]) &&
+			$data = DataObject::get_one("user", array("code" => $this->getRequest()->get_params["activate"]))) {
 			if ($this->getOwner()->confirm(lang("user_activate_confirm"), lang("yes"), null, $data->generateRepresentation(true))) {
 				$data->status = 1;
 				$data->code = randomString(10);
@@ -241,9 +235,10 @@ class RegisterExtension extends ControllerExtension
 	 * registers the user
 	 * we don't use register, because of constructor
 	 *
-	 * @name doRegister
-	 * @access public
+	 * @param $data
 	 * @return string
+	 * @throws Exception
+	 * @throws MySQLException
 	 */
 	public function doregister($data)
 	{
@@ -253,10 +248,16 @@ class RegisterExtension extends ControllerExtension
 			$data["status"] = 0;
 			$data["code"] = randomString(10);
 
-			// send mail
-			$this->sendMail($data);
-
+			/** @var User $model */
 			if ($model = $owner->save($data, 2, true, true)) {
+				try {
+					// send mail
+					$this->sendMail($model);
+				} catch(Exception $e) {
+					$model->remove(true);
+					throw $e;
+				}
+
 				return $this->renderView($model, lang('register_ok_activate', "User successful created. Please visit your e-mail-provider to check out the e-mail we sent to you."), true);
 			}
 		} else if (self::$mustBeValidated) {

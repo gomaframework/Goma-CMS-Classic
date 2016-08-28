@@ -11,14 +11,6 @@
  * last modified: 06.06.2015
  */
 class ModelRepository extends IModelRepository {
-
-    /**
-     * reads from a given model class.
-     */
-    public function read() {
-        throw new RuntimeException("Not implemented, yet.");
-    }
-
     /**
      * deletes a record.
      * @param DataObject $record
@@ -156,5 +148,21 @@ class ModelRepository extends IModelRepository {
         $writer->setWriteType($writeType);
 
         return $writer;
+    }
+
+    /**
+     * @param DataObject $record
+     * @param bool $forceWrite
+     * @param bool $silent
+     */
+    public function publish($record, $forceWrite, $silent = false)
+    {
+        $writer = $this->buildWriter($record, self::COMMAND_TYPE_PUBLISH, $silent, false);
+
+        if(!$forceWrite) {
+            $writer->validatePermission();
+        }
+
+        $writer->publish();
     }
 }

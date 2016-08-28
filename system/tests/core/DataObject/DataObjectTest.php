@@ -209,4 +209,15 @@ class fakeRepo extends  IModelRepository {
         // TODO: Implement buildWriter() method.
         $this->lastMethod = "buildWriter";
     }
+
+    /**
+     * @param DataObject $record
+     * @param bool $forceWrite
+     * @param bool $silent
+     * @return void
+     */
+    public function publish($record, $forceWrite, $silent = false)
+    {
+        // TODO: Implement publish() method.
+    }
 }
