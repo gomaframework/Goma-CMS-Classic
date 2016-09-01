@@ -250,30 +250,4 @@ define("SYSTEM_TPL_PATH", "system/templates");
 // set timezone for security
 date_default_timezone_set(DEFAULT_TIMEZONE);
 
-if (!file_exists(ROOT . ".htaccess") && !file_exists(ROOT . "web.config")) {
-	writeServerConfig();
-}
-
-// some hacks for changes in .htaccess
-if (file_exists(ROOT . ".htaccess") && !strpos(file_get_contents(".htaccess"), "ErrorDocument 404")) {
-	if (!file_put_contents(ROOT . ".htaccess", "\nErrorDocument 404 " . ROOT_PATH . "system/application.php", FILE_APPEND)) {
-		die("Could not write .htaccess");
-	}
-}
-
-if (file_exists(ROOT . ".htaccess") && !strpos(file_get_contents(".htaccess"), "ErrorDocument 500")) {
-	if (!file_put_contents(ROOT . ".htaccess", "\nErrorDocument 500 " . ROOT_PATH . "system/templates/framework/500.html", FILE_APPEND)) {
-		die("Could not write .htaccess");
-	}
-}
-
-if (file_exists(ROOT . ".htaccess") && (strpos(file_get_contents(".htaccess"), " system"))) {
-	$contents = file_get_contents(ROOT . ".htaccess");
-	$contents = str_replace(' system', ' ' . ROOT_PATH . "system", $contents);
-	if (!file_put_contents(ROOT . ".htaccess", $contents)) {
-		die("Could not write .htaccess");
-	}
-	unset($contents);
-}
-
 loadApplication($application);

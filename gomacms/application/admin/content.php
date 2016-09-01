@@ -377,9 +377,11 @@ class contentAdmin extends LeftAndMain {
      *
      * @param array $data
      * @param FormAjaxResponse $response
+     * @param Form $form
+     * @param Controller $controller
      * @return FormAjaxResponse
      */
-    public function ajaxSaveGenerate($data, $response)
+    public function ajaxSaveGenerate($data, $response, $form, $controller)
     {
         $data["mainbartitle"] = $data["title"];
         $value = PageUtils::cleanPath($data["title"]);
@@ -397,7 +399,7 @@ class contentAdmin extends LeftAndMain {
 
         $data["path"] = $current;
 
-        return $this->ajaxSave($data, $response);
+        return $this->ajaxSave($data, $response, $form, $controller);
     }
 
     /**
