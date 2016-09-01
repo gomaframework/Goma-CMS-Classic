@@ -122,7 +122,8 @@ class GomaCKEditor extends GomaEditor {
 				}
 			}
 		}
-		$pageLinksJS = ClassInfo::exists("pages") ? "$.getScript(\"system/libs/ckeditor_goma/pagelinks.js\");" : "";
+		$pageLinksJS = ClassInfo::exists("pages") ? "if(window['__pagelinksloaded'] == null) {
+		$.getScript(\"system/libs/ckeditor_goma/pagelinks.js\"); window['__pagelinksloaded'] = true; }" : "";
 
 		return '
 window.CKEDITOR_BASEPATH = "'.BASE_URI.'system/libs/thirdparty/ckeditor4_5/";
