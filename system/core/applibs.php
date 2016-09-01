@@ -881,6 +881,10 @@ function RetinaPath($file) {
  * Writes the server configuration file
  */
 function writeServerConfig() {
+	if(!defined("ROOT_PATH")) {
+		return;
+	}
+
 	$args = getCommandLineArgs();
 	$server = isset($_SERVER["SERVER_SOFTWARE"]) ? $_SERVER["SERVER_SOFTWARE"] :
 		(isset($args["server"]) ? $args["server"] : "");
@@ -982,6 +986,8 @@ function loadFramework($modelRepository = null) {
  */
 function loadApplication($directory) {
 	define("URL", parseUrl());
+
+    validateServerConfig();
 
 	if (is_dir(ROOT . $directory) && file_exists(ROOT . $directory . "/application/application.php")) {
 		// defines
@@ -1133,6 +1139,34 @@ function parseUrl() {
 
 		return isset($argv[0]) ? $argv[0] : "";
 	}
+}
+
+function validateServerConfig() {
+    if (!file_exists(ROOT . ".htaccess") && !file_exists(ROOT . "web.config")) {
+        writeServerConfig();
+    }
+
+// some hacks for changes in .htaccess
+    if (file_exists(ROOT . ".htaccess") && !strpos(file_get_contents(".htaccess"), "ErrorDocument 404")) {
+        if (!file_put_contents(ROOT . ".htaccess", "\nErrorDocument 404 " . ROOT_PATH . "system/application.php", FILE_APPEND)) {
+            die("Could not write .htaccess");
+        }
+    }
+
+    if (file_exists(ROOT . ".htaccess") && !strpos(file_get_contents(".htaccess"), "ErrorDocument 500")) {
+        if (!file_put_contents(ROOT . ".htaccess", "\nErrorDocument 500 " . ROOT_PATH . "system/templates/framework/500.html", FILE_APPEND)) {
+            die("Could not write .htaccess");
+        }
+    }
+
+    if (file_exists(ROOT . ".htaccess") && (strpos(file_get_contents(".htaccess"), " system"))) {
+        $contents = file_get_contents(ROOT . ".htaccess");
+        $contents = str_replace(' system', ' ' . ROOT_PATH . "system", $contents);
+        if (!file_put_contents(ROOT . ".htaccess", $contents)) {
+            die("Could not write .htaccess");
+        }
+        unset($contents);
+    }
 }
 
 /**
