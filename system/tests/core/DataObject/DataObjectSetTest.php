@@ -768,6 +768,121 @@ class DataObjectSetTests extends GomaUnitTest
             ));
         }, "LogicException");
     }
+
+    public function testSort() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $set->sort("name", "DESC");
+        $this->assertEqual($this->kathi, $set->first());
+        $this->assertEqual($this->daniel, $set->last());
+
+        $set->sort("age", "ASC");
+        $this->assertEqual($this->janine, $set->first());
+        $this->assertEqual($this->kathi, $set->last());
+    }
+
+    public function testResetSort() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $set->sort("name", "DESC");
+        $this->assertEqual($this->kathi, $set->first());
+        $this->assertEqual($this->daniel, $set->last());
+        $this->assertEqual($this->julian, $set[1]);
+
+        $this->assertTrue($set->isDataLoaded());
+
+        $set->sort();
+        $this->assertFalse($set->isDataLoaded());
+
+        $this->assertEqual($this->julian, $set->first());
+        $this->assertFalse($set->isDataLoaded());
+
+        $this->assertEqual($this->daniel, $set[1]);
+        $this->assertTrue($set->isDataLoaded());
+    }
+
+    public function testSortWithArray() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $set->sort(array("name" => "DESC"));
+        $this->assertEqual($this->kathi, $set->first());
+        $this->assertEqual($this->daniel, $set->last());
+
+        $set->sort(array("age" => "ASC"));
+        $this->assertEqual($this->janine, $set->first());
+        $this->assertEqual($this->kathi, $set->last());
+
+        $secondSet = new DataObjectSet("DumpDBElementPerson");
+        $secondSet->setVersion(DataObject::VERSION_PUBLISHED);
+        $secondSet->sort("age");
+
+        $secondSource = $secondSet->getDbDataSource();
+        $secondSource->records = $source->records;
+
+        $this->assertEqual($this->janine, $secondSet->first());
+        $this->assertEqual($this->kathi, $secondSet->last());
+    }
+
+
+    public function testMultiSortWithArray() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $set->sort(array("age" => "ASC", "name" => "DESC"));
+        $this->assertEqual($this->janine, $set->first());
+        $this->assertEqual($this->julian, $set[1]);
+        $this->assertEqual($this->daniel, $set[2]);
+        $this->assertEqual($this->kathi, $set->last());
+
+        $set->sort(array("age" => "ASC", "name" => "ASC"));
+        $this->assertEqual($this->janine, $set->first());
+        $this->assertEqual($this->julian, $set[2]);
+        $this->assertEqual($this->daniel, $set[1]);
+        $this->assertEqual($this->kathi, $set->last());
+    }
 }
 
 class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
