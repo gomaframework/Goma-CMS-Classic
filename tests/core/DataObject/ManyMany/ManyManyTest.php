@@ -443,10 +443,75 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
     }
 
     /**
+     * tests if editing bidirectional works
+     *
+     * @group ManyManyBiDirectional
+     * @throws DataObjectSetCommitException
+     */
+    public function testBiDirEdit() {
+        $this->assertEqual(5, DataObject::get(ManyManyBiDirObj::class)->count());
+
+        /** @var ManyManyBiDirObj $zero */
+        $two = DataObject::get_one(ManyManyBiDirObj::class, array("number" => 2));
+        /** @var ManyManyBiDirObj $one */
+        $one = DataObject::get_one(ManyManyBiDirObj::class, array("number" => 1));
+
+        /** @var ManyManyBiDirObj $three */
+        $three = DataObject::get_one(ManyManyBiDirObj::class, array("number" => 3));
+
+        $one->my()->add($two);
+        $one->my()->commitStaging(false, true);
+
+        $this->assertEqual(1, $one->my()->count());
+
+        $this->assertEqual(1, $two->my()->count());
+
+        $one = DataObject::get_one(ManyManyBiDirObj::class, array("number" => 1));
+        $one->my()->add($three);
+        $one->my()->commitStaging(false, true);
+
+        $this->assertEqual(2, $one->my()->count());
+
+        $one = DataObject::get_one(ManyManyBiDirObj::class, array("number" => 1));
+        $one->my()->removeFromSet($two);
+        $one->my()->commitStaging(false, true);
+
+        $this->assertEqual(1, $one->my()->count());
+        $this->assertEqual($three->id, $one->my()->first()->id);
+
+        $one->my()->removeFromSet($three);
+        $one->my()->commitStaging(false, true);
+
+        $this->assertEqual(null, $one->my()->first());
+    }
+
+    /**
+     * tests if initing bidirectional from ids.
+     */
+    public function testBiDirectionInitFromIds() {
+        $this->assertEqual(5, DataObject::get(ManyManyBiDirObj::class)->count());
+
+        /** @var ManyManyBiDirObj $zero */
+        $two = DataObject::get_one(ManyManyBiDirObj::class, array("number" => 2));
+        /** @var ManyManyBiDirObj $one */
+        $one = DataObject::get_one(ManyManyBiDirObj::class, array("number" => 1));
+
+        $one->myids = array($two->versionid);
+        $one->my()->commitStaging(false, true);
+
+        $this->assertEqual($two->id, $one->my()->first()->id);
+
+        $one->myids = array();
+        $one->writeToDB(false, true);
+        $this->assertNull($one->my()->first());
+    }
+ 
+    /**
      * tests if class-info is correctly initialized for bidir.
      */
     public function testBiDirClassInfo() {
-
+        $this->assertTrue(isset(ClassInfo::$class_info["manymanybidirobj"]["many_many_relations"]["my"]));
+        $this->assertFalse(isset(ClassInfo::$class_info["manymanybidirobj"]["many_many_relations_extra"]));
     }
 }
 

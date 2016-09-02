@@ -613,9 +613,9 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
      * @return array
      */
     protected function getBiDirRecordFromRelationData($id, $sort, $record) {
-        $ownerSort = isset($record[$this->relationShip->getOwnerSortField()]) ?
-            $record[$this->relationShip->getOwnerSortField()] : 0;
-        $record[$this->relationShip->getOwnerSortField()] = $sort;
+        $ownerSort = isset($record[$this->relationShip->getTargetSortField()]) ?
+            $record[$this->relationShip->getTargetSortField()] : 0;
+        $record[$this->relationShip->getTargetSortField()] = $sort;
 
         $newRecord = $this->getRecordFromRelationData($id, $ownerSort, $record);
         $newRecord[$this->relationShip->getTargetField()] = $this->ownRecord->versionid;
