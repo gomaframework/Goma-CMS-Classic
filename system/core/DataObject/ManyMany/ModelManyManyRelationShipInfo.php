@@ -224,6 +224,10 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      * @return string
      */
     public function getOwnerSortField() {
+        if(!$this->controlling && ClassManifest::classesRelated($this->owner, $this->targetClass)) {
+            return $this->owner . "_" . $this->owner . "_sort";
+        }
+
         return $this->owner . "_sort";
     }
 
@@ -233,6 +237,10 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      * @return string
      */
     public function getTargetSortField() {
+        if($this->controlling && ClassManifest::classesRelated($this->owner, $this->targetClass)) {
+            return $this->targetClass . "_" . $this->targetClass . "_sort";
+        }
+
         return $this->targetClass . "_sort";
     }
 
