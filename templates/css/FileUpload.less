@@ -296,8 +296,10 @@
       text-align: center;
     }
 
-    .jcrop-holder {
+    img.jcrop-preview {
       margin: auto;
+      max-width: none !important;
+      height: auto !important;
     }
   }
 
@@ -424,6 +426,10 @@
 
   }
 }
+.jcrop-holder > div > div > img {
+  max-width: none !important;
+  height: auto !important;
+}
 
 @media screen and (max-width: 50em) {
   .fileupload-advanced {
@@ -447,4 +453,3 @@
     margin-left: 0;
   }
 }
-

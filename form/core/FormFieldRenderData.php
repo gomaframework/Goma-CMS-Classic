@@ -480,6 +480,7 @@ class FormFieldRenderData extends gObject implements IRestResponse {
             "extra" => $this->extra,
             "hasRenderData" => $this->renderedField != null,
             "disabled"  => $this->isDisabled,
+            "disabledString" => $this->isDisabled ? ' disabled="disabled" ' : "",
             "cssRenderResources" => $this->renderResources["css"],
             "jsRenderResources" => $this->renderResources["js"],
             "postname"  => $this->postname

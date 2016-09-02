@@ -416,7 +416,7 @@ class FileUpload extends FormField {
 					$this->uploadClass
 				));
 
-				$this->value = $data;
+				$this->model = $data;
 
 				return $data;
 			} else {

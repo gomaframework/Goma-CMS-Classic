@@ -7,6 +7,11 @@ var multiFormFieldController = function(element, options) {
         }
     }
 
+    if(options.disabled) {
+        this.sortable = false;
+        this.deletable = false;
+    }
+
     this.init();
 
     return this;

@@ -366,7 +366,7 @@ class FormTest extends GomaUnitTest implements TestAble {
 			"test" => "test"
 		)));
 		$form->trySubmit();
-		$this->assertEqual(1, $form->getModel()->test);
+		$this->assertEqual(null, $form->getModel()->test);
 		$this->assertEqual(321, $form->state->blah);
 
         $form->getModel()->test = 0;
@@ -379,7 +379,7 @@ class FormTest extends GomaUnitTest implements TestAble {
             "test" => "test"
         )));
         $form->trySubmit();
-        $this->assertEqual(1, $form->getModel()->test);
+        $this->assertEqual(0, $form->getModel()->test);
         $this->assertEqual(321, $form->state->blah);
 	}
 

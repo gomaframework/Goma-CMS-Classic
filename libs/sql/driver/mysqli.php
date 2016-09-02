@@ -1042,7 +1042,11 @@ class mysqliDriver implements SQLDriver
                     $sql .= ", ";
                 }
 
-                $casting = DBField::getObjectByCasting(ClassInfo::$database[$table][$field], $field, $record[$field]);
+                $casting = DBField::getObjectByCasting(
+                    isset(ClassInfo::$database[$table][$field]) ? ClassInfo::$database[$table][$field] : null,
+                    $field,
+                    $record[$field]
+                );
                 $sql .= $casting->forDBQuery();
             }
         }

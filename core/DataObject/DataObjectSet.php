@@ -1221,9 +1221,8 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	protected function publishStateRecords($repository, $forceWrite, &$exceptions, &$errorRecords) {
         if($this->fetchMode == self::FETCH_MODE_EDIT) {
             $info = clone $this;
-            $info->addFilter(array(
-                "publishedid" => 0
-            ));
+            $info->addFilter($this->dbDataSource()->baseTable() . '_state.publishedid != '.
+                $this->dbDataSource()->baseTable() . '_state.stateid');
 
             foreach ($info as $record) {
                 try {

@@ -18,19 +18,54 @@ class ManyManyRelationShipInfoTests extends GomaUnitTest
     public $name = "ManyManyRelationShipInfo";
 
     /**
+     * tests if data is inited correctly.
+     */
+    public function testInitNormal() {
+        $relationshipInfo = new ModelManyManyRelationShipInfo("user", "test", "group", true);
+
+        $this->assertEqual("user", $relationshipInfo->getOwner());
+        $this->assertEqual("group", $relationshipInfo->getTargetClass());
+        $this->assertEqual("users", $relationshipInfo->getBelongingName());
+        $this->assertTrue($relationshipInfo->isControlling());
+        $this->assertFalse($relationshipInfo->isBidirectional());
+        $this->assertEqual($relationshipInfo->getExtraFields(), array());
+    }
+
+    /**
+     * tests if data is inited correctly.
+     */
+    public function testInitBidir() {
+        $relationshipInfo = new ModelManyManyRelationShipInfo("user", "test", "user", true);
+
+        $this->assertEqual("user", $relationshipInfo->getOwner());
+        $this->assertEqual("user", $relationshipInfo->getTargetClass());
+        $this->assertEqual(null, $relationshipInfo->getBelongingName());
+        $this->assertTrue($relationshipInfo->isControlling());
+        $this->assertTrue($relationshipInfo->isBidirectional());
+        $this->assertEqual($relationshipInfo->getExtraFields(), array());
+    }
+
+    /**
+     * tests if data is inited correctly.
+     */
+    public function testInitBidirFromBelongsManyMany() {
+        $this->assertThrows(function(){
+            new ModelManyManyRelationShipInfo("user", "test", "user", false);
+        }, InvalidArgumentException::class);
+    }
+
+    /**
      * test table-name styles.
      */
     public function testTableNameStyle() {
-        $this->unitTestTableNameStyle("test", "testName", "target", "targetName", true, true, "many_many_test_testname_target");
-        $this->unitTestTableNameStyle("test", "testName", "target", "targetName", true, false, "many_test_testname");
+        $this->unitTestTableNameStyle("test", "testName", "user", "targetName", true, true, "many_many_test_testname_user");
+        $this->unitTestTableNameStyle("test", "testName", "user", "targetName", true, false, "many_test_testname");
 
-        $this->unitTestTableNameStyle("test", "testName", "target", "targetName", false, true, "many_many_target_targetname_test");
-        $this->unitTestTableNameStyle("test", "testName", "target", "targetName", false, false, "many_target_targetname");
+        $this->unitTestTableNameStyle("test", "testName", "user", "targetName", false, true, "many_many_user_targetname_test");
+        $this->unitTestTableNameStyle("test", "testName", "user", "targetName", false, false, "many_user_targetname");
 
-        $this->unitTestTableNameStyle("test", "testName", "test", "testReverse", true, false, "many_test_testname");
-        $this->unitTestTableNameStyle("test", "testName", "test", "testReverse", false, false, "many_test_testreverse");
-        $this->unitTestTableNameStyle("test", "testName", "test", "testReverse", false, true, "many_many_test_testreverse_test");
-        $this->unitTestTableNameStyle("test", "testName", "test", "testReverse", true, true, "many_many_test_testname_test");
+        $this->unitTestTableNameStyle("user", "testName", "user", "testReverse", true, false, "many_user_testname");
+        $this->unitTestTableNameStyle("user", "testName", "user", "testReverse", true, true, "many_many_user_testname_user");
     }
 
     /**
@@ -188,6 +223,7 @@ class ManyManyRelationShipInfoTests extends GomaUnitTest
             ));
         }, "InvalidArgumentException");
 
+        // no target class
         $this->assertThrows(function() {
             ModelManyManyRelationShipInfo::generateFromClassInfo("test", array(
                 "test" => array(
@@ -200,16 +236,15 @@ class ManyManyRelationShipInfoTests extends GomaUnitTest
             ));
         }, "InvalidArgumentException");
 
+        // inverse
         $this->assertThrows(function(){
-            ModelManyManyRelationShipInfo::generateFromClassInfo("", array(
-                "" => array(
-                    "table"         => "",
-                    "ef"            => array(),
-                    "target"        => "test",
-                    "inverse"     => "",
-                    "isMain"        => ""
-                )
-            ));
+            new ModelManyManyRelationShipInfo("", "",  array(
+                "table"         => "",
+                "ef"            => array(),
+                "target"        => "test",
+                "inverse"     => "",
+                "isMain"        => ""
+            ), true);
         }, "InvalidArgumentException");
     }
 
@@ -217,9 +252,11 @@ class ManyManyRelationShipInfoTests extends GomaUnitTest
      * tests if all properties are assigned correctly and accessable.
      */
     public function testAssignMent() {
-        $this->unittestAssignMent("test", "test_many", array("test" => 1), "blub", "blah", "myrelation", true);
-        $this->unittestAssignMent("test", "test_many", array(), "blub", "blah", "myrelation", false);
-        $this->unittestAssignMent(randomString(10), randomString(10), array(), randomString(10), randomString(10), randomString(10), false);
+        $this->unittestAssignMent("test", "test_many", array("test" => 1), "user", "blah", "myrelation", true);
+        $this->unittestAssignMent("test", "test_many", array(), "user", "blah", "myrelation", false);
+        $this->assertThrows(function(){
+            $this->unittestAssignMent(randomString(10), randomString(10), array(), randomString(10), randomString(10), randomString(10), false);
+        }, "InvalidArgumentException");
     }
 
     /**

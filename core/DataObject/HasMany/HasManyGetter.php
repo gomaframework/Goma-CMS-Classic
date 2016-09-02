@@ -109,6 +109,7 @@ class HasManyGetter extends AbstractGetterExtension {
 
             $hasManyClasses = array();
             foreach($has_many as $name => $value) {
+                $value["validatedInverse"] = true;
                 $hasManyClasses[$name] = new ModelHasManyRelationShipInfo($owner->classname, $name, $value);
             }
 

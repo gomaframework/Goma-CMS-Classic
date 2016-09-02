@@ -106,6 +106,17 @@ class ClassInfo extends gObject {
 		return true;
 	}
 
+    /**
+     * @param $class
+     * @return null
+     */
+    public static function getExpansionForClass($class) {
+        $class = ClassManifest::resolveClassName($class);
+
+        return isset(ClassInfo::$class_info[$class]["inExpansion"]) ?
+            ClassInfo::$class_info[$class]["inExpansion"] : null;
+    }
+
 	/**
 	 * gets the childs of a class
 	 *
@@ -838,14 +849,13 @@ class ClassInfo extends gObject {
 	 * @param string $interface
 	 */
 	static function addInterface($interface) {
-
 		$interface = strtolower(trim($interface));
 
 		if($interface == "")
 			return;
 
 		if(!isset(self::$interfaces[$interface])) {
-			$parentsi = array_values(class_implements($interface));
+			$parentsi = array_values((array) class_implements($interface));
 			self::$interfaces[$interface] = isset($parentsi[0]) ? $parentsi[0] : false;
 
 			if(isset($parentsi[0])) {

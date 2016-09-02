@@ -238,7 +238,8 @@ function goma_date($format, $date = NOW) {
 function makeProjectUnavailable($project = APPLICATION, $ip = null) {
 	$ip = isCommandLineInterface() ? "cli" : (isset($ip) ? $ip : $_SERVER["REMOTE_ADDR"]);
 	if(!file_put_contents(ROOT . $project . "/503.goma", $ip, LOCK_EX)) {
-		die("Could not make project unavailable.");
+		echo ("Could not make project unavailable.");
+		exit(11);
 	}
 	chmod(ROOT . $project . "/503.goma", 0777);
 }
@@ -741,7 +742,7 @@ function Goma_ExceptionHandler($exception) {
 		echo $content;
 	}
 
-	exit(8);
+	exit($exception->getCode() != 0 ? $exception->getCode() : 8);
 }
 
 
@@ -757,6 +758,24 @@ function log_exception(Exception $exception) {
 	
 	$debugMsg = "URL: " . $uri . "\nGoma-Version: " . GOMA_VERSION . "-" . BUILD_VERSION . "\nApplication: " . print_r(ClassInfo::$appENV, true) . "\n\n" . $message;
 	debug_log($debugMsg);
+}
+
+/**
+ * @return int
+ */
+function getMemoryLimit() {
+	if(function_exists("ini_get")) {
+		$memory_limit = ini_get('memory_limit');
+		if (preg_match('/^(\d+)(.)$/', $memory_limit, $matches)) {
+			if ($matches[2] == 'M') {
+				return $matches[1] * 1024 * 1024; // nnnM -> nnn MB
+			} else if ($matches[2] == 'K') {
+				return $matches[1] * 1024; // nnnK -> nnn KB
+			}
+		}
+	}
+
+	return 64 * 1024 * 1024;
 }
 
 //!Logging
@@ -880,6 +899,10 @@ function RetinaPath($file) {
  * Writes the server configuration file
  */
 function writeServerConfig() {
+	if(!defined("ROOT_PATH")) {
+		return;
+	}
+
 	$args = getCommandLineArgs();
 	$server = isset($_SERVER["SERVER_SOFTWARE"]) ? $_SERVER["SERVER_SOFTWARE"] :
 		(isset($args["server"]) ? $args["server"] : "");
@@ -896,7 +919,8 @@ function writeServerConfig() {
 	require (ROOT . "system/resources/" . $file . ".php");
 
 	if(!file_put_contents(ROOT . $toFile, $serverconfig, FILE_APPEND | LOCK_EX)) {
-		die("Could not write " . $file);
+		echo ("Could not write " . $file);
+		exit(6);
 	}
 }
 
@@ -977,9 +1001,16 @@ function loadFramework($modelRepository = null) {
 /**
  * this function loads an application
  * @param $directory
+ * @throws Exception
  */
 function loadApplication($directory) {
+	if(getMemoryLimit() < 64 * 1024 * 1024) {
+		throw new Exception("Memory of at least 64M is required.");
+	}
+
 	define("URL", parseUrl());
+
+    validateServerConfig();
 
 	if (is_dir(ROOT . $directory) && file_exists(ROOT . $directory . "/application/application.php")) {
 		// defines
@@ -1040,7 +1071,8 @@ function loadApplication($directory) {
 			header('HTTP/1.1 503 Service Temporarily Unavailable');
 			header('Status: 503 Service Temporarily Unavailable');
 			header('Retry-After: 10');
-			die($content);
+			echo ($content);
+			exit(503);
 		}
 
 		if(isCommandLineInterface()) {
@@ -1130,6 +1162,34 @@ function parseUrl() {
 
 		return isset($argv[0]) ? $argv[0] : "";
 	}
+}
+
+function validateServerConfig() {
+    if (!file_exists(ROOT . ".htaccess") && !file_exists(ROOT . "web.config")) {
+        writeServerConfig();
+    }
+
+// some hacks for changes in .htaccess
+    if (file_exists(ROOT . ".htaccess") && !strpos(file_get_contents(".htaccess"), "ErrorDocument 404")) {
+        if (!file_put_contents(ROOT . ".htaccess", "\nErrorDocument 404 " . ROOT_PATH . "system/application.php", FILE_APPEND)) {
+            die("Could not write .htaccess");
+        }
+    }
+
+    if (file_exists(ROOT . ".htaccess") && !strpos(file_get_contents(".htaccess"), "ErrorDocument 500")) {
+        if (!file_put_contents(ROOT . ".htaccess", "\nErrorDocument 500 " . ROOT_PATH . "system/templates/framework/500.html", FILE_APPEND)) {
+            die("Could not write .htaccess");
+        }
+    }
+
+    if (file_exists(ROOT . ".htaccess") && (strpos(file_get_contents(".htaccess"), " system"))) {
+        $contents = file_get_contents(ROOT . ".htaccess");
+        $contents = str_replace(' system', ' ' . ROOT_PATH . "system", $contents);
+        if (!file_put_contents(ROOT . ".htaccess", $contents)) {
+            die("Could not write .htaccess");
+        }
+        unset($contents);
+    }
 }
 
 /**

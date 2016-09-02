@@ -399,6 +399,8 @@ class RequestHandler extends gObject {
 
 		if(is_a($e, "LogicException")) {
 			throw $e;
+		} else {
+			log_exception($e);
 		}
 
 		if($this->request->canReplyJavaScript()) {

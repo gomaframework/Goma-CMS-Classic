@@ -1,4 +1,7 @@
-<?php defined("IN_GOMA") OR die();
+<?php use Goma\GD\GD;
+use Goma\GD\GDFileMalformedException;
+
+defined("IN_GOMA") OR die();
 /**
  * Unit-Tests for GD-Class.
  *
@@ -39,7 +42,7 @@ class GDTest extends GomaUnitTest
     public function unitCheck304($etag, $mtime, $http_mod, $http_etag, $expected) {
         $gd = new GD();
 
-        $reflectionMethod = new ReflectionMethod('GD', 'check304');
+        $reflectionMethod = new ReflectionMethod(GD::class, 'check304');
         $reflectionMethod->setAccessible(true);
         $this->assertEqual($reflectionMethod->invoke($gd, $etag, $mtime, $http_mod, $http_etag), $expected);
     }
@@ -47,23 +50,11 @@ class GDTest extends GomaUnitTest
     public function testExceptions() {
         $this->assertThrows(function() {
             new GD("./");
-        }, "FileException");
+        }, FileException::class);
 
         $this->assertThrows(function() {
             new GD("./index.php");
-        }, "GDFileMalformedException");
-    }
-
-    /**
-     * tests if gd resize resizes correctly.
-     */
-    public function testGDResize() {
-
-        $f1 = "system/tests/resources/img_1000_480.png";
-        $this->assertTrue(file_exists($f1));
-        $this->unitGDResize($f1, new Size(1000, 480), new Size(500, 250), true, new Size(500, 250));
-        $this->unitGDResize($f1, new Size(1000, 480), new Size(700, 240), true, new Size(700, 240));
-        $this->unitGDResize($f1, new Size(1000, 480), new Size(240, 240), true, new Size(240, 240));
+        }, GDFileMalformedException::class);
     }
 
     public function testGDResizeCalculation() {
@@ -95,24 +86,35 @@ class GDTest extends GomaUnitTest
     public function unitGDResizeCalculation($sourceSize, $targetSize, $expectedSize, $expectedSourceArea, $expectedDestArea, $cropPosition = null, $cropSize = null) {
         $gd = new GD();
 
-        $reflectionMethodImageSize = new ReflectionMethod('GD', 'getDestImageSize');
+        $reflectionMethodImageSize = new ReflectionMethod(GD::class, 'getDestImageSize');
         $reflectionMethodImageSize->setAccessible(true);
         $size = $reflectionMethodImageSize->invoke($gd, $sourceSize->getWidth(), $sourceSize->getHeight(),
             $targetSize->getWidth(), $targetSize->getHeight());
         $this->assertEqual($size, $expectedSize,'Expected  Size Area: '.print_r($expectedSize, true).' %s');
 
-        $reflectionMethodSourceArea = new ReflectionMethod('GD', 'getSrcImageArea');
+        $reflectionMethodSourceArea = new ReflectionMethod(GD::class, 'getSrcImageArea');
         $reflectionMethodSourceArea->setAccessible(true);
 
         $source = $reflectionMethodSourceArea->invoke($gd, $sourceSize->getWidth(), $sourceSize->getHeight(), $size, $cropPosition, $cropSize);
 
         $this->assertEqual($source, $expectedSourceArea, 'Expected Source Area: '.print_r($expectedSourceArea, true).' Got: '.print_r($source, true).' %s');
 
-        $reflectionMethodSourceArea = new ReflectionMethod('GD', 'getDestImageArea');
+        $reflectionMethodSourceArea = new ReflectionMethod(GD::class, 'getDestImageArea');
         $reflectionMethodSourceArea->setAccessible(true);
 
         $dest = $reflectionMethodSourceArea->invoke($gd, $source->getSecond(), $size);
         $this->assertEqual($dest, $expectedDestArea, 'Expected Dest-Area: '.print_r($expectedDestArea, true).' Got: '.print_r($dest, true).' %s');
+    }
+
+    /**
+     * tests if gd resize resizes correctly.
+     */
+    public function testGDResize() {
+        $f1 = "system/tests/resources/img_1000_480.png";
+        $this->assertTrue(file_exists($f1));
+        $this->unitGDResize($f1, new Size(1000, 480), new Size(500, 250), true, new Size(500, 250));
+        $this->unitGDResize($f1, new Size(1000, 480), new Size(700, 240), true, new Size(700, 240));
+        $this->unitGDResize($f1, new Size(1000, 480), new Size(240, 240), true, new Size(240, 240));
     }
 
     /**

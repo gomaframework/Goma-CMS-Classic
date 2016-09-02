@@ -294,7 +294,7 @@ class LeftAndMain extends AdminItem {
 	 * @param bool $overrideCreated
 	 * @return FormAjaxResponse
 	 */
-	public function ajaxSave($data, $response, $form = null, $controller = null, $forceInsert = false, $forceWrite = false, $overrideCreated = false) {
+	public function ajaxSave($data, $response, $form, $controller, $forceInsert = false, $forceWrite = false, $overrideCreated = false) {
 		try {
 			$model = $this->save($data, 1, $forceInsert, $forceWrite, $overrideCreated, $form->getModel());
 			// notify the user

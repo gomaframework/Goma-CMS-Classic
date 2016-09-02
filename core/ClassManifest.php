@@ -284,6 +284,7 @@ class ClassManifest {
         $contents = preg_replace('/\?\>(.*)\<?php/Usi', '', $contents);
 
         $namespace = self::getNamespace($contents);
+        $usings = self::parseUsings($contents);
 
         preg_match_all('/(abstract\s+)?class\s+([a-zA-Z0-9\\\\_]+)(\s+extends\s+([a-zA-Z0-9\\\\_]+))?(\s+implements\s+([a-zA-Z0-9\\\\_,\s]+?))?\s*\{/Usi', $contents, $parts);
         foreach($parts[2] as $key => $class) {
@@ -291,12 +292,14 @@ class ClassManifest {
             $class = self::resolveClassName($namespace . trim($class));
 
             if(!self::classHasAlreadyBeenIndexed($classes, $class, $file, count($parts[2]) == 1)) {
-                self::generateDefaultClassInfo($class, $file, $parts[4][$key], $classes, $class_info, false);
+                self::generateDefaultClassInfo($class, $file, $parts[4][$key], $classes, $class_info, false, $namespace, $usings);
             }
 
             if($parts[6][$key]) {
                 $interfaces = explode(",", $parts[6][$key]);
-                $class_info[$class]["interfaces"] = array_map(array("ClassManifest", "resolveClassName"), $interfaces);
+                $class_info[$class]["interfaces"] = array_map(function($interface) use($usings, $namespace) {
+                    return self::resolveClassNameWithUsings($interface, $namespace, $usings);
+                }, $interfaces);
             }
 
             if($parts[1][$key]) {
@@ -310,9 +313,59 @@ class ClassManifest {
             $class = self::resolveClassName($namespace . trim($class));
 
             if(!self::classHasAlreadyBeenIndexed($classes, $class, $file, count($parts[1]) == 1)) {
-                self::generateDefaultClassInfo($class, $file, $parts[3][$key], $classes, $class_info, true);
+                self::generateDefaultClassInfo($class, $file, $parts[3][$key], $classes, $class_info, true, $namespace, $usings);
             }
         }
+    }
+
+    /**
+     * @param string $className
+     * @param string $namespace
+     * @param array $usings
+     * @return string
+     */
+    protected static function resolveClassNameWithUsings($className, $namespace, $usings) {
+        $resolvedClassName = self::resolveClassName($className);
+
+        if(strpos($className, "\\") === false) {
+            if(isset($usings[$resolvedClassName])) {
+                return self::resolveClassName($usings[$resolvedClassName]);
+            }
+
+            if(!$namespace) {
+                return $resolvedClassName;
+            }
+
+            return $namespace . $resolvedClassName;
+        }
+
+        if(substr($className, 0, 1) == "\\") {
+            return $resolvedClassName;
+        }
+
+        $qualifier = substr($resolvedClassName, 0, strpos($resolvedClassName, "\\"));
+        if (isset($usings[$qualifier])) {
+            return $usings[$qualifier] . "\\" . self::resolveClassName(
+                substr($resolvedClassName, strpos($resolvedClassName, "\\") + 1)
+            );
+        }
+
+        throw new InvalidArgumentException("Could not find class " . $className . ". Please define correct usings and namespace.");
+    }
+
+    /**
+     * @param string $contents
+     * @return array
+     */
+    protected static function parseUsings($contents) {
+        $usings = array();
+        preg_match_all('/use\s+([a-zA-Z0-9_\\\\]+)\;/Usi', $contents, $parts);
+        foreach($parts[1] as $part) {
+            $qualifiedName = strrpos($part, "\\") !== false ? substr($part, strrpos($part, "\\") + 1) : $part;
+            $usings[strtolower($qualifiedName)] = $part;
+        }
+
+        return $usings;
     }
 
     /**
@@ -354,8 +407,10 @@ class ClassManifest {
      * @param array $classes
      * @param array $class_info
      * @param bool $interface
+     * @param string $namespace
+     * @param array $usings
      */
-    protected static function generateDefaultClassInfo($class, $file, $parent, &$classes, &$class_info, $interface) {
+    protected static function generateDefaultClassInfo($class, $file, $parent, &$classes, &$class_info, $interface, $namespace, $usings) {
         $classes[$class] = $file;
 
         if(!isset($class_info[$class])) {
@@ -363,7 +418,7 @@ class ClassManifest {
         }
 
         if($parent) {
-            $class_info[$class]["parent"] = self::resolveClassName($parent);
+            $class_info[$class]["parent"] = self::resolveClassNameWithUsings($parent, $namespace, $usings);
             if($class_info[$class]["parent"] == $class) {
                 if($interface) {
                     throw new LogicException("Interface '" . $class . "' can not extend itself in " . $file . ".");

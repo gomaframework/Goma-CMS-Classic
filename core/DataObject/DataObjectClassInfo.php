@@ -1,5 +1,6 @@
 <?php defined('IN_GOMA') OR die();
 
+
 /**
  * @package		Goma\Model
  *
@@ -80,8 +81,7 @@ class DataObjectClassInfo extends Extension
                     ClassInfo::$class_info[$class]["many_many_relations"][$relationShip->getRelationShipName()] =
                         $relationShip->toClassInfo();
 
-                    if($relationShip->getBelongingName() == null) {
-
+                    if($relationShip->getBelongingName() == null && !$relationShip->isBidirectional()) {
                         ClassInfo::$class_info[$relationShip->getTargetClass()]["many_many_relations_extra"][] = array(
                             $class, $relationShip->getRelationShipName()
                         );
