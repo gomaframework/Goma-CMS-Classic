@@ -49,6 +49,10 @@ class CheckBox extends FormField {
 
 	}
 
+    /**
+     * @param FormFieldRenderData $info
+     * @param bool $notifyField
+     */
 	public function addRenderData($info, $notifyField = true)
 	{
 		parent::addRenderData($info, $notifyField);

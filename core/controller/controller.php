@@ -708,13 +708,14 @@ class Controller extends RequestHandler
 
         if(!isset($model)) {
             $model = $this->getModelToWrite();
-            foreach ($data as $key => $value) {
-                if(in_array(strtolower($key), array("id", "versionid"))) {
-                    throw new InvalidArgumentException("Controller::saveModel does not use id and versionid.");
-                }
+        }
 
-                $model->$key = $value;
+        foreach ($data as $key => $value) {
+            if(in_array(strtolower($key), array("id", "versionid"))) {
+                throw new InvalidArgumentException("Controller::saveModel does not use id and versionid.");
             }
+
+            $model->$key = $value;
         }
 
         $model->writeToDB($forceInsert, $forceWrite, $priority, false, true, false, $overrideCreated);
