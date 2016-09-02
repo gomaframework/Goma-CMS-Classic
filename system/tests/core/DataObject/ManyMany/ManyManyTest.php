@@ -33,20 +33,33 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
 
     public function setUp()
     {
-        foreach(DBTableManager::Tables("ManyManyTestObjectOne") as $table) {
+        foreach(DBTableManager::Tables(ManyManyTestObjectOne::class) as $table) {
             if(!SQL::query("TRUNCATE TABLE " . DB_PREFIX . $table)) {
                 throw new MySQLException();
             }
         }
 
-        foreach(DBTableManager::Tables("ManyManyTestObjectTwo") as $table) {
+        foreach(DBTableManager::Tables(ManyManyTestObjectTwo::class) as $table) {
             if(!SQL::query("TRUNCATE TABLE " . DB_PREFIX . $table)) {
                 throw new MySQLException();
             }
         }
 
         /** @var ModelManyManyRelationShipInfo $relationship */
-        foreach(gObject::instance("ManyManyTestObjectOne")->ManyManyRelationships() as $relationship) {
+        foreach(gObject::instance(ManyManyTestObjectTwo::class)->ManyManyRelationships() as $relationship) {
+            if(!SQL::query("TRUNCATE TABLE " . DB_PREFIX . $relationship->getTableName())) {
+                throw new MySQLException();
+            }
+        }
+
+        foreach(DBTableManager::Tables(ManyManyBiDirObj::class) as $table) {
+            if(!SQL::query("TRUNCATE TABLE " . DB_PREFIX . $table)) {
+                throw new MySQLException();
+            }
+        }
+
+        /** @var ModelManyManyRelationShipInfo $relationship */
+        foreach(gObject::instance(ManyManyBiDirObj::class)->ManyManyRelationships() as $relationship) {
             if(!SQL::query("TRUNCATE TABLE " . DB_PREFIX . $relationship->getTableName())) {
                 throw new MySQLException();
             }
@@ -81,6 +94,15 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
 
             $onesInTwo->commitStaging(false, true);
         }
+
+        for($i = 0; $i < 5; $i++) {
+            $biDir = new ManyManyBiDirObj(array(
+                "number" => $i,
+                "random" => randomString(10)
+            ));
+            $biDir->writeToDB(false, true);
+        }
+
     }
 
     public function testManyManyInitGetter() {
@@ -271,6 +293,27 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
             "one" => 10
         ))->first());
     }
+
+    public function testBiDir() {
+        $this->assertEqual(5, DataObject::get(ManyManyBiDirObj::class)->count());
+
+        /** @var ManyManyBiDirObj $zero */
+        $zero = DataObject::get_one(ManyManyBiDirObj::class, array("number" => 0));
+        /** @var ManyManyBiDirObj $one */
+        $one = DataObject::get_one(ManyManyBiDirObj::class, array("number" => 1));
+
+        $zero->my()->add($one);
+        $zero->my()->commitStaging(false, true);
+
+        $this->assertEqual(1, $zero->my()->count());
+
+        $this->assertEqual(1, $one->my()->count());
+        $one->my()->removeFromSet($zero);
+        $one->my()->commitStaging(false, true);
+
+        $zero = DataObject::get_one(ManyManyBiDirObj::class, array("number" => 0));
+        $this->assertEqual(0, $zero->my()->count());
+    }
 }
 
 /**
@@ -329,5 +372,26 @@ class ManyManyTestObjectTwo extends DataObject {
             DataObject::RELATION_TARGET     => "ManyManyTestObjectOne",
             DataObject::RELATION_INVERSE    => "twos"
         )
+    );
+}
+
+/**
+ * Class ManyManyTestObjectTwo
+ *
+ * @method ManyMany_DataObjectSet my()
+ */
+class ManyManyBiDirObj extends DataObject {
+
+    static $versions = true;
+
+    static $db = array(
+        "number"    => "int(10)",
+        "random"    => "varchar(200)"
+    );
+
+    static $search_fields = false;
+
+    static $many_many = array(
+        "my" => ManyManyBiDirObj::class
     );
 }

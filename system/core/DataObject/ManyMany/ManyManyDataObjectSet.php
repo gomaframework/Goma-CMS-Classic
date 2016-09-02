@@ -472,6 +472,13 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                     );
 
                     foreach ($relationData as $id => $record) {
+                        if($this->relationShip->isBidirectional()) {
+                            if(!isset($manipulation[self::MANIPULATION_INSERT_NEW]["fields"][$id . "_" . $this->ownRecord->versionid])) {
+                                $manipulation[self::MANIPULATION_INSERT_NEW]["fields"][$id . "_" . $this->ownRecord->versionid] =
+                                    $this->getBiDirRecordFromRelationData($id, $sort, $record);
+                            }
+                        }
+
                         $manipulation[self::MANIPULATION_INSERT_NEW]["fields"][$this->ownRecord->versionid . "_" . $id] =
                             $this->getRecordFromRelationData($id, $sort, $record);
 
@@ -479,6 +486,14 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                         $sort++;
                     }
                 }
+            }
+        }
+
+        // remove bidirectional when is bidirectional, which means you reference basically objects of same type
+        if(isset($manipulation[self::MANIPULATION_DELETE_EXISTING])) {
+            if($this->relationShip->isBidirectional()) {
+                $manipulation[self::MANIPULATION_DELETE_EXISTING]["where"][] = "OR";
+                $manipulation[self::MANIPULATION_DELETE_EXISTING]["where"][$this->relationShip->getTargetField()] = $this->ownRecord->versionid;
             }
         }
 
@@ -494,6 +509,13 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                     "table_name"	=> $this->relationShip->getTableName(),
                     "fields"        => array()
                 );
+            }
+
+            if($this->relationShip->isBidirectional()) {
+                if(!isset($manipulation[self::MANIPULATION_INSERT_NEW]["fields"][$record->versionid . "_" . $this->ownRecord->versionid])) {
+                    $manipulation[self::MANIPULATION_INSERT_NEW]["fields"][$record->versionid . "_" . $this->ownRecord->versionid] =
+                        $this->getBiDirRecordFromRelationData($record->versionid, $sort, $record->ToArray());
+                }
             }
 
             $manipulation[self::MANIPULATION_INSERT_NEW]["fields"][$this->ownRecord->versionid . "_" . $record->versionid] =
@@ -552,6 +574,24 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             }
         }
 
+        return $newRecord;
+    }
+
+    /**
+     * gets record from relationdata.
+     * @param int $id
+     * @param int $sort
+     * @param array $record
+     * @return array
+     */
+    protected function getBiDirRecordFromRelationData($id, $sort, $record) {
+        $ownerSort = isset($record[$this->relationShip->getOwnerSortField()]) ?
+            $record[$this->relationShip->getOwnerSortField()] : 0;
+        $record[$this->relationShip->getOwnerSortField()] = $sort;
+
+        $newRecord = $this->getRecordFromRelationData($id, $ownerSort, $record);
+        $newRecord[$this->relationShip->getTargetField()] = $this->ownRecord->versionid;
+        $newRecord[$this->relationShip->getOwnerField()] = $id;
         return $newRecord;
     }
 
@@ -644,9 +684,14 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
         $manipulation[self::MANIPULATION_DELETE_SPECIFIC] = array(
             "command"		=> "delete",
             "table_name"	=> $this->relationShip->getTableName(),
-            "where"			=> " {$this->relationShip->getTargetField()} IN (".$versionQuery->build().") ");
+            "where"			=> " {$this->relationShip->getTargetField()} IN (".$versionQuery->build().") "
+        );
 
-        if($asReturn) {
+        if($this->relationShip->isBidirectional()) {
+            $manipulation[self::MANIPULATION_DELETE_SPECIFIC]["where"] .= " OR {$this->relationShip->getOwnerField()} IN (".$versionQuery->build().") ";
+        }
+
+            if($asReturn) {
             return $asReturn;
         } else {
             $insertedRelationships = array();

@@ -435,10 +435,12 @@ class ClassInfo extends gObject {
 				self::raiseSoftwareError($dependencies);
 			}
 
-			if(file_exists($file) && (filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") || filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist"))) {
-				if(!preg_match("/^dev/i", URL)) {
-					ClassManifest::tryToInclude("Dev", 'system/core/control/DevController.php');
-					Dev::redirectToDev();
+			if(!isCommandLineInterface()) {
+				if (file_exists($file) && (filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") || filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist"))) {
+					if (!preg_match("/^dev/i", URL)) {
+						ClassManifest::tryToInclude("Dev", 'system/core/control/DevController.php');
+						Dev::redirectToDev();
+					}
 				}
 			}
 
