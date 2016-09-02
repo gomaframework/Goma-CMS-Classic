@@ -73,7 +73,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testAssignFields() {
-        $this->unittestAssignFields("MockDataObjectForDataObjectSet");
+        $this->unittestAssignFields(MockDataObjectForDataObjectSet::class);
         $this->unittestAssignFields(new MockDataObjectForDataObjectSet());
         $this->unittestAssignFields(new MockIDataObjectSetDataSource("User"));
 
@@ -102,9 +102,9 @@ class DataObjectSetTests extends GomaUnitTest
 
     public function unittestAssignFields($object, $inExpansion = null) {
         $set = new DataObjectSet($object);
-        $this->assertIsA($set->getModelSource(), "IDataObjectSetModelSource");
-        $this->assertIsA($set->getDbDataSource(), "IdataObjectSetDataSource");
-        $this->assertEqual($set->inExpansion, $inExpansion);
+        $this->assertIsA($set->getModelSource(), IDataObjectSetModelSource::class);
+        $this->assertIsA($set->getDbDataSource(), IdataObjectSetDataSource::class);
+        $this->assertEqual($inExpansion, $set->inExpansion);
 
         return $set;
     }

@@ -232,8 +232,8 @@ class MultiFormFormField extends ClusterFormField {
                     $hasFieldB = $fieldB != null;
                     $infoA = array();
                     $infoB = array();
-                    $fieldA->argumentResult($infoA);
-                    $fieldB->argumentResult($infoB);
+                    $fieldA != null && $fieldA->argumentResult($infoA);
+                    $fieldB != null && $fieldB->argumentResult($infoB);
                     throw new LogicException("Sort-Information not available. Query for: {$a->{$keyField}}: $hasFieldA, " .
                     " {$b->{$keyField}}: $hasFieldB | Data for: " . print_r($sortInfo, true) . " A: " . print_r($infoA, true) .
                     "B: " . print_r($infoB, true));

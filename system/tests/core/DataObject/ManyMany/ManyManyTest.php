@@ -102,7 +102,6 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
             ));
             $biDir->writeToDB(false, true);
         }
-
     }
 
     public function testManyManyInitGetter() {
@@ -169,6 +168,17 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         $this->assertEqual($countedSetB, $this->createdSet);
     }
 
+    /**
+     * tests if ids-setter is working as expected
+     *
+     * 1. gets relationship
+     * 2. splice relationship down to 3
+     * 3. rewrite relationship
+     * 4. check if written correctly
+     * 5. shuffle relationship
+     * 6. write
+     * 7. check if written correctly
+     */
     public function testSetIds() {
         /** @var ManyManyTestObjectOne $firstOne */
         $firstOne = DataObject::get_one("ManyManyTestObjectOne");
@@ -197,6 +207,9 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         }
     }
 
+    /**
+     * @throws DataObjectSetCommitException
+     */
     public function testRewriteRelationship() {
         /** @var ManyManyTestObjectOne $firstOne */
         $firstOne = DataObject::get_one("ManyManyTestObjectOne");
@@ -218,6 +231,18 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         }
     }
 
+    /**
+     * tests if sort is working correctly
+     *
+     * 1. gets one object
+     * 2. checks if setup() initiliazed correctly
+     * 3. shuffles manymany-relationship
+     * 4. checks if shuffle has been completed
+     * 5. writes new object
+     * 6. checks if object has been correctly written
+     *
+     * @throws DataObjectSetCommitException
+     */
     public function testSort() {
         /** @var ManyManyTestObjectOne $firstOne */
         $firstOne = DataObject::get_one("ManyManyTestObjectOne");
@@ -240,6 +265,9 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         $this->assertEqual($firstOne->twosids, $ids);
     }
 
+    /**
+     * tests if filter API is working as expected
+     */
     public function testFilter() {
         $firstOne = DataObject::get_one("ManyManyTestObjectOne");
 
@@ -247,6 +275,21 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         $this->assertEqual($firstOne->twos()->filter(array("two" => $this->twos[0]->two))->count(), 1);
     }
 
+    /**
+     * tests state-upgrades when writing manymany-DataObjectSets from a DataObject
+     * it tests just state records to published
+     *
+     * 1. creates test objects (one one and two twos)
+     * 2. assigns the twos to the one
+     * 3. write state of one
+     * 4. checks if data is available
+     * 5. checks if twos have NOT been published
+     * 6. publishes complete object-set
+     * 7. checks if everything has been published
+     * 8. cleanup
+     *
+     * @throws MySQLException
+     */
     public function testUpgradeStateToPublish() {
         $newOne = new ManyManyTestObjectOne(array(
             "one" => 10
@@ -294,6 +337,90 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         ))->first());
     }
 
+    /**
+     * tests state-upgrades when writing manymany-DataObjectSets from a DataObject
+     * it tests when also already published records are available, which has a new state-version
+     *
+     * 1. Create One TestObjectOne and two testObjectTwo.
+     * 2. Assign both of the twos to the one.
+     * 3. edit the first two and publish it
+     * 4. edit the first two and make a draft
+     * 5. assert correct records are available for one
+     * 6. checks if record in published version has right data.
+     * 7. publishes manymany-relationship
+     * 8. checks if everything got right
+     * 9. removes one and checks if remove was successful
+     *
+     * @throws MySQLException
+     */
+    public function testUpgradeStateToPublishWithPublished()
+    {
+        $newOne = new ManyManyTestObjectOne(array(
+            "one" => 10
+        ));
+        $newOne->twos()->add($first = new ManyManyTestObjectTwo(array(
+            "two" => 10
+        )));
+        $newOne->twos()->add(new ManyManyTestObjectTwo(array(
+            "two" => 11
+        )));
+        $first->writeToDB(true, true);
+        $first->two = 12;
+        $first->writeToDB(false, true, 1);
+        $newOne->writeToDB(true, true, 1);
+
+        $this->assertEqual($newOne, $newOne->twos()->getOwnRecord());
+        $this->assertEqual(12, $newOne->twos()->first()->two);
+        $this->assertEqual(2, $newOne->twos()->count());
+
+        $this->assertEqual(1, DataObject::count(ManyManyTestObjectTwo::class, array(
+            "two" => 10
+        )));
+
+        /** @var ManyManyTestObjectOne $stateOne */
+        $stateOne = DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
+            "one" => 10
+        ))->first();
+        $this->assertEqual(DataObject::VERSION_STATE, $stateOne->queryVersion);
+
+        $this->assertIsA($stateOne, ManyManyTestObjectOne::class);
+        $this->assertEqual(2, $stateOne->twos()->count());
+        $this->assertEqual(1, DataObject::get(ManyManyTestObjectTwo::class, array(
+            "two" => array(10, 11)
+        ))->count());
+
+        $stateOne->writeToDB(false, true, 2);
+        $this->assertEqual(1, DataObject::get(ManyManyTestObjectTwo::class, array(
+            "two" => array(10, 11)
+        ))->count());
+        $this->assertEqual(2, DataObject::get(ManyManyTestObjectTwo::class, array(
+            "two" => array(12, 11)
+        ))->count());
+
+        $this->assertEqual(2, $stateOne->twos()->count());
+        foreach ($stateOne->twos() as $two) {
+            $two->remove(true);
+        }
+
+        $this->assertEqual(0, DataObject::get(ManyManyTestObjectTwo::class, array(
+            "two" => array(10, 11)
+        ))->count());
+
+        $stateOne->remove(true);
+        $this->assertNull(DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
+            "one" => 10
+        ))->first());
+    }
+
+    /**
+     * tests Bidirectional Relationships, due to the fact that it is referencing itself.
+     *
+     * 1. Create two objects
+     * 2. Add second to first
+     * 3. Check if written correctly
+     *
+     * @throws DataObjectSetCommitException
+     */
     public function testBiDir() {
         $this->assertEqual(5, DataObject::get(ManyManyBiDirObj::class)->count());
 
@@ -313,6 +440,13 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
 
         $zero = DataObject::get_one(ManyManyBiDirObj::class, array("number" => 0));
         $this->assertEqual(0, $zero->my()->count());
+    }
+
+    /**
+     * tests if class-info is correctly initialized for bidir.
+     */
+    public function testBiDirClassInfo() {
+
     }
 }
 

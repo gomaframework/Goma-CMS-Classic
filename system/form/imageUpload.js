@@ -47,7 +47,7 @@ function ImageUploadController(field, updateUrl, options) {
 
     this.fieldElement.find(".crop-button").click(function(){
         if(this.field.upload != null) {
-            this.placeCropButton();
+            setTimeout(this.placeCropButton.bind(this), 100);
         }
     }.bind(this));
 
@@ -314,6 +314,7 @@ ImageUploadController.prototype = {
                         "data-retina": null
                     });
                     $this.super.formelement.find(".upload-link").attr("href", data.file.path);
+                    $this.super.destInput.val(data.file.realpath);
                 }
             } else {
                 $this.super.uploader.updateFile(data);

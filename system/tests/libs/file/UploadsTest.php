@@ -51,10 +51,10 @@ class UploadsTest extends GomaUnitTest {
 
 	public function testAddExistsAndRemove() {
 		// store first file.
-		$file = Uploads::addFile("1" . $this->filename, $this->testfile, "FormUpload", null, true);
+		$file = Uploads::addFile("1" . $this->filename, $this->testfile, "FormUpload", null);
 
 		$this->assertEqual("1" . $this->filename, $file->filename);
-		$this->assertEqual("imageuploads", $file->classname);
+		$this->assertEqual(strtolower(ImageUploads::class), $file->classname);
 		$this->assertTrue(file_exists($file->realfile));
 		$this->assertEqual(md5_file($file->realfile), md5_file($this->testfile));
 		$this->assertEqual(md5_file($this->testfile), $file->md5);
@@ -63,7 +63,7 @@ class UploadsTest extends GomaUnitTest {
 
 		// file2 test: Tests deletable for same file and some tests with same file/collection
 		// check for second file, which should be stored.
-		$file2 = Uploads::addFile($this->filename . ".jpg", $this->testfile, "FormUpload", null, true);
+		$file2 = Uploads::addFile($this->filename . ".jpg", $this->testfile, "FormUpload", null);
 
 		$this->assertTrue(file_exists($file2->realfile));
 		$this->assertEqual($file->realfile, $file2->realfile);
@@ -239,12 +239,22 @@ class UploadsTest extends GomaUnitTest {
 	}
 
 	public function testFileVersions() {
+        foreach(DataObject::get(Uploads::class, array(
+            "md5" => md5_file($this->testfile)
+        )) as $file) {
+            $file->remove(true);
+        }
+
+        $this->assertEqual(0, DataObject::get(Uploads::class, array(
+            "md5" => md5_file($this->testfile)
+        ))->count());
+
 		$file1 = Uploads::addFile("blub.jpg", $this->testfile, "testCollection");
 		$file2 = Uploads::addFile("blah.jpg", $this->testfile, "testCollection");
 
-		$this->assertEqual($file1->getFileVersions()->count(), 2);
-		$this->assertEqual($file1->getFileVersions()->first()->id, $file1->id);
-		$this->assertEqual($file1->getFileVersions()->last()->id, $file2->id);
+		$this->assertEqual(2, $file1->getFileVersions()->count());
+		$this->assertEqual($file1->id, $file1->getFileVersions()->first()->id);
+		$this->assertEqual($file2->id, $file1->getFileVersions()->last()->id);
 
 		$file1->remove(true);
 		$file2->remove(true);

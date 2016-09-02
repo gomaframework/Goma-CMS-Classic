@@ -132,7 +132,7 @@ class Uploads extends DataObject {
         /** @var Uploads $file */
         $file = $file->getClassAs(self::getFileClass($class_name, $filename));
 
-        if(copy($realfile, $file->realfile)) {
+        if(file_exists($file->realfile) || copy($realfile, $file->realfile)) {
             $file->writeToDB(true, true);
 
             return $file;
@@ -229,7 +229,6 @@ class Uploads extends DataObject {
      * @return   Uploads
      */
     public static function getFileInstance($realfile, $collection, $filename) {
-
         // check for already existing file.
         if(filesize($realfile) < self::FILESIZE_MD5) {
             $md5 = md5_file($realfile);

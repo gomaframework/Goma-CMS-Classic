@@ -1,4 +1,6 @@
-<?php defined('IN_GOMA') OR die();
+<?php
+namespace Goma\GD;
+defined('IN_GOMA') OR die();
 /**
  * This class manages image uploaded.
  *
@@ -33,7 +35,7 @@ class ROOTImage extends GD
     {
         $this->org_pic = $imagePath;
         if (substr($imagePath, 0, 7) == "Uploads") {
-            if ($data = DataObject::Get_one("Uploads", array("path" => $imagePath))) {
+            if ($data = \DataObject::Get_one("Uploads", array("path" => $imagePath))) {
                 $this->md5 = md5_file($data->realfile);
                 parent::__construct($data->realfile);
             } else {
@@ -56,8 +58,8 @@ class ROOTImage extends GD
      * @param int $width new width
      * @param int $height height
      * @param bool $crop
-     * @param Position $cropPosition
-     * @param Size $cropSize
+     * @param \Position $cropPosition
+     * @param \Size $cropSize
      * @return bool|GD
      */
     public function resize($width, $height, $crop = true, $cropPosition = null, $cropSize = null)
@@ -100,12 +102,10 @@ class ROOTImage extends GD
     {
         if ($width === false) {
             $relation = $this->width / $this->height;
-            $height = $height;
             $width = round($height * $relation);
 
         } else if ($height === false) {
             $relation = $this->height / $this->width;
-            $width = $width;
             $height = round($width * $relation);
         }
 

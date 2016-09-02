@@ -667,12 +667,7 @@ class Form extends AbstractFormComponentWithChildren {
 		$this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
 
 		try {
-            try {
-                $content = $data->handleSubmit();
-            } finally {
-                $this->model = $data->model;
-                $data->saveToSession();
-            }
+            $content = $data->handleSubmit();
 
 			/** @var Form|GomaFormResponse $content */
 			if(is_a($content, "Form")) {

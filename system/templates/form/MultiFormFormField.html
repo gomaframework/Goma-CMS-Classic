@@ -13,6 +13,7 @@
 $field.field
 <% ENDCONTROL %>
 
+<% IF NOT $disabled %>
 <% IF $addable %>
 <div class="add">
     <h3><% lang("ADD_CONTENT") %></h3>
@@ -26,13 +27,15 @@ $field.field
     <% ENDCONTROL %>
 </div>
 <% END %>
+<% END %>
 
 <script type="text/javascript">
     $(function(){
         window["mf"] = new multiFormFieldController('#$divId', {
             sortable: $sortable,
             deletable: $deletable,
-            addedNewField: $addedNewField
+            addedNewField: $addedNewField,
+            disabled: <% IF $disabled %> true <% ELSE %> false <% END %>
         });
     })
 </script>

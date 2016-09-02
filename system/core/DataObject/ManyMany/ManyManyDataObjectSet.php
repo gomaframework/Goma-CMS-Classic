@@ -89,12 +89,28 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             throw new InvalidArgumentException("Source-Data of ManyManySet must be type of array, but was " . gettype($data) . ".");
 
         $this->manyManyData = array();
+        $existingData = $this->getRelationshipDataFromDB();
+        $i = 0;
         foreach((array) $data as $possibleId => $recordData) {
             if(is_array($recordData)) {
-                $this->manyManyData[$possibleId] = $recordData;
+                if(!$possibleId) {
+                    throw new InvalidArgumentException("Each source-data-dictionary needs a valid id, which is defined by DB.");
+                }
+
+                $this->manyManyData[$possibleId] = array_merge(
+                    isset($existingData[$possibleId]) ? $existingData[$possibleId] : array(),
+                    $recordData
+                );
+                $this->manyManyData[$possibleId][$this->relationShip->getOwnerSortField()] = $i;
             } else {
-                $this->manyManyData[$recordData] = array();
+                if(!$recordData) {
+                    throw new InvalidArgumentException("Each source-data-dictionary needs a valid id, which is defined by DB.");
+                }
+
+                $this->manyManyData[$recordData] = isset($existingData[$recordData]) ? $existingData[$recordData] : array();
+                $this->manyManyData[$recordData][$this->relationShip->getOwnerSortField()] = $i;
             }
+            $i++;
         }
 
         $this->fetchMode = self::FETCH_MODE_EDIT;
@@ -185,20 +201,24 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             return array_keys($this->manyManyData);
         }
 
-        $query = $this->getManyManyQuery(array($this->relationShip->getTargetField()));
-        $query->execute();
+        if($this->getQueryVersionID()) {
+            $query = $this->getManyManyQuery(array($this->relationShip->getTargetField()));
+            $query->execute();
 
-        $ids = array();
-        while($row = $query->fetch_assoc()) {
-            $ids[] = $row[$this->relationShip->getTargetField()];
+            $ids = array();
+            while ($row = $query->fetch_assoc()) {
+                $ids[] = $row[$this->relationShip->getTargetField()];
+            }
+
+            /** @var DataObject $record */
+            foreach ($this->staging as $record) {
+                $ids[] = $record->versionid;
+            }
+
+            return $ids;
         }
 
-        /** @var DataObject $record */
-        foreach($this->staging as $record) {
-            $ids[] = $record->versionid;
-        }
-
-        return $ids;
+        return array();
     }
 
     /**
@@ -211,35 +231,39 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             return $this->manyManyData;
         }
 
-        $query = $this->getManyManyQuery(array("*", "recordid"), $oldId);
-        $query->execute();
+        if($this->getQueryVersionID($oldId)) {
+            $query = $this->getManyManyQuery(array("*", "recordid"), $oldId);
+            $query->execute();
 
-        $arr = array();
-        while($row = $query->fetch_assoc()) {
-            $id = $row[$this->relationShip->getTargetField()];
-            $arr[$id] = array(
-                "versionid"                             => $id,
-                "relationShipId"                        => $row["relationid"],
-                $this->relationShip->getOwnerField()    => $row[$this->relationShip->getOwnerField()]
-            );
+            $arr = array();
+            while ($row = $query->fetch_assoc()) {
+                $id = $row[$this->relationShip->getTargetField()];
+                $arr[$id] = array(
+                    "versionid"                          => $id,
+                    "relationShipId"                     => $row["relationid"],
+                    $this->relationShip->getOwnerField() => $row[$this->relationShip->getOwnerField()]
+                );
 
-            $arr[$id][$this->relationShip->getOwnerSortField()] = $row[$this->relationShip->getOwnerSortField()];
-            $arr[$id][$this->relationShip->getTargetSortField()] = $row[$this->relationShip->getTargetSortField()];
+                $arr[$id][$this->relationShip->getOwnerSortField()] = $row[$this->relationShip->getOwnerSortField()];
+                $arr[$id][$this->relationShip->getTargetSortField()] = $row[$this->relationShip->getTargetSortField()];
 
-            if($updateObject = $this->updateExtraFieldsStage->find("id", $row["recordid"])) {
-                $updateRecord = $updateObject->toArray();
-            }
+                if ($updateObject = $this->updateExtraFieldsStage->find("id", $row["recordid"])) {
+                    $updateRecord = $updateObject->toArray();
+                }
 
-            foreach ($this->relationShip->getExtraFields() as $field => $pattern) {
-                if(isset($updateRecord)) {
-                    $arr[$id][$field] = isset($updateRecord[$field]) ? $updateRecord[$field] : $row[$field];
-                } else {
-                    $arr[$id][$field] = $row[$field];
+                foreach ($this->relationShip->getExtraFields() as $field => $pattern) {
+                    if (isset($updateRecord)) {
+                        $arr[$id][$field] = isset($updateRecord[$field]) ? $updateRecord[$field] : $row[$field];
+                    } else {
+                        $arr[$id][$field] = $row[$field];
+                    }
                 }
             }
+
+            return $arr;
         }
 
-        return $arr;
+        return array();
     }
 
     /**
@@ -471,6 +495,10 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                         "fields"        => array()
                     );
 
+                    if($this->ownRecord->versionid == 0) {
+                        throw new LogicException("Ownrecord must be written in order to write ManyMany-Relationship.");
+                    }
+
                     foreach ($relationData as $id => $record) {
                         if($this->relationShip->isBidirectional()) {
                             if(!isset($manipulation[self::MANIPULATION_INSERT_NEW]["fields"][$id . "_" . $this->ownRecord->versionid])) {
@@ -655,12 +683,20 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                 }
             }
 
-            $join[$relationTable] = array(
-                DataObject::JOIN_TYPE      => "INNER",
-                DataObject::JOIN_TABLE     => $relationTable,
-                DataObject::JOIN_STATEMENT => $relationTable . "." . $this->relationShip->getTargetField() . " = " . $this->dbDataSource()->table() . ".id AND " .
-                    $relationTable . "." . $this->relationShip->getOwnerField() . " = '" . $this->getQueryVersionID() . "'"
-            );
+            if($this->getQueryVersionID()) {
+                $join[$relationTable] = array(
+                    DataObject::JOIN_TYPE      => "INNER",
+                    DataObject::JOIN_TABLE     => $relationTable,
+                    DataObject::JOIN_STATEMENT => $relationTable . "." . $this->relationShip->getTargetField() . " = " . $this->dbDataSource()->baseTable() . ".id AND " .
+                        $relationTable . "." . $this->relationShip->getOwnerField() . " = '" . $this->getQueryVersionID() . "'"
+                );
+            } else {
+                $join[$relationTable] = array(
+                    DataObject::JOIN_TYPE      => "INNER",
+                    DataObject::JOIN_TABLE     => $relationTable,
+                    DataObject::JOIN_STATEMENT => "0 = 1"
+                );
+            }
         }
 
         return $join;

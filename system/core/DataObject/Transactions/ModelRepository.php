@@ -62,7 +62,6 @@ class ModelRepository extends IModelRepository {
      * @throws PermissionException
      */
     public function write($record, $forceWrite = false, $silent = false, $overrideCreated = false) {
-
         $writer = $this->buildWriter($record, -1, $silent, $overrideCreated);
 
         if(!$forceWrite) {

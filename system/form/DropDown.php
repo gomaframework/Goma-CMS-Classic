@@ -211,12 +211,6 @@ class DropDown extends FormField {
 			"class" => "dropdown_widget",
 			"id" => $this->ID() . "_widget"
 		), array(
-			new HTMLNode("input", array(
-				"type" => "submit",
-				"name" => "field_action_" . $this->name . "_nojs",
-				"value" => "",
-				"class" => "hiddenbutton"
-			)),
 			$this->field = new HTMLNode("div", array(
 				"class" => "field",
 				"id" => $this->ID() . "_field"
@@ -250,6 +244,15 @@ class DropDown extends FormField {
 				new HTMLNode("div", array("class" => "footer"))
 			))
 		));
+
+		if(!$this->isDisabled()) {
+			$this->widget->prepend(new HTMLNode("input", array(
+				"type" => "submit",
+				"name" => "field_action_" . $this->name . "_nojs",
+				"value" => "",
+				"class" => "hiddenbutton"
+			)));
+		}
 
 		if($this->multiselect) {
 			$this->widget->addClass("multi-value");

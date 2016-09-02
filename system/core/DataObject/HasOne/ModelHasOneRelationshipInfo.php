@@ -74,8 +74,7 @@ class ModelHasOneRelationshipInfo extends ModelRelationShipInfo {
             DataObject::RELATION_TARGET => $this->targetClass,
             DataObject::RELATION_INVERSE => $this->inverse,
             DataObject::FETCH_TYPE => $this->fetchType,
-            DataObject::CASCADE_TYPE => $this->cascade,
-            "validatedInverse"  => true
+            DataObject::CASCADE_TYPE => $this->cascade
         );
     }
 }

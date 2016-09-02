@@ -742,7 +742,7 @@ function Goma_ExceptionHandler($exception) {
 		echo $content;
 	}
 
-	exit(8);
+	exit($exception->getCode() != 0 ? $exception->getCode() : 8);
 }
 
 
@@ -758,6 +758,24 @@ function log_exception(Exception $exception) {
 	
 	$debugMsg = "URL: " . $uri . "\nGoma-Version: " . GOMA_VERSION . "-" . BUILD_VERSION . "\nApplication: " . print_r(ClassInfo::$appENV, true) . "\n\n" . $message;
 	debug_log($debugMsg);
+}
+
+/**
+ * @return int
+ */
+function getMemoryLimit() {
+	if(function_exists("ini_get")) {
+		$memory_limit = ini_get('memory_limit');
+		if (preg_match('/^(\d+)(.)$/', $memory_limit, $matches)) {
+			if ($matches[2] == 'M') {
+				return $matches[1] * 1024 * 1024; // nnnM -> nnn MB
+			} else if ($matches[2] == 'K') {
+				return $matches[1] * 1024; // nnnK -> nnn KB
+			}
+		}
+	}
+
+	return 64 * 1024 * 1024;
 }
 
 //!Logging
@@ -983,8 +1001,13 @@ function loadFramework($modelRepository = null) {
 /**
  * this function loads an application
  * @param $directory
+ * @throws Exception
  */
 function loadApplication($directory) {
+	if(getMemoryLimit() < 64 * 1024 * 1024) {
+		throw new Exception("Memory of at least 64M is required.");
+	}
+
 	define("URL", parseUrl());
 
     validateServerConfig();

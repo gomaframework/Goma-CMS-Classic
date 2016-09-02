@@ -74,6 +74,7 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
             $has_one = isset(ClassInfo::$class_info[$owner->classname]["has_one"]) ? ClassInfo::$class_info[$owner->classname]["has_one"] : array();
 
             foreach($has_one as $name => $value) {
+                $value['validatedInverse'] = true;
                 $hasOneClasses[$name] = new ModelHasOneRelationshipInfo($owner->classname, $name, $value);
             }
 
@@ -83,6 +84,7 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
                         $has_one = array_merge(ClassInfo::$class_info[$class]["has_one"], $has_one);
 
                         foreach(ClassInfo::$class_info[$class]["has_one"] as $name => $value) {
+                            $value['validatedInverse'] = true;
                             $hasOneClasses[$name] = new ModelHasOneRelationshipInfo($class, $name, $value);
                         }
                     }

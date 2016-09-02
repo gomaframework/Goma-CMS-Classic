@@ -339,9 +339,7 @@ abstract class gObject
         $this->classname = ClassManifest::resolveClassName($this);
         $this->class = $this->classname;
 
-        if (isset(ClassInfo::$class_info[$this->classname]["inExpansion"])) {
-            $this->inExpansion = ClassInfo::$class_info[$this->classname]["inExpansion"];;
-        }
+        $this->inExpansion = ClassInfo::getExpansionForClass($this->classname);
 
         $this->checkDefineStatics();
     }

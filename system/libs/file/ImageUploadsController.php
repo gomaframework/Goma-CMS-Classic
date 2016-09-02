@@ -1,4 +1,6 @@
-<?php defined('IN_GOMA') OR die();
+<?php use Goma\GD\ROOTImage;
+
+defined('IN_GOMA') OR die();
 
 /**
  * @package 	goma framework

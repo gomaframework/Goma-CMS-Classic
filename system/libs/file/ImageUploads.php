@@ -1,4 +1,9 @@
-<?php defined('IN_GOMA') OR die();
+<?php use Goma\GD\GD;
+use Goma\GD\GDException;
+use Goma\GD\GDImageSizeException;
+use Goma\GD\ROOTImage;
+
+defined('IN_GOMA') OR die();
 
 /**
  *
@@ -475,13 +480,25 @@ class ImageUploads extends Uploads {
 
     /**
      * @param ModelWriter $modelWriter
+     * @throws GDImageSizeException
+     * @throws MySQLException
      */
     public function onBeforeWrite($modelWriter)
     {
         parent::onBeforeWrite($modelWriter);
 
         $gd = new GD($this->realfile);
+        $usage = memory_get_usage();
         $gd->fixRotation()->toFile($this->realfile);
+        $gd->gd();
+        if(memory_get_usage() - $usage > 0.5 * getMemoryLimit()) {
+            if(DataObject::count(Uploads::class, array("realfile" => $this->realfile)) == 0) {
+                @unlink($this->realfile);
+            }
+            
+            throw new GDImageSizeException("The image is too big for our library.");
+        }
+        $gd->destroy();
 
         $this->md5 = md5_file($this->realfile);
 

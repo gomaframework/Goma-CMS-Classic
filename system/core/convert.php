@@ -12,46 +12,50 @@ defined("IN_GOMA") OR die();
 class Convert {
 	/**
 	 * converts raw-code to js
-	 *@param string - raw
+	 * @param string $raw
+	 * @return array|mixed
 	 */
-	static function raw2js($str) {
-		if(is_array($str)) {
-			foreach($str as $k => $v)
-				$str[$k] = self::raw2js($v);
-			return $str;
+	static function raw2js($raw) {
+		if(is_array($raw)) {
+			foreach($raw as $k => $v)
+				$raw[$k] = self::raw2js($v);
+			return $raw;
 		} else {
-			return str_replace(array("\\", "\"", "'", "\n", "\r", "\t", "\b", "\f", "/"), array("\\\\", "\\\"", "\\'", '\n', '\r', '\t', '\b', '\f', '\/'), $str);
+			return str_replace(array("\\", "\"", "'", "\n", "\r", "\t", "\b", "\f", "/"), array("\\\\", "\\\"", "\\'", '\n', '\r', '\t', '\b', '\f', '\/'), $raw);
 		}
 	}
 
 	/**
 	 * converts raw to sql
+	 * @param string $raw
+	 * @return string
 	 */
-	static function raw2sql($str) {
-		if(is_array($str)) {
-			foreach($str as $k => $v)
+	static function raw2sql($raw) {
+		if(is_array($raw)) {
+			foreach($raw as $k => $v)
 				self::raw2sql($v);
-			return $str;
+			return $raw;
 		} else {
 			if(function_exists("get_magic_quotes_gpc") && get_magic_quotes_gpc()) {
-				return sql::escape_string(stripslashes($str));
+				return sql::escape_string(stripslashes($raw));
 			}
-			$str = sql::escape_string($str);
-			return $str;
+			$raw = sql::escape_string($raw);
+			return $raw;
 		}
 	}
 
 	/**
 	 * converts raw to text with correct Lines
-	 *
+	 * @param string $raw
+	 * @return array|string
 	 */
-	static function raw2xmlLines($val) {
-		if(is_array($val)) {
-			foreach($val as $k => $v)
-				$val[$k] = self::raw2xmlLines($v);
-			return $val;
+	static function raw2xmlLines($raw) {
+		if(is_array($raw)) {
+			foreach($raw as $k => $v)
+				$raw[$k] = self::raw2xmlLines($v);
+			return $raw;
 		} else {
-			return nl2br(self::raw2xml($val));
+			return nl2br(self::raw2xml($raw));
 		}
 	}
 
@@ -123,14 +127,14 @@ class Convert {
 	/**
 	 * Encode a value as a URL
 	 *
-	 *@param val
-	 *@access public
+	 * @param string $url
+	 * @return string
 	 */
-	static function raw2url($val) {
-		if(is_array($val)) {
+	static function raw2url($url) {
+		if(is_array($url)) {
 			foreach($url as $k => $v)
 				$url[$k] = self::raw2url($v);
-			return $val;
+			return $url;
 		} else {
 			return urlencode($url);
 		}
@@ -139,17 +143,16 @@ class Convert {
 	/**
 	 * Encode a URL as raw
 	 *
-	 *@param val
-	 *@access public
+	 * @param $url
+	 * @return array|string
 	 */
-	static function url2raw($val) {
-		if(is_array($val)) {
+	static function url2raw($url) {
+		if(is_array($url)) {
 			foreach($url as $k => $v)
 				$url[$k] = self::url2raw($v);
-			return $val;
+			return $url;
 		} else {
 			return urldecode($url);
 		}
 	}
-
 }
