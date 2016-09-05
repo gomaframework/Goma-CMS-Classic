@@ -26,5 +26,4 @@ class MemberTest extends GomaUnitTest {
 	public function testExceptions() {
 		// TODO: implement a model-test-platform, so we can test models without DataBase.
 	}
-
 }

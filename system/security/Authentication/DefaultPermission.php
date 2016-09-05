@@ -23,7 +23,11 @@ class DefaultPermission {
     public static function checkDefaults() {
         $cacher = new Cacher(self::CACHE_DEFAULT_CHECK);
         if(!$cacher->checkValid()) {
-            if(DataObject::count("group", array("type" => 2)) === 0) {
+            if(DataObject::count("group", array(
+                    "permissions" => array(
+                        "name" => "superadmin"
+                    )
+                )) === 0) {
                 $group = new Group();
                 $group->name = lang("admins", "admin");
                 $group->type = 2;
@@ -64,7 +68,6 @@ class DefaultPermission {
 
         // if no group is set, set default group user
         if($groups->forceData()->Count() === 0) {
-
             $group = self::getDefaultGroup();
 
             $groups->add($group);
@@ -75,7 +78,7 @@ class DefaultPermission {
     }
 
     /**
-     * returns a group which any user can be assigned safetly to based on permissions.
+     * returns a group which any user can be assigned to safely, based on permissions.
      *
      * @name 	getDefaultGroup
      * @return 	Group
@@ -90,12 +93,10 @@ class DefaultPermission {
 
             // validate group and permissions
             if($groupCount == 0 || ($groupCount == 1 && DataObject::get_one("group", array("type" => 1))->permissions()->Count() > 0)) {
-
                 // create new
                 $defaultGroup = new Group(array("name" => lang("user"), "type" => 1, "usergroup" => 1));
                 $defaultGroup->writeToDB(true, true, 2, false, false);
             } else {
-
                 // iterate trough all groups with type 1 and set default group to the first one without permissions
                 foreach(DataObject::get("group", array("type" => 1)) as $defaultGroup) {
                     if($defaultGroup->permissions()->count() === 0) {
