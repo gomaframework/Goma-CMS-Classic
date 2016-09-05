@@ -513,6 +513,19 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         $this->assertTrue(isset(ClassInfo::$class_info["manymanybidirobj"]["many_many_relations"]["my"]));
         $this->assertFalse(isset(ClassInfo::$class_info["manymanybidirobj"]["many_many_relations_extra"]));
     }
+
+    /**
+     * tests if exception is raised when committing data when source part of
+     * ManyMany-Relationship is a trasient object.
+     */
+    public function testExceptionWhenCommitingOnNotWrittenObject() {
+        $transient = new ManyManyTestObjectOne();
+        $transient->twos()->add(DataObject::get_one(ManyManyTestObjectTwo::class));
+        $this->assertEqual(1, $transient->twos()->count());
+        $this->assertThrows(function() use($transient) {
+            $transient->twos()->commitStaging(false, true);
+        }, "LogicException");
+    }
 }
 
 /**

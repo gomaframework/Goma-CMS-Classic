@@ -460,6 +460,11 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             throw new PermissionException();
         }
 
+        if($this->ownRecord->id == 0) {
+            throw new LogicException("Many-Many-Relationship can only be written when record has been written. " .
+                "Call writeToDB on record, this will also trigger writing Relationship.");
+        }
+
         $copyOfAddStage = $this->staging->ToArray();
 
         parent::writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, $exceptions, $errorRecords);

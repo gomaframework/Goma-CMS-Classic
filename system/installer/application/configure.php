@@ -45,12 +45,16 @@ if(file_exists($data["directory"] . "/temp/" . CLASS_INFO_DATAFILE)) {
 }
 
 register_shutdown_function(function() use($data) {
-
     logging("Creating user with " . $data["user"] . " and password ***");
+
+    DefaultPermission::checkDefaults();
+
+    $group = DataObject::get_one(Group::class, array("type" => 2));
 
     $user = new User(array(
         "nickname" => $data["user"]
     ));
     $user->password = $data["pwd"];
+    $user->groups()->add($group);
     $user->writeToDB(false, true);
 });

@@ -41,6 +41,12 @@ class SettingsController extends gObject {
 				self::$settingsCache = new Newsettings(array(
 
 				));
+				if(!file_exists("tpl/" . self::$settingsCache->stpl)) {
+					$templates = TemplateInfo::get_available_templates(ClassInfo::$appENV["app"]["name"], ClassInfo::appVersion(), GOMA_VERSION . "-" . BUILD_VERSION);
+					if(isset($templates[0])) {
+						self::$settingsCache->stpl = $templates[0];
+					}
+				}
 			}
 			$cacher->write(self::$settingsCache->toArray(), 3600);
 		}
