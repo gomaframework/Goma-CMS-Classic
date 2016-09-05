@@ -85,14 +85,15 @@ class templateInfo extends gObject
 			
 		return $content[$key];
 	}
-	
+
 	/**
 	 * get all available templates for the given versions of framework and cms.
 	 *
-	 * @access 	public
-	 * @param 	string 	version to check
-	 * @return 	array 	numbered array with all available templates
-	*/
+	 * @param string $app
+	 * @param string $versionCMS
+	 * @param string $versionFramework
+	 * @return array numbered array with all available templates
+	 */
 	public static function get_available_templates($app, $versionCMS, $versionFramework)
 	{
 		$tpl = self::getTemplates();
