@@ -32,7 +32,6 @@ class DefaultPermission {
                 $group->name = lang("admins", "admin");
                 $group->type = 2;
                 $group->permissions()->add(Permission::forceExisting("superadmin"));
-                $group->permissions()->commitStaging(false, true, 2);
                 $group->writeToDB(true, true, 2, false, false);
             }
 
