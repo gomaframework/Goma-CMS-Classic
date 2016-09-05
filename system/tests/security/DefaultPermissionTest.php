@@ -13,7 +13,6 @@ defined("IN_GOMA") OR die();
  * @version 1.0
  */
 class DefaultPermissionTest extends GomaUnitTest {
-
     /**
      *
      */

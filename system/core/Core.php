@@ -581,6 +581,17 @@ class Core extends gObject {
 
 		Director::direct($url);
 	}
+
+	/**
+	 * renders cli.
+	 */
+	public function cli()
+	{
+        $args = getCommandLineArgs();
+        if(isset($args["-cron"])) {
+            CronController::handleCron();
+        }
+	}
 }
 
 /**
