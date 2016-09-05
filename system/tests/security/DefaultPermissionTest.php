@@ -60,6 +60,6 @@ class DefaultPermissionTest extends GomaUnitTest {
             "groups" => array(
                 "id" => $possibleGroups
             )
-        )));
+        ))->count());
     }
 }
