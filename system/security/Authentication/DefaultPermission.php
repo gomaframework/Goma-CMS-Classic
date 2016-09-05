@@ -34,9 +34,10 @@ class DefaultPermission {
                 $group->writeToDB(true, true, 2, false, false);
             }
 
-            if(DataObject::count("group", array("type" => 1)) === 0) {
+            if(DataObject::count("group", array("usergroup" => 1)) === 0) {
                 $group = new Group();
                 $group->name = lang("user", "users");
+                $group->usergroup = 1;
                 $group->type = 1;
                 $group->writeToDB(true, true, 2, false, false);
             }

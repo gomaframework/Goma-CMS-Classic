@@ -27,7 +27,7 @@ class DefaultPermissionTest extends GomaUnitTest {
         $defaults = DataObject::get(Group::class, array(
             "usergroup" => 1
         ));
-        $this->assertEqual(1, $defaults->count());
+        $this->assertGreaterThanOrEqual(1, $defaults->count());
         $group = $defaults->first();
 
         $this->assertInstanceOf(Group::class, $group);
