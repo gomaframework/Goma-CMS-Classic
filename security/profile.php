@@ -50,6 +50,7 @@ class ProfileController extends FrontedController {
 
 		$userdata = member::$loggedIn;
 		$controller = ControllerResolver::instanceForModel($userdata);
+		$controller->originalNamespace = $controller->namespace = $this->namespace;
 
 		$data = $controller->edit();
 		if(is_object($data)) {
