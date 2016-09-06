@@ -32,6 +32,15 @@ class PagesTest extends GomaUnitTest implements TestAble {
     }
 
     /**
+     * tests sort.
+     */
+    public function testSortWhenNothingExists() {
+        $page = new Page(array("parentid" => -1));
+        $page->onBeforeWrite(new ModelWriter($page, IModelRepository::COMMAND_TYPE_PUBLISH, $page, Core::repository()));
+        $this->assertEqual($page->sort, 0);
+    }
+
+    /**
      * tests parent-type.
      */
     public function testParentType() {
