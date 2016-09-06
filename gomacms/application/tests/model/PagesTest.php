@@ -16,6 +16,21 @@ class PagesTest extends GomaUnitTest implements TestAble {
      */
     public $name = "pages";
 
+    protected $parentIdForZero;
+
+    /**
+     *
+     */
+    public function setup() {
+        if(DataObject::get(pages::class)->count() == 0) {
+            $this->parentIdForZero = 0;
+        } else {
+            $this->parentIdForZero = DataObject::get_one(pages::class, array(
+                "children.count" => 0
+            ))->id;
+        }
+    }
+
     /**
      * tests if permissions are instantly written.
      */
@@ -35,7 +50,7 @@ class PagesTest extends GomaUnitTest implements TestAble {
      * tests sort.
      */
     public function testSortWhenNothingExists() {
-        $page = new Page(array("parentid" => -1));
+        $page = new Page(array("parentid" => $this->parentIdForZero));
         $page->onBeforeWrite(new ModelWriter($page, IModelRepository::COMMAND_TYPE_PUBLISH, $page, Core::repository()));
         $this->assertEqual($page->sort, 0);
     }
