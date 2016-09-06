@@ -586,7 +586,7 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
             if($pages->count() == 0) {
                 $this->data["sort"] = 0;
             } else {
-                $this->data["sort"] = DataObject::get("pages", array("parentid" => $this->parentid))->last()->sort;
+                $this->data["sort"] = (int) $pages->last()->sort + 1;
             }
         }
 

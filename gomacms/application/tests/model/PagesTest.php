@@ -31,6 +31,12 @@ class PagesTest extends GomaUnitTest implements TestAble {
         }
     }
 
+    public function tearDown() {
+        foreach(DataObject::get(pages::class, array("parentid" => $this->parentIdForZero)) as $page) {
+            $page->remove(true);
+        }
+    }
+
     /**
      * tests if permissions are instantly written.
      */
@@ -42,8 +48,6 @@ class PagesTest extends GomaUnitTest implements TestAble {
 
         $this->assertEqual($perm->id, 0);
         $this->assertEqual($page->id, 0);
-
-        //$this->assertEqual($page->read_permission, $perm);
     }
 
     /**
@@ -65,9 +69,7 @@ class PagesTest extends GomaUnitTest implements TestAble {
 
         $secondPage = new Page(array("parentid" => $this->parentIdForZero));
         $secondPage->onBeforeWrite(new ModelWriter($page, IModelRepository::COMMAND_TYPE_PUBLISH, $page, Core::repository()));
-        $this->assertEqual($secondPage->sort, $page->sort + 1);
-
-        $page->remove(true);
+        $this->assertEqual($page->sort + 1, $secondPage->sort);
     }
 
     /**
