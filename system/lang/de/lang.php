@@ -676,5 +676,7 @@ $lang = array(
 	"versions"			=> "Versionen",
 
     "moveContentBlock"  => "Inhaltsblock verschieben",
-    "removeContentBlock"=> "Inhaltsblock löschen"
+    "removeContentBlock"=> "Inhaltsblock löschen",
+
+	"imageTooBig"		=> "Die hochgeladene Datei ist zu groß."
 );

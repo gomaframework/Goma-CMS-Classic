@@ -686,5 +686,7 @@ $lang = array(
 
 
     "moveContentBlock"  => "Move content-block",
-    "removeContentBlock"=> "Delete content-block"
+    "removeContentBlock"=> "Delete content-block",
+
+	"imageTooBig"		=> "The uploaded file is too big."
 );

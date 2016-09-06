@@ -80,7 +80,7 @@ AjaxUpload.prototype = {
     uploadRateRefreshTime: 500,
     usePut: true,
     useSlice: false,
-    sliceSize: 4194304, // 4MB
+    sliceSize: 2048000, // ~2MB
 
     frames: [],
     name: "file",

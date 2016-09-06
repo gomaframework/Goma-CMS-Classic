@@ -496,7 +496,7 @@ class ImageUploads extends Uploads {
                 @unlink($this->realfile);
             }
             
-            throw new GDImageSizeException("The image is too big for our library.");
+            throw new GDImageSizeException(lang("imageTooBig"));
         }
         $gd->destroy();
 
