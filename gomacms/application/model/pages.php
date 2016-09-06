@@ -582,7 +582,12 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
         $this->data["uploadtrackingids"] = array();
 
         if($this->sort == 10000) {
-            $this->data["sort"] = DataObject::get("pages", array("parentid" => $this->parentid))->last()->sort;
+            $pages = DataObject::get("pages", array("parentid" => $this->parentid));
+            if($pages->count() == 0) {
+                $this->data["sort"] = 0;
+            } else {
+                $this->data["sort"] = (int) $pages->last()->sort + 1;
+            }
         }
 
         $this->UploadTracking()->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
