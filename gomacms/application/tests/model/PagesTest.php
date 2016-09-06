@@ -47,12 +47,27 @@ class PagesTest extends GomaUnitTest implements TestAble {
     }
 
     /**
-     * tests sort.
+     * tests sort when no other page in that set exists.
      */
     public function testSortWhenNothingExists() {
         $page = new Page(array("parentid" => $this->parentIdForZero));
         $page->onBeforeWrite(new ModelWriter($page, IModelRepository::COMMAND_TYPE_PUBLISH, $page, Core::repository()));
         $this->assertEqual($page->sort, 0);
+    }
+
+    /**
+     * tests sort when something is existing.
+     * @throws MySQLException
+     */
+    public function testSortWhenSomeExist() {
+        $page = new Page(array("parentid" => $this->parentIdForZero));
+        $page->writeToDB(false, true);
+
+        $secondPage = new Page(array("parentid" => $this->parentIdForZero));
+        $secondPage->onBeforeWrite(new ModelWriter($page, IModelRepository::COMMAND_TYPE_PUBLISH, $page, Core::repository()));
+        $this->assertEqual($secondPage->sort, $page->sort + 1);
+
+        $page->remove(true);
     }
 
     /**
