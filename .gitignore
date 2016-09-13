@@ -2,9 +2,6 @@
 .DS_Store
 Thumbs.db
 
-system/libs/thirdparty/phpqrcode/cache
-system/libs/thirdparty/phpqrcode/cache/*
-
 # Aptana
 .settings/
 .project
@@ -13,40 +10,17 @@ system/libs/thirdparty/phpqrcode/cache/*
 nbproject/
 
 # Goma files
-/_config.php
 .index-db
 .htaccess
 web.config
 
-# Goma Application
-gomacms/*
-!gomacms/.htaccess
-!gomacms/web.config
-!gomacms/application/*
-!gomacms/application
-!gomacms/templates/*
-!gomacms/templates
-!gomacms/info.plist
-!gomacms/upgrade/*
-!gomacms/upgrade
-gomacms/application/.WELCOME_RUN
-gomacms/application/WELCOME_RUN.php
-
-# User files
-Uploads
-Uploads/*
-images/resampled
-images/resampled/*
-
-# Developer
-tpl/
-!tpl/goma_simple/*
-!tpl/goma_simple/
-!tpl/smoothOrange/*
-!tpl/smoothOrange/
-*.permit
-
-#sublime
+# Goma Core
+installer/log_*****/*
+temp/*
+installer/log/*
+installer/temp/*
+system/version.php
+!system/_config.php
 *.sublime-workspace
 
 .idea
