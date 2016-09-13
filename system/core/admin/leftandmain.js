@@ -328,6 +328,8 @@ var LaM_type_timeout;
 			return false;
 		});
 
+		var sortXhr;
+
 		// bind the sort
 		if(sortable && self.LaMsort) {
 			gloader.loadAsync("sortable").done(function(){
@@ -343,8 +345,12 @@ var LaM_type_timeout;
 						update: function(event, ui)
 						{
 							var sortSerialized = $(s).sortable('serialize', {key: "treenode[]", attribute: "data-recordid", expression: /(.+)/});
-							$.ajax({
-								url: BASE_SCRIPT + adminURI + "/savesort/" + marked_node + "/",
+                            if(sortXhr != null) {
+                                sortXhr.abort();
+                            }
+                            var update = new Date().getTime();
+                            sortXhr = $.ajax({
+								url: BASE_SCRIPT + adminURI + "/savesort/" + marked_node + "/?t=" + update,
 								data: sortSerialized + "&" + oForm.serialize(),
 								type: 'post',
 								error: function(e)

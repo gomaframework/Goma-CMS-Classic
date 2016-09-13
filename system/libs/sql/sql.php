@@ -152,7 +152,11 @@ class SQL
         if (defined("SLOW_QUERY") && SLOW_QUERY != -1 && $time > SLOW_QUERY) {
             slow_query_log("Slow SQL-Query: " . $sql . " (" . $time . "ms)");
             if($time > 10000 && !$longQuery) {
-                throw new LogicException("SQL-Queries takes way too long, cancelling.");
+                if(!isCommandLineInterface()) {
+                    throw new LogicException("SQL-Queries takes way too long, cancelling.");
+                } else {
+                    echo "SQL-Queries taking very long: " . $time . "\n Query: " . $_sql . "\n";
+                }
             }
         }
 

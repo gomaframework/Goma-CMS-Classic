@@ -11,8 +11,12 @@
  * @version     2.2.8
  */
 class LeftAndMain extends AdminItem {
+    /**
+     * used to identify correct sort request.
+     */
+    const SESSION_KEY_SORT = "lam_sort_session";
 
-	/**
+    /**
 	 * the base template of the view
 	*/
 	public $baseTemplate = "admin/leftandmain.html";
@@ -315,15 +319,28 @@ class LeftAndMain extends AdminItem {
 	*/
 	public function savesort() {
 		if(isset($this->request->post_params["treenode"])) {
-			$field = $this->sort_field;
-			foreach ($this->request->post_params["treenode"] as $key => $value) {
-				DataObject::update($this->tree_class, array($field => $key), array("recordid" => $value), "", true);
-			}
-			$this->marked = $this->getParam("id");
+			if(isset($this->request->get_params["t"])) {
+                if (Core::globalSession()->hasKey(self::SESSION_KEY_SORT)) {
+                    $lastSession = Core::globalSession()->get(self::SESSION_KEY_SORT);
+                    if ((int)$lastSession > (int)$this->request->get_params["t"]) {
+                        return GomaResponse::create()->setShouldServe(false)->setBody(
+                            GomaResponseBody::create($this->createTree())->setParseHTML(false)
+                        );
+                    }
+                }
 
-			return GomaResponse::create()->setShouldServe(false)->setBody(
-				GomaResponseBody::create($this->createTree())->setParseHTML(false)
-			);
+                Core::globalSession()->set(self::SESSION_KEY_SORT, $this->request->get_params["t"]);
+
+                $field = $this->sort_field;
+                foreach ($this->request->post_params["treenode"] as $key => $value) {
+                    DataObject::update($this->tree_class, array($field => $key), array("recordid" => $value), "");
+                }
+                $this->marked = $this->getParam("id");
+
+                return GomaResponse::create()->setShouldServe(false)->setBody(
+                    GomaResponseBody::create($this->createTree())->setParseHTML(false)
+                );
+            }
 		}
 
 		throw new BadRequestException();

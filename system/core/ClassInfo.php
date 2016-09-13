@@ -675,7 +675,7 @@ class ClassInfo extends gObject {
 
 			//chmod(ROOT . CACHE_DIRECTORY . CLASS_INFO_DATAFILE, 0773);
 
-			if(!$wasUnavailable)
+			if(!$wasUnavailable && !isCommandLineInterface())
 				makeProjectAvailable();
 
 			define("CLASS_INFO_GENERATED", true);
@@ -701,6 +701,7 @@ class ClassInfo extends gObject {
 
 			if(isCommandLineInterface()) {
 				Dev::buildDevCLI();
+				makeProjectAvailable();
 			}
 		} else {
 			defined("CLASS_INFO_LOADED") OR define("CLASS_INFO_LOADED", true);

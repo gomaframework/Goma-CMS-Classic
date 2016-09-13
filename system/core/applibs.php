@@ -236,7 +236,7 @@ function goma_date($format, $date = NOW) {
  * @param string|null $ip
  */
 function makeProjectUnavailable($project = APPLICATION, $ip = null) {
-	$ip = isCommandLineInterface() ? "cli" : (isset($ip) ? $ip : $_SERVER["REMOTE_ADDR"]);
+	$ip = isCommandLineInterface() ? "cli" : ((isset($ip) ? $ip : $_SERVER["REMOTE_ADDR"]));
 	if(!file_put_contents(ROOT . $project . "/503.goma", $ip, LOCK_EX)) {
 		echo ("Could not make project unavailable.");
 		exit(11);
@@ -868,6 +868,10 @@ function logging($string) {
  *@param string - debug-string
  */
 function debug_log($data) {
+	if(!defined("CURRENT_PROJECT")) {
+		return;
+	}
+
 	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/");
 	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/" . date("m-d-y"));
 	$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/" . date("m-d-y") . "/" . date("H_i_s");
@@ -1213,7 +1217,7 @@ if (!function_exists('getallheaders'))
 
 function isCommandLineInterface()
 {
-	return (php_sapi_name() === 'cli');
+	return (!isset($_SERVER['SERVER_SOFTWARE']) && (php_sapi_name() == 'cli' || (is_numeric($_SERVER['argc']) && $_SERVER['argc'] > 0)));
 }
 
 function isPHPUnit() {
