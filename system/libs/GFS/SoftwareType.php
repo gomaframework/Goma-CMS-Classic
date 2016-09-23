@@ -35,10 +35,18 @@ abstract class g_SoftwareType {
 	 * folder for Packages.
 	*/
 	public static $package_folder = DEFAULT_PACKAGE_FOLDER;
-	
+
+	/**
+	 *
+	 */
+	public static function instance() {
+		return new static();
+	}
+
 	/**
 	 * default __construct
-	*/
+	 * @param null|string $file
+	 */
 	public function __construct($file = null) {
 		$this->file = $file;
 	}
@@ -903,7 +911,10 @@ abstract class g_SoftwareType {
 	/**
 	 * finalizes the build
 	 *
+	 * @param array $data
 	 * @return bool
+	 * @throws GFSFileExistsException
+	 * @throws GFSRealFilePermissionException
 	 */
 	public function finalizeDistro($data) {
 		GlobalSessionManager::globalSession()->set(self::FINALIZE_SESSION_VAR, $data);

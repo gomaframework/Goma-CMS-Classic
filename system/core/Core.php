@@ -97,7 +97,8 @@ class Core extends gObject {
 	 *
 	 */
 	public static function Init() {
-		ob_start();
+		if(!isCommandLineInterface())
+            ob_start();
 
 		StaticsManager::addSaveVar("gObject", "extensions");
 		StaticsManager::addSaveVar("gObject", "extra_methods");
@@ -591,6 +592,10 @@ class Core extends gObject {
         if(isset($args["-cron"])) {
             CronController::handleCron();
         }
+
+        $code = 0;
+		Core::callHook("cli", $args, $code);
+        exit($code);
 	}
 }
 

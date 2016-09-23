@@ -636,7 +636,6 @@ class ClassInfo extends gObject {
 
 				if(isset(self::$class_info[$class]["child"]) && !empty(self::$class_info[$class]["child"])) {
 					self::$childData[$class] = self::$class_info[$class]["child"];
-					//chmod($f, 0777);
 					self::$class_info[$class]["child"] = null;
 					unset($_file, $f, $children, self::$class_info[$class]["child"]);
 				}
