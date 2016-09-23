@@ -119,6 +119,9 @@ class Director extends gObject {
 
     /**
      * renders the page
+     * @param string $url
+     * @return string|void
+     * @throws Exception
      */
     public static function direct($url) {
 

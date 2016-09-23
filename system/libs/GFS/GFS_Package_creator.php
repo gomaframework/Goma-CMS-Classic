@@ -8,57 +8,45 @@
  * @package		Goma\Framework
  * @version		2.7.2
  */
-
 class GFS_Package_Creator extends GFS {
 	public $status;
 	public $current;
 	public $progress;
 	public $remaining;
 	
-	// packed files for evantually later reload
+	// packed files for probable later reload
 	static public $packed = array();
 	
 	/**
 	 * defines if we commit changes after adding files
-	 *
-	 *@name autoCommit
-	 *@access public
 	*/
 	public $autoCommit = true;
 	
 	/**
 	 * index of files of the next operation
-	 *
-	 *@name fileIndex
-	 *@access protected
 	*/
 	protected $fileIndex = array();
-	
-	/**
-	 * construct with read-only
-	 *
-	 *@name __construct
-	 *@access public
-	*/
+
+    /**
+     * construct with read-only
+     * @param string $filename
+     * @throws GFSDBException
+     * @throws GFSFileException
+     * @throws GFSVersionException
+     */
 	public function __construct($filename) {
 		parent::__construct($filename, GFS_READWRITE);
 	}
-	
-	/**
-	 * adds a folder
-	 *
-	 *@name add
-	 *@access public
-	 *@param string - directory which we add
-	 *@param string - path to which we write
-	 *@param array - subfolder, we want to exclude
-	*/
+
+    /**
+     * adds a folder
+     *
+     * @param $file
+     * @param string $path - directory which we add
+     * @param array $excludeList - subfolder, we want to exclude
+     * @return bool
+     */
 	public function add($file, $path = "", $excludeList = array()){
-	
-		
-		
-		// create index
-		
 		$this->indexHelper($file, $this->fileIndex, $path, $excludeList);
 		
 		if($this->autoCommit) {
@@ -66,30 +54,39 @@ class GFS_Package_Creator extends GFS {
 		}
 		
 		return true;
-		
 	}
-	
-	/**
-	 * sets the value of auto-commit
-	 *
-	 *@name setAutoCommit
-	 *@access public
-	 *@param bool
-	*/
+
+    /**
+     * sets the value of auto-commit
+     *
+     * @param bool $commit
+     * @return $this
+     */
 	public function setAutoCommit($commit) {
 		$this->autoCommit = $commit;
+        return $this;
 	}
-	
+
 	/**
 	 * commits the changes
 	 *
-	 *@name commit
-	 *@access public
-	*/
-	public function commit($inFile = null, $index = null) {
+	 * @param null $inFile
+	 * @param null $index
+	 * @param float $maxTime
+	 * @throws GFSFileExistsException
+	 * @throws GFSFileNotFoundException
+	 * @throws GFSFileNotValidException
+	 * @throws GFSRealFileNotFoundException
+	 * @throws GFSRealFilePermissionException
+	 */
+	public function commit($inFile = null, $index = null, $maxTime = 2.0) {
 		if(isset($index)) {
 			$this->fileIndex = $index;
 		}
+
+        if(isCommandLineInterface()) {
+            echo "Creating Archive... {$this->file}\n";
+        }
 		
 		// Adding files...
 		$this->status = "Adding files...";
@@ -116,12 +113,21 @@ class GFS_Package_Creator extends GFS {
 		$realfiles = array_keys($this->fileIndex);
 		$paths = array_values($this->fileIndex);
 
+		$currentProgress = round($i / count($this->fileIndex) * 100);
 		// iterate through the index
 		while($i < count($this->fileIndex)){
 			// maximum of 2.0 seconds
-			if(microtime(true) - $start < 2.0) {
+			if($maxTime < 0 || microtime(true) - $start < $maxTime) {
 				if(!$this->exists($paths[$i])) {
 					$this->addFromFile($realfiles[$i], $paths[$i]);
+				}
+
+				if(round($i / count($this->fileIndex) * 100) != $currentProgress) {
+					if(isCommandLineInterface()) {
+						$currentProgress = round($i / count($this->fileIndex) * 100);
+                        echo "\033[5D";
+						echo str_pad($currentProgress, 3, " ", STR_PAD_LEFT) . " %";
+					}
 				}
 			} else {
 				$count++;
@@ -164,7 +170,12 @@ class GFS_Package_Creator extends GFS {
 		self::$packed[$this->file] = $this->file;
 		$this->unlink("/gfsprogress" . count($this->fileIndex));
 		//$this->fileIndex = array();
-		
+
+        if(isCommandLineInterface()) {
+            echo "\033[5D";
+            echo "Done Creating Archive.\n";
+        }
+
 		// if we are in the external file
 		if(isset($inFile)) {
 			@unlink($inFile);

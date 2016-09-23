@@ -326,6 +326,8 @@ class G_ExpansionSoftwareType extends G_SoftwareType {
 	 * icon
 	 * title
 	 * required framework-version: framework_version
+	 * @param array $data
+	 * @return bool
 	 */
 	public function setPackageInfo($data) {
 		$gfs = new GFS($this->file);

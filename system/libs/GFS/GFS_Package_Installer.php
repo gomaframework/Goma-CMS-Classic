@@ -42,15 +42,13 @@ class GFS_Package_installer extends GFS {
 	/**
 	 * unpack
 	 *
-	 * @name unpack
-	 * @access public
 	 * @param string $destination directory to which we unpack
 	 * @param string $path not supported yet
+	 * @param float $maxTime
 	 * @return bool|int
 	 */
-	public function unpack($destination, $path = "") {
+	public function unpack($destination, $path = "", $maxTime = 2.0) {
 		if($path != "") {
-			//! TODO: Support Subfolders!
 			throw new InvalidArgumentException("GFS_Package_Installer doesn't support subfolders.");
 		}
 		if(!$this->valid) {
@@ -77,7 +75,7 @@ class GFS_Package_installer extends GFS {
 			$this->unpackToFileSystem($i);
 
 			// maximum 2.0 second
-			$this->checkForTime($start, $i, $count, 0.7, 0);
+			$this->checkForTime($start, $i, $count, 0.7, 0, ".gfsprogress", $maxTime);
 			$i++;
 			unset($data, $path);
 		}
@@ -89,11 +87,10 @@ class GFS_Package_installer extends GFS {
 
 		// let's go
 		while($i < count($this->dbvalues)) {
-
 			$this->renameUnpacked($i);
 
 			// maximum of 0.5 seconds
-			$this->checkForTime($start, $i, $count, 0.3, 0.7, ".gfsrprogress");
+			$this->checkForTime($start, $i, $count, 0.3, 0.7, ".gfsrprogress", $maxTime);
 			$i++;
 			unset($data, $path);
 		}
@@ -124,8 +121,6 @@ class GFS_Package_installer extends GFS {
 			$data = file_get_contents($this->tempFolder() . "/" . $file);
 			if(preg_match('/^[0-9]+$/i', $data)) {
 				return array($data, 1);
-				$i = $data;
-				$count = 1;
 			} else {
 				$data = unserialize($data);
 				return array($data["i"], $data["count"]);
@@ -184,14 +179,16 @@ class GFS_Package_installer extends GFS {
 	 * checks for the time.
 	 *
 	 * @param int $start
-	 * @param $i
-	 * @param $count
-	 * @param $operationMultiplier how much of 100% the operation should take
-	 * @param $operationDone how much of 100% the previous has been taken
+	 * @param int $i
+	 * @param int $count
+	 * @param float $operationMultiplier how much of 100% the operation should take
+	 * @param float $operationDone how much of 100% the previous has been taken
+	 * @param string $filename
+	 * @param float $maxTime
 	 */
-	protected function checkForTime($start, $i, $count, $operationMultiplier, $operationDone, $filename = ".gfsprogress") {
+	protected function checkForTime($start, $i, $count, $operationMultiplier, $operationDone, $filename = ".gfsprogress", $maxTime = 2.0) {
 		// maximum 2.0 second
-		if(microtime(true) - $start > 2.0) {
+		if($maxTime > 0 && microtime(true) - $start > $maxTime) {
 			$i++;
 			$count++;
 			file_put_contents($this->tempFolder() . "/" . $filename, serialize(array("i" => $i, "count" => $count)));
@@ -217,11 +214,11 @@ class GFS_Package_installer extends GFS {
 	/**
 	 * calculates remaining.
 	 *
-	 * @param $i number of elements done
-	 * @param $count number of requests done
-	 * @param $startTime
-	 * @param $operationMultiplier how much of 100% the operation should take
-	 * @param $operationDone how much of 100% the previous has been taken
+	 * @param int $i number of elements done
+	 * @param int $count number of requests done
+	 * @param int $startTime
+	 * @param float $operationMultiplier how much of 100% the operation should take
+	 * @param float $operationDone how much of 100% the previous has been taken
 	 */
 	protected function calculateRemaining($i, $count, $startTime, $operationMultiplier, $operationDone) {
 		$this->progress = ($i / count($this->db) * 100) * $operationMultiplier + $operationDone;

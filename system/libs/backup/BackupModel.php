@@ -56,10 +56,9 @@ class BackupModel extends DataObject {
 
 	/**
 	 * syncs the path with the model
-	 *
-	 *@name syncFolder
-	 *@access public
-	*/
+	 * @param bool $force
+	 * @throws FileNotPermittedException
+	 */
 	public static function syncFolder($force = false) {
 		FileSystem::requireDir(self::BACKUP_PATH);
 
@@ -81,7 +80,7 @@ class BackupModel extends DataObject {
 			
 			// now re-index
 			foreach($files as $file) {
-				if($file != "." && $file != ".." && $file != "/syncStatus_" . self::VERSION) {
+				if($file != "." && $file != ".." && $file != "syncStatus_" . self::VERSION) {
 					if ($data->filter(array("name" => $file))->Count() == 0 && preg_match('/\.(gfs|sgfs)$/i', $file)) {
 						$object = new BackupModel(array("name" => $file));
 						try {
