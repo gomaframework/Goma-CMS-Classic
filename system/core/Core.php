@@ -595,7 +595,10 @@ class Core extends gObject {
 
         $code = 0;
 		Core::callHook("cli", $args, $code);
-        exit($code);
+
+        if($code != 0) {
+            exit($code);
+        }
 	}
 }
 
