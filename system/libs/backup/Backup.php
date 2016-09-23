@@ -26,14 +26,19 @@ class Backup extends gObject {
      * @param string $file
      * @param string $prefix
      * @param array $excludeList
+     * @param float $maxTime
      * @return string
      * @throws GFSFileExistsException
      * @throws GFSRealFilePermissionException
      * @throws PListException
      * @throws SQLException
      */
-    public static function generateDBBackup($file, $prefix = DB_PREFIX, $excludeList = array())
+    public static function generateDBBackup($file, $prefix = DB_PREFIX, $excludeList = array(), $maxTime = 1.0)
     {
+        if(isCommandLineInterface()) {
+            echo "Generate DB Backup\n";
+        }
+        
         $excludeList = array_merge(StaticsManager::getStatic("Backup", "excludeList"), $excludeList);
         // force GFS
         if (!preg_match('/\.sgfs$/i', $file))
@@ -170,7 +175,7 @@ class Backup extends gObject {
             $i++;
 
             $diff = microtime(true) - $time;
-            if ($diff > 1) {
+            if ($maxTime > 0 && $diff > $maxTime) {
                 if (!defined("BASE_URI")) define("BASE_URI", "./"); // most of the users use this path ;)
 
                 $template = new Template;
@@ -265,10 +270,22 @@ class Backup extends gObject {
     /**
      * generates a backup
      *
-     * @name generateBackup
-     * @access public
+     * @param $file
+     * @param array $excludeList
+     * @param array $excludeSQLList
+     * @param $SQLprefix
+     * @param bool $includeTPL
+     * @param null $framework
+     * @param null $changelog
+     * @param float $maxTime
+     * @throws GFSFileExistsException
+     * @throws GFSRealFileNotFoundException
+     * @throws GFSRealFilePermissionException
+     * @throws PListException
+     * @throws SQLException
      */
-    public static function generateBackup($file, $excludeList = array(), $excludeSQLList = array(), $SQLprefix = DB_PREFIX, $includeTPL = true, $framework = null, $changelog = null)
+    public static function generateBackup($file, $excludeList = array(), $excludeSQLList = array(), $SQLprefix = DB_PREFIX,
+                                          $includeTPL = true, $framework = null, $changelog = null, $maxTime = 1.0)
     {
         if (GFS_Package_Creator::wasPacked() && GlobalSessionManager::globalSession()->hasKey("backup") &&
             GFS_Package_Creator::wasPacked(GlobalSessionManager::globalSession()->get("backup"))
@@ -278,7 +295,7 @@ class Backup extends gObject {
             GlobalSessionManager::globalSession()->set("backup", $file);
             self::generateFileBackup($file, $excludeList, $includeTPL);
         }
-        $DBfile = self::generateDBBackup(ROOT . CACHE_DIRECTORY . "/database.sgfs", $SQLprefix, $excludeSQLList);
+        $DBfile = self::generateDBBackup(ROOT . CACHE_DIRECTORY . "/database.sgfs", $SQLprefix, $excludeSQLList, $maxTime);
         $backup = new GFS($file);
         $backup->addFromFile($DBfile, basename($DBfile));
         @unlink($DBfile);
@@ -322,10 +339,25 @@ class Backup extends gObject {
         unset($plist);
     }
 
-    public static function cli() {
+    /**
+     * @param array $args
+     * @param int $code
+     * @throws SQLException
+     */
+    public static function cli($args, &$code) {
+        if(isset($args["-backup"])) {
+            if($args["-backup"] == "sql") {
+                $file = isset($args["backupfile"]) ? $args["backupfile"] : "sql" . "." . randomString(5) . "." . date("m-d-y_H-i-s", NOW) . ".sgfs";
+
+                self::generateDBBackup(BackupModel::BACKUP_PATH . "/" . $file, DB_PREFIX, array(), -1);
+            } else {
+                $file = isset($args["backupfile"]) ? $args["backupfile"] : "full" . "." . randomString(5) . "." . date("m-d-y_H-i-s", NOW) . ".gfs";
+
+                self::generateBackup(BackupModel::BACKUP_PATH . "/" . $file, array(), array(), DB_PREFIX, true, null, null, -1);
+            }
+        }
+
         BackupModel::syncFolder();
-
-
     }
 }
 
