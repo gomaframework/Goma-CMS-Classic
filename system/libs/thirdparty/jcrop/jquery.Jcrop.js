@@ -197,7 +197,13 @@
         nw = (h / $obj.height()) * $obj.width();
       }
       xscale = $obj.width() / nw;
-      yscale = $obj.height() / nh;
+        // fix for safari
+        if(nh == 0) {
+            yscale = 1;
+        } else {
+            yscale = $obj.height() / nh;
+        }
+
       $obj.width(nw).height(nh);
     }
     //}}}
@@ -326,10 +332,13 @@
     presize($img, options.boxWidth, options.boxHeight);
 
     var boundx = $img.width(),
-        boundy = $img.height(),
-        
-        
-        $div = $('<div />').width(boundx).height(boundy).addClass(cssClass('holder')).css({
+        boundy = $img.height();
+
+    if(boundy == 0 && options.boxHeight > 0) {
+        boundy = options.boxHeight;
+    }
+
+    var $div = $('<div />').width(boundx).height(boundy).addClass(cssClass('holder')).css({
         position: 'relative',
         backgroundColor: options.bgColor
       }).insertAfter($origimg).append($img);
@@ -1447,6 +1456,9 @@
         presize($img, bw, bh);
         boundx = $img.width();
         boundy = $img.height();
+          if(boundy == 0 && bh > 0) {
+              boundy = bh;
+          }
         $img2.width(boundx).height(boundy);
         $trk.width(boundx + (bound * 2)).height(boundy + (bound * 2));
         $div.width(boundx).height(boundy);

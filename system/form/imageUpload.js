@@ -87,6 +87,8 @@ ImageUploadController.prototype = {
         this.super.actions.find(".crop").show();
         this.fieldElement.find(".crop-button").show();
 
+        this.fieldElement.find(".crop-wrapper").css("height", "auto");
+
         if(this.fieldElement.find(".crop-button").length > 0 && this.fieldElement.find(".crop-button").hasClass("active")) {
             this.initCropArea(
                 {
@@ -104,14 +106,21 @@ ImageUploadController.prototype = {
             return;
         }
 
-        this.initingJCrop = true;
         if (this.jcropInstance != null) {
             this.jcropInstance.destroy();
             this.jcropInstance = null;
+
+            return setTimeout(this.initCropArea.bind(this, size, image, imageWidth), 100);
         }
+
+        this.fieldElement.find(".crop-wrapper").css("height", size.height + "px");
+
+        this.initingJCrop = true;
 
         var $this = this,
             options = {
+                boxWidth: size.width,
+                boxHeight: size.height,
                 onChange: $this.updateCoords.bind($this),
                 onSelect: $this.updateCoords.bind($this),
                 onRelease: function() {

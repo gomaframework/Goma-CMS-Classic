@@ -2,7 +2,9 @@
 
 
 /**
- * Basic class for getting Data as DataSet from DataBase. It implements all types of DataBase-Queriing and always needs a DataObject to query the DataBase.
+ * Basic class for getting Data as DataSet from DataBase.
+ * It implements all types of DataBase-Queriing and always needs a DataObject to query the DataBase.
+ * All methods are in-place, but groupBy.
  *
  * @package     Goma\Model
  *
@@ -103,12 +105,12 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 *
 	 * @var ViewAccessableData
 	 */
-	private $firstCache;
+	protected $firstCache;
 
 	/**
 	 * @var ViewAccessableData
 	 */
-	private $lastCache;
+	protected $lastCache;
 
 	/**
 	 * @var int
@@ -681,7 +683,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 					$limit[0]++;
 					$limit[1]--;
 				}
-				$this->items = $this->getRecordsByRange($limit[0], $limit[1]);
+				$this->items = array_values($this->getRecordsByRange($limit[0], $limit[1]));
 				if(isset($this->firstCache)) array_unshift($this->items, $this->firstCache);
 				if(isset($this->lastCache)) $this->items[count($this->items) - $offsetInsertLast] = $this->lastCache;
 
@@ -748,18 +750,21 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	/**
 	 * group by a specific field
 	 * @param  string $field
-	 * @return array
+	 * @return DataObjectSet
 	 */
 	public function groupBy($field) {
-		return $this->dbDataSource()->getGroupedRecords($this->version, $field, $this->getFilterForQuery(), $this->getSortForQuery(), array(), $this->getJoinForQuery(), $this->search);
-	}
+        if(is_string($field) && strpos($field, ",") !== false) {
+            $field = array_map("trim", explode(",", $field));
+        }
 
-	/**
-	 * @param string $field
-	 * @return DataSet
-	 */
-	public function getGroupedSet($field) {
-		return new DataSet($this->groupBy($field));
+		return new DataObjectSet(array(
+			new \Goma\Model\Group\GroupedDataObjectSetDataSource(
+				$this->dbDataSource(),
+				$this->modelSource,
+				$field
+			),
+			$this->modelSource
+		), $this->getFilterForQuery(), $this->getSortForQuery(), $this->getJoinForQuery(), $this->search, $this->version);
 	}
 
 	/**
@@ -860,28 +865,33 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		$columns = $types = array();
 		if(is_string($args[0])) {
-			if(substr(strtolower($args[0]), -4) == "desc") {
-				$args[0] = substr($args[0], 0, -4);
-				$types = array("desc");
-			} else if(substr(strtolower($args[0]), -3) == "asc") {
-				$args[0] = substr($args[0], 0, -3);
-				$types = array("asc");
-			} else {
-				$types = array(isset($args[1]) && strtolower($args[1]) == "desc" ? "desc" : "asc");
-			}
-			$columns = array($args[0]);
+            if(strpos($args[0], ",") !== false) {
+                $columns = array_map("trim", explode(",", $args[0]));
+            } else {
+                $columns = array($args[0]);
+            }
 		} else if(is_array($args[0])) {
 			$columns = array_keys($args[0]);
-			$types = array_values($args[0]);
 		}
 
-		foreach($columns as $column) {
+        $sort = array();
+        foreach($columns as $column) {
+            if(substr(strtolower($column), -4) == "desc") {
+                $sort[substr($column, 0, -4)] = "desc";
+            } else if(substr(strtolower($column), -3) == "asc") {
+                $sort[substr($column, 0, -3)] = "asc";
+            } else if(isset($args[0][$column])) {
+                $sort[$column] = strtolower($args[0][$column]) == "desc" ? "desc" : "asc";
+            } else {
+                $sort[$column] = isset($args[1]) && strtolower($args[1]) == "desc" ? "desc" : "asc";
+            }
+        }
+
+        foreach($sort as $column => $type) {
 			if (!$this->canSortBy($column)) {
 				throw new InvalidArgumentException("can not sort by $column");
 			}
 		}
-
-		$sort = array_combine($columns, $types);
 
 		if($this->sort == $sort) {
 			return $this;

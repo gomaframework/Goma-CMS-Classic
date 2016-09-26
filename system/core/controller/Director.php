@@ -168,7 +168,7 @@ class Director extends gObject {
 
             /** @var RequestHandler $inst */
             $data = $inst->handleRequest($ruleMatcher->getCurrentRequest());
-            if($data !== false) {
+            if($data !== false && $data !== null) {
                 self::serve($data);
                 return;
             }

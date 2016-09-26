@@ -36,7 +36,7 @@ class DataObjectClassInfo extends Extension
 
             // generate table_name
             if (StaticsManager::hasStatic($class, "table")) {
-                $table_name = StaticsManager::getStatic($class, "table");
+                $table_name =  str_replace("\\", "_", StaticsManager::getStatic($class, "table"));
             } else {
                 $table_name = $classInstance->prefix . str_replace("\\", "_", $class);
             }

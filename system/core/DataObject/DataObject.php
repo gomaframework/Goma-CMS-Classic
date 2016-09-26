@@ -372,7 +372,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
         }
 
         if ($groupby !== false) {
-            return $DataSet->getGroupedSet($groupby);
+            return $DataSet->groupBy($groupby);
         }
 
 
@@ -906,15 +906,15 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
             // delete connection in state-table
 
             // base class
-            if (!isset($manipulation[$baseClass . "_state"]))
-                $manipulation[$baseClass . "_state"] = array(
+            if (!isset($manipulation[$baseTable . "_state"]))
+                $manipulation[$baseTable . "_state"] = array(
                     "command"		=> "delete",
                     "table_name"	=> $baseTable . "_state",
                     "where"			=> array(
 
                     ));
 
-            $manipulation[$baseClass . "_state"]["where"]["id"][] = $this->id;
+            $manipulation[$baseTable . "_state"]["where"]["id"][] = $this->id;
 
             // if not versioning, delete data, too
             if (!self::Versioned($this->classname) || $forceAll || !isset($this->data["stateid"])) {
@@ -1880,22 +1880,17 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
 
         $query->distinct = true;
 
-        $query->fields = array($groupField);
-
         $query->groupby($groupField);
         $this->tryToBuild($query);
 
         $query->execute();
 
         while($row = $query->fetch_assoc()) {
-            if (isset($row[$groupField])) {
-                if (is_array($filter)) {
-                    $filter[$groupField] = $row[$groupField];
-                } else {
-                    $filter = array($groupField => $row[$groupField], $filter);
-                }
-
-                $data[$row[$groupField]] = DataObject::get($this->classname, $filter, $sort, array(), $joins, $version);
+            if ($id = $this->getGroupIdentifier($groupField, $row)) {
+                $set = new Goma\Model\Group\GroupDataObjectSet($this->classname, $filter, $sort, $joins, array(), $version);
+                $set->setGroupFilter($this->getGroupFilter($groupField, $row));
+                $set->setFirstCache($row);
+                $data[$id] = $set;
             }
             unset($row);
         }
@@ -1904,6 +1899,40 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
         if (PROFILE) Profiler::unmark("DataObject::getGroupedRecords");
 
         return $data;
+    }
+
+    /**
+     * @param array|string $groupField
+     * @param array $row
+     * @return null|string
+     */
+    private function getGroupIdentifier($groupField, $row) {
+        if(is_string($groupField)) {
+            return isset($row[$groupField]) ? $row[$groupField] : null;
+        }
+
+        $id = "";
+        foreach($groupField as $field) {
+            if(isset($row[$field])) {
+                $id .= $row[$field];
+            }
+        }
+
+        return $id ? md5($id) : null;
+    }
+
+    private function getGroupFilter($groupField, $row) {
+        if(is_string($groupField)) {
+            return array($groupField => $row[$groupField]);
+        }
+
+        $filter = array();
+        foreach($groupField as $field) {
+            if(isset($row[$field])) {
+                $filter[$field] =  $row[$field];
+            }
+        }
+        return $filter;
     }
 
 
@@ -1949,11 +1978,11 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
 
         $aggregateSQL = "";
         $i = 0;
+        $aggregateField = $query->getFieldIdentifier($aggregateField);
         foreach($aggregates as $singleAggregate) {
             if($i == 0) $i++;
             else $aggregateSQL .= ",";
 
-            $aggregateField = $query->getFieldIdentifier($aggregateField);
             $aggregateSQL .= $singleAggregate . "( " . $distinctSQL . " " . $aggregateField . ") as " . strtolower($singleAggregate);
         }
 
@@ -2090,6 +2119,10 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      * @return bool
      */
     public function canSortBy($field) {
+        if(strpos($field, ".") !== false) {
+            return true;
+        }
+
         $field = strtolower(trim($field));
         $fields = $this->DataBaseFields(true);
         return isset($fields[$field]);
@@ -2648,7 +2681,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
             return array(
                 'id'			=> 'INT(10) AUTO_INCREMENT  PRIMARY KEY',
                 'last_modified' => 'DateTime()',
-                'class_name' 	=> 'enum("'.implode('","', array_merge(Classinfo::getChildren($class), array($class))).'")',
+                'class_name' 	=> 'enum("'.implode('","', array_map(function($class) {
+                        return str_replace("\\", "\\\\", $class);
+                    }, array_merge(Classinfo::getChildren($class), array($class)))).'")',
                 "created"		=> "DateTime()"
             );
         } else {

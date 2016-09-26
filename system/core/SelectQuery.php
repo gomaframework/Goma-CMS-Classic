@@ -318,6 +318,7 @@ class SelectQuery {
 	 * adds group-by
 	 *
 	 * @param string|array fields
+	 * @param bool $prepend
 	 * @return $this
 	 */
 	public function groupby($fields, $prepend = false) {
@@ -516,10 +517,14 @@ class SelectQuery {
 
 	/**
 	 * resolves correct identifier for field.
-	 * @param string $field
+	 * @param string|array $field
 	 * @return string
 	 */
 	public function getFieldIdentifier($field) {
+		if(is_array($field)) {
+			return implode(",", array_map(array($this, "getFieldIdentifier"), $field));
+		}
+
 		$field = strtolower(trim($field));
 
 		$data = $this->generateDBFieldColidingCache();

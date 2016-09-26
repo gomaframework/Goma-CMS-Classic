@@ -81,15 +81,6 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     }
 
     /**
-     * getGroupedSet
-     * @param string $field
-     * @return DataSet
-     */
-    public function getGroupedSet($field) {
-        return new DataSet($this->groupBy($field));
-    }
-
-    /**
      * @return $this
      */
     public function sort()

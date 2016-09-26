@@ -290,7 +290,7 @@ function isProjectUnavailableForIP($ip, $project = APPLICATION) {
  *
  * @param array[] $data An array with configuration variables.
  *
- * @return void
+ * @throws ProjectConfigWriteException
  */
 function writeSystemConfig($data = array()) {
 
@@ -327,9 +327,8 @@ function writeSystemConfig($data = array()) {
 
 	if(@file_put_contents(ROOT . "_config.php", $contents, LOCK_EX)) {
 		@chmod(ROOT . "_config.php", 0644);
-		return true;
 	} else {
-		throw new LogicException("Could not write System-Config. Please apply Permissions 0777 to /_config.php");
+		throw new ProjectConfigWriteException("./_config.php", "Could not write System-Config.");
 	}
 }
 
@@ -374,7 +373,6 @@ function getSSLPrivateKey() {
  * @return void
  */
 function writeProjectConfig($data = array(), $project = CURRENT_PROJECT) {
-
 	$config = $project . "/config.php";
 
 	if(file_exists($config)) {
@@ -419,10 +417,8 @@ function writeProjectConfig($data = array(), $project = CURRENT_PROJECT) {
 	$config_content = str_replace('{folder}', $project, $config_content);
 	if(@file_put_contents($config, $config_content, LOCK_EX)) {
 		@chmod($config, 0644);
-		return true;
 	} else {
-		echo ("6: Could not write Project-Config '" . $config . "'. Please set Permissions to 0777!");
-		exit(6);
+        throw new ProjectConfigWriteException($config, "Could not write Project-Config.");
 	}
 }
 
@@ -1272,6 +1268,33 @@ class GomaException extends Exception {
 	public function http_status() {
 		return 500;
 	}
+}
+
+class ProjectConfigWriteException extends GomaException {
+    protected $standardCode = ExceptionManager::PROJECT_CONFIG_WRITE_ERROR;
+    protected $config;
+
+    /**
+     * ProjectConfigWriteException constructor.
+     * @param string $file
+     * @param string $message
+     * @param null $code
+     * @param Exception|null $previous
+     */
+    public function __construct($file, $message = "Could not write Project-Config", $code = null, Exception $previous = null)
+    {
+        $this->config = $file;
+
+        parent::__construct($message . " File: " . $file, $code, $previous);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getConfig()
+    {
+        return $this->config;
+    }
 }
 
 class MySQLException extends SQLException {

@@ -68,8 +68,8 @@ var AjaxUpload = function(DropZone, options) {
         this.browse = $(this.browse);
         this.placeBrowseHandler();
 
-        this.browse.on("click touchend", function(){
-            $("#" + $this.id + "_uploadForm").find("input").trigger("click");
+        this.browse.on("click", function(e){
+            $("#" + $this.id + "_uploadForm").find(".fileSelectInput").click();
         });
     }
 
@@ -620,8 +620,6 @@ AjaxUpload.prototype = {
             return false;
         }
 
-        var $form = $("#" + this.id + "_uploadForm");
-        $form.css({top: - 400, left: this.browse.offset().left});
         this.browse.attr("disabled", "disabled");
     },
 
