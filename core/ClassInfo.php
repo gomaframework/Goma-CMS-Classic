@@ -455,8 +455,16 @@ class ClassInfo extends gObject {
 				}
 			}
 
-			writeProjectConfig();
-			writeSystemConfig();
+            try {
+                writeProjectConfig();
+                writeSystemConfig();
+            } catch(ProjectConfigWriteException $e) {
+                if(!file_exists($e->getConfig())) {
+                    throw $e;
+                } else {
+                    log_exception($e);
+                }
+            }
 
 			// end filesystem checks
 

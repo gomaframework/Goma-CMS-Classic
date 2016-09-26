@@ -123,6 +123,7 @@ if (PROFILE)
 	Profiler::mark("core_requires");
 
 // core
+require_once (FRAMEWORK_ROOT . 'core/CoreLibs/ExceptionManager.php');
 require_once (FRAMEWORK_ROOT . 'core/applibs.php');
 require_once (FRAMEWORK_ROOT . 'core/CoreLibs/StaticsManager.php');
 require_once (FRAMEWORK_ROOT . 'core/Object.php');

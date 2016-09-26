@@ -47,7 +47,7 @@ class DBTableManager
 
         $tables = array();
 
-        $tables[$baseClass . "_state"] = $baseClass . "_state";
+        $tables[ClassInfo::$class_info[$baseClass]["table"] . "_state"] = ClassInfo::$class_info[$baseClass]["table"] . "_state";
 
         $tables = self::fillTableArray($baseClass, $tables);
 

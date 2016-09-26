@@ -6,7 +6,7 @@
         <% IF Permission("UPLOADS_MANAGE") %>
         <a class="button manage-file-button" target="_blank" href="$upload.managePath"><% lang('files.manage_file') %></a>
         <% END %>
-        <input $disabledString type="button"  class="button fileSelect" id="{$id}" value="<% lang('files.browse') %>" />
+        <input $disabledString type="button"  class="button fileSelect needsclick" id="{$id}" value="<% lang('files.browse') %>" />
     </div>
     <input name="{$postname}_file" id="{$id}_hidden"
            type="hidden" value="$upload.realpath" class="FileUploadValue"/>
@@ -38,13 +38,13 @@
                             <span class="filename">$upload.name</span>
                         </div>
                     </a>
-                    <div class="fileSelect drop-here show-on-js">
+                    <div class="fileSelect drop-here show-on-js needsclick">
                         <i class="fa fa-picture-o" aria-hidden="true"></i>
                         <% IF NOT $disabled %>
                         <p class="drag"><% lang("drag_file_here") %></p>
                         <p class="drop"><% lang("drop_file_here") %></p>
                         <% END %>
-                        <a $disabledString class="button"><% lang("files.browse") %></a>
+                        <!--<a $disabledString class="button"><% lang("files.browse") %></a>-->
                     </div>
                 </div>
                 <div class="crop-wrapper" id="{$id}_tabcrop">

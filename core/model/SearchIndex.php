@@ -89,7 +89,7 @@ class SearchIndex extends DataObjectExtension {
 		}
 		
 		if ($groupby !== false) {
-			return $DataSet->getGroupedSet($groupby);
+			return $DataSet->groupBy($groupby);
 		}
 			
 		

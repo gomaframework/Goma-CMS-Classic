@@ -280,7 +280,7 @@ class MySQLWriterImplementation implements iDataBaseWriter {
 
             $this->model()->id = $id;
         } else if (!isset($data["publishedid"])) {
-            $query = new SelectQuery($this->model()->baseTable . "_state", array("id"), array("id" => $this->recordid()));
+            $query = new SelectQuery($this->model()->baseTable() . "_state", array("id"), array("id" => $this->recordid()));
             if ($query->execute()) {
                 $data = $query->fetch_assoc();
 

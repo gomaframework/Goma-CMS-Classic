@@ -60,14 +60,6 @@ interface IDataSet extends Countable {
     public function sort();
 
     /**
-     * get DataSet of groups.
-     *
-     * @param string $field
-     * @return array
-     */
-    public function getGroupedSet($field);
-
-    /**
      * get array of groups.
      *
      * @param string $field

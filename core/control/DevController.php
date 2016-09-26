@@ -308,7 +308,7 @@ class Dev extends RequestHandler {
 						$recordids = array();
 						$ids = array();
 						// first recordids
-						$sql = "SELECT * FROM " . DB_PREFIX . $child . "_state";
+						$sql = "SELECT * FROM " . DB_PREFIX . $baseTable . "_state";
 						if($result = SQL::Query($sql)) {
 							while($row = SQL::fetch_object($result)) {
 								$recordids[$row->id] = $row->id;

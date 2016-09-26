@@ -130,6 +130,7 @@ class ExceptionManager {
 	const FILE_NOT_FOUND = -804;
 	const FILE_ALREADY_EXISTING = -810;
 	const FILE_COPY_FAIL = -820;
+	const PROJECT_CONFIG_WRITE_ERROR = -825;
 
 	/**
 	 * form
