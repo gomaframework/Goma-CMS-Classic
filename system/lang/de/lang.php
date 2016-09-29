@@ -165,7 +165,7 @@ $lang = array(
 	"open_in"                                      	=> "&Ouml;ffnen in",
 	"same_window"                                  	=> "Selbem Fenster",
 	"new_window"                                   	=> "Neuem Fenster",
-	"url"                                          	=> "Adresse",
+	"url"                                          	=> "URL",
 	/* MAINBAR END SITES START */
 	"rename"                                       	=> "umbenennen",
 	'site'											=> "Seite",

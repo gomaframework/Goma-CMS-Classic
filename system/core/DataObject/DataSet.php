@@ -63,7 +63,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     /**
      * groups dataset
      * @param string $field
-     * @return array
+     * @return IDataSet
      */
     public function groupBy($field) {
         $set = array();
@@ -77,7 +77,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
             }
         }
 
-        return $set;
+        return new DataSet($set);
     }
 
     /**

@@ -63,7 +63,7 @@ interface IDataSet extends Countable {
      * get array of groups.
      *
      * @param string $field
-     * @return array
+     * @return IDataSet
      */
     public function groupBy($field);
 
