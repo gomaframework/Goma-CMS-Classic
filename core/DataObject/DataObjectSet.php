@@ -753,21 +753,37 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @return DataObjectSet
 	 */
 	public function groupBy($field) {
+        if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
+            throw new LogicException("Group by is only possible when using FETCH_MODE_EDIT.");
+        }
+
+        if($this->hasChanged()) {
+            throw new LogicException("Group by is only possible on not changed DataObjectSet, call commitStaging before grouping.");
+        }
+
         if(is_string($field) && strpos($field, ",") !== false) {
             $field = array_map("trim", explode(",", $field));
         }
 
-		return new DataObjectSet(array(
-			new \Goma\Model\Group\GroupedDataObjectSetDataSource(
-				$this->dbDataSource(),
-				$this->modelSource,
-				$field
-			),
-			$this->modelSource
-		), $this->getFilterForQuery(), $this->getSortForQuery(), $this->getJoinForQuery(), $this->search, $this->version);
+        $set = clone $this;
+        $set->setDbDataSource(new \Goma\Model\Group\GroupedDataObjectSetDataSource(
+            $this->dbDataSource(),
+            $this->modelSource,
+            $field
+        ));
+
+        return $set;
 	}
 
-	/**
+    /**
+     * @return bool
+     */
+    public function hasChanged()
+    {
+        return $this->getStaging()->bool();
+    }
+
+    /**
 	 * adds a join
 	 * @param string $join
 	 * @return $this

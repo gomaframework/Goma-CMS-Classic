@@ -234,7 +234,7 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 			$gfs->add(FRAMEWORK_ROOT, "/data/system/", array("temp", LOG_FOLDER, "/installer/data", "version.php"));
 			$gfs->add(ROOT . "images/", "/data/images/", array("resampled"));
 			$gfs->add(ROOT . "languages/", "/data/languages/");
-			$gfs->commit();
+			$gfs->commit(null, null, isCommandLineInterface() ? -1 : 2.0);
 		}
 
 		// add some files
