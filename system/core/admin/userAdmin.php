@@ -80,7 +80,7 @@ class userAdmin extends adminItem {
 														array($this, "checkForLock"),
 														array("button button-clear yellow")));
 
-		$form = new Form($this, "form", array(
+		$form = new Form($this, "form_useradmin", array(
 			new TableField("userTable", lang("users"), $this->modelInst(), $config)
 		));
 		

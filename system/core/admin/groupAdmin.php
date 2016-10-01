@@ -53,12 +53,15 @@ class groupAdmin extends adminItem {
 		$config = TableFieldConfig_Editable::create();
 		$config->getComponentByType("TableFieldDataColumns")->setDisplayFields(array(
 			"id"		=> "ID",
+			"users.count" => lang("usercount"),
 			"name"		=> lang("name")
+		))->setFieldFormatting(array(
+			"users.count" => '$users.count ' . lang("usercount")
 		));
 		$config->removeComponent($config->getComponentByType("TableFieldToolbarHeader"));
 		$config->getComponentByType("TableFieldPaginator")->perPage = 20;
 		
-		$form = new Form($this, "form", array(
+		$form = new Form($this, "form_groupadmin", array(
 			new TableField("groupTable", lang("groups"), $this->modelInst(), $config)
 		));
 		
