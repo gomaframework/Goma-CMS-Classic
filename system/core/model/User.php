@@ -288,12 +288,6 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 			$form->remove("groupadmin");
 		}
 
-		// generate actions
-		if(Permission::check("USERS_MANAGE") && defined("IS_BACKEND"))
-		{
-			$form->addAction(new HTMLAction("delete", '<a href="'.ROOT_PATH.'admin/usergroup/model/user/'.$this->id.'/delete'.URLEND.'?redirect='.urlencode(ROOT_PATH . "admin/usergroup/").'" rel="ajaxfy" class="button red">'.lang("delete", "Delete").'</a>'));
-		}
-
 		$form->addAction(new CancelButton("cancel", lang("cancel")));
 		$form->addAction(new FormAction("submit", lang("save"), "publish", array("green")));
 	}
