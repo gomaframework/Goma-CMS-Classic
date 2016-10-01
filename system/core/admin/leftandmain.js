@@ -297,7 +297,6 @@ var LaM_type_timeout;
 	}
 
 	function tree_bind_ajax(sortable, node) {
-
 		var oForm = $("#tree-options-form");
 
 		// bind events to the nodes to load the content then
@@ -433,7 +432,15 @@ var LaM_type_timeout;
 
 				updateSidebarToggle();
 			});
-
 		}, 100);
-	}
+	};
+
+    goma.ui.onProgress(function(percent){
+        if(percent == 100) {
+            setTimeout(function(){
+                $("td.left").removeClass("active");
+                $("table.leftandmaintable").removeClass("left-active");
+            }, 100);
+        }
+    });
 })(jQuery, window);
