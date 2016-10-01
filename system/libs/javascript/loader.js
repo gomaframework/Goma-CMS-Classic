@@ -670,10 +670,6 @@ if (goma.ui === undefined) {
 												noRequestTrack: true,
 												dataType: "html"
 											}).done(function (css) {
-												if (goma.ui.progress !== undefined && p) {
-													goma.ui.setProgress(goma.ui.progress + perProgress);
-												}
-
 												// patch uris
 												var base = file.substring(0, file.lastIndexOf("/"));
 												//css = css.replace(/url\(([^'"]+)\)/gi, 'url(' + root_path + base + '/$2)');
@@ -683,11 +679,15 @@ if (goma.ui === undefined) {
 												goma.ui.CSSIncluded[file] = true;
 
 												$("head").prepend('<style type="text/css" id="css_'+file.replace(/[^a-zA-Z0-9_\-]/g, "_")+'">'+css+'</style>');
+											}).fail(function () {
+												deferred.reject();
+											}).always(function(){
+												if (goma.ui.progress !== undefined && p) {
+													goma.ui.setProgress(goma.ui.progress + perProgress);
+												}
 
 												i++;
 												loadFile();
-											}).fail(function () {
-												deferred.reject();
 											});
 										} else if (goma.ui.CSSIncluded[file] === undefined) {
 											$("head").prepend('<style type="text/css" id="css_'+file.replace(/[^a-zA-Z0-9_\-]/g, "_")+'">'+CSSLoaded[file]+'</style>');
@@ -726,15 +726,17 @@ if (goma.ui === undefined) {
 											noRequestTrack: true,
 											dataType: "html"
 										}).done(function (js) {
+											// build into internal cache
+											goma.ui.JSFiles[file] = js;
+										}).fail(function () {
+											deferred.reject();
+										}).always(function(){
 											if (goma.ui.progress !== undefined && p) {
 												goma.ui.setProgress(goma.ui.progress + perProgress);
 											}
-											// build into internal cache
-											goma.ui.JSFiles[file] = js;
+
 											i++;
 											loadFile();
-										}).fail(function () {
-											deferred.reject();
 										});
 									})(file);
 								} else {
