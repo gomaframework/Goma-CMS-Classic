@@ -15,6 +15,18 @@ function FileUpload(form, field, formelement, url, size, types) {
 	field.fileUpload = this;
 	this.url = url;
 
+	form.form.on("formsubmit", function(){
+		if(this.uploader.loading) {
+			if(!FileUpload.hasAsked) {
+				FileUpload.hasAsked = true;
+				setTimeout(function(){
+					FileUpload.hasAsked = false;
+				}, 300);
+				return confirm(lang("leave_page_upload_confirm"));
+			}
+		}
+	}.bind(this));
+
 	this.fieldElement = $("#" + field.divId);
 
 	this.formelement = $(formelement);
@@ -62,6 +74,7 @@ function FileUpload(form, field, formelement, url, size, types) {
 				that.abort();
 			});
 			$($this.element).append('<div class="loading"></div>');
+            $this.form.setLeaveCheck(true);
 		},
 		dragInDocument: function() {
 			$($this.element).addClass("upload-active");
@@ -210,3 +223,5 @@ function FileUpload(form, field, formelement, url, size, types) {
 
 	return this;
 }
+
+FileUpload.hasAsked = false;

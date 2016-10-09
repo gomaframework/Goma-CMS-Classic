@@ -680,4 +680,5 @@ $lang = array(
 
 	"imageTooBig"		=> "Die hochgeladene Datei ist zu groß.",
 	"usercount"			=> "Benutzer"
+	"leave_page_upload_confirm"	=> "Ein Upload läuft, soll dieser abgebrochen werden?"
 );
