@@ -56,6 +56,11 @@ class GomaFormResponse extends GomaResponse {
     protected $resolveCache = array();
 
     /**
+     * @var string|null
+     */
+    protected $inTplExpansion;
+
+    /**
      * @param Form $form
      * @return static
      */
@@ -124,7 +129,7 @@ class GomaFormResponse extends GomaResponse {
         if($this->template != null) {
             $content = $this->serveWithModel->customise(array(
                 $this->templateName => $content
-            ))->renderWith($this->template);
+            ))->renderWith($this->template, $this->inTplExpansion);
         }
 
         foreach($this->functionsForRendering as $function) {
@@ -312,10 +317,15 @@ class GomaFormResponse extends GomaResponse {
     /**
      * @param string $model
      * @param null $view
-     * @param string $formName
+     * @param string $formName default: "form"
+     * @param string|null $inExpansion
      * @return $this
      */
-    public function setRenderWith($model, $view = null, $formName = "form") {
+    public function setRenderWith($model, $view = null, $formName = null, $inExpansion = null) {
+        if(!isset($formName)) {
+            $formName = "form";
+        }
+
         $this->resolveCache = array();
         if(is_string($model)) {
             if(!isset($view)) {
@@ -329,6 +339,7 @@ class GomaFormResponse extends GomaResponse {
         $this->serveWithModel = $model;
         $this->template = $view;
         $this->templateName = isset($formName) ? $formName : "form";
+        $this->inTplExpansion = $inExpansion;
 
         return $this;
     }
