@@ -15,25 +15,16 @@ class TableFieldDataColumns implements TableField_ColumnProvider
 {
 	/**
 	 * fields with casted values
-	 *
-	 * @name fieldCasting
-	 * @access public
 	 */
 	public $fieldCasting = array();
 
 	/**
 	 * field-formatting, for example an img or a link for the column
-	 *
-	 * @name fieldFormatting
-	 * @access public
 	 */
 	public $fieldFormatting = array();
 
 	/**
 	 * display-fields
-	 *
-	 * @name displayFields
-	 * @access public
 	 */
 	public $displayFields = array();
 
@@ -265,8 +256,8 @@ class TableFieldDataColumns implements TableField_ColumnProvider
 
 			return $value;
 		} else {
-
 			$format = str_replace('$value', "__VAL__", $spec);
+			$format = addslashes($format);
 			$format = preg_replace_callback('/\{?\$([a-zA-Z0-9_][a-zA-Z0-9_\-\.]+)\.([a-zA-Z0-9_]+)\((.*?)\)}?/si', array("TableFieldDataColumns", "convert_vars"), $format);
 			$format = preg_replace_callback('/\$([a-zA-Z0-9_][a-zA-Z0-9_\.]+)/si', array("TableFieldDataColumns", "vars"), $format);
 			$format = str_replace('__VAL__', '$value', $format);

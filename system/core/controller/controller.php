@@ -513,7 +513,7 @@ class Controller extends RequestHandler
 
             $description = $this->generateRepresentation($model);
 
-            if ($this->confirm(lang("delete_confirm", "Do you really want to delete this record?"), null, null, $description)) {
+            return $this->confirmByForm(lang("delete_confirm", "Do you really want to delete this record?"), function() use($model) {
                 $preservedModel = clone $model;
                 $model->remove();
                 if ($this->getRequest()->isJSResponse() || isset($this->getRequest()->get_params["dropdownDialog"])) {
@@ -524,7 +524,7 @@ class Controller extends RequestHandler
                 } else {
                     return $this->actionComplete("delete_success", $preservedModel);
                 }
-            }
+            }, null, null, $description);
         }
     }
 
@@ -598,7 +598,7 @@ class Controller extends RequestHandler
     /**
      * hides the deleted object
      * @param AjaxResponse $response
-     * @param array $data
+     * @param array|DataObject $data
      * @return AjaxResponse
      */
     public function hideDeletedObject($response, $data)

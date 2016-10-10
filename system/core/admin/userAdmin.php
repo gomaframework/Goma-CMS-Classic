@@ -80,9 +80,28 @@ class userAdmin extends adminItem {
 														array($this, "checkForLock"),
 														array("button button-clear yellow")));
 
+		if(isset($this->getRequest()->get_params["groupid"]) &&
+            $group = DataObject::get_by_id(Group::class, $this->getRequest()->get_params["groupid"])) {
+			$this->modelInst()->addFilter(array(
+				"groups" => array(
+                    "id" => $this->getRequest()->get_params["groupid"]
+                )
+			));
+            $view = new ViewAccessableData();
+            $groupField = new HTMLField("groupfield", $view->customise(array(
+                "backurl" => isset($this->getRequest()->get_params["redirect"]) ?
+                    $this->getRequest()->get_params["redirect"] : ROOT_PATH . $this->namespace . URLEND,
+                "title" => $group->name()->text()
+            ))->renderWith("admin/subview-header.html"));
+		}
+
 		$form = new Form($this, "form_useradmin", array(
 			new TableField("userTable", lang("users"), $this->modelInst(), $config)
 		));
+
+        if(isset($groupField)) {
+            $form->add($groupField, 0);
+        }
 		
 		return $form->render();
 	}
