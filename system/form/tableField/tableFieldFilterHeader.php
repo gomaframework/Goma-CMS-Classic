@@ -30,6 +30,11 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
     protected $selectList;
 
     /**
+     * @var bool
+     */
+    protected $shouldTrim = true;
+
+    /**
      * sets a value-callback.
      * it can also unset the callback by providing null as callback.
      *
@@ -83,8 +88,8 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
             // sortabe column
             if ($title && $tableField->getData()->canFilterBy($columnField)) {
                 $value = '';
-                if (isset($filterArguments[$columnField])) {
-                    $value = $filterArguments[$columnField];
+                if (isset($filterArguments[strtolower($columnField)])) {
+                    $value = $filterArguments[strtolower($columnField)];
                 }
                 $searchField = $this->getFilterField($columnField, $value, $title);
 
@@ -184,8 +189,16 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
             } else if ($data->canFilterBy($columnName) && $this->isValueValid($value)) {
                 $values = $this->getValueCastingForValue($columnName, $value);
                 if (is_array($values) && count($values) > 0) {
+                    if($this->shouldTrim) {
+                        $values = array_map("trim", $values);
+                    }
+
                     $data->AddFilter(array($columnName => $values));
                 } else {
+                    if($this->shouldTrim) {
+                        $value = trim($value);
+                    }
+
                     $data->AddFilter(array($columnName => array("LIKE", "%" . $value . "%")));
                 }
             }
@@ -264,7 +277,7 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
             $state->reset = true;
             $state->visible = false;
         } else if ($actionName === "resetfields") {
-            $state->resetColumn = $arguments;
+            $state->resetColumn = strtolower($arguments);
         } else if ($actionName === "togglefiltervisibility") {
             if ($state->visible === true) {
                 $state->visible = false;
@@ -396,5 +409,23 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
      */
     protected function isValueValid($value) {
         return $value || $value === 0 || $value === "0";
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isShouldTrim()
+    {
+        return $this->shouldTrim;
+    }
+
+    /**
+     * @param boolean $shouldTrim
+     * @return $this
+     */
+    public function setShouldTrim($shouldTrim)
+    {
+        $this->shouldTrim = $shouldTrim;
+        return $this;
     }
 }

@@ -690,5 +690,7 @@ $lang = array(
 
 	"imageTooBig"		=> "The uploaded file is too big.",
 	"usercount"			=> "Users",
-	"publisher"			=> "Permission to publish page"
+	"publisher"			=> "Permission to publish page",
+
+	"leave_page_upload_confirm"	=> "A upload is running, should it be cancelled?"
 );

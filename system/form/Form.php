@@ -356,10 +356,11 @@ class Form extends AbstractFormComponentWithChildren {
 	 * @param string|ViewAccessableData $model
 	 * @param string $view
 	 * @param string $formName
+	 * @param string|null $inExpansion
 	 * @return GomaResponse
 	 */
-	public function renderWith($model, $view = null, $formName = "form") {
-		return GomaFormResponse::create($this)->setRenderWith($model, $view, $formName);
+	public function renderWith($model, $view = null, $formName = "form", $inExpansion = null) {
+		return GomaFormResponse::create($this)->setRenderWith($model, $view, $formName, $inExpansion);
 	}
 
 	/**

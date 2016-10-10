@@ -121,8 +121,7 @@ class Core extends gObject {
 			Profiler::unmark("session");
 			
 			
-		// init language-support
-		i18n::Init(i18n::SetSessionLang());
+		self::initLang();
 
 		if(defined("SQL_LOADUP"))
 			member::Init();
@@ -136,6 +135,23 @@ class Core extends gObject {
 
 		if(PROFILE)
 			Profiler::unmark("Core::Init");
+	}
+
+	/**
+	 * init lang and rebuilds if rebuild is required.
+	 */
+	protected static function initLang() {
+		$args = getCommandLineArgs();
+		if(isset($args["--rebuild"]) || isset($args["-rebuild"])) {
+			foreach(scandir(ROOT . LANGUAGE_DIRECTORY) as $file) {
+				if($file != "." && $file != ".." && is_dir(ROOT . LANGUAGE_DIRECTORY . "/" . $file)) {
+					i18n::Init($file);
+				}
+			}
+		}
+
+		// init language-support
+		i18n::Init(i18n::SetSessionLang());
 	}
 
 	/**
