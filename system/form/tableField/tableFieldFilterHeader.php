@@ -83,8 +83,8 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
             // sortabe column
             if ($title && $tableField->getData()->canFilterBy($columnField)) {
                 $value = '';
-                if (isset($filterArguments[$columnField])) {
-                    $value = $filterArguments[$columnField];
+                if (isset($filterArguments[strtolower($columnField)])) {
+                    $value = $filterArguments[strtolower($columnField)];
                 }
                 $searchField = $this->getFilterField($columnField, $value, $title);
 
@@ -264,7 +264,7 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
             $state->reset = true;
             $state->visible = false;
         } else if ($actionName === "resetfields") {
-            $state->resetColumn = $arguments;
+            $state->resetColumn = strtolower($arguments);
         } else if ($actionName === "togglefiltervisibility") {
             if ($state->visible === true) {
                 $state->visible = false;

@@ -54,7 +54,7 @@ class groupAdmin extends adminItem {
 		$config->getComponentByType("TableFieldDataColumns")->setDisplayFields(array(
 			"id"		=> "ID",
 			"users.count" => lang("usercount"),
-			"name"		=> lang("name")
+			"Name"		=> lang("name")
 		))->setFieldFormatting(array(
 			"users.count" => '$users.count ' . lang("usercount")
 		));
