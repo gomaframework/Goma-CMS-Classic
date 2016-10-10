@@ -29,19 +29,20 @@ var LaM_type_timeout;
 		goma.ui.addFlexBox(".left-and-main > table td.main > .inner > form > .fields");
 		goma.ui.addFlexBox(".leftandmaintable .main .inner");
 
+        var searchInput = $(".treesearch form input[type=text]");
+
 		//! searchfield bindings
 		$(".treesearch form").submit(function(){
 			updateWithSearch($(this));
 			return false;
 		});
 
-		$(".treesearch form input[type=text]").change(function(){
+		searchInput.change(function(){
 			updateWithSearch($(this).parent());
 			return false;
 		});
 
 		oForm.submit(function(){
-
 			updateWithSearch($(".treesearch form"), null, true);
 			return false;
 		});
@@ -177,17 +178,17 @@ var LaM_type_timeout;
 		optimizeScroll();
 
 		//! tree-events
-		$(".treesearch form input[type=text]").keyup(function(){
+		searchInput.keyup(function(){
 			self.LaM_current_text = $(this).val();
 			clearTimeout(self.LaM_type_timeout);
 			self.LaM_type_timeout = setTimeout(function(){
-				if(self.LaM_current_text == $(".treesearch form input[type=text]").val()) {
+				if(self.LaM_current_text == searchInput.val()) {
 					updateWithSearch($(".treesearch form"),null, null, true);
 				}
 			}, 400);
 
 			// legend-fade
-			if($(".treesearch form input[type=text]").val() == "") {
+			if(searchInput.val() == "") {
 				$(".legend").stop().fadeTo(300, 1);
 			} else {
 				$(".legend").stop().fadeTo(300, 0.4);
@@ -202,11 +203,7 @@ var LaM_type_timeout;
 
 
 		//! sort
-		if(	$(".treesearch form input[type=text]").val() == "" || $(".treesearch form input[type=text]").val() == lang("search", "Search...")) {
-			var sort = true;
-		} else {
-			var sort = false;
-		}
+		var sort = (searchInput.val() == "" || searchInput.val() == lang("search", "Search..."));
 
 		//! legend
 		$(".legend").find(":checkbox").each(function(){
@@ -221,11 +218,10 @@ var LaM_type_timeout;
 	w.reloadTree = function(fn, openid) {
 		$(".treesearch form input[type=text]").val("");
 		updateWithSearch($(".treesearch form"), fn, true, undefined, openid);
-	}
+	};
 
 	var active_val = "";
 	function updateWithSearch($this, callback, force, notblur, openid) {
-
 		var oForm = $("#tree-options-form");
 
 		var fn = callback;
@@ -301,7 +297,6 @@ var LaM_type_timeout;
 	}
 
 	function tree_bind_ajax(sortable, node) {
-
 		var oForm = $("#tree-options-form");
 
 		// bind events to the nodes to load the content then
@@ -366,7 +361,7 @@ var LaM_type_timeout;
 								}
 							});
 						},
-						tolerance: 'pointer',
+						tolerance: 'pointer'
 					});
 				});
 			});
@@ -395,7 +390,7 @@ var LaM_type_timeout;
 	w.LoadTreeItem = function (id) {
 		var $this = $("li[data-nodeid="+id+"] > span > a.node-area");
 		if($this.length == 0 && $("li[data-recordid="+id+"] > span > a.node-area").length == 0) {
-			return false;
+			return;
 		}
 
 		if($this.length == 0) {
@@ -405,7 +400,6 @@ var LaM_type_timeout;
 		// Internet Explorer seems not to work correctly with Ajax, maybe we'll fix it later on, but until then, we will just load the whole page ;)
 		if(getInternetExplorerVersion() <= 7 && getInternetExplorerVersion() != -1) {
 			$this.click();
-			return true;
 		}
 
 		$this.addClass("loading");
@@ -438,9 +432,15 @@ var LaM_type_timeout;
 
 				updateSidebarToggle();
 			});
-
 		}, 100);
+	};
 
-		return false;
-	}
+    goma.ui.onProgress(function(percent){
+        if(percent == 100) {
+            setTimeout(function(){
+                $("td.left").removeClass("active");
+                $("table.leftandmaintable").removeClass("left-active");
+            }, 100);
+        }
+    });
 })(jQuery, window);

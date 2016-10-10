@@ -415,6 +415,7 @@ class ClassInfo extends gObject {
 	 * loads the classinfo from file
 	 * @param IModelRepository|null $modelRepository
 	 * @return null
+	 * @throws ProjectConfigWriteException
 	 */
 	public static function loadfile($modelRepository = null) {
 		self::$tables = array();
@@ -465,8 +466,6 @@ class ClassInfo extends gObject {
                     log_exception($e);
                 }
             }
-
-			// end filesystem checks
 
 			// check for clean-up
 			if(file_exists(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log")) {

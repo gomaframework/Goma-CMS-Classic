@@ -689,6 +689,8 @@ $lang = array(
     "removeContentBlock"=> "Delete content-block",
 
 	"imageTooBig"		=> "The uploaded file is too big.",
+	"usercount"			=> "Users",
+	"publisher"			=> "Permission to publish page",
 
 	"leave_page_upload_confirm"	=> "A upload is running, should it be cancelled?"
 );
