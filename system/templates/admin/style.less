@@ -869,156 +869,24 @@ form h2 {
 #maincontent > .table-view {
 	padding: 0;
 }
-.tableview_wrapper > form {
-	margin: 0;
-}
 
-.tableview {
-	width: 100%;
-	border-spacing: 0;
-	border-bottom: 0.063em solid #ccc;
-	margin: 0;
-}
-.tableview tbody > tr:hover {
-	background: #e0e0e0;
-}
-.tableview td {
-	padding: 0.4em 0.6em;
-}
-.tableview thead {
-	background: @color-grey;
-	font-weight: bold;
-	color: #333;
-}
-.tableview thead td.first {
-	padding: 1.2em 0.6em;
-}
-.tableview thead td {
-	padding: 0.5em 0.6em;
-	border-bottom: 0.063em solid #bbb;
-	font-weight: normal;
-}
-.tableview thead td.actions {
-	padding: 0 0.7em;
-	text-align: right;
-}
-.tableview thead td a {
-	color: #333;
-	padding: 0.5em 0.7em;
-	-webkit-border-radius: 0.4em;
-	-moz-border-radius: 0.4em;
-	border-radius: 0.4em;
-	position: relative;
-	padding-left: 1em;
-}
-.tableview thead td a:hover {
-	text-decoration: none;
-	color: @color-action;
-	background-color: #ddd;
-}
-.tableview tbody td {
-	height: 1.6em;
-}
-.tableview thead td a {
-	display: inline-block;
-}
-.tableview thead td a.orderdesc, .tableview thead td a.orderasc {
-	color: @color-action;
-	background-color: #ddd;
-}
-.tableview thead td a.orderdesc span, .tableview thead td a.orderasc span, .tableview thead td a:hover span, .tableview thead td a.orderdesc:hover span {
-	background-image: url(../../../images/framework/sort.png);
-	background-repeat: no-repeat;
-	background-position: -10px 2px;
-	display: block;
-	position: absolute;
-	top: 0.5em;
-	left: 0.25em;
-	height: 0.75em;
-	width: 0.75em;
-	margin-top: 0.25em;
-}
-.tableview thead td a.orderdesc span, .tableview thead td a.orderasc:hover span {
-	background-position: 0 -9px;
-}
+.admin-subheader {
+	background: #eee;
+	border-bottom: 1px solid #ccc;
+	padding: 1em .5em;
+	margin: -1.75em 0 0;
 
-.tableview thead tr.search input[type=search] {
-	-webkit-appearance: none;
-	border: 0.063em solid #ccc;
-	padding: 0.31em;
-	padding-right: 1.5em;
-	-webkit-border-bottom-left-radius: 0.25em;
-	-webkit-border-top-left-radius: 0.25em;
-	border-top-left-radius: 0.25em;
-	border-bottom-left-radius: 0.25em;
-	background: #fff;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 6em;
-}
-.tableview thead tr.search td {
-	border-top: 0.063em solid #fff;
-}
-.tableview thead tr.search td.field {
-	min-width: 8em;
-}
-.tableview thead tr.search td > div {
-	position: relative;
-	height: 2em;
-}
-.tableview thead tr.search input[type=image], .tableview thead tr.search .cancel {
-	height: 1.25em;
-	width: 1.25em;
-	padding: 0.31em;
-	margin: 0;
-	background: @color-grey;
-	border: 0.063em solid #ccc;
-	-webkit-border-bottom-right-radius: 5px;
-	-webkit-border-top-right-radius: 5px;
-	border-top-right-radius: 5px;
-	border-bottom-right-radius: 5px;
-	position: absolute;
-	top: 0;
-	left: 7.5em;
-	box-sizing: content-box;
-	-webkit-box-sizing: content-box;
-	-moz-box-sizing: content-box;
-}
-.tableview thead tr.search input[type=image]:hover, .tableview thead tr.search .cancel:hover {
-	background-position: 0 -60px;
-}
-.tableview thead tr.search .cancel {
-	left: 5.75em;
-	padding: 0.25em 0.125em;
-	-webkit-border-radius: 0;
-	border-radius: 0;
-}
+	.back {
+		float: left;
+	}
 
-.tableview .no_data {
-	padding: 1em;
-	color: #999;
-	font-style: italic;
-	font-weight: normal;
+	h2 {
+		line-height: 1.25em;
+		text-align: center;
+		padding: .25em;
+		margin: 0.05em 0.05em -.5em;
+	}
 }
-
-.tableview tbody .actions {
-	text-align: right;
-}
-.tableview_wrapper .foot {
-	padding: 0.5em 1em;
-}
-.tableview_wrapper .foot .pages {
-	float: right;
-	max-width: 50%;
-	padding: 0.375em;
-}
-
-.tableview_wrapper .pages {
-	float: right;
-	margin: 0.25em 0.5em;
-}
-
 
 #preview {
 	background: #fff;
