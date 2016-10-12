@@ -71,9 +71,10 @@ class Director extends gObject {
     /**
      * serves the output given
      *
-     *@param string - content
+     * @param $output
+     * @param $request
      */
-    public static function serve($output) {
+    public static function serve($output, $request = null) {
         if(PROFILE)
             Profiler::unmark("render");
 
@@ -83,6 +84,10 @@ class Director extends gObject {
         Core::callHook("serve", $output);
 
         if(isset(self::$requestController)) {
+            if(self::$requestController->getRequest() == null) {
+                self::$requestController->setRequest($request);
+            }
+
             if(is_a($output, "GomaResponse")) {
                 /** @var GomaResponse $output */
                 if($output->shouldServe()) {
@@ -169,7 +174,7 @@ class Director extends gObject {
             /** @var RequestHandler $inst */
             $data = $inst->handleRequest($ruleMatcher->getCurrentRequest());
             if($data !== false && $data !== null) {
-                self::serve($data);
+                self::serve($data, $request);
                 return;
             }
         }

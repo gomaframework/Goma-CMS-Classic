@@ -577,20 +577,6 @@ class Core extends gObject {
 		return (!defined("IS_BACKEND") && GlobalSessionManager::globalSession()->hasKey(SystemController::ADMIN_AS_USER));
 	}
 
-	//!Rendering-Methods
-	/**
-	 * Rendering-Methods
-	 */
-
-	/**
-	 * serves the output given
-	 *
-	 *@param string - content
-	 */
-	public static function serve($output) {
-		Director::serve($output);
-	}
-
 	/**
 	 * renders the page
 	 * @param string $url
