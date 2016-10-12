@@ -18,7 +18,7 @@ class settingsAdmin extends adminItem
 
 	public $rights = "SETTINGS_ADMIN";
 
-	public $models = array("newsettings");
+	public $model = "newsettings";
 
 	public $template = "admin/settings.html";
 

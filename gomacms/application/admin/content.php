@@ -34,7 +34,7 @@ class contentAdmin extends LeftAndMain {
     /**
      * models this admin-panel manages
      */
-    public $models = array("pages");
+    public $model = "pages";
 
     static $icon = "templates/images/content.png";
 

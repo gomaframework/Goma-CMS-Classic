@@ -14,24 +14,16 @@ class adminController extends Controller
 {
     /**
      * current title
-     *
-     * @name title
      */
     static $title;
 
     /**
      * object of current admin-view
-     *
-     * @name activeController
-     * @access protected
      */
     protected static $activeController;
 
     /**
      * some default url-handlers for this controller
-     *
-     * @name url_handkers
-     * @access public
      */
     public $url_handlers = array(
         "switchlang"              => "switchlang",
@@ -43,9 +35,6 @@ class adminController extends Controller
 
     /**
      * we allow those actions
-     *
-     * @name allowed_actions
-     * @access public
      */
     public $allowed_actions = array("handleItem", "switchlang", "handleUpdate", "flushLog", "history");
 
@@ -53,7 +42,6 @@ class adminController extends Controller
      * this var contains the templatefile
      * the str {admintpl} will be replaced with the current admintpl
      *
-     * @name template
      * @var string
      */
     public $template = "admin/index.html";
@@ -92,14 +80,15 @@ class adminController extends Controller
     /**
      * global admin-enabling
      *
-     * @name handleRequest
-     * @access public
-     * @return string|false
+     * @param Request $request
+     * @param bool $subController
+     * @return false|string
+     * @throws Exception
      */
     public function handleRequest($request, $subController = false)
     {
         if (isset(ClassInfo::$appENV["app"]["enableAdmin"]) && !ClassInfo::$appENV["app"]["enableAdmin"]) {
-            HTTPResponse::redirect(BASE_URI);
+            return GomaResponse::redirect(BASE_URI);
         }
 
         HTTPResponse::unsetCacheable();
@@ -122,12 +111,12 @@ class adminController extends Controller
         $class = $this->request->getParam("item") . "admin";
 
         if (ClassInfo::exists($class)) {
-            /** @var RequestHandler $controller */
+            /** @var adminItem $controller */
             $controller = new $class;
 
             Core::$favicon = ClassInfo::getClassIcon($class);
 
-            if (Permission::check($controller->rights)) {
+            if (Permission::check($controller->userHasPermissions())) {
                 self::$activeController = $controller;
 
                 return $controller->handleRequest($this->request);
@@ -137,9 +126,6 @@ class adminController extends Controller
 
     /**
      * title
-     *
-     * @name title
-     * @return string
      */
     public function title()
     {
@@ -149,8 +135,6 @@ class adminController extends Controller
     /**
      * returns title, alias for title
      *
-     * @name adminTitle
-     * @access public
      * @return string
      */
     final public function adminTitle()
@@ -161,8 +145,6 @@ class adminController extends Controller
     /**
      * returns the URL for the View Website-Button
      *
-     * @name PreviewURL
-     * @access public
      * @return string
      */
     public function PreviewURL()
@@ -173,8 +155,6 @@ class adminController extends Controller
     /**
      * switch-lang-template
      *
-     * @name switchLang
-     * @access public
      * @return string
      */
     public function switchLang()
@@ -185,7 +165,6 @@ class adminController extends Controller
     /**
      * flushes all log-files
      *
-     * @name flushLog
      * @return mixed|string
      */
     public function flushLog($count = 40) {
@@ -198,20 +177,16 @@ class adminController extends Controller
             // we delete all logs that are older than 30 days
             Core::CleanUpLog($count);
 
-            if (!Core::is_ajax()) {
+            if (!$this->request->is_ajax()) {
                 AddContent::addSuccess(lang("flush_log_success"));
                 return $this->redirectBack();
             } else {
-                HTTPResponse::setHeader("content-type", "text/x-json");
-                HTTPResponse::sendHeader();
-
                 Notification::notify($this->classname, lang("flush_log_success"), null, "PushNotification");
 
                 GlobalSessionManager::Init();
                 PushController::disablePush();
 
-                echo json_encode(1);
-                exit;
+                return new JSONResponseBody(1);
             }
         }
 
@@ -222,11 +197,13 @@ class adminController extends Controller
 
     /**
      * post in own structure
+     * @param string $content
+     * @return string
      */
     public function serve($content)
     {
         Core::setHeader("robots", "noindex,nofollow");
-        if (!Permission::check("ADMIN") && Core::is_ajax()) {
+        if (!Permission::check("ADMIN") && $this->request->is_ajax()) {
             Resources::addJS("location.reload();");
         }
 
@@ -236,7 +213,7 @@ class adminController extends Controller
             Resources::addJS("addHelp(" . json_encode($data) . ");");
         }
 
-        if (!Core::is_ajax()) {
+        if (!$this->request->is_ajax()) {
             if (!preg_match('/<\/html/i', $content)) {
                 if (!Permission::check("ADMIN")) {
                     $admin = new Admin();
@@ -280,13 +257,9 @@ class adminController extends Controller
 
     /**
      * update algorythm
-     *
-     * @name handleUpdate
-     * @access public
      */
     public function handleUpdate()
     {
-
         if (Permission::check("superadmin")) {
             $controller = new UpdateController();
             self::$activeController = $controller;
@@ -377,6 +350,9 @@ class adminController extends Controller
  */
 class admin extends ViewAccessableData implements PermProvider
 {
+    const PERMISSION_ADMIN_PANEL = "ADMIN";
+    const PERMISSION_ADMIN_HISTORY = "ADMIN_HISTORY";
+
     /**
      * user-bar
      *
@@ -393,9 +369,6 @@ class admin extends ViewAccessableData implements PermProvider
 
     /**
      * history-url
-     *
-     * @name historyURL
-     * @access public
      */
     public function historyURL()
     {
@@ -445,8 +418,6 @@ class admin extends ViewAccessableData implements PermProvider
 
     /**
      * returns the URL for the view Website button
-     *
-     * @name PreviewURL
      */
     public function PreviewURL()
     {
@@ -459,14 +430,14 @@ class admin extends ViewAccessableData implements PermProvider
     public function providePerms()
     {
         return array(
-            "ADMIN"         => array(
+            self::PERMISSION_ADMIN_PANEL         => array(
                 "title"       => '{$_lang_administration}',
                 'default'     => array(
                     "type" => "admins"
                 ),
                 "description" => '{$_lang_permission_administration}'
             ),
-            "ADMIN_HISTORY" => array(
+            self::PERMISSION_ADMIN_HISTORY => array(
                 "title"    => '{$_lang_history}',
                 "default"  => array(
                     "type" => "admins"
@@ -481,14 +452,13 @@ class admin extends ViewAccessableData implements PermProvider
      *
      * @return DataSet
      */
-    public function this()
-    {
-
+    public function this() {
         $data = new DataSet();
         foreach (ClassInfo::getChildren("adminitem") as $child) {
+            /** @var adminItem $class */
             $class = new $child;
             if ($class->text) {
-                if (Permission::check($class->rights) && $class->visible()) {
+                if (Permission::check($class->userHasPermissions()) && $class->visible()) {
                     if (adminController::activeController()->classname == $child)
                         $active = true;
                     else

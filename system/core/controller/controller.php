@@ -865,7 +865,7 @@ class Controller extends RequestHandler
             return false;
         }, $btnokay, $description);
         if(!is_bool($data->getRawBody())) {
-            Director::serve($data);
+            Director::serve($data, $this->request);
             exit;
         }
 
@@ -964,7 +964,7 @@ class Controller extends RequestHandler
         }
 
         if(!is_bool($data->getRawBody())) {
-            Director::serve($data);
+            Director::serve($data, $this->request);
             exit;
         }
         return $data->getRawBody();
