@@ -301,10 +301,11 @@ class adminItem extends AdminController implements PermProvider {
 				}
 			}
 		} else {
-			$firstModel = ArrayLib::first($this->models);
-			if(ClassManifest::isOfType($name, $firstModel)) {
-				return new $name;
-			}
+			if($firstModel = ArrayLib::first($this->models)) {
+                if (ClassManifest::isOfType($name, $firstModel)) {
+                    return new $name;
+                }
+            }
 		}
 
 		return null;
