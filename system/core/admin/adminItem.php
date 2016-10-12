@@ -293,20 +293,9 @@ class adminItem extends AdminController implements PermProvider {
 	 * @return gObject|null
 	 */
 	protected function getModelByName($name) {
-		if(count($this->models) > 1) {
-			foreach($this->models as $currentModel) {
-				$currentModel = trim(strtolower($currentModel));
-				if(ClassManifest::isOfType($name, $currentModel)) {
-					return new $name();
-				}
-			}
-		} else {
-			if($firstModel = ArrayLib::first($this->models)) {
-                if (ClassManifest::isOfType($name, $firstModel)) {
-                    return new $name;
-                }
-            }
-		}
+		if (ClassManifest::isOfType($name, $this->model)) {
+            return new $name;
+        }
 
 		return null;
 	}
