@@ -82,7 +82,21 @@ class DataSetTests extends GomaUnitTest {
         $this->assertEqual($list[4], $this->kathi);
     }
 
-    public function testRemoveDuplicates() {
+    public function testRemoveDuplicatesByNumber() {
+        $list = new DataSet(array(
+            $this->daniel,
+            $this->julian,
+            $this->nik
+        ));
+
+        $list->removeDuplicates("age");
+
+        $this->assertEqual($list->count(), 2);
+        $this->assertEqual($list[0], $this->daniel);
+        $this->assertEqual($list[1], $this->nik);
+    }
+
+    public function testRemoveDuplicatesByString() {
         $list = new DataSet(array(
             $this->daniel,
             $this->kathi,
@@ -95,6 +109,7 @@ class DataSetTests extends GomaUnitTest {
         $this->assertEqual($list->count(), 2);
         $this->assertEqual($list[1], $this->kathi);
     }
+
 
     public function testSort() {
         $list = new DataSet($orgArray = array(
@@ -446,5 +461,137 @@ class DataSetTests extends GomaUnitTest {
         $this->assertEqual($dataset->doObject("this"), $dataset->first());
     }
 
-    // TODO: Add Test for count vs. countInSet
+    /**
+     * tests if group-by is working in-place.
+     */
+    public function testGroupByInPlace() {
+        $set = new DataSet(array(
+            $this->daniel,
+            $this->janine,
+            $this->julian,
+            $this->nik
+        ));
+
+        $this->assertEqual($set, $set->groupBy("age"));
+        $this->assertEqual($set->count(), 3);
+
+        foreach($set as $record) {
+            $this->assertIsA($record, IDataSet::class);
+        }
+    }
+
+    /**
+     * tests if group-by is working with a reset.
+     */
+    public function testGroupByReset() {
+        $set = new DataSet(array(
+            $this->daniel,
+            $this->janine,
+            $this->julian,
+            $this->nik
+        ));
+
+        $set->groupBy("age");
+        $this->assertEqual($set->count(), 3);
+
+        $set->groupBy(null);
+        $this->assertEqual($set->count(), 4);
+    }
+
+    /**
+     * tests if group-by sets the one field to a value.
+     */
+    public function testGroupByEachSetWithValue() {
+        $set = new DataSet(array(
+            $this->daniel,
+            $this->janine,
+            $this->julian,
+            $this->nik
+        ));
+
+        $set->groupBy("age");
+        /** @var IDataSet|ViewAccessableData $record */
+        foreach($set as $record) {
+            $this->assertEqual($record->first()->age, $record->age);
+        }
+    }
+
+    /**
+     * tests if group-by sort is possible.
+     */
+    public function testGroupBySort() {
+        $set = new DataSet(array(
+            $this->daniel,
+            $this->janine,
+            $this->julian,
+            $this->nik
+        ));
+
+        $set->groupBy("age");
+        $set->sort("age");
+        $age = $set->first()->first()->age;
+        /** @var ViewAccessableData|IDataSet $record */
+        foreach($set as $record) {
+            $this->assertTrue($record->age >= $age);
+            $age = $record->age;
+        }
+    }
+
+    /**
+     * tests if count is correctly responding.
+     */
+    public function testCount() {
+        $set = new DataSet(array(
+            $this->daniel,
+            $this->janine,
+            $this->julian,
+            $this->nik
+        ));
+
+        $this->assertEqual(4, $set->count());
+    }
+
+    /**
+     * tests if count is correctly working with pagination.
+     */
+    public function testPaginatedCount() {
+        $set = new DataSet(array(
+            $this->daniel,
+            $this->janine,
+            $this->julian,
+            $this->nik
+        ));
+        $set->activatePagination(1, 2);
+
+        $this->assertEqual(2, $set->count());
+    }
+
+    /**
+     * tests if countWholeSet is correctly responding.
+     */
+    public function testCountWholeSet() {
+        $set = new DataSet(array(
+            $this->daniel,
+            $this->janine,
+            $this->julian,
+            $this->nik
+        ));
+
+        $this->assertEqual(4, $set->countWholeSet());
+    }
+
+    /**
+     * tests if countWholeSet is correctly working with pagination.
+     */
+    public function testPaginatedCountWholeSet() {
+        $set = new DataSet(array(
+            $this->daniel,
+            $this->janine,
+            $this->julian,
+            $this->nik
+        ));
+        $set->activatePagination(1, 2);
+
+        $this->assertEqual(4, $set->countWholeSet());
+    }
 }

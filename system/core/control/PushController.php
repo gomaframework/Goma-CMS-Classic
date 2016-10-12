@@ -59,6 +59,7 @@ class PushController extends Controller {
 		Resources::addData("goma.Pusher.init('" . self::$key . "');var uniqueID = " . var_export(member::uniqueID(), true) . ";");
 
 		Resources::add("notifications.css", "css");
+		gloader::load("pusher");
 		gloader::load("notifications");
 	}
 

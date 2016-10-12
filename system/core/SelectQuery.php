@@ -198,9 +198,13 @@ class SelectQuery {
 	 * @param array|string $filter
 	 */
 	public function addFilter($filter) {
-		if(is_string($this->filter)) {
-			$this->filter = array($this->filter, $filter);
-		} else if(is_array($filter)) {
+		if(is_string($this->filter) || is_string($filter)) {
+            if($this->filter) {
+                $this->filter = array($this->filter, $filter);
+            } else {
+                $this->filter = $filter;
+            }
+		} else if(is_array($this->filter)) {
 			foreach($filter as $k => $v) {
 				if(is_int($k)) {
 					$this->filter[] = $v;

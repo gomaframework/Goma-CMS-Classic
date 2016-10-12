@@ -555,22 +555,4 @@ class Request extends gObject {
 	public function canReplyJSON() {
 		return (isset($this->headers["accept"]) && preg_match('/text/json/i', $this->headers["accept"]));
 	}
-
-	/**
-	 * @return string
-	 */
-	public function queryString() {
-		$string = "";
-		$i = 0;
-		foreach($this->get_params as $key => $value) {
-			if($i == 0) {
-				$i++;
-			} else {
-				$string .= "&";
-			}
-
-			$string .= urlencode($key) . "=" . urlencode($value);
-		}
-		return $string;
-	}
 }

@@ -485,11 +485,11 @@ class tplCaller extends gObject
         $set = new DataSet();
         $data = i18n::listLangs();
         foreach ($data as $lang => $contents) {
-            $set->add(array(
+            $set->add(array_merge($contents, array(
                 "code" => $lang,
                 "name" => $lang,
                 "active" => $lang == Core::$lang
-            ));
+            )));
 
         }
 

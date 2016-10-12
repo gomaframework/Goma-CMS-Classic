@@ -187,51 +187,51 @@
 			        		}
 			        	}
 		        	};
-		        	
-					hammer.on("dragleft dragright dragstart dragend tap", "#" + id, function(ev){
-						ev.gesture.preventDefault();
-						
-						switch(ev.type) {
-							case "dragleft":
-							case "dragright":
-								transformTo(ev.gesture.deltaX);
-								
-								if((ev.gesture.deltaX - lastX) != 0) {
-									speed = (ev.gesture.deltaX - lastX) / (new Date().getTime() - lastT);
-									lastX = ev.gesture.deltaX;
-									lastT = (new Date().getTime());
-								}
-							break;
-							case "dragstart":
-								$(this).addClass("drag");
-								lastT = (new Date().getTime());
-								lastX = ev.gesture.deltaX;
-								
-								offsetLeft = $(this).find(".g-check-handle").position().left;
-							break;
-							case "dragend":
-							
-								$(this).removeClass("drag");
-								
-								offsetLeft = 0;
-								var left = $(this).find(".g-check-handle").position().left + speed * 100,
-								maxWidth = $wrapper.innerWidth() - $wrapper.find(".g-check-handle").width();
 
-								if(left < maxWidth / 2) {
-									switchUIValueToOff();
-									$wrapper.find("input").prop("checked", false);
-								} else {
-									switchUIValueToOn();
-									$wrapper.find("input").prop("checked", true);
-								}
-							break;
-							case "tap":
-								switchValue();
-							break;
-						}
+					goma.ui.loadHammer().done(function() {
+						hammer.on("dragleft dragright dragstart dragend tap", "#" + id, function (ev) {
+							ev.gesture.preventDefault();
+
+							switch (ev.type) {
+								case "dragleft":
+								case "dragright":
+									transformTo(ev.gesture.deltaX);
+
+									if ((ev.gesture.deltaX - lastX) != 0) {
+										speed = (ev.gesture.deltaX - lastX) / (new Date().getTime() - lastT);
+										lastX = ev.gesture.deltaX;
+										lastT = (new Date().getTime());
+									}
+									break;
+								case "dragstart":
+									$(this).addClass("drag");
+									lastT = (new Date().getTime());
+									lastX = ev.gesture.deltaX;
+
+									offsetLeft = $(this).find(".g-check-handle").position().left;
+									break;
+								case "dragend":
+
+									$(this).removeClass("drag");
+
+									offsetLeft = 0;
+									var left = $(this).find(".g-check-handle").position().left + speed * 100,
+										maxWidth = $wrapper.innerWidth() - $wrapper.find(".g-check-handle").width();
+
+									if (left < maxWidth / 2) {
+										switchUIValueToOff();
+										$wrapper.find("input").prop("checked", false);
+									} else {
+										switchUIValueToOn();
+										$wrapper.find("input").prop("checked", true);
+									}
+									break;
+								case "tap":
+									switchValue();
+									break;
+							}
+						});
 					});
-		        	
-					
 		        };
 				
 				if ($this.prop("checked")) {

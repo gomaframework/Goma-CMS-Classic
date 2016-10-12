@@ -246,14 +246,16 @@ class Core extends gObject {
 		Resources::add("system/libs/thirdparty/modernizr/modernizr.js", "js", "main");
 		Resources::add("system/libs/thirdparty/jquery/jquery.js", "js", "main");
 		Resources::add("system/libs/thirdparty/jquery/jquery.ui.js", "js", "main");
-		Resources::add("system/libs/thirdparty/hammer.js/hammer.js", "js", "main");
-		Resources::add("system/libs/thirdparty/respond/respond.min.js", "js", "main");
 		Resources::add("system/libs/thirdparty/jResize/jResize.js", "js", "main");
 		Resources::add("system/libs/javascript/loader.js", "js", "main");
 		Resources::add("box.css", "css", "main");
 
 		Resources::add("default.css", "css", "main");
 		Resources::add("goma_default.css", "css", "main");
+
+        if(preg_match('/(?i)msie [5-8]/',$_SERVER['HTTP_USER_AGENT'])) {
+            Resources::add("system/libs/thirdparty/respond/respond.min.js", "js", "main");
+        }
 
 		if(isset($_GET["debug"])) {
 			Resources::enableDebug();
@@ -573,6 +575,20 @@ class Core extends gObject {
 	 */
 	public static function adminAsUser() {
 		return (!defined("IS_BACKEND") && GlobalSessionManager::globalSession()->hasKey(SystemController::ADMIN_AS_USER));
+	}
+
+	//!Rendering-Methods
+	/**
+	 * Rendering-Methods
+	 */
+
+	/**
+	 * serves the output given
+	 *
+	 *@param string - content
+	 */
+	public static function serve($output) {
+		Director::serve($output);
 	}
 
 	/**

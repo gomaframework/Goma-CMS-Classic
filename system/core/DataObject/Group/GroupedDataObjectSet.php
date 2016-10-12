@@ -218,4 +218,38 @@ class GroupedDataObjectSetDataSource implements \IDataObjectSetDataSource {
         $query->groupby($this->groupField);
         return $query;
     }
+
+    /**
+     * @return \IDataObjectSetDataSource
+     */
+    public function getDatasource()
+    {
+        return $this->datasource;
+    }
+
+    /**
+     * @return \IDataObjectSetModelSource
+     */
+    public function getModelSource()
+    {
+        return $this->modelSource;
+    }
+
+    /**
+     * @return array|string
+     */
+    public function getGroupField()
+    {
+        return $this->groupField;
+    }
+
+    /**
+     * @param array|string $groupField
+     * @return $this
+     */
+    public function setGroupField($groupField)
+    {
+        $this->groupField = $groupField;
+        return $this;
+    }
 }

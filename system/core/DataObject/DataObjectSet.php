@@ -4,7 +4,7 @@
 /**
  * Basic class for getting Data as DataSet from DataBase.
  * It implements all types of DataBase-Queriing and always needs a DataObject to query the DataBase.
- * All methods are in-place, but groupBy.
+ * All methods are in-place.
  *
  * @package     Goma\Model
  *
@@ -753,26 +753,38 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @return DataObjectSet
 	 */
 	public function groupBy($field) {
-        if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
+        if ($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
             throw new LogicException("Group by is only possible when using FETCH_MODE_EDIT.");
         }
 
-        if($this->hasChanged()) {
-            throw new LogicException("Group by is only possible on not changed DataObjectSet, call commitStaging before grouping.");
-        }
+		if($field === null) {
+			if (is_a($this->dbDataSource, \Goma\Model\Group\GroupedDataObjectSetDataSource::class)) {
+				$this->dbDataSource = $this->dbDataSource->getDataSource();
+                $this->clearCache();
+			}
+		} else {
+			if ($this->hasChanged()) {
+				throw new LogicException("Group by is only possible on not changed DataObjectSet, call commitStaging before grouping.");
+			}
 
-        if(is_string($field) && strpos($field, ",") !== false) {
-            $field = array_map("trim", explode(",", $field));
-        }
+			if (is_string($field) && strpos($field, ",") !== false) {
+				$field = array_map("trim", explode(",", $field));
+			}
 
-        $set = clone $this;
-        $set->setDbDataSource(new \Goma\Model\Group\GroupedDataObjectSetDataSource(
-            $this->dbDataSource(),
-            $this->modelSource,
-            $field
-        ));
+			if (is_a($this->dbDataSource, \Goma\Model\Group\GroupedDataObjectSetDataSource::class)) {
+				$this->dbDataSource->setGroupField($field);
+			} else {
+				$this->setDbDataSource(new \Goma\Model\Group\GroupedDataObjectSetDataSource(
+					$this->dbDataSource(),
+					$this->modelSource,
+					$field
+				));
+			}
 
-        return $set;
+            $this->clearCache();
+		}
+
+		return $this;
 	}
 
     /**

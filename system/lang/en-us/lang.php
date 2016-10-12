@@ -692,5 +692,7 @@ $lang = array(
 	"usercount"			=> "Users",
 	"publisher"			=> "Permission to publish page",
 
-	"leave_page_upload_confirm"	=> "A upload is running, should it be cancelled?"
+	"leave_page_upload_confirm"	=> "A upload is running, should it be cancelled?",
+
+	"apply"	=> "apply"
 );

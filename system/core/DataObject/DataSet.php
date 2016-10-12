@@ -48,6 +48,11 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     protected $filter;
 
     /**
+     * @var null|string
+     */
+    protected $isGroupedBy = null;
+
+    /**
      * construction
      * @param array $set
      */
@@ -66,18 +71,36 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
      * @return IDataSet
      */
     public function groupBy($field) {
-        $set = array();
-        foreach($this->items as $record) {
-            $key = $this->getItemProp($record, $field);
-            if($key !== null) {
-                if(!isset($set[$key]))
-                    $set[$key] = new DataSet();
+        $this->isGroupedBy = $field;
+        $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
 
-                $set[$key]->push($record);
+        return $this;
+    }
+
+    /**
+     * @param ArrayList $list
+     * @param string $field
+     * @return ArrayList
+     */
+    protected function executeGroupBy($list, $field) {
+        if($field !== null) {
+            $set = array();
+            foreach ($list as $record) {
+                $key = $this->getItemProp($record, $field);
+                if ($key !== null) {
+                    if (!isset($set[$key])) {
+                        $set[$key] = new DataSet();
+                        $set[$key]->$field = $key;
+                    }
+
+                    $set[$key]->push($record);
+                }
             }
+
+            return new ArrayList($set);
         }
 
-        return new DataSet($set);
+        return $list;
     }
 
     /**
@@ -87,7 +110,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     {
         $this->dataSource = call_user_func_array(array($this->dataSource, "sort"), func_get_args());
 
-        $this->updateSet($this->filter, $this->page, $this->perPage);
+        $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
 
         return $this;
     }
@@ -98,7 +121,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     public function filter()
     {
         $this->filter = call_user_func_array(array("DataSet", "getFilterFromArgs"), func_get_args());
-        $this->updateSet($this->filter, $this->page, $this->perPage);
+        $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
 
         return $this;
     }
@@ -111,7 +134,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
         $filter = call_user_func_array(array("DataSet", "getFilterFromArgs"), func_get_args());
 
         $this->filter = array_merge((array) $this->filter, (array) $filter);
-        $this->updateSet($this->filter, $this->page, $this->perPage);
+        $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
         return $this;
     }
 
@@ -143,9 +166,10 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
      * @param array $filter
      * @param int|null $page
      * @param int $perPage
+     * @param string $isGroupedBy
      * @return ArrayList|mixed
      */
-    protected function updateSet($filter, $page, $perPage) {
+    protected function updateSet($filter, $page, $perPage, $isGroupedBy) {
         /** @var ArrayList $source */
         $source = $this->dataSource;
 
@@ -155,6 +179,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
 
         $this->filteredDataSource = $source;
 
+        $this->filteredDataSource = $this->executeGroupBy($this->filteredDataSource, $isGroupedBy);
         $this->updatePagination($page, $perPage);
     }
 
@@ -203,7 +228,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     public function push($item) {
         $this->dataSource->push($item);
 
-        $this->updateSet($this->filter, $this->page, $this->perPage);
+        $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
     }
 
     /**
@@ -221,7 +246,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     public function pop() {
         $return = $this->dataSource->pop();
 
-        $this->updateSet($this->filter, $this->page, $this->perPage);
+        $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
 
         return $return;
     }
@@ -232,7 +257,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     public function shift() {
         $return = $this->dataSource->shift();
 
-        $this->updateSet($this->filter, $this->page, $this->perPage);
+        $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
 
         return $return;
     }
@@ -244,7 +269,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     {
         $this->dataSource->unshift($item);
 
-        $this->updateSet($this->filter, $this->page, $this->perPage);
+        $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
     }
 
     /**
@@ -566,7 +591,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     {
         $removed = $this->dataSource->remove($item);
 
-        $this->updateSet($this->filter, $this->page, $this->perPage);
+        $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
 
         return $removed;
     }
@@ -607,7 +632,7 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
         $this->dataSource->move($item, $to, $insertIfNotExisting);
 
         if($this->isPagination()) {
-            $this->updateSet($this->filter, $this->page, $this->perPage);
+            $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
         } else {
             parent::move($item, $to, $insertIfNotExisting);
         }

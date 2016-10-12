@@ -856,7 +856,6 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($this->kathi, $secondSet->last());
     }
 
-
     public function testMultiSortWithArray() {
         $set = new DataObjectSet("DumpDBElementPerson");
         $set->setVersion(DataObject::VERSION_PUBLISHED);
@@ -882,6 +881,67 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($this->julian, $set[2]);
         $this->assertEqual($this->daniel, $set[1]);
         $this->assertEqual($this->kathi, $set->last());
+    }
+
+    public function testGroupBy() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $source->group = array(
+            array(
+                $this->julian,
+                $this->daniel,
+            ),
+            array(
+                $this->janine,
+                $this->kathi
+            )
+        );
+
+        $this->assertEqual($set->ToArray(), $source->records);
+        $set->groupBy("blub");
+        $this->assertEqual($set->ToArray(), $source->group);
+    }
+
+    public function testGroupByReset() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $source->group = array(
+            array(
+                $this->julian,
+                $this->daniel,
+            ),
+            array(
+                $this->janine,
+                $this->kathi
+            )
+        );
+
+        $set->groupBy("blub");
+        $this->assertEqual($set->ToArray(), $source->group);
+        $set->groupBy(null);
+        $this->assertEqual($set->ToArray(), $source->records);
     }
 }
 
