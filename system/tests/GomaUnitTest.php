@@ -1,7 +1,5 @@
 <?php defined("IN_GOMA") OR die();
 
-require_once(ROOT . "/system/libs/thirdparty/simpletest/unit_tester.php");
-
 /**
  * Base-Class for all Goma Unit-Tests.
  *

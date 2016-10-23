@@ -17,7 +17,7 @@ class Hierarchy extends DataObjectExtension implements TreeModel {
 	 *
 	 *@name extra_methods
 	*/
-	static $extra_methods = array(
+	protected static $extra_methods = array(
 		"AllChildren", "getallChildVersionIDs", "getAllChildIDs", "searchChildren", "searchAllChildren", "getAllParentIDs", "getAllParents", "build_tree"
 	);
 	

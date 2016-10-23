@@ -107,7 +107,7 @@ class adminController extends Controller
         if (!Permission::check("ADMIN"))
             return $this->modelInst()->renderWith("admin/index_not_permitted.html");
 
-        $class = $this->request->getParam("item") . "admin";
+        $class = str_replace("-", "\\", $this->request->getParam("item")) . "admin";
 
         if (ClassInfo::exists($class)) {
             /** @var RequestHandler $controller */
@@ -483,7 +483,7 @@ class admin extends ViewAccessableData implements PermProvider
                         $active = false;
 
                     $data->push(array('text'   => parse_lang($class->text),
-                                      'uname'  => substr($class->classname, 0, -5),
+                                      'uname'  => str_replace("\\", "-", substr($class->classname, 0, -5)),
                                       'sort'   => $class->sort,
                                       "active" => $active,
                                       "icon"   => ClassInfo::getClassIcon($class->classname)));

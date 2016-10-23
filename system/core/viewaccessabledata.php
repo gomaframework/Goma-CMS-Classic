@@ -1088,7 +1088,7 @@ abstract class Extension extends gObject implements ExtensionModel {
 	/**
 	 * extra_methods
 	 */
-	public static $extra_methods = array();
+	public static $all_extra_methods = array();
 	/**
 	 * the owner-class
 	 *@name owner

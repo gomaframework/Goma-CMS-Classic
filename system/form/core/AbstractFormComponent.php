@@ -103,10 +103,11 @@ abstract class AbstractFormComponent extends RequestHandler {
     {
         parent::__construct();
 
-        $this->name = $name;
-        $this->__fieldname = strtolower(trim($name));
-        $this->dbname = strtolower(trim($name));
+        $this->name = preg_replace("/[^a-zA-Z0-9_\\.\\-\[\]\{\}]/", "_", $name);
+        $this->__fieldname = strtolower(trim($this->name));
+        $this->dbname = strtolower(trim($this->name));
         $this->setModel($model);
+
 
         if ($parent) {
             $parent->add($this);

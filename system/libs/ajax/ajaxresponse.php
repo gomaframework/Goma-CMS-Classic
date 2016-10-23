@@ -137,7 +137,7 @@ class AjaxResponse extends GomaResponse
     /**
      * slides a node up (hide)
      */
-    public function slideUp($node, $duration = "200", $exec, $exec = "")
+    public function slideUp($node, $duration = "200", $exec = "")
     {
 
         if (is_int($exec)) {

@@ -58,17 +58,10 @@ class StaticsManagerTest extends GomaUnitTest implements TestAble
         }
     }
 
-    public function testHasStaticVarExceptions()
-    {
-        try {
-            StaticsManager::hasStatic("StaticTestClassNotExisting", "c");
-
-            $this->fail("Class not exists, but setStatic does not fire an Exception.");
-        } catch(Exception $e) {
-            $this->assertIsA($e, "ReflectionException");
-            $this->assertPattern("/Class/i", $e->getMessage());
-        }
-
+    /**
+     * tests if hasStatic is throwing InvalidArgument for empty variable.
+     */
+    public function testHasStaticWithEmptyVariableException() {
         try {
             StaticsManager::hasStatic("StaticTestClass", "");
 
@@ -79,9 +72,46 @@ class StaticsManagerTest extends GomaUnitTest implements TestAble
         }
     }
 
-    public function testStaticCalls() {
-        $this->assertEqual(StaticsManager::callStatic("StaticTestClass", "call"), StaticTestClass::call());
+    /**
+     * tests if hasStatic is throwing Exception for unknown class.
+     */
+    public function testHasStaticVarExceptionUnknownClass()
+    {
+        try {
+            StaticsManager::hasStatic("StaticTestClassNotExisting", "c");
 
+            $this->fail("Class not exists, but setStatic does not fire an Exception.");
+        } catch (Exception $e) {
+            $this->assertIsA($e, "ReflectionException");
+            $this->assertPattern("/Class/i", $e->getMessage());
+        }
+    }
+
+    /**
+     *  @testdox tests that it correctly works for protected statics.
+     */
+    public function testHasStaticIsNotThrowingExceptionForPrivateStatic() {
+        $this->assertTrue(StaticsManager::hasStatic("testDefineStatics", "privateStatic"));
+    }
+
+    /**
+     * @testdox tests if public invocation works.
+     */
+    public function testPublicStaticCallIsSameAsNormal() {
+        $this->assertEqual(StaticsManager::callStatic("StaticTestClass", "call"), StaticTestClass::call());
+    }
+
+    /**
+     * @testdox tests if public invocation works.
+     */
+    public function testPublicStaticCallIsSameAsNormalWithoutPublish() {
+        $this->assertEqual(StaticsManager::callStatic("StaticTestClass", "callWithoutPublic"), StaticTestClass::callWithoutPublic());
+    }
+
+    /**
+     * tests if protected methods throws exception.
+     */
+    public function testStaticCallIsThrowingExceptionForProtected() {
         try {
             StaticsManager::callStatic("StaticTestClass", "prot");
 
@@ -89,7 +119,12 @@ class StaticsManagerTest extends GomaUnitTest implements TestAble
         } catch(Exception $e) {
             $this->assertIsA($e, "BadMethodCallException");
         }
+    }
 
+    /**
+     * tests if logicException is thrown for unknown class.
+     */
+    public function testStaticCallIsThrowingDifferentForUnknownClass() {
         try {
             StaticsManager::callStatic("StaticTestClassNotExisting", "prot");
             $this->fail("Class not exists, but callStatic does not fire an Exception.");
@@ -98,6 +133,13 @@ class StaticsManagerTest extends GomaUnitTest implements TestAble
             $this->assertIsA($e, "LogicException");
             $this->assertPattern("/Class/i", $e->getMessage());
         }
+    }
+
+    /**
+     * tests that protected method call works when invoking with true.
+     */
+    public function testStaticCallIsNotThrowingExceptionForProtectedWithTrue() {
+            $this->assertEqual(2, StaticsManager::callStatic("StaticTestClass", "prot", true));
     }
 
     public function testDefineStatics() {
@@ -117,6 +159,8 @@ class testDefineStatics extends gObject {
     public static $hasBeenCalled = false;
     public $hasBeenLocallyCalled = false;
 
+    private static $privateStatic = 2;
+
     public function defineStatics() {
         self::$hasBeenCalled = true;
         $this->hasBeenLocallyCalled = true;
@@ -128,6 +172,11 @@ class StaticTestClass {
     public static function call()
     {
         return 1;
+    }
+
+    static function callWithoutPublic()
+    {
+        return 4;
     }
 
     protected static function prot()

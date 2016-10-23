@@ -135,6 +135,10 @@ class Controller extends RequestHandler
                 Core::addBreadCrumb($title, $this->namespace . URLEND);
             }
         }
+
+        if (StaticsManager::hasStatic($this->classname, "less_vars")) {
+            Resources::$lessVars = StaticsManager::getStatic($this->classname, "less_vars");
+        }
     }
 
     /**
@@ -260,10 +264,6 @@ class Controller extends RequestHandler
     public function handleRequest($request, $subController = false)
     {
         try {
-            if (StaticsManager::hasStatic($this->classname, "less_vars")) {
-                Resources::$lessVars = StaticsManager::getStatic($this->classname, "less_vars");
-            }
-
             $data = $this->__output(parent::handleRequest($request, $subController));
 
             if ($this->helpArticle()) {
@@ -678,9 +678,7 @@ class Controller extends RequestHandler
         /** @var DataObject $model */
         $model = $this->getSafableModel($data, $givenModel);
 
-        $model->writeToDB($forceInsert, $forceWrite, $priority, false, true, false, $overrideCreated);
-
-        $this->callExtending("onAfterSave", $model, $priority);
+        $this->storeModel($model, $priority, $forceInsert, $forceWrite, $overrideCreated);
 
         if (!isset($givenModel)) {
             $this->model_inst = $model;
@@ -718,13 +716,36 @@ class Controller extends RequestHandler
             $model->$key = $value;
         }
 
-        $model->writeToDB($forceInsert, $forceWrite, $priority, false, true, false, $overrideCreated);
-
-        $this->callExtending("onAfterSave", $model, $priority);
+        $this->storeModel($model, $priority, $forceInsert, $forceWrite, $overrideCreated);
 
         if (PROFILE) Profiler::unmark("Controller::save");
 
         return $model;
+    }
+
+    /**
+     * @param DataObject $model
+     * @param int $priority
+     * @param bool $forceInsert
+     * @param bool $forceWrite
+     * @param bool $overrideCreated
+     */
+    protected function storeModel($model, $priority, $forceInsert, $forceWrite, $overrideCreated) {
+        $model->writeToDB($forceInsert, $forceWrite, $priority, false, true, false, $overrideCreated);
+
+        $this->onAfterSave($model, $priority, $forceInsert, $forceWrite, $overrideCreated);
+        $this->callExtending("onAfterSave", $model, $priority, $forceInsert, $forceWrite, $overrideCreated);
+    }
+
+    /**
+     * @param DataObject $model
+     * @param int $priority
+     * @param bool $forceInsert
+     * @param bool $forceWrite
+     * @param bool $overrideCreated
+     */
+    protected function onAfterSave($model, $priority, $forceInsert, $forceWrite, $overrideCreated) {
+
     }
 
     /**

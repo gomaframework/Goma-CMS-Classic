@@ -14,7 +14,7 @@ class FormDisabler extends FormDecorator {
 	/**
 	 * decorate methods
 	*/ 
-	public static $extra_methods = array(
+	protected static $extra_methods = array(
 		"reenable", "disableActions", "enableActions"
 	);
 	

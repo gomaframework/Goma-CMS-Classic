@@ -55,6 +55,10 @@ class RegisterTest extends GomaUnitTest {
         $form = $controller->handleRequest($request);
         $this->assertNotEqual("", $form->render());
 
-        DataObject::get(User::class, array("email" => "__test__@ibpg.eu"))->first()->remove(true);
+        if($user = DataObject::get(User::class, array("email" => "__test__@ibpg.eu"))->first()) {
+            $user->remove(true);
+        } else {
+            $this->assertTrue(false, "Something went wrong at registration.");
+        }
     }
 }

@@ -280,7 +280,7 @@ class TestViewClassExtendedProperty extends Extension {
 
     static $prop = "";
 
-    static $extra_methods = array(
+    protected static $extra_methods = array(
         "getProperty"
     );
 

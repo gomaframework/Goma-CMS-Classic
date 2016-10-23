@@ -141,6 +141,9 @@ class GomaResponseBody extends gObject {
     }
 
     /**
+     * defines if this response is part of a full page.
+     * false means it should stand for itself.
+     *
      * @return bool
      */
     public function isFullPage() {

@@ -166,7 +166,7 @@ class Dev extends RequestHandler {
 		makeProjectUnavailable();
 
 		// patch
-		gObject::$cache_singleton_classes = array();
+		StaticsManager::setStatic(gObject::class, "cache_singleton_classes", array(), true);
 
        	$data = self::buildDevCLI();
 

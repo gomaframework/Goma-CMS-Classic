@@ -8,20 +8,20 @@
 
 
 .tabs > ul {
-	padding: 0;
 	margin: 0;
 	list-style: none;
 	display: block;
-	padding-left: 0.5em;
-	margin-left: -0.5em;
-	padding-top: 0.25em;
-	height: 2.5em;
+	padding: 0.25em 0 0;
+	border-bottom: 1px solid #ccc;
 }
 .tabs > ul li {
 	float: left;
 	padding: 0;
 	margin: 0;
-
+}
+.tabs > ul li.clear {
+  clear: left;
+  float: none;
 }
 .tabs > ul li a, .tabs > ul li .tab {
 
@@ -98,5 +98,4 @@
 .tabs > .active, .tabs > .tab-wrapper > .active {
 	position: static;
 	clear: left;
-	border-top: 1px solid #ccc;
 }

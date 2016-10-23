@@ -160,12 +160,12 @@ function session_store_exists($key) {
  */
 function getRedirect($parentDir = false, $controller = null) {
 	// AJAX Request
-	if(Core::is_ajax() && isset($_SERVER["HTTP_X_REFERER"]) && protectUrl($_SERVER["HTTP_X_REFERER"])) {
+	if(Core::is_ajax() && isset($_SERVER["HTTP_X_REFERER"]) && isURLFromServer($_SERVER["HTTP_X_REFERER"])) {
 		return htmlentities($_SERVER["HTTP_X_REFERER"], ENT_COMPAT, "UTF-8", false);
 	}
 
 	if($parentDir) {
-		if(isset($_GET["redirect"]) && protectUrl($_GET["redirect"])) {
+		if(isset($_GET["redirect"]) && isURLFromServer($_GET["redirect"])) {
 			return htmlentities($_GET["redirect"], ENT_COMPAT, "UTF-8", false);
 		} else if(isset($controller)) {
 			return htmlentities(ROOT_PATH . BASE_SCRIPT . $controller->originalNamespace, ENT_COMPAT, "UTF-8", false);
@@ -181,7 +181,7 @@ function getRedirect($parentDir = false, $controller = null) {
 			}
 		}
 	} else {
-		if(isset($_GET["redirect"]) && protectUrl($_GET["redirect"])) {
+		if(isset($_GET["redirect"]) && isURLFromServer($_GET["redirect"])) {
 			return htmlentities($_GET["redirect"], ENT_COMPAT, "UTF-8", false);
 		} else if(isset($controller)) {
 			return htmlentities(ROOT_PATH . BASE_SCRIPT . $controller->originalNamespace, ENT_COMPAT, "UTF-8", false);
@@ -194,9 +194,12 @@ function getRedirect($parentDir = false, $controller = null) {
 	}
 }
 
-function protectUrl($url) {
+function isURLFromServer($url, $server) {
 	if(preg_match('/^(http|https|ftp)\:\/\/(.*)/i', $url, $matches)) {
-		$server = $_SERVER["SERVER_NAME"];
+		if(!isset($server)) {
+			$server = $_SERVER["SERVER_NAME"];
+		}
+
 		if(strtolower(substr($matches[2], 0, strlen($server))) != strtolower($server)) {
 			return "";
 		} else {
@@ -715,7 +718,8 @@ function Goma_ExceptionHandler($exception) {
 
 	log_exception($exception);
 
-	$details = $exception->getMessage() . "\n<br />\n<br />\n<textarea style=\"width: 100%; height: 300px;\">" . $exception->getTraceAsString() . "</textarea>";
+	$details = $exception->getMessage() . "\n<br />"." in ".
+		$exception->getFile() . " on line ".$exception->getLine() . ".\n<br />\n<textarea style=\"width: 100%; height: 300px;\">" . $exception->getTraceAsString() . "</textarea>";
 	$current = $exception;
 	while($current = $current->getPrevious()) {
 		$details .= $current->getMessage() . "\n<br />\n<br />\n<textarea style=\"width: 100%; height: 300px;\">" . $current->getTraceAsString() . "</textarea>";
@@ -741,11 +745,14 @@ function Goma_ExceptionHandler($exception) {
 	exit($exception->getCode() != 0 ? $exception->getCode() : 8);
 }
 
-
-function log_exception(Exception $exception) {
+/**
+ * @param Throwable $exception
+ */
+function log_exception($exception) {
 	$uri = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : (isset($_SERVER["argv"]) ? implode(" ", $_SERVER["argv"]) : null);
 
-	$message = get_class($exception) . " " . $exception->getCode() . ":\n\n" . $exception->getMessage() . "\n\n Backtrace: " . $exception->getTraceAsString();
+	$message = get_class($exception) . " " . $exception->getCode() . ":\n\n" . $exception->getMessage() . " in ".
+		$exception->getFile() . " on line ".$exception->getLine().".\n\n Backtrace: " . $exception->getTraceAsString();
 	$current = $exception;
 	while($current = $current->getPrevious()) {
 		$message .= "\nPrevious: " . $current->getMessage() . "\n" . $current->getTraceAsString();

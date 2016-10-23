@@ -19,7 +19,7 @@ class AutoCompleterField extends ControllerExtension {
 	/**
 	 * extend methods
 	 */
-	static $extra_methods = array("autocomplete_search");
+	protected static $extra_methods = array("autocomplete_search");
 
 	/**
 	 * data

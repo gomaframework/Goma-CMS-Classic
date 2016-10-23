@@ -26,6 +26,11 @@ class TabSet extends FieldSet
     protected $template = "form/TabSet.html";
 
     /**
+     * @var bool
+     */
+    protected $hideTabsIfOnlyOne = false;
+
+    /**
      * @param string|null $name
      * @param array $fields
      * @param Form|null $form
@@ -61,6 +66,23 @@ class TabSet extends FieldSet
         if($notifyField) {
             $this->callExtending("afterRenderFormResponse", $info);
         }
+    }
+
+    /**
+     * @return FormFieldRenderData
+     */
+    public function createsRenderDataClass()
+    {
+        return TabSetRenderData::create($this->name, $this->classname, $this->ID(), $this->divID());
+    }
+
+    /**
+     * @param null $fieldErrors
+     * @return mixed
+     */
+    public function exportBasicInfo($fieldErrors = null)
+    {
+        return parent::exportBasicInfo($fieldErrors)->setShouldRenderTabsIfOnlyOne(!$this->hideTabsIfOnlyOne);
     }
 
     /**
@@ -134,6 +156,24 @@ class TabSet extends FieldSet
     public function setActiveTab($activeTab)
     {
         $this->activeTab = $activeTab;
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isHideTabsIfOnlyOne()
+    {
+        return $this->hideTabsIfOnlyOne;
+    }
+
+    /**
+     * @param boolean $hideTabsIfOnlyOne
+     * @return $this
+     */
+    public function setHideTabsIfOnlyOne($hideTabsIfOnlyOne)
+    {
+        $this->hideTabsIfOnlyOne = $hideTabsIfOnlyOne;
         return $this;
     }
 }

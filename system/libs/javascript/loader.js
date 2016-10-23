@@ -1247,6 +1247,10 @@ if (window.loader === undefined) {
 			scrollPosition -= $("#frontedbar").height();
 		}
 
+		if (scrollPosition != 0 && $("#head").length == 1) {
+			scrollPosition -= $("#head").height();
+		}
+
 		var scroll = $(window).scrollTop();
 		window.location.hash = hash;
 		$(window).scrollTop(scroll);

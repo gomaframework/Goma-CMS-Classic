@@ -684,7 +684,7 @@ $lang = array(
 
 	"optional"					=> "optional",
 
-
+	"move"				=> "move",
     "moveContentBlock"  => "Move content-block",
     "removeContentBlock"=> "Delete content-block",
 

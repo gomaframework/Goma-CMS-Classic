@@ -175,8 +175,6 @@
                                                 goma.ui.CSSIncluded[file] = true;
 
                                                 $("head").prepend('<style type="text/css" id="css_'+file.replace(/[^a-zA-Z0-9_\-]/g, "_")+'">'+css+'</style>');
-                                            }).fail(function () {
-                                                deferred.reject();
                                             }).always(function(){
                                                 if (goma.ui.progress !== undefined && p) {
                                                     goma.ui.setProgress(goma.ui.progress + perProgress);
@@ -224,8 +222,6 @@
                                         }).done(function (js) {
                                             // build into internal cache
                                             goma.ui.JSFiles[file] = js;
-                                        }).fail(function () {
-                                            deferred.reject();
                                         }).always(function(){
                                             if (goma.ui.progress !== undefined && p) {
                                                 goma.ui.setProgress(goma.ui.progress + perProgress);

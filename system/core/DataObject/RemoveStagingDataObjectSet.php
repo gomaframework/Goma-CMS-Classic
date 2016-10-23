@@ -114,7 +114,7 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
         parent::writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, $exceptions, $errorRecords);
 
         if(!isset($options["callRemove"]) || $options["callRemove"] === true)
-            $this->commitRemoveStaging($repository, $forceWrite, $snap_priority, $repository);
+            $this->commitRemoveStaging($repository, $forceWrite, $snap_priority);
     }
 
     /**
@@ -132,7 +132,7 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
      * @param IModelRepository $repository
      * @return mixed
      */
-    abstract public function commitRemoveStaging($repository, $forceWrite = false, $snap_priority = 2, $repository = null);
+    abstract public function commitRemoveStaging($repository, $forceWrite = false, $snap_priority = 2);
 
     /**
      * @param array|string $filter

@@ -675,6 +675,7 @@ $lang = array(
 	"this_version"		=> "Diese Version",
 	"versions"			=> "Versionen",
 
+	"move"				=> "Verschieben",
     "moveContentBlock"  => "Inhaltsblock verschieben",
     "removeContentBlock"=> "Inhaltsblock löschen",
 

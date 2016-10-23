@@ -268,7 +268,7 @@ class TestObject extends gObject {
 }
 
 class TestObjectExtension extends Extension {
-	static $extra_methods = array(
+	protected static $extra_methods = array(
 		"extra_method"
 	);
 
