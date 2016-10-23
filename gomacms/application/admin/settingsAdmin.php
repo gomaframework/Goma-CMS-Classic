@@ -1,4 +1,6 @@
 <?php
+use Goma\CMS\admin\SettingsAdminCategories;
+
 defined("IN_GOMA") OR die();
 
 /**
@@ -33,57 +35,17 @@ class settingsAdmin extends adminItem
 		return "admin/history/newsettings";
 	}
 
-	public function index() {
-		$form = $this->Form();
-
-		if(is_string($form)) {
-			$this->tplVars["form"] = $form;
-			return parent::index();
-		} else {
-			return $form;
-		}
-	}
-
 	/**
-	 * generates the form
-	 */
-	public function Form() {
-		$data = DataObject::get("newsettings", array("id" => 1))->first();
-		return parent::Form(null, $data);
-	}
-
-	/**
-	 * writes correct settings to correct location
-	 *
-	 * @param array $data
-	 * @param Form|null $form
-	 * @param null $model
-	 * @return string|void
+	 * @param Request $request
+	 * @param bool $subController
+	 * @return false|mixed|null|string
 	 * @throws Exception
 	 */
-	public function submit_form($data, $form, $model = null) {
-		if(isset($data["lang"], $data["status"], $data["timezone"], $data["date_format_date"])) {
-			if(!file_exists(ROOT . LANGUAGE_DIRECTORY . $data["lang"])) {
-				throw new LogicException("Selected language is not existing!");
-			}
+	public function handleRequest($request, $subController = false) {
+		$this->Init($request);
 
-			$status = (SITE_MODE == STATUS_DISABLED) ? STATUS_DISABLED : $data["status"];
-			writeProjectConfig(array(	'lang' => $data["lang"],
-					"status" => $status,
-					"safe_mode" => isset($data["safe_mode"]) ? $data["safe_mode"] : FileSystem::$safe_mode,
-					"timezone" => $data["timezone"],
-					"date_format_date" => $data["date_format_date"],
-					"date_format_time" => $data["date_format_time"]));
-
-			if(isset($data["safe_mode"]) && FileSystem::$safe_mode != $data["safe_mode"]) {
-				FileSystem::$safe_mode = (bool) $data["safe_mode"];
-				register_shutdown_function(array("settingsAdmin", "upgradeSafeMode"));
-			}
-		} else {
-			throw new LogicException("settingsAdmin::submit_form needs at least lang, status, timezone and date_format_date.");
-		}
-
-		return parent::safe($data, $form, $model);
+		$controller = new SettingsAdminCategories();
+		return $controller->handleRequest($request, true);
 	}
 
 	/**

@@ -1118,7 +1118,7 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
 
             $nodes = array();
             foreach($data as $record) {
-                $node = new TreeNode($record->classname . "_" . $record->versionid, $record->id, $record->title, $record->class);
+                $node = new TreeNode($record->classname . "_" . $record->versionid, $record->id, $record->title, $record->classname);
 
                 // add a bubble for changed or new pages.
                 if(!$record->isPublished())
@@ -1160,7 +1160,7 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
 
             $nodes = array();
             foreach($data as $record) {
-                $node = new TreeNode($record->classname . "_" . $record->versionid, $record->id, $record->title, $record->class);
+                $node = new TreeNode($record->classname . "_" . $record->versionid, $record->id, $record->title, $record->classname);
 
                 // add a bubble for changed or new pages.
                 if(!$record->isPublished())

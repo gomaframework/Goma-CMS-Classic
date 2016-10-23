@@ -80,47 +80,22 @@ class Newsettings extends DataObject implements HistoryData {
 	 * @param Form $form
 	 */
 	public function getForm(&$form) {
-		$tabs = new TabSet("tabs", array(), $form);
+		$this->getFormFromDB($form);
+		$form->add(new langselect('lang',lang("lang"),PROJECT_LANG));
+		$form->add(new select("timezone",lang("timezone"), ArrayLib::key_value(i18n::$timezones), PROJECT_TIMEZONE));
+		$form->add($date_format = new Select("date_format_date", lang("date_format"), $this->generateDate(), DATE_FORMAT_DATE));
+		$form->add($date_format = new Select("date_format_time", lang("time_format"), $this->generateTIME(), DATE_FORMAT_TIME));
 
-		$tabs->add($general = new Tab("general", array(), lang("settings_normal", "General")));
-		$this->getFormFromDB($general);
-		$general->add(new langselect('lang',lang("lang"),PROJECT_LANG));
-		$general->add(new select("timezone",lang("timezone"), ArrayLib::key_value(i18n::$timezones), PROJECT_TIMEZONE));
-		$general->add($date_format = new Select("date_format_date", lang("date_format"), $this->generateDate(), DATE_FORMAT_DATE));
-		$general->add($date_format = new Select("date_format_time", lang("time_format"), $this->generateTIME(), DATE_FORMAT_TIME));
-
-		$general->add($status = new select('status',lang("site_status"),array(STATUS_ACTIVE => lang("SITE_ACTIVE"), STATUS_MAINTANANCE => lang("SITE_MAINTENANCE")), SITE_MODE));
+		$form->add($status = new select('status',lang("site_status"),array(STATUS_ACTIVE => lang("SITE_ACTIVE"), STATUS_MAINTANANCE => lang("SITE_MAINTENANCE")), SITE_MODE));
 		
 		if(STATUS_DISABLED) {
 			$status->disable();
 		}
 
-		$tabs->add(new Tab("security", array(
-			$safe_mode = new Checkbox("safe_mode", lang("safe_mode"), FileSystem::$safe_mode)
-		),lang("security")));
-
-		$safe_mode->info = lang("safe_mode_info");
-			
 		$status->info = lang("sitestatus_info");
 
-		$this->generateSubClassForm($form);
-		
 		$form->addAction(new CancelButton('cancel',lang("cancel")));
 		$form->addAction(new FormAction("submit", lang("save"), null, array("green")));
-	}
-
-	/**
-	 * generates form for subClasses.
-	 * @param Form $form
-	 */
-	public function generateSubClassForm(&$form) {
-		$tabs = $form->tabs;
-		foreach(ClassInfo::getChildren("newsettings") as $child) {
-			$tabs->add($currenttab = new Tab($child, array(),parse_lang(gObject::instance($child)->tab)));
-			$inst = new $child($this->data);
-			// sync data
-			$inst->getFormFromDB($currenttab);
-		}
 	}
 
 	/**
