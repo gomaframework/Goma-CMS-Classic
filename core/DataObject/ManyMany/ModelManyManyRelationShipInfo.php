@@ -199,10 +199,10 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      */
     public function getOwnerField() {
         if(!$this->controlling && ClassManifest::classesRelated($this->owner, $this->targetClass)) {
-            return $this->owner . "_" . $this->owner . "id";
+            return str_replace("\\", "_", $this->owner) . "_" . str_replace("\\", "_", $this->owner) . "id";
         }
 
-        return $this->owner . "id";
+        return str_replace("\\", "_", $this->owner) . "id";
     }
 
     /**
@@ -212,10 +212,10 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      */
     public function getTargetField() {
         if($this->controlling && ClassManifest::classesRelated($this->owner, $this->targetClass)) {
-            return $this->targetClass . "_" . $this->targetClass . "id";
+            return str_replace("\\", "_", $this->targetClass) . "_" . str_replace("\\", "_", $this->targetClass) . "id";
         }
 
-        return $this->targetClass . "id";
+        return str_replace("\\", "_", $this->targetClass) . "id";
     }
 
     /**
@@ -225,10 +225,10 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      */
     public function getOwnerSortField() {
         if(!$this->controlling && ClassManifest::classesRelated($this->owner, $this->targetClass)) {
-            return $this->owner . "_" . $this->owner . "_sort";
+            return str_replace("\\", "_", $this->owner) . "_" . str_replace("\\", "_", $this->owner) . "_sort";
         }
 
-        return $this->owner . "_sort";
+        return str_replace("\\", "_", $this->owner) . "_sort";
     }
 
     /**
@@ -238,10 +238,10 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      */
     public function getTargetSortField() {
         if($this->controlling && ClassManifest::classesRelated($this->owner, $this->targetClass)) {
-            return $this->targetClass . "_" . $this->targetClass . "_sort";
+            return str_replace("\\", "_", $this->targetClass) . "_" . str_replace("\\", "_", $this->targetClass) . "_sort";
         }
 
-        return $this->targetClass . "_sort";
+        return str_replace("\\", "_", $this->targetClass) . "_sort";
     }
 
     /**
@@ -313,9 +313,9 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      */
     protected function getNewTableName() {
         if($this->controlling) {
-            return "many_" . $this->owner . "_" . $this->relationShipName;
+            return "many_" . str_replace("\\", "_", $this->owner) . "_" . $this->relationShipName;
         } else {
-            return "many_" . $this->targetClass . "_" . $this->inverse;
+            return "many_" . str_replace("\\", "_", $this->targetClass) . "_" . str_replace("\\", "_", $this->inverse);
         }
     }
 
@@ -326,9 +326,11 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      */
     protected function getOldTableName() {
         if($this->controlling) {
-            return "many_many_" . $this->owner . "_" . $this->relationShipName . "_" . $this->targetClass;
+            return "many_many_" . str_replace("\\", "_", $this->owner) . "_" . $this->relationShipName . "_" .
+            str_replace("\\", "_", $this->targetClass);
         } else {
-            return "many_many_" . $this->targetClass . "_" . $this->inverse . "_" . $this->owner;
+            return "many_many_" . str_replace("\\", "_", $this->targetClass) . "_" .
+            str_replace("\\", "_", $this->inverse) . "_" . str_replace("\\", "_", $this->owner);
         }
     }
 

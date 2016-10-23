@@ -387,7 +387,8 @@ class ClassInfo extends gObject {
 
 	/**
 	 * gets the icon of a class
-	 *
+	 * @param string $class
+	 * @return bool|null|string
 	 */
 	public static function getClassIcon($class) {
 		if(StaticsManager::hasStatic($class, "icon")) {
@@ -606,9 +607,11 @@ class ClassInfo extends gObject {
 
 					// ci-funcs
 					// that are own function, for generating class-info
-					foreach(StaticsManager::getStatic($class, "ci_funcs") as $name => $func) {
-						self::$class_info[$class][$name] = StaticsManager::callStatic($class, $func);
-						unset($name, $func);
+					if($classInfoFuncs = StaticsManager::getStatic($class, "ci_funcs", true)) {
+						foreach ($classInfoFuncs as $name => $func) {
+							self::$class_info[$class][$name] = StaticsManager::callStatic($class, $func, true);
+							unset($name, $func);
+						}
 					}
 				}
 
@@ -618,17 +621,18 @@ class ClassInfo extends gObject {
 			foreach(self::$class_info as $class => $data) {
 				if(!ClassInfo::isAbstract($class)) {
 					if(ClassInfo::hasInterface($class, "PermProvider")) {
-						$c = new $class();
-						Permission::addPermissions($c->providePerms());
+                        /** @var PermProvider|gObject $currentClassInstance */
+                        $currentClassInstance = new $class();
+						Permission::addPermissions($currentClassInstance->providePerms());
 					}
 
 					if(gObject::method_exists($class, "generateClassInfo")) {
-						if(!isset($c))
-							$c = new $class;
-						$c->generateClassInfo();
+						if(!isset($currentClassInstance))
+							$currentClassInstance = new $class;
+						$currentClassInstance->generateClassInfo();
 					}
 
-					unset($c);
+					unset($currentClassInstance);
 				}
 
 				if(isset($data["interface"])) {
@@ -654,8 +658,6 @@ class ClassInfo extends gObject {
 
 			// reappend
 			self::$class_info["permission"]["providedPermissions"] = Permission::$providedPermissions;
-
-
 
 			if(PROFILE)
 				Profiler::unmark("classinfo_renderafter");
@@ -686,8 +688,8 @@ class ClassInfo extends gObject {
 
 			define("CLASS_INFO_GENERATED", true);
 
-			gObject::$cache_singleton_classes = array();
-			// class_info reset
+            // class_info reset
+            StaticsManager::setStatic(gObject::class, "cache_singleton_classes", array(), true);
 
 			// run hooks
 			if(self::$ClassInfoHooks) {
@@ -722,7 +724,8 @@ class ClassInfo extends gObject {
 				return;
 			}
 
-			if(!isset($root) || $root != ROOT || !isset($version) || version_compare($version, self::VERSION, "<")) {
+            /** @var string $version */
+            if(!isset($root) || $root != ROOT || !isset($version) || version_compare($version, self::VERSION, "<")) {
 				ClassInfo::delete();
 				clearstatcache();
 				ClassInfo::loadfile();
@@ -887,8 +890,10 @@ class ClassInfo extends gObject {
 					}
 					// ci-funcs
 					// that are own function, for generating class-info
-					foreach(StaticsManager::getStatic($class, "ci_funcs", true) as $name => $func) {
-						self::$class_info[$class][$name] = StaticsManager::callStatic($class, $func);
+					if($classInfoFuncs = StaticsManager::getStatic($class, "ci_funcs", true)) {
+						foreach ($classInfoFuncs as $name => $func) {
+							self::$class_info[$class][$name] = StaticsManager::callStatic($class, $func);
+						}
 					}
 
 					if(isset(self::$class_info[$class]["interfaces"])) {
@@ -966,7 +971,8 @@ class ClassInfo extends gObject {
 		// first consolidate data
 		if(self::$childData == array() && file_exists(ROOT . CACHE_DIRECTORY . ".children" . CLASS_INFO_DATAFILE)) {
 			include (ROOT . CACHE_DIRECTORY . ".children" . CLASS_INFO_DATAFILE);
-			if($children === null) {
+            /** @var array $children */
+            if($children === null) {
 				self::delete();
 				return;
 			}

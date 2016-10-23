@@ -292,7 +292,7 @@ class Form extends AbstractFormComponentWithChildren {
 		Resources::add("system/form/form.js", "js", "tpl");
 
 		if(!isset($this->fields["redirect"]))
-			$this->add(new HiddenField("redirect", getredirect()));
+			$this->add(new HiddenField("redirect", $this->controller->getRedirect($this)));
 	}
 
 	/**
@@ -926,10 +926,12 @@ class Form extends AbstractFormComponentWithChildren {
 	/**
 	 * sets the default submission
 	 * @param string|array $submission
+	 * @return $this
 	 */
 	public function setSubmission($submission) {
 		if (is_callable($submission) || gObject::method_exists($this->controller, $submission)) {
 			$this->submission = $submission;
+			return $this;
 		} else {
 			throw new LogicException("Unknown Function '$submission'' for Controller {$this->controller->classname}.");
 		}

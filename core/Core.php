@@ -101,7 +101,7 @@ class Core extends gObject {
             ob_start();
 
 		StaticsManager::addSaveVar("gObject", "extensions");
-		StaticsManager::addSaveVar("gObject", "extra_methods");
+		StaticsManager::addSaveVar("gObject", "all_extra_methods");
 		StaticsManager::AddSaveVar(Core::class, "hooks");
 		StaticsManager::AddSaveVar(Core::class, "cmsVarCallbacks");
 		StaticsManager::AddSaveVar("Director", "rules");
@@ -280,6 +280,14 @@ class Core extends gObject {
 	public static function setTitle($title) {
 		self::$title = convert::raw2text($title);
 		return true;
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getTitle()
+	{
+		return self::$title;
 	}
 
 	/**
@@ -575,20 +583,6 @@ class Core extends gObject {
 	 */
 	public static function adminAsUser() {
 		return (!defined("IS_BACKEND") && GlobalSessionManager::globalSession()->hasKey(SystemController::ADMIN_AS_USER));
-	}
-
-	//!Rendering-Methods
-	/**
-	 * Rendering-Methods
-	 */
-
-	/**
-	 * serves the output given
-	 *
-	 *@param string - content
-	 */
-	public static function serve($output) {
-		Director::serve($output);
 	}
 
 	/**

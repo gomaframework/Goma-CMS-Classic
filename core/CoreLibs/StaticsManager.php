@@ -117,15 +117,27 @@ class StaticsManager {
      *
      * @param string|gObject $class Name of the class.
      * @param string $func Name of the function.
+     * @param bool $ignoreAccess
      *
      * @return mixed return value of call
      */
-    public static function callStatic($class, $func)
+    public static function callStatic($class, $func, $ignoreAccess = false)
     {
         $class = self::validate_static_call($class, $func);
 
-        if (is_callable(array($class, $func))) {
-            return call_user_func_array(array($class, $func), array($class));
+        $reflectionClass = new ReflectionClass($class);
+        if($reflectionClass->hasMethod($func)) {
+            $method = $reflectionClass->getMethod($func);
+
+            if($ignoreAccess) {
+                $method->setAccessible(true);
+            } else if($method->isProtected()) {
+                throw new BadMethodCallException('Call to protected method ' . $class . '::' . $func);
+            } else if($method->isPrivate()) {
+                throw new BadMethodCallException('Call to private method ' . $class . '::' . $func);
+            }
+
+            return $method->invoke(null, array($class));
         } else {
             throw new BadMethodCallException('Call to unknown method ' . $class . '::' . $func);
         }

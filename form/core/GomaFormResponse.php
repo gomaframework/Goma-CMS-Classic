@@ -398,6 +398,14 @@ class GomaFormResponse extends GomaResponse {
     }
 
     /**
+     * @return bool
+     */
+    public function isFullPage()
+    {
+        return $this->isStringResponse();
+    }
+
+    /**
      * @param Callable $function
      * @return $this
      */

@@ -15,6 +15,7 @@
 .profile-content {
 	margin-left: 170px;
 	padding: 1px;
+	overflow: auto;
 }
 .profile-actions {
 	margin-top: 3px;

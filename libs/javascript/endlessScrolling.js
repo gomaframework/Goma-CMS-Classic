@@ -7,6 +7,8 @@
  * @version 1.1
  */
 var endlessScroller = function(options) {
+    this.baseElement = $("body");
+
     for(var i in options) {
         if(options.hasOwnProperty(i)) {
             this[i] = options[i];
@@ -20,7 +22,6 @@ var endlessScroller = function(options) {
 };
 
 endlessScroller.prototype = {
-    baseElement: $(window),
     scrollElement: $(window),
     endlessElement: null,
     urlProperty: "data-url",

@@ -71,9 +71,10 @@ class Director extends gObject {
     /**
      * serves the output given
      *
-     *@param string - content
+     * @param $output
+     * @param $request
      */
-    public static function serve($output) {
+    public static function serve($output, $request = null) {
         if(PROFILE)
             Profiler::unmark("render");
 
@@ -83,19 +84,18 @@ class Director extends gObject {
         Core::callHook("serve", $output);
 
         if(isset(self::$requestController)) {
-            if(is_a($output, "GomaResponse")) {
-                /** @var GomaResponse $output */
-                if($output->shouldServe()) {
-                    $body = $output->getBody();
-                    $output->setBodyString(self::$requestController->serve($output->getResponseBodyString(), $body));
-                }
-            } else {
-                if(is_a($output, "GomaResponseBody")) {
-                    /** @var GomaResponseBody $output */
-                    $output->setBody(self::$requestController->serve($output->getBody(), $output));
-                } else {
-                    $output = self::$requestController->serve($output, new GomaResponseBody($output));
-                }
+            if(self::$requestController->getRequest() == null) {
+                self::$requestController->setRequest($request);
+            }
+
+            /** @var GomaResponse|GomaResponseBody|string $output */
+            if(!is_a($output, GomaResponse::class) || $output->shouldServe()) {
+                $output = self::setStringToResponse($output,
+                    self::$requestController->serve(
+                        self::getStringFromResponse($output),
+                        self::getBodyObjectFromResponse($output)
+                    )
+                );
             }
         }
         if(PROFILE)
@@ -118,6 +118,81 @@ class Director extends gObject {
     }
 
     /**
+     * @param string|GomaResponse|GomaResponseBody $response
+     * @return GomaResponse|GomaResponseBody
+     */
+    public static function getBodyObjectFromResponse($response) {
+        if(is_a($response, "GomaResponse")) {
+            /** @var GomaResponse $response */
+            return $response->getBody();
+        }
+
+        if(is_a($response, "GomaResponseBody")) {
+            /** @var GomaResponseBody $response */
+            return $response;
+        }
+
+        return new GomaResponseBody($response);
+    }
+
+    /**
+     * @param string|GomaResponse|GomaResponseBody $response
+     * @return bool
+     */
+    public static function isResponseFullPage($response) {
+        if(is_a($response, "GomaResponse")) {
+            /** @var GomaResponse $response */
+            return $response->isFullPage();
+        }
+
+        if(is_a($response, "GomaResponseBody")) {
+            /** @var GomaResponseBody $response */
+            return $response->isFullPage();
+        }
+
+        return true;
+    }
+
+    /**
+     * @param string|GomaResponse|GomaResponseBody $response
+     * @return string|mixed
+     */
+    public static function getStringFromResponse($response) {
+        if(is_a($response, "GomaResponse")) {
+            /** @var GomaResponse $response */
+            return $response->getResponseBodyString();
+        }
+
+        if(is_a($response, "GomaResponseBody")) {
+            /** @var GomaResponseBody $response */
+            return $response->getBody();
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param string|GomaResponse|GomaResponseBody $response
+     * @param string $content
+     * @return string|GomaResponse|GomaResponseBody|mixed
+     */
+    public static function setStringToResponse($response, $content) {
+        if(is_a($response, "GomaResponse")) {
+            /** @var GomaResponse $response */
+            $response->setBodyString($content);
+            return $response;
+        }
+
+        if(is_a($response, "GomaResponseBody")) {
+            /** @var GomaResponseBody $response */
+            $response->setBody($content);
+            return $response;
+        }
+
+        return $content;
+    }
+
+        /**
      * renders the page
      * @param string $url
      * @return string|void
@@ -169,7 +244,7 @@ class Director extends gObject {
             /** @var RequestHandler $inst */
             $data = $inst->handleRequest($ruleMatcher->getCurrentRequest());
             if($data !== false && $data !== null) {
-                self::serve($data);
+                self::serve($data, $request);
                 return;
             }
         }

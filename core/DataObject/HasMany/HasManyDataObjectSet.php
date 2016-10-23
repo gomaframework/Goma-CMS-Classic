@@ -158,12 +158,11 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
      * @param IModelRepository $repository
      * @param bool $forceWrite
      * @param int $snap_priority
-     * @param IModelRepository|null $repository
      * @return mixed
      * @throws MySQLException
      * @throws PermissionException
      */
-    public function commitRemoveStaging($repository, $forceWrite = false, $snap_priority = 2, $repository = null) {
+    public function commitRemoveStaging($repository, $forceWrite = false, $snap_priority = 2) {
         /** @var DataObject $item */
         foreach ($this->removeStaging as $item) {
             if($this->relationShipInfo()->shouldRemoveData()) {

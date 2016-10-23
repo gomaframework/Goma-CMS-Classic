@@ -18,7 +18,7 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
     /**
      * extra-methods.
      */
-    public static $extra_methods = array(
+    protected static $extra_methods = array(
         "HasOne",
         "GetHasOne"
     );

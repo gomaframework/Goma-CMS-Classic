@@ -274,7 +274,7 @@ class Uploads extends DataObject {
      * @param string $filename
      * @return string
      */
-    protected function buildPath($collection, $filename) {
+    protected static function buildPath($collection, $filename) {
         return strtolower(self::cleanUpURL($collection->hash())) . "/" . randomString(6) . "/" . self::cleanUpURL($filename);
     }
 

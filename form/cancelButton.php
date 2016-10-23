@@ -13,11 +13,13 @@ class CancelButton extends FormAction
 {
     /**
      * the javascript for this button on cancel
-     *
-     * @name js
-     * @access public
      */
     public $js;
+
+    /**
+     * @var null|string
+     */
+    protected $redirect;
 
     /**
      * @name __construct
@@ -31,7 +33,6 @@ class CancelButton extends FormAction
     {
         $this->js = $js;
         parent::__construct($name, $value);
-        $this->redirect = ($redirect === null) ? getredirect() : $redirect;
     }
 
     /**
@@ -77,14 +78,29 @@ class CancelButton extends FormAction
      * @return GomaResponse
      */
     public function redirect() {
-        if ($this->redirect !== null)
+        if($this->redirect) {
             return GomaResponse::redirect($this->redirect);
-        else if (isset($this->form()->getRequest()->post_params["redirect"]))
-            return GomaResponse::redirect($this->form()->getRequest()->post_params["redirect"]);
-        else if (isset($this->form()->getRequest()->get_params["redirect"]))
-            return GomaResponse::redirect($this->form()->getRequest()->get_params["redirect"]);
-        else
-            return GomaResponse::redirect(BASE_URI);
+        }
 
+        return GomaResponse::redirect($this->form()->getController()->getRedirect());
+
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getRedirect()
+    {
+        return $this->redirect;
+    }
+
+    /**
+     * @param null|string $redirect
+     * @return $this
+     */
+    public function setRedirect($redirect)
+    {
+        $this->redirect = $redirect;
+        return $this;
     }
 }

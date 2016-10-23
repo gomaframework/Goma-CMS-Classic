@@ -350,7 +350,9 @@ var LaM_type_timeout;
 								type: 'post',
 								error: function(e)
 								{
-									alert(e);
+									if(e.statusText != "abort" && e.readyState > 0) {
+										alert(e);
+									}
 								},
 								success: function(html, code, jqXHR)
 								{

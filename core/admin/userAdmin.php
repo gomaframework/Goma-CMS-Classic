@@ -182,4 +182,20 @@ class userAdmin extends adminItem {
 		
 		return parent::actionComplete($action, $record);
 	}
+
+	/**
+	 * @return false|mixed|null|string
+	 * @throws Exception
+	 */
+	public function edit()
+	{
+		/** @var DataObject $model */
+		if($model = $this->getSingleModel()) {
+			Core::setTitle($model->title);
+
+			$editController = new \Goma\Security\Controller\EditProfileController();
+			$editController->setModelInst($model);
+			return $editController->handleRequest($this->request, true);
+		}
+	}
 }

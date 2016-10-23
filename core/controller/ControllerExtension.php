@@ -22,11 +22,6 @@ abstract class ControllerExtension extends Controller implements ExtensionModel 
     public $allowed_actions = array();
 
     /**
-     * extra_methods
-     */
-    public static $extra_methods = array();
-
-    /**
      * the owner-class
      *
      * @var RequestHandler

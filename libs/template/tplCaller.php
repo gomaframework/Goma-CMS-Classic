@@ -13,24 +13,25 @@ class tplCaller extends gObject
 {
     /**
      * goma adds all caller in CONTROL xxx to this var
+     * @internal
      */
     public $callers = array();
 
     /**
      * current template-file
      */
-    public $tpl;
+    protected $tpl;
 
     /**
      * current template-base
      */
-    public $tplBase;
+    protected $tplBase;
 
     /**
      * sub-path, for example admin/ or history/
      * so this is not connected with template-root
      */
-    public $subPath;
+    protected $subPath;
 
     /**
      * this var contains the dataobject for this caller
@@ -69,10 +70,13 @@ class tplCaller extends gObject
      */
     public function setTplPath($tpl)
     {
-
         $this->tplBase = substr($tpl, 0, strrpos($tpl, "/"));
-        if (substr($this->tplBase, 0, strlen(ROOT)) == ROOT)
+        if (substr($this->tplBase, 0, strlen(ROOT)) == ROOT) {
             $this->tplBase = substr($this->tplBase, strlen(ROOT));
+            while(substr($this->tplBase, 0, 1) == "/") {
+                $this->tplBase = substr($this->tplBase, 1);
+            }
+        }
 
         if (substr(SYSTEM_TPL_PATH, -1) == "/") {
             $systemL = strlen(SYSTEM_TPL_PATH) + 1;
@@ -329,6 +333,7 @@ class tplCaller extends gObject
                     return "";
                 }
             }
+
             if (self::file_exists($this->tplBase . "/" . $name)) {
                 $name = $this->tplBase . "/" . $name;
             }
