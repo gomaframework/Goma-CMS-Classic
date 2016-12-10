@@ -62,12 +62,13 @@ class VirtualPageController extends PageController {
 	 * @return bool|string
 	 */
 	public function index() {
-		$model = $this->modelInst()->regardingPage();
-		$model->title = $this->modelInst()->title;
-		if(is_object($model->controller())) {
-			return $model->controller()->index();
-		} else {
-			throw new LogicException("VirtualPage must have an regarding Page, but regarding page seems missing or incompabible.");
+		if($model = $this->modelInst()->regardingPage()) {
+			$model->title = $this->modelInst()->title;
+			if (is_object($model->controller())) {
+				return $model->controller()->index();
+			} else {
+				throw new LogicException("VirtualPage must have an regarding Page, but regarding page seems missing or incompabible.");
+			}
 		}
 	}
 }

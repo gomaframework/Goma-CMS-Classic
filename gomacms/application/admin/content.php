@@ -283,17 +283,14 @@ class contentAdmin extends LeftAndMain {
         $controller->selectModel($model, true);
         $form = new Form($controller, "add_page");
 
-        if (isset($this->request->get_params["parentid"]) && $this->request->get_params["parentid"] != 0) {
-            $form->setModel(new Page(array(
-                "parenttype" => "subpage",
-                "parentid"   => $this->request->get_params["parentid"]
-            )));
+        if (isset($this->request->get_params["parentid"]) && $this->request->get_params["parentid"]) {
+            $model->parenttype = "subpage";
+            $model->parentid = $this->request->get_params["parentid"];
         } else {
-            $form->setModel(new Page(array(
-                "parenttype" => "root",
-                "parentid"   => 0
-            )));
+            $model->parenttype = "root";
         }
+
+        $form->setModel($model);
 
         $form->useStateData = true;
 
