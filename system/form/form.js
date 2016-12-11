@@ -24,6 +24,7 @@ if(typeof goma == "undefined")
 
 		this.id = id;
 		this.form = $("#" + id);
+		this.form.attr("action", this.form.attr("action") + location.hash);
 
 		this.form.bind("formsubmit",function(){
 			that.form.addClass("leave_check");

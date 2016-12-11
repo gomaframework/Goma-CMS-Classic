@@ -331,9 +331,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	/**
 	 * this function returns the current data as an array
 	 *
+	 * @param array $additional_fields unused here
 	 * @return array
 	 */
-	public function ToArray()
+	public function ToArray($additional_fields = array())
 	{
 		$this->forceData();
 		return $this->items;
@@ -1482,14 +1483,14 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		// render form
 		if($edit) {
-			$this->modelSource()->getEditForm($form);
+			$model->getEditForm($form);
 		} else {
-			$this->modelSource()->getForm($form);
+			$model->getForm($form);
 		}
 
-		$this->modelSource()->callExtending('getForm', $form, $edit);
-		$this->modelSource()->getActions($form, $edit);
-		$this->modelSource()->callExtending('getActions', $form, $edit);
+		$model->callExtending('getForm', $form, $edit);
+		$model->getActions($form, $edit);
+		$model->callExtending('getActions', $form, $edit);
 
 		return $form;
 	}
@@ -1782,5 +1783,18 @@ class DataObjectSetCommitException extends GomaException {
 
 		$this->exceptions = $exceptions;
 		$this->records = $records;
+	}
+
+	public function getDeveloperMessage()
+	{
+		$message =  parent::getDeveloperMessage();
+
+		foreach($this->exceptions as $exception) {
+			$message .= get_class($exception) . ": " . $exception->getCode() . ": " . $exception->getMessage() . " in ".
+            $exception->getFile() . " on line ".$exception->getLine() . "\n" .
+			exception_get_dev_message($exception) . "\n" . $exception->getTraceAsString() . "\n\n";
+		}
+
+        return $message;
 	}
 }

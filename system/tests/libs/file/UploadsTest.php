@@ -51,7 +51,7 @@ class UploadsTest extends GomaUnitTest {
 
 	public function testAddExistsAndRemove() {
 		// store first file.
-		$file = Uploads::addFile("1" . $this->filename, $this->testfile, "FormUpload", null);
+		$file = Uploads::addFile("1" . $this->filename, $this->testfile, "FormUpload", null, false);
 
 		$this->assertEqual("1" . $this->filename, $file->filename);
 		$this->assertEqual(strtolower(ImageUploads::class), $file->classname);
@@ -63,7 +63,7 @@ class UploadsTest extends GomaUnitTest {
 
 		// file2 test: Tests deletable for same file and some tests with same file/collection
 		// check for second file, which should be stored.
-		$file2 = Uploads::addFile($this->filename . ".jpg", $this->testfile, "FormUpload", null);
+		$file2 = Uploads::addFile($this->filename . ".jpg", $this->testfile, "FormUpload", null, false);
 
 		$this->assertTrue(file_exists($file2->realfile));
 		$this->assertEqual($file->realfile, $file2->realfile);
@@ -71,7 +71,7 @@ class UploadsTest extends GomaUnitTest {
 		$this->assertEqual($file->md5, $file2->md5);
 
 		// file3: tests stuff with different collection but same file
-		$file3 = Uploads::addFile($this->filename, $this->testfile, "TestUpload");
+		$file3 = Uploads::addFile($this->filename, $this->testfile, "TestUpload", null, false);
 		$this->assertTrue(file_exists($file3->realfile));
 		$this->assertNotEqual($file->realfile, $file3->realfile);
 		$this->assertEqual($file->filename, "1" . $file3->filename);
@@ -166,7 +166,7 @@ class UploadsTest extends GomaUnitTest {
 
 	public function textFileTests() {
 		$textfilename = basename($this->testTextFile);
-		$textfile = Uploads::addFile(basename($this->testTextFile), $this->testTextFile, "FormUpload");
+		$textfile = Uploads::addFile(basename($this->testTextFile), $this->testTextFile, "FormUpload", null, false);
 		$this->assertEqual($textfile->filename, $textfilename);
 		$this->assertEqual($textfile->classname, "uploads");
 		$this->assertTrue(file_exists($textfile->realfile));
@@ -188,7 +188,7 @@ class UploadsTest extends GomaUnitTest {
 	 */
 	public function testCollection() {
 		$collection = "test.c.t.b.a.d.t.d.e.d";
-		$file = Uploads::addFile($this->filename, $this->testfile, $collection);
+		$file = Uploads::addFile($this->filename, $this->testfile, $collection, null, false);
 
 		$this->assertEqual($file->collection->collection->collection->collection->filename, "t");
 		$this->assertEqual($file->collection->collection->collection->collection->collection->filename, "d");
@@ -230,12 +230,15 @@ class UploadsTest extends GomaUnitTest {
 
 	public function unitTestStrangeFilename($filename, $testfile, $collection) {
 		// store first file.
-		$file = Uploads::addFile($filename, $testfile, $collection);
-		$path = $file->path;
+		if($file = Uploads::addFile($filename, $testfile, $collection, null, false)) {
+			$path = $file->path;
 
-		$file->remove(true);
+			$file->remove(true);
 
-		return $path;
+			return $path;
+		} else {
+			return null;
+		}
 	}
 
 	public function testFileVersions() {
@@ -249,37 +252,45 @@ class UploadsTest extends GomaUnitTest {
             "md5" => md5_file($this->testfile)
         ))->count());
 
-		$file1 = Uploads::addFile("blub.jpg", $this->testfile, "testCollection");
-		$file2 = Uploads::addFile("blah.jpg", $this->testfile, "testCollection");
+		if($file1 = Uploads::addFile("blub.jpg", $this->testfile, "testCollection", null, false)) {
+			if($file2 = Uploads::addFile("blah.jpg", $this->testfile, "testCollection", null, false)) {
 
-		$this->assertEqual(2, $file1->getFileVersions()->count());
-		$this->assertEqual($file1->id, $file1->getFileVersions()->first()->id);
-		$this->assertEqual($file2->id, $file1->getFileVersions()->last()->id);
-
-		$file1->remove(true);
-		$file2->remove(true);
+				$this->assertEqual(2, $file1->getFileVersions()->count());
+				$this->assertEqual($file1->id, $file1->getFileVersions()->first()->id);
+				$this->assertEqual($file2->id, $file1->getFileVersions()->last()->id);
+				$file2->remove(true);
+			} else {
+				$this->assertFalse(true, "Could not add file to collection.");
+			}
+			$file1->remove(true);
+		} else {
+			$this->assertFalse(true, "Could not add file to collection.");
+		}
 	}
 
 	public function testBacktrack() {
-		$file = Uploads::addFile("blub.jpg", $this->testfile, "testCollection");
+		if($file = Uploads::addFile("blub.jpg", $this->testfile, "testCollection", false)) {
 
-		$this->assertIsA($file->getLinkingModels()->getDbDataSource(), UploadsBackTrackDataSource::class);
-		$this->assertEqual($file->getLinkingModels()->count(), 0);
-		$this->assertNull($file->getLinkingModels()->getModelSource());
+			$this->assertIsA($file->getLinkingModels()->getDbDataSource(), UploadsBackTrackDataSource::class);
+			$this->assertEqual($file->getLinkingModels()->count(), 0);
+			$this->assertNull($file->getLinkingModels()->getModelSource());
 
-		$model = new MockBacktrackModel(array(
-			"file" => $file
-		));
-		$model->writeToDB(false, true);
+			$model = new MockBacktrackModel(array(
+				"file" => $file
+			));
+			$model->writeToDB(false, true);
 
-		$this->assertEqual($file->getLinkingModels()->count(), 1);
+			$this->assertEqual($file->getLinkingModels()->count(), 1);
 
-		$linkingModel = $file->getLinkingModels()->first();
-		$this->assertEqual($linkingModel->id, $model->id);
-		$this->assertEqual($linkingModel->classname, $model->classname);
+			$linkingModel = $file->getLinkingModels()->first();
+			$this->assertEqual($linkingModel->id, $model->id);
+			$this->assertEqual($linkingModel->classname, $model->classname);
 
-		$model->remove(true);
-		$file->remove(true);
+			$model->remove(true);
+			$file->remove(true);
+		} else {
+			$this->assertFalse(true, "Could not add file to collection.");
+		}
 	}
 }
 

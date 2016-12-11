@@ -65,14 +65,16 @@ class tplCaller extends gObject
     /**
      * sets tpl-paths
      *
-     * @name setTplPath
+     * @param $tpl
+     * @param string $root
+     * @internal param $setTplPath
      * @access public
      */
-    public function setTplPath($tpl)
+    public function setTplPath($tpl, $root = ROOT)
     {
-        $this->tplBase = substr($tpl, 0, strrpos($tpl, "/"));
-        if (substr($this->tplBase, 0, strlen(ROOT)) == ROOT) {
-            $this->tplBase = substr($this->tplBase, strlen(ROOT));
+        $this->tplBase = substr($tpl, 0, strrpos(str_replace("\\", "/", $tpl), "/"));
+        if (str_replace("\\", "/", substr($this->tplBase, 0, strlen($root))) == str_replace("\\", "/", $root)) {
+            $this->tplBase = substr($this->tplBase, strlen($root));
             while(substr($this->tplBase, 0, 1) == "/") {
                 $this->tplBase = substr($this->tplBase, 1);
             }

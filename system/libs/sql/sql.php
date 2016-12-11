@@ -168,23 +168,6 @@ class SQL
     }
 
     /**
-     * in CGI ends send to client and runs query.
-     *
-     * @param string $sql
-     * @param bool $unbuffered
-     * @param bool $track
-     * @param bool $debug
-     * @return
-     */
-    static function queryAfterDie($sql, $unbuffered = false, $track = true, $debug = true)
-    {
-        if (function_exists("fastcgi_finish_request")) {
-            fastcgi_finish_request();
-        }
-        return self::query($sql, $unbuffered, $track, $debug, true);
-    }
-
-    /**
      * @access public
      * @use: fetch_row
      */
@@ -438,8 +421,6 @@ class SQL
     /**
      * deletes a table
      *
-     * @name dontRequireTable
-     * @access public
      * @param string - table
      * @param string - prefix
      */
@@ -447,7 +428,6 @@ class SQL
     {
         return self::$driver->dontRequireTable($table, $prefix);
     }
-
 
     /**
      * sets the charset UTF-8
@@ -457,21 +437,6 @@ class SQL
     static function setCharsetUTF8()
     {
         return self::$driver->setCharsetUTF8();
-    }
-
-    /**
-     * sets the default sort
-     *
-     * @name setDefaultSort
-     * @access public
-     * @param string - table
-     * @param string - field
-     * @param string - type
-     * @param bool|string - prefix
-     */
-    static function setDefaultSort($table, $field, $type = "ASC", $prefix = null)
-    {
-        return self::$driver->setDefaultSort($table, $field, $type, $prefix);
     }
 
     static function listStorageEngines()
@@ -680,8 +645,6 @@ interface SQLDriver
     public function requireTable($table, $fields, $indexes, $defaults, $prefix = null);
 
     public function dontRequireTable($table, $prefix = null);
-
-    public function setDefaultSort($table, $field, $type = "ASC", $prefix = null);
 
     /**
      * INDEX-functions

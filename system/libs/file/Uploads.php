@@ -90,6 +90,11 @@ class Uploads extends DataObject {
             "name"      => "md5",
             "fields"    => "md5",
             "type"      => "INDEX"
+        ),
+        array(
+            "name"      => "realfile_delete",
+            "fields"    => "realfile",
+            "type"      => "INDEX"
         )
     );
 
@@ -104,12 +109,17 @@ class Uploads extends DataObject {
      * @param string $realfile
      * @param string $collectionPath
      * @param string $class_name
+     * @param bool $rename
      * @return Uploads
      * @throws FileCopyException
      */
-    public static function addFile($filename, $realfile, $collectionPath, $class_name = null) {
-        if(!file_exists($realfile) || empty($collectionPath)) {
-            return null;
+    public static function addFile($filename, $realfile, $collectionPath, $class_name = null, $rename = true) {
+        if(!file_exists($realfile)) {
+            throw new InvalidArgumentException("Realfile ".convert::raw2text($realfile)." not found for Uploads::addFile");
+        }
+
+        if(!$collectionPath) {
+            throw new InvalidArgumentException("Collection is Required for Uploads::addFile");
         }
 
         // get collection info
@@ -132,7 +142,9 @@ class Uploads extends DataObject {
         /** @var Uploads $file */
         $file = $file->getClassAs(self::getFileClass($class_name, $filename));
 
-        if(file_exists($file->realfile) || copy($realfile, $file->realfile)) {
+        if(file_exists($file->realfile) ||
+            ($rename && rename($realfile, $file->realfile)) ||
+            (!$rename && copy($realfile, $file->realfile))) {
             $file->writeToDB(true, true);
 
             return $file;
@@ -627,13 +639,20 @@ class Uploads extends DataObject {
     /**
      * checks for the permission to show this file
      *
-     * @name checkPermission
+     * @param DataObject|null $row
+     * @param string|null $name
      * @return bool
+     * @internal param $checkPermission
      */
-    public function checkPermission() {
-        $check = true;
-        $this->callExtending("checkPermission", $check);
-        return $check;
+    public function checkPermission($row = null, $name = null) {
+        if(!isset($row) && !isset($name)) {
+            $check = true;
+            $this->callExtending("checkPermission", $check);
+
+            return $check;
+        }
+
+        return parent::checkPermission($row, $name);
     }
 
     /**

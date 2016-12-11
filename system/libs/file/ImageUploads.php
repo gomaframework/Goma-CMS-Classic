@@ -97,6 +97,21 @@ class ImageUploads extends Uploads {
     );
 
     /**
+     * @var bool
+     */
+    static $autoImageResize = true;
+
+    /**
+     * @var bool
+     */
+    static $useCommandLineforAutoResize = true;
+
+    /**
+     * @var int
+     */
+    static $destinationSize = 3000;
+
+    /**
      * returns the raw-path
      *
      * @name raw
@@ -212,8 +227,10 @@ class ImageUploads extends Uploads {
         }
 
         foreach($this->imageVersions() as $childImage) {
-            $childImage->remove(true);
+            $this->imageVersions()->removeFromSet($childImage);
         }
+
+        $this->imageVersions()->commitStaging(false, true);
     }
 
     /**
@@ -456,7 +473,7 @@ class ImageUploads extends Uploads {
             throw new InvalidArgumentException("Transitive source-images are not allowed.");
         }
 
-        $imageUploads = clone $this;
+        $imageUploads = $this->duplicate();
         $imageUploads->thumbHeight = min($height / $imageUploads->height * 100, 100);
         $imageUploads->thumbWidth = min($width / $imageUploads->width * 100, 100);
 
@@ -467,6 +484,17 @@ class ImageUploads extends Uploads {
         $imageUploads->thumbTop = $topPercentage;
 
         $imageUploads->sourceImage = $this;
+
+        // check for existing
+        if($file = DataObject::get_one(ImageUploads::class, array(
+            "thumbHeight" => $imageUploads->thumbHeight,
+            "thumbWidth" => $imageUploads->thumbWidth,
+            "thumbTop"  => $imageUploads->thumbTop,
+            "thumbLeft" => $imageUploads->thumbLeft,
+            "sourceImageId" => $this->id
+        ))) {
+            return $file;
+        }
         $imageUploads->path = $imageUploads->buildPath($imageUploads->collection, $imageUploads->filename);
 
         if($this->id != 0 && $write) {
@@ -488,23 +516,51 @@ class ImageUploads extends Uploads {
         parent::onBeforeWrite($modelWriter);
 
         $gd = new GD($this->realfile);
-        $usage = memory_get_usage();
-        $gd->fixRotation()->toFile($this->realfile);
-        $gd->gd();
-        if(memory_get_usage() - $usage > 0.5 * getMemoryLimit()) {
-            if(DataObject::count(Uploads::class, array("realfile" => $this->realfile)) == 0) {
-                @unlink($this->realfile);
+        try {
+            $tmpFile = ROOT . CACHE_DIRECTORY . "/" . md5($this->realfile). "_fixed2";
+            $usage = memory_get_usage();
+            $gd->fixRotationInPlace()->toFile($tmpFile);
+
+            if (self::$autoImageResize) {
+                $gd->autoImageResizeInPlace(self::$destinationSize, self::$useCommandLineforAutoResize)->toFile($tmpFile);
             }
-            
-            throw new GDImageSizeException(lang("imageTooBig"));
+
+            $gd->gd();
+            if (memory_get_usage() - $usage > 0.5 * getMemoryLimit()) {
+                if (DataObject::count(Uploads::class, array("realfile" => $this->realfile)) == 0) {
+                    unlink($this->realfile);
+                    unlink($tmpFile);
+                }
+
+                throw new GDImageSizeException(lang("imageTooBig"));
+            }
+            $gd->destroy();
+
+            if(md5_file($tmpFile) != $this->md5) {
+                /** @var Uploads $upload */
+                if ($upload = DataObject::get_one(Uploads::class, array(
+                    "md5" => md5_file($tmpFile)
+                ))
+                ) {
+                    $this->realfile = $upload->realfile;
+                } else {
+                    $i = 0;
+                    while (file_exists($this->realfile)) {
+                        $this->realfile = substr($this->realfile, 0, strrpos($this->realfile, ".")) . "_" . $i .
+                            substr($this->realfile, strrpos($this->realfile, "."));
+
+                    }
+                    copy($tmpFile, $this->realfile);
+                }
+                unlink($tmpFile);
+
+                $this->width = $gd->width;
+                $this->height = $gd->height;
+                $this->md5 = md5_file($this->realfile);
+            }
+        } finally {
+            $gd->destroy();
         }
-        $gd->destroy();
-
-        $this->md5 = md5_file($this->realfile);
-
-        DataObject::update(Uploads::class, array("md5" => $this->md5), array(
-            "realfile" => $this->realfile
-        ));
     }
 
     /**

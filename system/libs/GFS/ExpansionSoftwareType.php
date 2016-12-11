@@ -13,19 +13,17 @@
 class G_ExpansionSoftwareType extends G_SoftwareType {
 	/**
 	 * type is backup
-	 *
-	 *@name type
-	 *@access public
 	 */
 	public static $type = "expansion";
 
-	/**
-	 * installs the framework
-	 *
-	 * @name getInstallInfo
-	 * @access public
-	 * @return array
-	 */
+    /**
+     * installs the framework
+     *
+     * @param RequestHandler $controller
+     * @param bool $forceInstall
+     * @return array
+     * @throws FileNotPermittedException
+     */
 	public function getInstallInfo($controller, $forceInstall = false) {
 		$gfs = new GFS($this->file);
 		$info = $gfs->parsePlist("info.plist");
@@ -140,27 +138,37 @@ class G_ExpansionSoftwareType extends G_SoftwareType {
 	/**
 	 * generates a distro
 	 *
-	 * @name backup
-	 * @access public
+	 * @param Request $request
+	 * @param string $file
+	 * @param string $name
+	 * @param null $changelog
 	 * @return bool
+	 * @throws GFSRealFilePermissionException
+	 * @internal param $backup
+	 * @access public
 	 */
-	public static function backup($file, $name, $changelog = null) {
+	public static function backup($request, $file, $name, $changelog = null) {
 		if(!isset(ClassInfo::$appENV["expansion"][$name])) {
 			return false;
 		}
 
 		$folder = ExpansionManager::getExpansionFolder($name);
 
-		if(!GFS_Package_Creator::wasPacked($file)) {
+		if(!GFS_Package_Creator::wasPacked($file, $request)) {
 			if(file_exists($file)) {
 				@unlink($file);
 			}
 		}
 
-		$gfs = new GFS_Package_Creator($file);
+		$gfs = GFS_Package_Creator::createWithRequest($file, $request);
+        $gfs->setAutoCommit(false);
 
-		if(!GFS_Package_Creator::wasPacked($file)) {
-			$gfs->add($folder, "/contents/", "", array("version.php"));
+		if(!GFS_Package_Creator::wasPacked($file, $request)) {
+			$gfs->add($folder, "/contents/", array("version.php"));
+            $out = $gfs->commitReply(null, null, isCommandLineInterface() ? -1 : 2.0, isCommandLineInterface());
+            if(is_a($out, GomaResponse::class)) {
+                return $out;
+            }
 		}
 
 		$plist = new CFPropertyList();
@@ -203,7 +211,7 @@ class G_ExpansionSoftwareType extends G_SoftwareType {
 	 */
 	public static function buildDistro($file, $name, $controller) {
 		if(GlobalSessionManager::globalSession()->hasKey(g_SoftwareType::FINALIZE_SESSION_VAR))
-			return gObject::instance("g_expansionSoftWareType")->finalizeDistro(GlobalSessionManager::globalSession()->get(g_SoftwareType::FINALIZE_SESSION_VAR));
+			return gObject::instance("g_expansionSoftWareType")->finalizeDistro(GlobalSessionManager::globalSession()->get(g_SoftwareType::FINALIZE_SESSION_VAR), null, null, $controller->getRequest());
 
 		if(!isset(ClassInfo::$appENV["expansion"][$name])) {
 			return false;
@@ -221,6 +229,7 @@ class G_ExpansionSoftwareType extends G_SoftwareType {
 			new LinkAction("cancel", lang("cancel"), ROOT_PATH . BASE_SCRIPT . "dev/buildDistro"),
 			new FormAction("submit", lang("download"), array(gObject::instance("g_expansionSoftWareType"), "finalizeDistro"))
 		));
+        $form->removeSecret();
 
 		$version->disable();
 
@@ -241,14 +250,11 @@ class G_ExpansionSoftwareType extends G_SoftwareType {
 			foreach(ClassInfo::$appENV["expansion"] as $name => $data) {
 				if(isset($data["build"])) {
 					$data["version"] = $data["version"] . "-" . $data["build"];
-				} else {
-					$data["version"] = $data["version"];
 				}
 
 				if(isset($data["icon"]) && $data["icon"]) {
 					$data["icon"] = ExpansionManager::getExpansionFolder($name) . "/" . $data["icon"];
 				}
-
 
 				if(!isset($data["title"])) {
 					$data["title"] = $name;

@@ -955,7 +955,7 @@ class Controller extends RequestHandler
      * @return bool
      */
     public function _confirmCancel() {
-        return self::$errorCallback ? call_user_func_array(self::$errorCallback, array()) : false;
+        return self::$errorCallback ? call_user_func_array(self::$errorCallback, array()) : $this->redirectback();
     }
 
     /**

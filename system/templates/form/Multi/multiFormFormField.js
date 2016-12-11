@@ -34,12 +34,12 @@ multiFormFieldController.prototype = {
                     opacity: 0.6,
                     helper: 'clone',
                     handle: ".part-sort-button",
-                    placeholder: 'placeholder',
+                    placeholder: 'placeholder-multi-form-field-' + this.element.attr("id"),
                     revert: true,
                     tolerance: 'pointer',
                     cancel: "a, img, .actions",
                     start: function(event, ui) {
-                        $(".placeholder")
+                        $(".placeholder-multi-form-field-" + _this.element.attr("id"))
                             .css({'width' : ui.item.width(), 'height': ui.item.height()})
                             .attr("class", ui.item.attr("class") + " placeholder");
                     },

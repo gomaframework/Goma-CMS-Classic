@@ -86,7 +86,8 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
             $title = $metadata['title'];
 
             // sortabe column
-            if ($title && $tableField->getData()->canFilterBy($columnField)) {
+            if ($title &&
+                ($tableField->getData()->canFilterBy($columnField) || isset($this->valueCallback[strtolower($columnField)]))) {
                 $value = '';
                 if (isset($filterArguments[strtolower($columnField)])) {
                     $value = $filterArguments[strtolower($columnField)];

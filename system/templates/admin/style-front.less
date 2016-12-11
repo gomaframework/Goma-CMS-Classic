@@ -222,7 +222,15 @@ ul.list-view li a img {
 	max-width: 2em;
 }
 
-
+.loadingBar {
+	background: @system-red !important;
+	-webkit-box-shadow: 0 0 0.5em @system-red;
+	box-shadow: 0 0 0.5em @system-red;
+	-moz-box-shadow: 0 0 0.5em @system-red;
+	position: fixed !important;
+	z-index: 999;
+	height: 3px !important;
+}
 
 /* on small touch devices fall back to non-fixed-bars. */
 @media only screen and (min-width: 35em) {

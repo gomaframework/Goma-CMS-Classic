@@ -17,12 +17,12 @@ class UploadsController extends Controller {
 	public function index() {
 		if($this->modelInst()->checkPermission()) {
 			if(preg_match('/\.(pdf)$/i', $this->modelInst()->filename)) {
-				HTTPResponse::setHeader("content-type", "application/pdf");
-				HTTPResponse::sendHeader();
+                GomaResponse::create()->setHeader("content-type", "application/pdf")->sendHeader();
 				readfile($this->modelInst()->realfile);
 				exit;
 			}
-			FileSystem::sendFile($this->modelInst()->realfile, $this->modelInst()->filename);
+
+			return FileSystem::sendFile($this->modelInst()->realfile, $this->modelInst()->filename);
 		}
 	}
 

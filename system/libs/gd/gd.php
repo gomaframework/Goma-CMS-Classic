@@ -216,6 +216,8 @@ class GD extends \gObject
         {
             $this->pic = null;
             $this->gd = $gd;
+            $this->width = imagesx($gd);
+            $this->height = imagesy($gd);
         }
 
         if(isset($this->gd))
@@ -283,18 +285,77 @@ class GD extends \gObject
     }
 
     /**
-     * fixes problems with rotation.
+     * fixes problems with rotation in-place.
+     *
+     * @return $this
      */
-    public function fixRotation() {
+    public function fixRotationInPlace() {
         if($this->originalOrientedBy != 0) {
             $old = $this->gd();
-            $newgd = clone $this;
 
             $old = imagerotate($old, $this->originalOrientedBy, 0);
 
-            $newgd->gd($old);
+            $this->destroy();
+            $this->gd($old);
 
-            return $newgd;
+            return $this;
+        }
+
+        return $this;
+    }
+
+    /**
+     * resized image in place to match destination size.
+     *
+     * @param int $destinationSize
+     * @param bool $useCommandLine
+     * @return $this
+     */
+    public function autoImageResizeInPlace($destinationSize, $useCommandLine = false) {
+        if($useCommandLine && function_exists("exec")) {
+            $rand = randomString(20);
+            $file = ROOT . CACHE_DIRECTORY . "/" . $rand;
+            $this->toFile($file);
+            $output = array();
+            $return = 0;
+            exec('export PATH=/usr/local/bin:$PATH' . "\n" . 'convert ' . $file . ' -resize ' . $destinationSize . 'x' . $destinationSize . '\\> ' . $file, $output, $return);
+            if($return == 0) {
+                $this->initWithImage($file);
+                return $this;
+            } else {
+                log_exception(new GDException("convert did not work. Status-Code: " . $return . " Output: " . print_r($output, true)));
+            }
+        }
+
+        if($this->width > $destinationSize) {
+            $newWidth = $destinationSize;
+            $newHeight = $destinationSize / $this->width * $this->height;
+
+            if($newHeight > $destinationSize) {
+                $newHeight = $destinationSize;
+                $newWidth = $destinationSize / $this->height * $this->width;
+            }
+        } else if($this->height > $destinationSize) {
+            $newHeight = $destinationSize;
+            $newWidth = $destinationSize / $this->height * $this->width;
+        }
+
+        if(isset($newWidth, $newHeight)) {
+            $new = $this->generateImage($newWidth, $newHeight, $this->type);
+
+            imagecopyresampled(
+                $new,
+                $this->gd(),
+
+                0, 0, 0, 0,
+
+                $newWidth,
+                $newHeight,
+                $this->width,
+                $this->height);
+
+            $this->destroy();
+            $this->gd($new);
         }
 
         return $this;
@@ -796,7 +857,7 @@ class GD extends \gObject
     }
 
     /**
-     * destroys image to restore ram.
+     * destroys image to restore memory.
      */
     public function destroy() {
         if(isset($this->gd)) {

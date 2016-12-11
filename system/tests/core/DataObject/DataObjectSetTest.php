@@ -174,26 +174,47 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($set->count(), 2);
     }
 
-    public function testSearch() {
-        $user = new User(array(
-            "nickname" => "______test",
-            "password" => "test"
-        ));
-        $user->writeToDB(true, true);
+    /**
+     * tests if user which was created at build is searchable.
+     * @throws MySQLException
+     */
+    public function testSearchCreatedTestUserAtBuild() {
         $data = DataObject::get("user");
         $clone = clone $data;
 
         $count = $data->count();
-        $first = $data->first();
 
         $data->search("admin");
-        $this->assertNotEqual($count, $data->count());
         $this->assertIsA($data->first(), "DataObject");
         $this->assertEqual($clone->count(), $count);
+    }
 
-        $this->assertEqual($clone->first(), $first);
+    /**
+     * tests if user which was created at build is searchable.
+     * @throws MySQLException
+     */
+    public function testSearchCreatedUserAtRuntime() {
+        try {
+            $user = new User(array(
+                "nickname" => "______test",
+                "password" => "test"
+            ));
+            $user->writeToDB(true, true);
+            $data = DataObject::get("user");
+            $clone = clone $data;
 
-        $user->remove(true);
+            $count = $data->count();
+            $first = $data->first();
+
+            $data->search("______test");
+            $this->assertNotEqual($count, $data->count());
+            $this->assertIsA($data->first(), "DataObject");
+            $this->assertEqual($clone->count(), $count);
+
+            $this->assertEqual($clone->first(), $first);
+        } finally {
+            $user->remove(true);
+        }
     }
 
     public function testFirstLast() {
@@ -883,6 +904,9 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($this->kathi, $set->last());
     }
 
+    /**
+     * tests grouping.
+     */
     public function testGroupBy() {
         $set = new DataObjectSet("DumpDBElementPerson");
         $set->setVersion(DataObject::VERSION_PUBLISHED);
@@ -913,6 +937,9 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($set->ToArray(), $source->group);
     }
 
+    /**
+     * tests reset at grouping.
+     */
     public function testGroupByReset() {
         $set = new DataObjectSet("DumpDBElementPerson");
         $set->setVersion(DataObject::VERSION_PUBLISHED);
@@ -942,6 +969,71 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($set->ToArray(), $source->group);
         $set->groupBy(null);
         $this->assertEqual($set->ToArray(), $source->records);
+    }
+
+    /**
+     * tests if getForm is called on the model.
+     */
+    public function testGetFormOnModel() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setModelSource($source = new MockIModelSource());
+
+        $source->model = new MockFormModel();
+
+        $this->assertEqual($source->model->getFormCalled, 0);
+        $this->assertEqual($source->model->getEditFormCalled, 0);
+        $this->assertEqual($source->model->getActionsCalled, 0);
+
+        $set->generateForm(null, false, false, null, new Controller());
+
+        $this->assertEqual($source->model->getFormCalled, 1);
+        $this->assertEqual($source->model->getEditFormCalled, 0);
+        $this->assertEqual($source->model->getActionsCalled, 1);
+    }
+
+    /**
+     * tests if getEditForm is called on the model.
+     */
+    public function testGetEditFormOnModel() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setModelSource($source = new MockIModelSource());
+
+        $source->model = new MockFormModel();
+
+        $this->assertEqual($source->model->getFormCalled, 0);
+        $this->assertEqual($source->model->getEditFormCalled, 0);
+        $this->assertEqual($source->model->getActionsCalled, 0);
+
+        $set->generateForm(null, true, false, null, new Controller());
+
+        $this->assertEqual($source->model->getFormCalled, 0);
+        $this->assertEqual($source->model->getEditFormCalled, 1);
+        $this->assertEqual($source->model->getActionsCalled, 1);
+    }
+}
+
+class MockFormModel extends ViewAccessableData {
+
+    public $getFormCalled = 0;
+    public $getEditFormCalled = 0;
+    public $getActionsCalled = 0;
+
+    public function getForm(&$form)
+    {
+        $this->getFormCalled++;
+        parent::getForm($form);
+    }
+
+    public function getEditForm(&$form)
+    {
+        $this->getEditFormCalled++;
+        parent::getEditForm($form);
+    }
+
+    public function getActions(&$form)
+    {
+        $this->getActionsCalled++;
+        parent::getActions($form);
     }
 }
 
@@ -1062,7 +1154,6 @@ class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
      */
     public function onBeforeManipulateManyMany(&$manipulation, $set, $writeData)
     {
-        // TODO: Implement onBeforeManipulateManyMany() method.
     }
 
     /**
@@ -1070,7 +1161,6 @@ class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
      */
     public function clearCache()
     {
-        // TODO: Implement clearCache() method.
     }
 
     /**
@@ -1079,7 +1169,6 @@ class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
      */
     public function manipulate($manipulation)
     {
-        // TODO: Implement manipulate() method.
     }
 
     /**
@@ -1093,7 +1182,6 @@ class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
      */
     public function buildExtendedQuery($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $forceClasses = true)
     {
-        // TODO: Implement buildExtendedQuery() method.
     }
 }
 
@@ -1143,7 +1231,6 @@ class MockIModelSource implements IDataObjectSetModelSource {
 
     public function callExtending($method, &$p1 = null, &$p2 = null, &$p3 = null, &$p4 = null, &$p5 = null, &$p6 = null, &$p7 = null)
     {
-        // TODO: Implement callExtending() method.
     }
 }
 

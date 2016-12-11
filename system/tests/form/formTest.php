@@ -1,4 +1,28 @@
-<?php defined("IN_GOMA") OR die();
+<?php
+namespace Goma\Test;
+use AbstractFormComponent;
+use ClassInfo;
+use Controller;
+use Exception;
+use FieldSet;
+use Form;
+use FormAction;
+use FormField;
+use FormNotValidException;
+use FormValidator;
+use GlobalSessionManager;
+use GomaUnitTest;
+use MockSessionManager;
+use RadioButton;
+use ReflectionClass;
+use Request;
+use RequestHandler;
+use stdClass;
+use TestAble;
+use TextField;
+use tpl;
+
+defined("IN_GOMA") OR die();
 /**
  * Unit-Tests for Form.
  *
@@ -26,6 +50,20 @@ class FormTest extends GomaUnitTest implements TestAble {
 		$form = new Form($c = new Controller(), "test");
 
 		$this->assertEqual($form->name(), "test");
+		$this->assertEqual($form->controller, $c);
+		$this->assertTrue((boolean) $form->render());
+	}
+
+	/**
+	 * tests form RequestHandler connection.
+	 */
+	public function testFormWithSimpleFieldRequestHandler() {
+		$form = new Form($c = new Controller(), "test");
+        $form->add(new TextField("name", "Name"));
+
+		$this->assertEqual($form->name(), "test");
+        $this->assertIsA($form->name, TextField::class);
+        $this->assertNull($form->name->getModel());
 		$this->assertEqual($form->controller, $c);
 		$this->assertTrue((boolean) $form->render());
 	}

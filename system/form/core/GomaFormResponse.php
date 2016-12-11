@@ -61,20 +61,22 @@ class GomaFormResponse extends GomaResponse {
     protected $inTplExpansion;
 
     /**
+     * @param null|array $header
      * @param Form $form
      * @return static
      */
-    public static function create($form = null) {
-        return new static($form);
+    public static function create($header = null, $form = null) {
+        return new static($header, $form);
     }
 
     /**
      * GomaFormResponse constructor.
+     * @param array|null $header
      * @param Form $form
      */
-    public function __construct($form)
+    public function __construct($header, $form)
     {
-        parent::__construct(null);
+        parent::__construct($header);
         if(!isset($form)) {
             throw new InvalidArgumentException("Form must be not null.");
         }
@@ -102,11 +104,16 @@ class GomaFormResponse extends GomaResponse {
     public function resolveForm() {
         if(!isset($this->renderedForm)) {
             $this->renderedForm = $this->form->renderData();
-            if(!is_a($this->renderedForm, "GomaResponse")) {
-                parent::setBody($this->renderedForm);
-                parent::getBody()->setIncludeResourcesInBody(!$this->form->getRequest()->is_ajax());
-            } else if(!isset($this->renderedForm)) {
-                throw new LogicException("Form response can't be null.");
+            if(!is_array($this->renderedForm)) {
+                if (!is_a($this->renderedForm, "GomaResponse")) {
+                    parent::setBody($this->renderedForm);
+                    $this->body->setIncludeResourcesInBody(!$this->form->getRequest()->is_ajax());
+                } else if (!isset($this->renderedForm)) {
+                    throw new LogicException("Form response can't be null.");
+                }
+            } else {
+                parent::setBody(print_r($this->renderedForm, true));
+                $this->body->setIncludeResourcesInBody(!$this->form->getRequest()->is_ajax());
             }
         }
     }
@@ -227,6 +234,12 @@ class GomaFormResponse extends GomaResponse {
         } else {
             return parent::getStatus();
         }
+    }
+
+    public function getResult() {
+        $this->resolveForm();
+
+        return $this->renderedForm;
     }
 
     /**

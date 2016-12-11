@@ -120,8 +120,8 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
     {
         $record = parent::createNewModel($data);
 
-        if($this->relationShipField) {
-            $record->{$this->relationShipField} = $this->getRelationID();
+        if(($id = $this->getRelationID()) !== null) {
+            $record->{$this->relationShipField} = $id;
         }
 
         return $record;
@@ -148,7 +148,7 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
      */
     protected function getRelationID() {
         if(isset($this->relationShipValue)) {
-            return $this->relationShipValue;
+            return $this->relationShipValue == 0 ? -1 : $this->relationShipValue;
         } else if(isset($this->filter[$this->relationShipField]) && (is_string($this->filter[$this->relationShipField]) || is_int($this->filter[$this->relationShipField]))) {
             return $this->filter[$this->relationShipField];
         }

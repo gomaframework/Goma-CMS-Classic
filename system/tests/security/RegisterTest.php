@@ -26,7 +26,8 @@ class RegisterTest extends GomaUnitTest {
         $controller = new ProfileController();
         $request = new Request("get", "register");
 
-        $this->assertRegExp("/".preg_quote(lang("register_disabled"), "/")."/", (string) $controller->handleRequest(clone $request));
+        $view = new ViewAccessableData();
+        $this->assertRegExp("/".preg_quote($view->renderWith("profile/registerNotAllowed.html"), "/")."/", (string) $controller->handleRequest(clone $request));
 
         RegisterExtension::$enabled = true;
 

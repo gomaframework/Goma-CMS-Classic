@@ -10,6 +10,8 @@
  * @version 1.0.5
  */
 
+$__errorCount = 0;
+
 /**
  * Load a language file from /languages.
  *
@@ -468,20 +470,22 @@ function setProject($project, $domain = null) {
 				return true;
 			} else {
 				$apps[$key]["domain"] = $app["domain"];
-				return writeSystemConfig(array("apps" => $apps));
+				writeSystemConfig(array("apps" => $apps));
+				return;
 			}
 		}
 	}
 	$apps[] = $app;
 
-	return writeSystemConfig(array("apps" => $apps));
+	writeSystemConfig(array("apps" => $apps));
 }
 
 /**
  * removes a given project from project-stack
  *
- *@name removeProject
- *@access public
+ * @name removeProject
+ * @access public
+ * @return bool|void
  */
 function removeProject($project) {
 	if(file_exists(ROOT . "_config.php")) {
@@ -498,7 +502,7 @@ function removeProject($project) {
 
 	$apps = array_values($apps);
 
-	return writeSystemConfig(array("apps" => $apps));
+	writeSystemConfig(array("apps" => $apps));
 }
 
 // alias for setProject
@@ -702,6 +706,9 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 			exit(4);
 	}
 
+	global $__errorCount;
+	$__errorCount++;
+
 	// block PHP's internal Error-Handler
 	return true;
 }
@@ -751,16 +758,26 @@ function Goma_ExceptionHandler($exception) {
 function log_exception($exception) {
 	$uri = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : (isset($_SERVER["argv"]) ? implode(" ", $_SERVER["argv"]) : null);
 
-	$message = get_class($exception) . " " . $exception->getCode() . ":\n\n" . $exception->getMessage() . " in ".
+	$message = get_class($exception) . " " . $exception->getCode() . ":\n\n" . $exception->getMessage() . "\n".
+		exception_get_dev_message($exception)." in ".
 		$exception->getFile() . " on line ".$exception->getLine().".\n\n Backtrace: " . $exception->getTraceAsString();
 	$current = $exception;
 	while($current = $current->getPrevious()) {
-		$message .= "\nPrevious: " . $current->getMessage() . "\n" . $current->getTraceAsString();
+		$message .= "\nPrevious: " . $current->getMessage() . "\n" . exception_get_dev_message($current)."\n in "
+			. $current->getFile() . " on line ".$current->getLine() . ".\n" . $current->getTraceAsString();
 	}
 	log_error($message);
 	
 	$debugMsg = "URL: " . $uri . "\nGoma-Version: " . GOMA_VERSION . "-" . BUILD_VERSION . "\nApplication: " . print_r(ClassInfo::$appENV, true) . "\n\n" . $message;
 	debug_log($debugMsg);
+}
+
+function exception_get_dev_message($exception) {
+	if(method_exists($exception, "getDeveloperMessage")) {
+		return "\n\t\t" . str_replace("\n", "\n\t\t", $exception->getDeveloperMessage()) . "\n";
+	}
+
+	return "";
 }
 
 /**
@@ -1218,9 +1235,16 @@ if (!function_exists('getallheaders'))
 	}
 }
 
+$__isCommandLineInterface = null;
 function isCommandLineInterface()
 {
-	return (!isset($_SERVER['SERVER_SOFTWARE']) && (php_sapi_name() == 'cli' || (is_numeric($_SERVER['argc']) && $_SERVER['argc'] > 0)));
+    global $__isCommandLineInterface;
+
+    if(!isset($__isCommandLineInterface)) {
+        $__isCommandLineInterface = (!isset($_SERVER['SERVER_SOFTWARE']) && (php_sapi_name() == 'cli' || (is_numeric($_SERVER['argc']) && $_SERVER['argc'] > 0)));
+    }
+
+    return $__isCommandLineInterface;
 }
 
 function isPHPUnit() {
@@ -1275,6 +1299,10 @@ class GomaException extends Exception {
 	public function http_status() {
 		return 500;
 	}
+
+    public function getDeveloperMessage() {
+        return $this->http_status() != 200 ? " Status: " . $this->http_status() : "";
+    }
 }
 
 class ProjectConfigWriteException extends GomaException {
@@ -1336,6 +1364,11 @@ class PermissionException extends GomaException {
 
     public function getMissingPerm() {
         return $this->missingPerm;
+    }
+
+    public function getDeveloperMessage()
+    {
+        return parent::getDeveloperMessage() . " Missing Permission: " . $this->missingPerm;
     }
 
 }

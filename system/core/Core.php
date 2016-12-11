@@ -64,6 +64,11 @@ class Core extends gObject {
 	 */
 	private static $hooks = array();
 
+    /**
+     * @var array
+     */
+    private static $localHooks = array();
+
 	/**
 	 * file which contains data from php://input
 	 *
@@ -294,13 +299,33 @@ class Core extends gObject {
 	 * adds a callback to a hook
 	 *
 	 * @param string $name
-	 * @param Closure|array $callback
+	 * @param array $callback
 	 */
 	public static function addToHook($name, $callback) {
+        if(is_a($name, Closure::class)) {
+            throw new InvalidArgumentException();
+        }
+
 		if(!isset(self::$hooks[strtolower($name)]) || !in_array($callback, self::$hooks[strtolower($name)])) {
 			self::$hooks[strtolower($name)][] = $callback;
 		}
 	}
+
+    /**
+     * adds a closure to a hook
+     *
+     * @param string $name
+     * @param Closure $callback
+     */
+    public static function addToLocalHook($name, $callback) {
+        if(!is_a($callback, Closure::class)) {
+            throw new InvalidArgumentException();
+        }
+
+        if(!isset(self::$localHooks[strtolower($name)]) || !in_array($callback, self::$localHooks[strtolower($name)])) {
+            self::$localHooks[strtolower($name)][] = $callback;
+        }
+    }
 
 	/**
 	 * calls all callbacks for a hook
@@ -316,6 +341,14 @@ class Core extends gObject {
 				}
 			}
 		}
+
+        if(isset(self::$localHooks[strtolower($name)]) && is_array(self::$localHooks[strtolower($name)])) {
+            foreach(self::$localHooks[strtolower($name)] as $callback) {
+                if(is_callable($callback)) {
+                    call_user_func_array($callback, array(&$p1, &$p2, &$p3, &$p4, &$p5, &$p6, &$p7));
+                }
+            }
+        }
 	}
 
 	/**
@@ -607,6 +640,8 @@ class Core extends gObject {
 
         $code = 0;
 		Core::callHook("cli", $args, $code);
+
+        Core::callHook("onBeforeShutdown");
 
         if($code != 0) {
             exit($code);

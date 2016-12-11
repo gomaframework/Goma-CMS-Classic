@@ -56,7 +56,8 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 	 * we add an index to username and password, because of logins
 	 */
 	static $index = array(
-		"login"	=> array("type"	=> "INDEX", "fields" => 'nickname, password')
+		"login"	=> array("type"	=> "INDEX", "fields" => 'nickname, password'),
+		"name" => true
 	);
 
 	/**

@@ -158,7 +158,9 @@ function FileUpload(form, field, formelement, url, size, types) {
 				$this.field.upload = null;
 				$this.fieldElement.find(".image-area").removeClass("with-upload");
 			} else if(data.status == 0) {
-				$this.infoZone.html('<div class="error">'+data.error+'</div>');
+				if(data.error) {
+					$this.infoZone.html('<div class="error">' + data.error + '</div>');
+				}
 			} else {
 				if(field.showDeleteButton) {
 					$this.fieldElement.find(".delete-file-button").show();

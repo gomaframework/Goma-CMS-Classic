@@ -17,10 +17,13 @@ class GFS_Package_installer extends GFS {
 
 	/**
 	 * already unpacked files
-	 *
-	 *@name unpacked
 	 */
 	public static $unpacked = array();
+
+    /**
+     * @var Request|null
+     */
+    protected $request;
 
 	/**
 	 * local cache.
@@ -29,85 +32,179 @@ class GFS_Package_installer extends GFS {
 	private $dbvalues;
 	private $destination;
 
-	/**
-	 * construct with read-only
-	 *
-	 *@name __construct
-	 *@access public
-	 */
-	public function __construct($filename) {
-		parent::__construct($filename, GFS_READONLY);
+    /**
+     * @param string $filename
+     * @param Request $request
+     * @param int|null $flag
+     * @param int|null $writeMode
+     * @return static
+     */
+    public static function createWithRequest($filename, $request, $flag = null, $writeMode = null) {
+        return new static($filename, $flag, $writeMode, $request);
+    }
+
+    /**
+     * construct with read-only
+     * @param string $filename
+     * @param int|null $flag
+     * @param int|null $writeMode
+     * @param Request|null $request
+     * @throws GFSDBException
+     * @throws GFSFileException
+     * @throws GFSVersionException
+     */
+	public function __construct($filename, $flag = null, $writeMode = null, $request = null) {
+		parent::__construct($filename, isset($flag) ? $flag : GFS_READONLY, $writeMode);
+
+        $this->request = isset($request) ? $request : Director::createRequestFromEnvironment(URL);
 	}
 
-	/**
-	 * unpack
-	 *
-	 * @param string $destination directory to which we unpack
-	 * @param string $path not supported yet
-	 * @param float $maxTime
-	 * @return bool|int
-	 */
-	public function unpack($destination, $path = "", $maxTime = 2.0) {
-		if($path != "") {
-			throw new InvalidArgumentException("GFS_Package_Installer doesn't support subfolders.");
-		}
-		if(!$this->valid) {
-			return false;
-		}
+    /**
+     * @return null|Request
+     */
+    public function getRequest()
+    {
+        return $this->request;
+    }
 
-		// write files
-		$this->status = "Writing files...";
-		$this->current = "";
+    /**
+     * @param null|Request $request
+     * @return $this
+     */
+    public function setRequest($request)
+    {
+        $this->request = $request;
+        return $this;
+    }
 
-		// we get time, if it is over 2, we reload ;)
-		$start = microtime(true);
-		$info = $this->getProgressInfo(".gfsprogress");
-		$i = $info[0];
-		$count = $info[1];
+    /**
+     * @param string $destination
+     * @param string $path
+     * @param float $maxTimePerStep
+     * @param bool $cli
+     * @return bool
+     * @throws GFSException
+     */
+    public function unpackReply($destination, $path = "", $maxTimePerStep = 2.0, $cli = false) {
+        if($path != "") {
+            throw new InvalidArgumentException("GFS_Package_Installer doesn't support subfolders.");
+        }
 
-		$this->dbvalues = array_values($this->db);
-		$this->paths = array_keys($this->db);
-		$this->destination = $destination;
+        if(!$this->valid) {
+            throw new GFSException("File not valid.");
+        }
 
-		// let's go
-		while($i < count($this->dbvalues)) {
+        if($cli) {
+            echo "Writing files... {$this->file}\n";
+        }
 
-			$this->unpackToFileSystem($i);
+        // write files
+        $this->status = "Writing files...";
+        $this->current = "";
 
-			// maximum 2.0 second
-			$this->checkForTime($start, $i, $count, 0.7, 0, ".gfsprogress", $maxTime);
-			$i++;
-			unset($data, $path);
-		}
+        // we get time, if it is over 2, we reload ;)
+        $start = microtime(true);
+        $info = $this->getProgressInfo(".gfsprogress");
+        $i = $info[0];
+        $count = $info[1];
 
-		// now move all files
-		$rinfo = $this->getProgressInfo(".gfsrprogress");
-		$i = $rinfo[0];
-		$count = $rinfo[1];
+        $this->dbvalues = array_values($this->db);
+        $this->paths = array_keys($this->db);
+        $this->destination = $destination;
 
-		// let's go
-		while($i < count($this->dbvalues)) {
-			$this->renameUnpacked($i);
+        // let's go
+        while($i < count($this->dbvalues)) {
+            $this->unpackToFileSystem($i);
 
-			// maximum of 0.5 seconds
-			$this->checkForTime($start, $i, $count, 0.3, 0.7, ".gfsrprogress", $maxTime);
-			$i++;
-			unset($data, $path);
-		}
+            // maximum 2.0 second
+            if($response = $this->checkForTime($start, $i, $count, 0.7, 0, ".gfsprogress", $maxTimePerStep)) {
+                return $response;
+            }
 
-		self::$unpacked[] = $this->file;
+            if($cli) {
+                $currentProgress = round($i / count($this->dbvalues) * 70);
+                echo "\033[5D";
+                echo str_pad($currentProgress, 3, " ", STR_PAD_LEFT) . " %";
+            }
 
-		// clean up
+            $i++;
+            unset($data, $path);
+        }
 
-		FileSystem::delete($this->tempFolder());
+        if($cli) {
+            echo "Done unpacking files... {$this->file}\n";
+            echo "Renaming files... {$this->file}\n";
+        }
 
-		if(defined("IN_GFS_EXTERNAL")) {
-			if(isset($_GET["redirect"]))
-				header("Location:" . $_GET["redirect"]);
-			exit;
-		}
-		return true;
+        // now move all files
+        $rinfo = $this->getProgressInfo(".gfsrprogress");
+        $i = $rinfo[0];
+        $count = $rinfo[1];
 
+        // let's go
+        while($i < count($this->dbvalues)) {
+            $this->renameUnpacked($i);
+
+            // maximum of 0.5 seconds
+            if($response = $this->checkForTime($start, $i, $count, 0.3, 0.7, ".gfsrprogress", $maxTimePerStep)) {
+                return $response;
+            }
+
+            if($cli) {
+                $currentProgress = round($i / count($this->dbvalues) * 30) + 70;
+                echo "\033[5D";
+                echo str_pad($currentProgress, 3, " ", STR_PAD_LEFT) . " %";
+            }
+
+            $i++;
+            unset($data, $path);
+        }
+
+        self::$unpacked[] = $this->file;
+
+        // clean up
+
+        FileSystem::delete($this->tempFolder());
+
+        if(defined("IN_GFS_EXTERNAL")) {
+            if(isset($this->request->get_params["redirect"])) {
+                if($this->request->canReplyJSON()) {
+                    return GomaResponse::create(null, new JSONResponseBody(
+                        array("success" => true, "redirect" => $this->request->get_params["redirect"])
+                    ));
+                } else {
+                    return GomaResponse::redirect($this->request->get_params["redirect"]);
+                }
+            }
+        }
+
+        if($cli) {
+            echo "\033[5D";
+            echo "Done unpacking {$this->file}\n";
+        }
+
+        return true;
+    }
+
+    /**
+     * unpack
+     *
+     * @param string $destination directory to which we unpack
+     * @param string $path not supported yet
+     * @param float $maxTime
+     * @param bool $cli
+     * @return bool|int
+     * @throws GFSException
+     */
+	public function unpack($destination, $path = "", $maxTime = 2.0, $cli = false) {
+        /** @var GomaResponse $out */
+        $out = $this->unpackReply($destination, $path, $maxTime, $cli);
+        if(is_a($out, GomaResponse::class)) {
+            $out->output();
+            exit;
+        }
+
+        return $out;
 	}
 
 	/**
@@ -175,19 +272,20 @@ class GFS_Package_installer extends GFS {
 
 	}
 
-	/**
-	 * checks for the time.
-	 *
-	 * @param int $start
-	 * @param int $i
-	 * @param int $count
-	 * @param float $operationMultiplier how much of 100% the operation should take
-	 * @param float $operationDone how much of 100% the previous has been taken
-	 * @param string $filename
-	 * @param float $maxTime
-	 */
+    /**
+     * checks for the time.
+     *
+     * @param int $start
+     * @param int $i
+     * @param int $count
+     * @param float $operationMultiplier how much of 100% the operation should take
+     * @param float $operationDone how much of 100% the previous has been taken
+     * @param string $filename
+     * @param float $maxTime
+     * @return GomaResponse|null
+     */
 	protected function checkForTime($start, $i, $count, $operationMultiplier, $operationDone, $filename = ".gfsprogress", $maxTime = 2.0) {
-		// maximum 2.0 second
+        // maximum 2.0 second
 		if($maxTime > 0 && microtime(true) - $start > $maxTime) {
 			$i++;
 			$count++;
@@ -196,7 +294,7 @@ class GFS_Package_installer extends GFS {
 			$this->calculateRemaining($i, $count, $start, $operationMultiplier, $operationDone);
 
 			if(defined("IN_GFS_EXTERNAL")) {
-				$this->showUI();
+				return $this->showUI();
 			} else {
 				$file = $this->buildFile($this->destination);
 				$uri = strpos($_SERVER["REQUEST_URI"], "?") ? $_SERVER["REQUEST_URI"] . "&unpack[]=".urlencode($this->file)."" : $_SERVER["REQUEST_URI"] . "?unpack[]=".urlencode($this->file)."";
@@ -206,7 +304,7 @@ class GFS_Package_installer extends GFS {
 					}
 				}
 
-				$this->showUI($file . "?redirect=" . urlencode($uri));
+				return $this->showUI($file . "?redirect=" . urlencode($uri));
 			}
 		}
 	}
@@ -248,31 +346,35 @@ class GFS_Package_installer extends GFS {
 		return ROOT . CACHE_DIRECTORY . "/" . basename($this->file);
 	}
 
-	/**
-	 * if a specific file was unpacked
-	 *
-	 * @return bool
-	 */
-	public static function wasUnpacked($file = null) {
+    /**
+     * if a specific file was unpacked
+     *
+     * @param null|string $file
+     * @param null|Request $request
+     * @return bool
+     */
+	public static function wasUnpacked($file = null, $request = null) {
+        $request = isset($request) ? $request : Director::createRequestFromEnvironment(URL);
 		if(isset($file)) {
 			$file = str_replace('\\\\', '\\', realpath($file));
 			$file = str_replace('\\', '/', realpath($file));
-			$unpack = isset($_GET["unpack"]) ? str_replace('\\', '/', str_replace('\\\\', '\\', $_GET["unpack"])) : array();
+			$unpack = isset($request->get_params["unpack"]) ? str_replace('\\', '/', str_replace('\\\\', '\\', $request->get_params["unpack"])) : array();
 
 			return in_array($file, $unpack);
 		} else {
-			if(isset($_GET["unpack"]))
+			if(isset($request->get_params["unpack"]))
 				return true;
 			else
 				return false;
 		}
 	}
 
-	/**
-	 * builds the Code for the external file
-	 *
-	 * @return string
-	 */
+    /**
+     * builds the Code for the external file
+     *
+     * @param string $destination
+     * @return string
+     */
 	public function buildFile($destination) {
 		$goma = new GomaSeperatedEnvironment();
 		$goma->addClasses(array("gfs", "GFS_Package_installer"));
@@ -287,24 +389,41 @@ class GFS_Package_installer extends GFS {
 		$file = $goma->build($code);
 
 		return $file;
-
 	}
 
-	/**
-	 * shows the ui
-	 */
+    /**
+     * shows the ui
+     * @param string $file
+     * @param bool $reload
+     * @return GomaResponse
+     */
 	public function showUI($file = "",$reload = true) {
 		if(!defined("BASE_URI")) define("BASE_URI", "./"); // most of the users use this path ;)
 
-		$template = new Template;
-		$template->assign("destination", $file);
-		$template->assign("reload", $reload);
-		$template->assign("archive", basename($this->file));
-		$template->assign("progress", $this->progress);
-		$template->assign("status", $this->status);
-		$template->assign("current", $this->current);
-		$template->assign("remaining", $this->remaining);
-		echo $template->display("/system/templates/GFSUnpacker.html");
-		exit;
+        if($this->request->canReplyJSON()) {
+            return GomaResponse::create(null, new JSONResponseBody(array(
+                "redirect" => $file,
+                "reload" => $reload,
+                "archive" => basename($this->file),
+                "progress" => $this->progress,
+                "status" => $this->status,
+                "current" => $this->current,
+                "remaining" => $this->remaining
+            )))->setShouldServe(false);
+        } else {
+            $template = new Template;
+            $template->assign("destination", $file);
+            $template->assign("reload", $reload);
+            $template->assign("archive", basename($this->file));
+            $template->assign("progress", $this->progress);
+            $template->assign("status", $this->status);
+            $template->assign("current", $this->current);
+            $template->assign("remaining", $this->remaining);
+            return GomaResponse::create(null,
+                GomaResponseBody::create(
+                    $template->display("/system/templates/GFSUnpacker.html")
+                )->setParseHTML(false)
+            )->setShouldServe(false);
+        }
 	}
 }

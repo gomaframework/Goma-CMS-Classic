@@ -92,6 +92,7 @@ var FileUploadSet = function(name, table, url) {
 		ajaxurl: url + "/ajaxUpload/",
 		browse: this.browse,
 		usePut: false,
+		useSlice: true,
 		
 		multiple: true,
 		
@@ -211,7 +212,7 @@ var FileUploadSet = function(name, table, url) {
 					}
 				} catch(err) {
 					if(!this.isAbort) {
-                        this.removeTableRowWithError(tablerow, data.errstring);
+                        this.removeTableRowWithError(tablerow, data && data.errstring ? data.errstring : err);
 					}
 				}
 			}

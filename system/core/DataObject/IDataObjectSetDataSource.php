@@ -117,16 +117,10 @@ interface IDataObjectSetDataSource {
     public function buildExtendedQuery($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $forceClasses = true);
 }
 
-interface IDataObjectSetModelSource {
+interface IFormForModelGenerator {
     /**
-     * @param array $data
-     * @return ViewAccessableData
-     */
-    public function createNew($data = array());
-
-    /**
-     * @param Form $form
-     */
+    * @param Form $form
+    */
     public function getForm(&$form);
 
     /**
@@ -138,6 +132,14 @@ interface IDataObjectSetModelSource {
      * @param Form $form
      */
     public function getActions(&$form);
+}
+
+interface IDataObjectSetModelSource {
+    /**
+     * @param array $data
+     * @return ViewAccessableData
+     */
+    public function createNew($data = array());
 
     /**
      * @return string

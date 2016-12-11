@@ -80,7 +80,9 @@ class HTTPResponse
 	 */
 	public static function setBody($body)
 	{
-		self::gomaResponse()->getBody()->setBody($body);
+		self::gomaResponse()->setBody(
+			self::gomaResponse()->getBody()->setBody($body)
+		);
 	}
 
 	/**
@@ -114,8 +116,12 @@ class HTTPResponse
 		if(isset($body))
 			self::setBody($body);
 
-		self::gomaResponse()->getBody()->setParseHTML(!self::$disabledparsing);
-		self::gomaResponse()->getBody()->setIncludeResourcesInBody(!core::is_ajax());
+		$body = self::gomaResponse()->getBody();
+		$body->setParseHTML(!self::$disabledparsing);
+		$body->setIncludeResourcesInBody(!core::is_ajax());
+		self::gomaResponse()->setBody(
+			$body
+		);
 
 		self::gomaResponse()->output();
 	}

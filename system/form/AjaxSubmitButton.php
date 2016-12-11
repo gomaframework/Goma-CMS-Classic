@@ -111,7 +111,7 @@ class AjaxSubmitButton extends FormAction {
         try {
             $response = $this->handleSubmit($data, $form, $response, $controller);
 
-            if (is_a($response, "AjaxFormResponse") && $response->getLeaveCheck() === null) {
+            if (is_a($response, FormAjaxResponse::class) && $response->getLeaveCheck() === null) {
                 $response->setLeaveCheck(false);
             }
 
@@ -143,6 +143,8 @@ class AjaxSubmitButton extends FormAction {
 
                     $response->addErrorField($error->getField());
                 } else {
+                    log_exception($e);
+
                     if ($error->getMessage()) {
                         $prev = $error->getPrevious() ? " " . $error->getPrevious()->getMessage() : "";
                         $response->addError(lang($error->getMessage(), $error->getMessage()) . $prev);

@@ -312,7 +312,6 @@ ImageUploadController.prototype = {
             },
             datatype: "json"
         }).done(function(data){
-            console.log(updatePreviewOnly);
             if(updatePreviewOnly === true) {
                 if(data.file.imageHeight400) {
                     $this.super.formelement.find(".image-preview-img").css({
@@ -322,18 +321,29 @@ ImageUploadController.prototype = {
                         "src": data.file.imageHeight400,
                         "data-retina": null
                     });
+                    $this.field.upload = data.file;
                     $this.super.formelement.find(".upload-link").attr("href", data.file.path);
                     $this.super.destInput.val(data.file.realpath);
+
+                    $this.fieldElement.find(".ThumbLeftValue").val(-1);
+                    $this.fieldElement.find(".ThumbTopValue").val(-1);
+                    $this.fieldElement.find(".ThumbHeightValue").val(-1);
+                    $this.fieldElement.find(".ThumbWidthValue").val(-1);
                 }
             } else {
                 $this.super.uploader.updateFile(data);
             }
         }).fail(function(jqxhr){
-            var data = $.parseJSON(jqxhr.responseText);
-            if(data.error) {
-                alert(data.class + ": " + data.code + " " + data.errstring);
-            } else {
-                alert(jqxhr.responseText);
+            try {
+                var data = $.parseJSON(jqxhr.responseText);
+                if (data.error) {
+                    alert(data.class + ": " + data.code + " " + data.errstring);
+                } else {
+                    alert(jqxhr.responseText);
+                }
+            } catch(e) {
+                alert(e);
+                console.log(e);
             }
         });
 

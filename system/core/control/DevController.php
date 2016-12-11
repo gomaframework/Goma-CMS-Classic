@@ -44,7 +44,6 @@ class Dev extends RequestHandler {
 	 *
 	 */
 	public static function redirectToDev() {
-
 		if(GlobalSessionManager::globalSession() == null) {
 			ClassManifest::tryToInclude("SessionManager", "system/security/SessionManager.php");
 			GlobalSessionManager::__setSession(SessionManager::startWithIdAndName(null));
@@ -280,10 +279,11 @@ class Dev extends RequestHandler {
 
 			/** @var GomaFormResponse $return */
 			$return = call_user_func_array(array("G_" . $name . "SoftwareType", "buildDistro"), array($file, $subname, $this));
-			if(is_a($return, "GomaFormResponse") && $return->isStringResponse() && !is_bool($return->getRawBody()))
-				return $return;
+			if(!is_bool($return) && (!is_a($return, "GomaFormResponse") || !is_bool($return->getResult()))) {
+                return $return;
+            }
 
-			FileSystem::sendFile($file);
+			FileSystem::sendFile($file, null, $this->request);
 			exit;
 		}
 

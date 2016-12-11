@@ -1,17 +1,13 @@
-<?php
+<?php defined("IN_GOMA") OR die();
+
 /**
-  *@package goma framework
-  *@link http://goma-cms.org
-  *@license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
-  *@author Goma-Team
+  * @package goma framework
+  * @link http://goma-cms.org
+  * @license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
+  * @author Goma-Team
   * last modified: 15.09.2012
   * $Version 2.1.1
 */
-
-defined('IN_GOMA') OR die('<!-- restricted access -->'); // silence is golden ;)
-
-loadlang('backup');
-
 class InstallController extends Controller {
 	/**
 	 * url_handlers
@@ -36,26 +32,28 @@ class InstallController extends Controller {
 		if(GlobalSessionManager::globalSession()->hasKey("lang")) {
 			return tpl::render("install/index.html");
 		} else {
-			HTTPResponse::Redirect(BASE_URI . BASE_SCRIPT . "/install/langselect/");
+			return GomaResponse::Redirect(BASE_URI . BASE_SCRIPT . "/install/langselect/");
 		}
 	}
-	
-	/**
-	 * shows lang-select
-	 *
-	 *@name langSelect
-	*/
+
+    /**
+     * shows lang-select
+     *
+     * @name langSelect
+     * @return string
+     */
 	public function langSelect() {
 		$data = new ViewAccessAbleData();
 		return $data->renderWith("install/langselect.html");
 	}
-	
-	/**
-	 * lists apps to select
-	 *
-	 *@name install
-	 *@access public
-	*/
+
+    /**
+     * lists apps to select
+     *
+     * @name install
+     * @access public
+     * @return string
+     */
 	public function install() {
 		G_SoftwareType::forceLiveDB();
 		
@@ -74,19 +72,20 @@ class InstallController extends Controller {
 		$data = new DataSet($apps);
 		return $data->renderWith("install/selectApp.html");
 	}
-	
-	/**
-	 * starts an installation of an specific app
-	 *
-	 *@name installApp
-	 *@access public
-	*/
+
+    /**
+     * starts an installation of an specific app
+     *
+     * @name installApp
+     * @access public
+     * @return array|mixed|string
+     */
 	public function installApp() {
 		G_SoftwareType::forceLiveDB();
 		
 		$data = unserialize(file_get_contents(FRAMEWORK_ROOT . "installer/data/apps/.index-db"));
 		if(!$data)
-			Dev::RedirectToDev();
+			return Dev::RedirectToDev();
 		
 		$apps = G_SoftwareType::listInstallPackages();
 		
@@ -95,6 +94,13 @@ class InstallController extends Controller {
 		if(isset($apps[$app])) {
 			$softwareType = G_SoftwareType::getByType($apps[$app]["plist_type"], $apps[$app]["file"]);
 			$data = $softwareType->getInstallInfo($this);
+            if(is_a($data, GomaFormResponse::class)) {
+                /** @var GomaFormResponse $data */
+                if(is_array($data->getResult())) {
+                    $data = $data->getResult();
+                }
+            }
+
 			if(is_array($data)) {
 				$rand = randomString(20);
 				$data["rand"] = $rand;
@@ -118,7 +124,7 @@ class InstallController extends Controller {
 	public function validateInstall($obj) {
 		$result = $obj->getForm()->result;
 		$notAllowedFolders = array(
-			"dev", "admin", "pm", "system"
+			"dev", "admin", "pm", "system", "__system_temp", "api"
 		);
 		if(file_exists(ROOT . $result["folder"]) || in_array($result["folder"], $notAllowedFolders) || !preg_match('/^[a-z0-9_]+$/', $result["folder"])) {
 			return lang("install.folder_error");
@@ -132,41 +138,44 @@ class InstallController extends Controller {
 		
 		return true;
 	}
-		
-	/**
-	 * executess the installation with a give file
-	 *
-	 *@name execInstall
-	 *@access public
-	*/
+
+    /**
+     * executess the installation with a give file
+     *
+     * @name execInstall
+     * @access public
+     * @return GomaResponse
+     */
 	public function execInstall() {
 		$rand = $this->getParam("rand");
 		if(isset($_SESSION["install"][$rand])) {
 			$data = $_SESSION["install"][$rand];
 			G_SoftwareType::install($data);
-			HTTPResponse::redirect(BASE_URI);
+			return GomaResponse::redirect(BASE_URI);
 		} else {
-			HTTPResponse::redirect(BASE_URI);
+			return GomaResponse::redirect(BASE_URI);
 		}
 	}
-	
-	/**
-	 * serve
-	 *
-	 *@name content
-	 *@access public
-	*/
+
+    /**
+     * serve
+     *
+     * @name content
+     * @access public
+     * @return string
+     */
 	public function serve($content) {
 		$data = new ViewAccessAbleData();
 		return $data->customise(array("content" => $content))->renderWith("install/install.html");
 	}
-	
-	/**
-	 * shows a form to select a file to restore
-	 *
-	 *@name selectRestore
-	 *@access public
-	*/
+
+    /**
+     * shows a form to select a file to restore
+     *
+     * @name selectRestore
+     * @access public
+     * @return GomaFormResponse|string
+     */
 	public function selectRestore() {
 		$backups = array();
 		$files = scandir(APP_FOLDER . "data/restores/");
@@ -189,28 +198,28 @@ class InstallController extends Controller {
 		
 		return $form->render();
 	}
-	
-	/**
-	 * submit-action for selectRestore-form
-	 *
-	 *@name submitSelectRestore
-	 *@access public
-	*/
+
+    /**
+     * submit-action for selectRestore-form
+     *
+     * @name submitSelectRestore
+     * @access public
+     * @return GomaResponse
+     */
 	public function submitSelectRestore($data) {
-		HTTPResponse::redirect(ROOT_PATH . BASE_SCRIPT . "install/showRestore".URLEND."?restore=" . $data["backup"]);
-		exit;
+		return GomaResponse::redirect(ROOT_PATH . BASE_SCRIPT . "install/showRestore".URLEND."?restore=" . $data["backup"]);
 	}
-	
-	/**
-	 * shows up the file to restore and some information
-	 *
-	 *@name showRestore
-	 *@access public
-	*/
+
+    /**
+     * shows up the file to restore and some information
+     *
+     * @name showRestore
+     * @access public
+     * @return array|mixed|string
+     */
 	public function showRestore() {
 		if(!$this->getParam("restore")) {
-			HTTPResponse::redirect(ROOT_PATH . BASE_SCRIPT . "install/selectRestore" . URLEND);
-			exit;
+			return GomaResponse::redirect(ROOT_PATH . BASE_SCRIPT . "install/selectRestore" . URLEND);
 		}
 			
 		if(file_exists(APP_FOLDER . "data/restores/" . basename($this->getParam("restore")))) {
@@ -219,6 +228,13 @@ class InstallController extends Controller {
 			$t = G_SoftwareType::getByType($data["type"], APP_FOLDER . "data/restores/" . basename($this->getParam("restore")));
 			
 			$data = $t->getRestoreInfo();
+            if(is_a($data, GomaFormResponse::class)) {
+                /** @var GomaFormResponse $data */
+                if(is_array($data->getResult())) {
+                    $data = $data->getResult();
+                }
+            }
+
 			if(is_array($data)) {
 				$rand = randomString(20);
 				$data["rand"] = $rand;
@@ -240,8 +256,7 @@ class InstallController extends Controller {
 	*/
 	public function installFormBackup() {
 		if(!$this->getParam("restore")) {
-			HTTPResponse::redirect(ROOT_PATH . BASE_SCRIPT . "install/selectRestore" . URLEND);
-			exit;
+			return GomaResponse::redirect(ROOT_PATH . BASE_SCRIPT . "install/selectRestore" . URLEND);
 		}
 		
 		if(file_exists(APP_FOLDER . "data/restores/" . basename($this->getParam("restore")))) {
@@ -337,13 +352,14 @@ class InstallController extends Controller {
 			return "file not found";
 		}
 	}
-	
-	/**
-	 * returns an array of the wiki-article and youtube-video for this controller
-	 *
-	 *@name helpArticle
-	 *@access public
-	*/
+
+    /**
+     * returns an array of the wiki-article and youtube-video for this controller
+     *
+     * @name helpArticle
+     * @access public
+     * @return array
+     */
 	public function helpArticle() {
 		
 		if($this->getParam("action") == "installapp")

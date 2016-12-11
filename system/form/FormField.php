@@ -261,6 +261,7 @@ class FormField extends AbstractFormComponent {
     /**
      * this is the validation for this field if it is required
      *
+     * @param $value
      * @return bool
      */
     public function validate($value) {

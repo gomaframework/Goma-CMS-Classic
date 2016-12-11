@@ -102,8 +102,7 @@ class BackupAdmin extends TableView
 
         $file = $file->name;
         $path = BackupModel::BACKUP_PATH . "/" .  $file;
-        FileSystem::sendFile($path);
-        exit;
+        return FileSystem::sendFile($path);
     }
 
     /**
@@ -162,11 +161,16 @@ class BackupAdmin extends TableView
     /**
      * creates a db-backup
      *
-     * @name add_db
      * @return GomaResponse
      */
     public function add_db() {
-        Backup::generateDBBackup(BackupModel::BACKUP_PATH . "/" . $this->getFileFromSession(self::SESSION_VAR_DB_FILE, "sql", "sgfs"));
+        $out = Backup::generateDBBackup(
+            BackupModel::BACKUP_PATH . "/" . $this->getFileFromSession(self::SESSION_VAR_DB_FILE, "sql", "sgfs"),
+            $this->request
+        );
+        if(is_a($out, GomaResponse::class)) {
+            return $out;
+        }
 
         GlobalSessionManager::globalSession()->remove(self::SESSION_VAR_DB_FILE);
 
@@ -176,6 +180,10 @@ class BackupAdmin extends TableView
 
     /**
      * get file and stores it in session.
+     * @param string $session
+     * @param string $prefix
+     * @param string $extension
+     * @return mixed|string
      */
     protected function getFileFromSession($session, $prefix, $extension) {
         if(GlobalSessionManager::globalSession()->hasKey($session)) {
@@ -199,7 +207,10 @@ class BackupAdmin extends TableView
             $exclude[$key] = "/" . $val;
         }
 
-        Backup::generateBackup(BackupModel::BACKUP_PATH . "/" . $this->getFileFromSession(self::SESSION_VAR_COMPLETE, "full", "gfs"), $exclude);
+        $out = Backup::generateBackup(BackupModel::BACKUP_PATH . "/" . $this->getFileFromSession(self::SESSION_VAR_COMPLETE, "full", "gfs"), $exclude);
+        if(is_a($out, GomaResponse::class)) {
+            return $out;
+        }
 
         GlobalSessionManager::globalSession()->remove(self::SESSION_VAR_COMPLETE);
 

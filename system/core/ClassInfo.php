@@ -304,7 +304,6 @@ class ClassInfo extends gObject {
 	 * @return bool|string
 	 */
 	public static function findFile($file, $class) {
-
 		$class = ClassManifest::resolveClassName($class);
 
 		if($folder = ExpansionManager::getExpansionFolder($class)) {
@@ -315,12 +314,12 @@ class ClassInfo extends gObject {
 
 		if(isset(self::$files[$class])) {
 			if(file_exists(dirname(self::$files[$class]) . "/" . $file) && !is_dir(dirname(self::$files[$class]) . "/" . $file)) {
-				return dirname(self::$files[$class]) . "/" . $file;
+				return str_replace("\\", "/", dirname(self::$files[$class]) . "/" . $file);
 			}
 		}
 
 		if(file_exists(APPLICATION . "/" . $file) && !is_dir(APPLICATION . "/" . $file)) {
-			return APPLICATION . "/" . $file;
+			return str_replace("\\", "/", APPLICATION) . "/" . $file;
 		}
 
 		if(file_exists($file) && !is_dir($file)) {
@@ -846,12 +845,16 @@ class ClassInfo extends gObject {
 	 * @param 	string error
 	 */
 	public static function raiseSoftwareError($err) {
-		$error = file_get_contents(ROOT . "system/templates/framework/software_run_fail.html");
-		$error = str_replace('{$error}', $err, $error);
-		$error = str_replace('{BASE_URI}', BASE_URI, $error);
+		if(isCommandLineInterface()) {
+			$error = "Configuration-Error: " . $err . "\n";
+		} else {
+			$error = file_get_contents(ROOT . "system/templates/framework/software_run_fail.html");
+			$error = str_replace('{$error}', $err, $error);
+			$error = str_replace('{BASE_URI}', BASE_URI, $error);
+		}
 		header("HTTP/1.1 500 Server Error");
 		echo $error;
-		exit;
+		exit(15);
 	}
 
 	/**

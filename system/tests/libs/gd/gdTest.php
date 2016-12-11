@@ -110,6 +110,7 @@ class GDTest extends GomaUnitTest
      * tests if gd resize resizes correctly.
      */
     public function testGDResize() {
+        print_r(scandir("system/tests/resources/"));
         $f1 = "system/tests/resources/img_1000_480.png";
         $this->assertTrue(file_exists($f1));
         $this->unitGDResize($f1, new Size(1000, 480), new Size(500, 250), true, new Size(500, 250));

@@ -95,6 +95,8 @@ class userAdmin extends adminItem {
             ))->renderWith("admin/subview-header.html"));
 		}
 
+		$this->callExtending("extendUserAdmin", $config);
+
 		$form = new Form($this, "form_useradmin", array(
 			new TableField("userTable", lang("users"), $this->modelInst(), $config)
 		));

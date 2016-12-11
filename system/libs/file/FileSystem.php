@@ -443,21 +443,29 @@ class FileSystem extends gObject {
 		return fclose($handle);
 	}
 
-    /**
-     * sends a specified file to the browser through the file-sender
-     *
-     * @param string $file
-     * @param string $filename
-     * @return bool
-     */
-	public static function sendFile($file, $filename = null) {
+	/**
+	 * sends a specified file to the browser through the file-sender
+	 *
+	 * @param string $file
+	 * @param string $filename
+	 * @param Request|null $request
+	 * @return bool
+	 */
+	public static function sendFile($file, $filename = null, $request = null) {
 		if(!file_exists($file))
 			return false;
 		
 		$hash = randomString(20);
 		FileSystem::write(FRAMEWORK_ROOT . "temp/download." . $hash . ".goma", serialize(array("file" => realpath($file), "filename" => $filename)));
-		HTTPResponse::redirect(ROOT_PATH . "system/libs/file/Sender/FileSender.php?downloadID=" . $hash);
-		exit;
+
+		if(isset($request) && $request->canReplyJSON()) {
+			header("content-type: application/json");
+			echo json_encode(array("file" => ROOT_PATH . "system/libs/file/Sender/FileSender.php?downloadID=" . $hash));
+			exit;
+		} else {
+			HTTPResponse::redirect(ROOT_PATH . "system/libs/file/Sender/FileSender.php?downloadID=" . $hash);
+			exit;
+		}
 	}
 
     /**

@@ -809,32 +809,6 @@ class mysqliDriver implements SQLDriver
     }
 
     /**
-     * sets the default sort of a specific table
-     *
-     * @param string $table
-     * @param string $field
-     * @param string $type optional: DESC/ASC
-     * @param string $prefix
-     * @return bool
-     */
-    public function setDefaultSort($table, $field, $type = null, $prefix = null)
-    {
-        if(!isset($type)) {
-            $type = "ASC";
-        }
-
-        if (!isset($prefix)) {
-            $prefix = DB_PREFIX;
-        }
-
-        $sql = "ALTER TABLE " . $prefix . $table . " ORDER BY " . $field . " " . $type;
-        if (SQL::Query($sql))
-            return true;
-        else
-            return false;
-    }
-
-    /**
      * deletes a table
      *
      * @name dontRequireTable

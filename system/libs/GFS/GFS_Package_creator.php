@@ -28,16 +28,54 @@ class GFS_Package_Creator extends GFS {
 	protected $fileIndex = array();
 
     /**
+     * @var Request
+     */
+    protected $request;
+
+    /**
+     * @param string $filename
+     * @param Request $request
+     * @param int|null $flag
+     * @param int|null $writeMode
+     * @return static
+     */
+    public static function createWithRequest($filename, $request, $flag = null, $writeMode = null) {
+        return new static($filename, $flag, $writeMode, $request);
+    }
+
+    /**
      * construct with read-only
      * @param string $filename
+     * @param int|null $flag
+     * @param int|null $writeMode
+     * @param Request|null $request
      * @throws GFSDBException
      * @throws GFSFileException
      * @throws GFSVersionException
      */
-	public function __construct($filename) {
-		parent::__construct($filename, GFS_READWRITE);
-	}
+    public function __construct($filename, $flag = null, $writeMode = null, $request = null) {
+        parent::__construct($filename, isset($flag) ? $flag : GFS_READWRITE, $writeMode);
 
+        $this->request = isset($request) ? $request : Director::createRequestFromEnvironment(URL);
+    }
+
+    /**
+     * @return null|Request
+     */
+    public function getRequest()
+    {
+        return $this->request;
+    }
+
+    /**
+     * @param null|Request $request
+     * @return $this
+     */
+    public function setRequest($request)
+    {
+        $this->request = $request;
+        return $this;
+    }
     /**
      * adds a folder
      *
@@ -67,24 +105,43 @@ class GFS_Package_Creator extends GFS {
         return $this;
 	}
 
-	/**
-	 * commits the changes
-	 *
-	 * @param null $inFile
-	 * @param null $index
-	 * @param float $maxTime
-	 * @throws GFSFileExistsException
-	 * @throws GFSFileNotFoundException
-	 * @throws GFSFileNotValidException
-	 * @throws GFSRealFileNotFoundException
-	 * @throws GFSRealFilePermissionException
-	 */
-	public function commit($inFile = null, $index = null, $maxTime = 2.0) {
+    /**
+     * @param null $inFile
+     * @param null $index
+     * @param float $maxTime
+     * @param bool $cli
+     * @return GomaResponse
+     */
+    public function commit($inFile = null, $index = null, $maxTime = 2.0, $cli = false) {
+        $out = $this->commitReply($inFile, $index, $maxTime, $cli);
+        if(is_a($out, GomaResponse::class)) {
+            $out->output();
+            exit;
+        }
+
+        return $out;
+    }
+
+    /**
+     * commits the changes
+     *
+     * @param null $inFile
+     * @param null $index
+     * @param float $maxTime
+     * @param bool $cli
+     * @return GomaResponse
+     * @throws GFSFileExistsException
+     * @throws GFSFileNotFoundException
+     * @throws GFSFileNotValidException
+     * @throws GFSRealFileNotFoundException
+     * @throws GFSRealFilePermissionException
+     */
+	public function commitReply($inFile = null, $index = null, $maxTime = 2.0, $cli = false) {
 		if(isset($index)) {
 			$this->fileIndex = $index;
 		}
 
-        if(isCommandLineInterface()) {
+        if($cli) {
             echo "Creating Archive... {$this->file}\n";
         }
 		
@@ -123,7 +180,7 @@ class GFS_Package_Creator extends GFS {
 				}
 
 				if(round($i / count($this->fileIndex) * 100) != $currentProgress) {
-					if(isCommandLineInterface()) {
+					if($cli) {
 						$currentProgress = round($i / count($this->fileIndex) * 100);
                         echo "\033[5D";
 						echo str_pad($currentProgress, 3, " ", STR_PAD_LEFT) . " %";
@@ -133,7 +190,7 @@ class GFS_Package_Creator extends GFS {
 				$count++;
 				$this->write("/gfsprogress" . count($this->fileIndex), serialize(array("i" => $i, "count" => $count)));
 				$this->close();
-				$this->progress = ($i / count($this->fileIndex) * 100);
+				$this->progress = round($i / count($this->fileIndex) * 100);
 				$perhit = $i / $count;
 				$remaining = (round((count($index) - $i) / $perhit * 3) + 3);
 				$this->current = $paths[$i];
@@ -158,10 +215,10 @@ class GFS_Package_Creator extends GFS {
 							$uri .= "&pack[]=" . urlencode($file);
 						}
 					}
-					$this->showUI($file . "?redirect=" . urlencode($uri));
+					return $this->showUI($file . "?redirect=" . urlencode($uri));
 				} else {
 					// if we are in the external file
-				 	$this->showUI();	
+				 	return $this->showUI($_SERVER["REQUEST_URI"]);
 				}
 			}
 			$i++;
@@ -171,7 +228,7 @@ class GFS_Package_Creator extends GFS {
 		$this->unlink("/gfsprogress" . count($this->fileIndex));
 		//$this->fileIndex = array();
 
-        if(isCommandLineInterface()) {
+        if($cli) {
             echo "\033[5D";
             echo "Done Creating Archive.\n";
         }
@@ -179,37 +236,40 @@ class GFS_Package_Creator extends GFS {
 		// if we are in the external file
 		if(isset($inFile)) {
 			@unlink($inFile);
-			if(isset($_GET["redirect"])) {
-				header("Location:" . $_GET["redirect"]);
-				exit;
-			} else {
-				header("Location:" . ROOT_PATH);
-				exit;
-			}
+            if($this->request->canReplyJSON()) {
+                return new GomaResponse(null,
+                    new JSONResponseBody(
+                        array("success" => true, "redirect" => isset($_GET["redirect"]) ? $_GET["redirect"] : ROOT_PATH)
+                    )
+                );
+            } else {
+                return GomaResponse::redirect(isset($this->request->get_params["redirect"]) ? $this->request->get_params["redirect"] : ROOT_PATH);
+            }
 		}
 	}
 
-	/**
-	 * if a specific file was packed
-	 *
-	 * @name wasPacked
-	 * @access public
-	 * @return bool
-	 */
-	public static function wasPacked($file = null) {
+    /**
+     * if a specific file was packed
+     *
+     * @param null|string $file
+     * @param null|Request $request
+     * @return bool
+     */
+	public static function wasPacked($file = null, $request = null) {
+        $request = isset($request) ? $request : Director::createRequestFromEnvironment(URL);
 		if(isset($file)) {
 			$file = str_replace('\\\\', '\\', realpath($file));
 			$file = str_replace('\\', '/', realpath($file));
-			$pack = isset($_GET["pack"]) ? str_replace('\\', '/', str_replace('\\\\', '\\', $_GET["pack"])) : array();
+			$pack = isset($request->get_params["pack"]) ? str_replace('\\', '/', str_replace('\\\\', '\\', $_GET["pack"])) : array();
 			
-			if(isset($_GET["pack"])) {
+			if(isset($request->get_params["pack"])) {
 				$file = realpath($file);
 				return in_array($file, $pack);
 			} else {
 				return false;
 			}
 		} else {
-			if(isset($_GET["pack"]))
+			if(isset($request->get_params["pack"]))
 				return true;
 			else
 				return false;
@@ -254,21 +314,40 @@ class GFS_Package_Creator extends GFS {
 			}
 		}
 	}
-	/**
-	 * shows the ui
-	*/
+
+    /**
+     * shows the ui
+     * @param null $file
+     * @param bool $reload
+     * @return GomaResponse
+     */
 	public function showUI($file = null, $reload = true) {
 		if(!defined("BASE_URI")) define("BASE_URI", "./"); // most of the users use this path ;)
-		
-		$template = new Template();
-		$template->assign("destination", $file);
-		$template->assign("reload", $reload);
-		$template->assign("archive", basename($this->file));
-		$template->assign("progress", $this->progress);
-		$template->assign("status", $this->status);
-		$template->assign("current", $this->current);
-		$template->assign("remaining", $this->remaining);
-		echo $template->display("/system/templates/GFSUnpacker.html");
-		exit;
+
+		if($this->request->canReplyJSON()) {
+			return GomaResponse::create(null, new JSONResponseBody(array(
+				"redirect" => $file,
+				"reload" => $reload,
+				"archive" => basename($this->file),
+				"progress" => $this->progress,
+				"status" => $this->status,
+				"current" => $this->current,
+				"remaining" => $this->remaining
+			)))->setShouldServe(false);
+		} else {
+			$template = new Template();
+			$template->assign("destination", $file);
+			$template->assign("reload", $reload);
+			$template->assign("archive", basename($this->file));
+			$template->assign("progress", $this->progress);
+			$template->assign("status", $this->status);
+			$template->assign("current", $this->current);
+			$template->assign("remaining", $this->remaining);
+            return GomaResponse::create(null,
+                GomaResponseBody::create(
+                    $template->display("/system/templates/GFSUnpacker.html")
+                )->setParseHTML(false)
+            )->setShouldServe(false);
+		}
 	}
 }

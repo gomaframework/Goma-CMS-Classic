@@ -78,6 +78,10 @@ class ChunkedUploadHandler {
             $rangeStart = $matches[1];
             $rangeEnd = $matches[2];
 
+            if($rangeEnd > $this->request->getHeader("x-file-size") || $rangeStart > $this->request->getHeader("x-file-size")) {
+                throw new BadRequestException("Request-Information wrong.");
+            }
+
             if($rangeStart == 0) {
                 $this->delete();
             }

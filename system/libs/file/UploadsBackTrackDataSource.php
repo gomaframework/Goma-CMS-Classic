@@ -69,52 +69,60 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
         $i = 0;
         foreach ($models as $model => $info) {
             foreach ($info as $field => $fetchInfo) {
-                if($fetchInfo == "n") {
-                    if($this->fetchMode == self::FETCH_MODE_SINGLE) {
-                        $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field => array(
-                                "id" => $this->upload->id,
-                                "OR",
-                                "sourceImageId" => $this->upload->id
-                            )
-                        ));
-                    } else {
-                        $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field => array(
-                                "md5" => $this->upload->md5,
-                                "OR",
-                                "sourceImageId" => $this->upload->id
-                            )
-                        ));
-                    }
-                } else {
-                    if($this->fetchMode == self::FETCH_MODE_SINGLE) {
-                        $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field . "id"           => $this->upload->id,
-                            "OR",
-                            $field .".sourceImageId" => $this->upload->id
-                        ));
-                    } else {
-                        $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field . ".md5" => $this->upload->md5,
-                            "OR",
-                            $field.".sourceImageId" => $this->upload->id
-                        ));
-                    }
-                }
-
-                $remaining = ($limitLength - $i);
-                if($currentData->count() > $remaining) {
-                    $records = array_merge($records, $currentData->getArrayRange(0, $remaining));
-                    break;
-                } else {
-                    if($i > $start) {
-                        $records = array_merge($records, $currentData->getArrayRange(0, $currentData->count()));
-                    } else if($i + $currentData->count() > $start) {
-                        $records = array_merge($records, $currentData->getArrayRange($start - $i, $currentData->count()));
+                foreach(array(DataObject::VERSION_STATE, DataObject::VERSION_PUBLISHED) as $version) {
+                    if($version == DataObject::VERSION_STATE && !DataObject::Versioned($model)) {
+                        continue;
                     }
 
-                    $i += $currentData->count();
+                    if ($fetchInfo == "n") {
+                        if ($this->fetchMode == self::FETCH_MODE_SINGLE) {
+                            $currentData = DataObject::get($model, $filter)->addFilter(array(
+                                $field => array(
+                                    "id"            => $this->upload->id,
+                                    "OR",
+                                    "sourceImageId" => $this->upload->id
+                                )
+                            ));
+                        } else {
+                            $currentData = DataObject::get($model, $filter)->addFilter(array(
+                                $field => array(
+                                    "md5"           => $this->upload->md5,
+                                    "OR",
+                                    "sourceImageId" => $this->upload->id
+                                )
+                            ));
+                        }
+                    } else {
+                        if ($this->fetchMode == self::FETCH_MODE_SINGLE) {
+                            $currentData = DataObject::get($model, $filter)->addFilter(array(
+                                $field . "id"             => $this->upload->id,
+                                "OR",
+                                $field . ".sourceImageId" => $this->upload->id
+                            ));
+                        } else {
+                            $currentData = DataObject::get($model, $filter)->addFilter(array(
+                                $field . ".md5"           => $this->upload->md5,
+                                "OR",
+                                $field . ".sourceImageId" => $this->upload->id
+                            ));
+                        }
+                    }
+
+                    $currentData->setVersion($version);
+
+                    $remaining = ($limitLength - $i);
+                    if ($currentData->count() >= $remaining) {
+                        $records = array_merge($records, $currentData->getArrayRange(0, $remaining));
+                        break 3;
+                    } else {
+                        if ($i > $start) {
+                            $records = array_merge($records, $currentData->getArrayRange(0, $currentData->count()));
+                        } else if ($i + $currentData->count() > $start) {
+                            $records = array_merge($records, $currentData->getArrayRange($start - $i, $currentData->count()));
+                        }
+
+                        $i += $currentData->count();
+                    }
                 }
             }
 

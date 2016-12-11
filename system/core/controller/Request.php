@@ -1,7 +1,7 @@
 <?php defined("IN_GOMA") OR die();
 
 /**
- * Requests are represented by this class.
+ * HTTP-Requests are represented by this class.
  *
  * @package		Goma\System\Core
  * @author		Goma-Team
@@ -440,7 +440,7 @@ class Request extends gObject {
 	 * @return bool
 	 */
 	public function isJSResponse() {
-		return $this->is_ajax() && $this->getParam("ajaxfy");
+		return $this->canReplyJavaScript();
 	}
 
 	/**
@@ -540,20 +540,25 @@ class Request extends gObject {
 	 * @return bool
 	 */
 	public function canReplyHTML() {
-		return (isset($this->headers["accept"]) && preg_match('/text/html/i', $this->headers["accept"]));
+		return (isset($this->headers["accept"]) && preg_match('/text\/html/i', $this->headers["accept"]));
 	}
 
 	/**
 	 * @return bool
 	 */
 	public function canReplyPlain() {
-		return (isset($this->headers["accept"]) && preg_match('/text/plain/i', $this->headers["accept"]));
+		return (isset($this->headers["accept"]) && preg_match('/text\/plain/i', $this->headers["accept"]));
 	}
+
 	/**
 	 * @return bool
 	 */
 	public function canReplyJSON() {
-		return (isset($this->headers["accept"]) && preg_match('/text/json/i', $this->headers["accept"]));
+		return (isset($this->headers["accept"]) && (
+			preg_match('/text\/json/i', $this->headers["accept"]) ||
+			preg_match('/text\/x\-json/i', $this->headers["accept"]) ||
+			preg_match('/application\/json/i', $this->headers["accept"])
+		));
 	}
 
 	/**

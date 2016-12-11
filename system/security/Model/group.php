@@ -28,17 +28,11 @@ class Group extends DataObject implements HistoryData, PermProvider
 {
     /**
      * name of this model
-     *
-     * @name name
-     * @access public
      */
     public static $cname = '{$_lang_group}';
 
     /**
      * icon for this model
-     *
-     * @name icon
-     * @access public
      */
     static public $icon = "images/icons/fatcow16/group.png";
 
@@ -68,6 +62,10 @@ class Group extends DataObject implements HistoryData, PermProvider
     static $belongs_many_many = array(
         "users"       => "user",
         "permissions" => "Permission"
+    );
+
+    static $index = array(
+        "name" => true
     );
 
     /**

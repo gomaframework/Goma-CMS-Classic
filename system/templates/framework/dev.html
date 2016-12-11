@@ -6,6 +6,113 @@
 		<% INCLUDE_CSS_MAIN "admin/style-front.less" %>
 		
 		<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+
+		<script type="text/javascript">
+			$(function(){
+				$("form[name=builddistro]").submit(function(){
+					var form = $(this);
+					form.find("button[type=submit]").prop("disabled", true);
+
+					form.gForm().setLeaveCheck(true);
+
+                    goma.ui.setProgress(1);
+
+                    $(".ajax-result").html('<div class="progress"><img src="images/loading.gif" /> Creating archive...</div>');
+
+                    fireAjax($.ajax({
+						url: form.attr("action"),
+						type: "post",
+						data: form.serialize() + "&" + encodeURIComponent(form.find("button[type=submit]").attr("name")) +
+						"=" + encodeURIComponent(form.find("button[type=submit]").val()),
+						dataType: "json"
+					}), form);
+
+					return false;
+				});
+
+                var fireAjax = function(ajax, form) {
+                    ajax.done(function(data){
+                        try {
+                            if (data.file) {
+                                $(".ajax-result").html('<div class="success">Done creating archive</div>');
+                                form.find("button[type=submit]").prop("disabled", false);
+                                form.gForm().setLeaveCheck(false);
+                                goma.ui.setProgress(100);
+                                location.href = data.file;
+                            } else {
+                                if (data.redirect) {
+                                    var progress = data.progress ? data.progress + "%" : "";
+                                    if(data.progress) {
+                                        goma.ui.setProgress(data.progress, true);
+                                    }
+
+                                    $(".ajax-result").html('<div class="progress"><img src="images/loading.gif" /> Creating archive... ' + progress + '</div>');
+                                    fireAjax($.ajax({
+                                        url: data.redirect,
+                                        dataType: "json"
+                                    }), form);
+                                } else {
+                                    throw "";
+                                }
+                            }
+                        } catch(e) {
+                            $(".ajax-result").html('<div class="error">'+lang("error") + ' ' + e +'</div>');
+                            form.gForm().setLeaveCheck(false);
+                            form.find("button[type=submit]").prop("disabled", false);
+                        }
+                    }).fail(function(){
+                        goma.ui.setProgress(100);
+
+                        $(".ajax-result").html('<div class="error">'+lang("error")+'</div>');
+                        console.log(arguments);
+                        form.gForm().setLeaveCheck(false);
+                        form.find("button[type=submit]").prop("disabled", false);
+                    });
+                };
+
+                // show progress in tree
+                goma.ui.onProgress(function(percent, slow) {
+                    if($(".loading").length == 1) {
+                        var item = $(".loading").parent().eq(0);
+                        if(item.find(".loadingBar").length == 0) {
+                            item.append('<div class="loadingBar"></div>');
+                            item.find(".loadingBar").css({
+                                position: "absolute",
+                                left: 0,
+                                top:  0,
+                                height: "2px"
+                            });
+                        }
+
+                        var maxWidth = item.outerWidth();
+
+                        var slow = (typeof slow == "undefined") ? false : slow;
+
+                        var duration = (slow && percent != 100) ? 5000 : 500;
+
+                        goma.ui.progress = percent;
+                        item.find(".loadingBar").stop().css({opacity: 1}).animate({
+                            width: percent / 100 * maxWidth
+                        }, {
+                            duration: duration,
+                            queue: false
+                        });
+
+                        if(percent == 100) {
+                            item.find(".loadingBar").animate({
+                                opacity: 0
+                            }, {
+                                duration: 1000,
+                                queue: false,
+                                complete: function(){
+                                    item.find(".loadingBar").remove();
+                                }
+                            });
+                        }
+                    }
+                });
+			});
+		</script>
 	</head>
 	<body>
 		<div id="document">
@@ -19,7 +126,9 @@
 			</div>
 			
 			<div id="wrapper" class="content_wrapper">
-			
+
+                <div class="loading"></div>
+
 				<div class="header">
 					<div class="content_wrapper">
 						<h1>$_cms_ptitle</h1>
@@ -28,6 +137,9 @@
 				<div class="content">
 					<div class="content_wrapper">
 						<div style="float: right;"><a href="{BASE_URI}{BASE_SCRIPT}admin/">{$_lang_administration}</a></div>
+                        <div id="ajax" class="ajax-result">
+
+                        </div>
 						$content
 						<div class="clear"></div>
 					</div>

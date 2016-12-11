@@ -19,20 +19,28 @@ class GomaSeperatedEnvironment {
 		gObject::class,
 		ExceptionManager::class,
         StaticsManager::class,
-		"ClassInfo",
-		"ClassManifest",
-		"RequestHandler",
-		"Core",
-		"ViewAccessableData",
-		"FileSystem",
-		"tpl",
-		"template", 
-		"httpresponse",
-		"ArrayLib",
+		ClassInfo::class,
+		ClassManifest::class,
+        Director::class,
+        Request::class,
+		RequestHandler::class,
+		Core::class,
+		ViewAccessableData::class,
+		FileSystem::class,
+		tpl::class,
+		tplCaller::class,
+        \Goma\Template\tplcacher::class,
+		template::class,
+		HTTPResponse::class,
+        HTMLParser::class,
+		ArrayLib::class,
         "IDataBaseField",
-		"DBField",
-        "Varchar",
-		"Convert"
+		DBField::class,
+        Varchar::class,
+		Convert::class,
+        GomaResponse::class,
+        GomaResponseBody::class,
+        JSONResponseBody::class
 	);
 
 	/**
@@ -52,6 +60,8 @@ class GomaSeperatedEnvironment {
 		"PROFILE",
 		"CACHE_DIRECTORY",
 		"ROOT",
+        "GOMA_VERSION",
+        "PHP_MAIOR_VERSION",
 		"ROOT_PATH",
 		"BASE_URI",
 		"FRAMEWORK_ROOT",
@@ -66,9 +76,16 @@ class GomaSeperatedEnvironment {
 		"APP_FOLDER"
 	);
 
-	/**
-	 * generate class.
-	*/
+    protected $interfaces = array(
+        "IFormForModelGenerator"
+    );
+
+    /**
+     * generate class.
+     * @param array $files
+     * @param array $classes
+     * @param array $constants
+     */
 	public function __construct($files = array(), $classes = array(), $constants = array()) {
 		$this->files = array_merge($this->files, $files);
 		$this->classes = array_merge($this->classes, $classes);
@@ -120,9 +137,11 @@ class GomaSeperatedEnvironment {
 		return $code;
 	}
 
-	/**
-	 * returns filepath to class.
-	*/
+    /**
+     * returns filepath to class.
+     * @param string $class
+     * @return bool|string
+     */
 	public function getClassPath($class) {
 		$class = strtolower($class);
 
@@ -183,12 +202,17 @@ class GomaSeperatedEnvironment {
 		}
 
 		// add some code which is important to run
-		$code .= '	define("IN_GFS_EXTERNAL", true); 
+		$code .= '	define("URL", "");
+		            define("IN_GFS_EXTERNAL", true);
 					chdir(ROOT); 
 					error_reporting(E_ALL); 
 					defined("INSTALL") OR define("INSTALL", true); 
 					define("EXEC_START_TIME", microtime(true));
 					date_default_timezone_set('.var_export(DEFAULT_TIMEZONE, true).');';
+
+        foreach($this->interfaces as $interface) {
+            $code .= 'interface ' . $interface . ' {}';
+        }
 
 		return $code;
 	}

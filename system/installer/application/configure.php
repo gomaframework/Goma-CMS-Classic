@@ -44,7 +44,7 @@ if(file_exists($data["directory"] . "/temp/" . CLASS_INFO_DATAFILE)) {
     FileSystem::delete($data["directory"] . "/temp/" . CLASS_INFO_DATAFILE);
 }
 
-register_shutdown_function(function() use($data) {
+Core::addToLocalHook("onBeforeShutdown", function() use($data) {
     logging("Creating user with " . $data["user"] . " and password ***");
 
     DefaultPermission::checkDefaults();

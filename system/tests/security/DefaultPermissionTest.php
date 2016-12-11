@@ -46,9 +46,9 @@ class DefaultPermissionTest extends GomaUnitTest {
     }
 
     /**
-     *
+     * @testdox tests if an admin-user exists in this installation. This is part of the health-check.
      */
-    public function testDefaultUser() {
+    public function testAdminUserExists() {
         $possibleGroups = DataObject::get(Group::class, array(
             "permissions" => array(
                 "name" => "superadmin"

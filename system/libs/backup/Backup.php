@@ -24,18 +24,20 @@ class Backup extends gObject {
      * generates a database-backup
      *
      * @param string $file
+     * @param Request $request
      * @param string $prefix
      * @param array $excludeList
      * @param float $maxTime
+     * @param bool $cli
      * @return string
      * @throws GFSFileExistsException
      * @throws GFSRealFilePermissionException
      * @throws PListException
      * @throws SQLException
      */
-    public static function generateDBBackup($file, $prefix = DB_PREFIX, $excludeList = array(), $maxTime = 1.0)
+    public static function generateDBBackup($file, $request, $prefix = DB_PREFIX, $excludeList = array(), $maxTime = 1.0, $cli = false)
     {
-        if(isCommandLineInterface()) {
+        if($cli) {
             echo "Generate DB Backup\n";
         }
         
@@ -63,7 +65,6 @@ class Backup extends gObject {
         $i = 0;
 
         foreach (ClassInfo::$database as $table => $fields) {
-
             if ($gfs->exists("database/" . $table . ".sql"))
                 continue;
 
@@ -176,7 +177,19 @@ class Backup extends gObject {
 
             $diff = microtime(true) - $time;
             if ($maxTime > 0 && $diff > $maxTime) {
-                if (!defined("BASE_URI")) define("BASE_URI", "./"); // most of the users use this path ;)
+                if($request->canReplyJSON()) {
+                    return GomaResponse::create(null, new JSONResponseBody(array(
+                        "file" => $file,
+                        "redirect" => $_SERVER["REQUEST_URI"],
+                        "reload" => true,
+                        "archive" =>  "SQL-Backup",
+                        "progress" => ($i / count(ClassInfo::$database)) * 100,
+                        "status" => "",
+                        "current" => $table,
+                        "remaining" => ""
+                    )));
+                }
+
 
                 $template = new Template;
                 $template->assign("destination", $_SERVER["REQUEST_URI"]);
@@ -186,8 +199,7 @@ class Backup extends gObject {
                 $template->assign("status", "");
                 $template->assign("current", $table);
                 $template->assign("remaining", "");
-                echo $template->display("/system/templates/GFSUnpacker.html");
-                exit;
+                return GomaResponse::create(null, $template->display("/system/templates/GFSUnpacker.html"))->setShouldServe(false);
             }
         }
 
@@ -199,10 +211,20 @@ class Backup extends gObject {
 
     /**
      * generates a file-backup
+     * @param string $file
+     * @param $request
+     * @param array $excludeList
+     * @param bool $includeTPL
+     * @param bool $cli
+     * @return bool
+     * @throws DOMException
+     * @throws GFSRealFilePermissionException
+     * @throws IOException
+     * @throws PListException
      */
-    public static function generateFileBackup($file, $excludeList = array(), $includeTPL = true)
+    public static function generateFileBackup($file, $request, $excludeList = array(), $includeTPL = true, $cli = false)
     {
-        $backup = new GFS_Package_Creator($file);
+        $backup = GFS_Package_Creator::createWithRequest($file, $request);
 
         // for converting the PHP-Array to a plist-structure
         $detector = new CFTypeDetector();
@@ -260,7 +282,10 @@ class Backup extends gObject {
         }
 
         $backup->add(ROOT . APPLICATION, "/backup/", array_merge(StaticsManager::getStatic("Backup", "fileExcludeList"), $excludeList));
-        $backup->commit(null, null, isCommandLineInterface() ? -1 : 2.0);
+        $out = $backup->commitReply(null, null, $cli ? -1 : 2.0, $cli);
+        if(is_a($out, GomaResponse::class)) {
+            return $out;
+        }
 
         $backup->close();
 
@@ -271,6 +296,7 @@ class Backup extends gObject {
      * generates a backup
      *
      * @param $file
+     * @param Request $request
      * @param array $excludeList
      * @param array $excludeSQLList
      * @param $SQLprefix
@@ -278,24 +304,34 @@ class Backup extends gObject {
      * @param null $framework
      * @param null $changelog
      * @param float $maxTime
+     * @param bool $cli
+     * @return bool|GomaResponse
      * @throws GFSFileExistsException
      * @throws GFSRealFileNotFoundException
      * @throws GFSRealFilePermissionException
      * @throws PListException
      * @throws SQLException
      */
-    public static function generateBackup($file, $excludeList = array(), $excludeSQLList = array(), $SQLprefix = DB_PREFIX,
-                                          $includeTPL = true, $framework = null, $changelog = null, $maxTime = 1.0)
+    public static function generateBackup($file, $request, $excludeList = array(), $excludeSQLList = array(), $SQLprefix = DB_PREFIX,
+                                          $includeTPL = true, $framework = null, $changelog = null, $maxTime = 1.0, $cli = false)
     {
-        if (GFS_Package_Creator::wasPacked() && GlobalSessionManager::globalSession()->hasKey("backup") &&
-            GFS_Package_Creator::wasPacked(GlobalSessionManager::globalSession()->get("backup"))
+        if (GFS_Package_Creator::wasPacked(null, $request) && GlobalSessionManager::globalSession()->hasKey("backup") &&
+            GFS_Package_Creator::wasPacked(GlobalSessionManager::globalSession()->get("backup"), $request)
         ) {
             $file = GlobalSessionManager::globalSession()->get("backup");
         } else {
             GlobalSessionManager::globalSession()->set("backup", $file);
-            self::generateFileBackup($file, $excludeList, $includeTPL);
+            $out = self::generateFileBackup($file, $request, $excludeList, $includeTPL, $cli);
+            if(is_a($out, GomaResponse::class)) {
+                return $out;
+            }
+
         }
-        $DBfile = self::generateDBBackup(ROOT . CACHE_DIRECTORY . "/database.sgfs", $SQLprefix, $excludeSQLList, $maxTime);
+        $DBfile = self::generateDBBackup(ROOT . CACHE_DIRECTORY . "/database.sgfs", $request, $SQLprefix, $excludeSQLList, $maxTime, $cli);
+        if(is_a($DBfile, GomaResponse::class)) {
+            return $DBfile;
+        }
+
         $backup = new GFS($file);
         $backup->addFromFile($DBfile, basename($DBfile));
         @unlink($DBfile);
@@ -337,6 +373,8 @@ class Backup extends gObject {
         $backup->write("info.plist", $plist->toXML());
         $backup->close();
         unset($plist);
+
+        return true;
     }
 
     /**
@@ -349,11 +387,12 @@ class Backup extends gObject {
             if($args["-backup"] == "sql") {
                 $file = isset($args["backupfile"]) ? $args["backupfile"] : "sql" . "." . randomString(5) . "." . date("m-d-y_H-i-s", NOW) . ".sgfs";
 
-                self::generateDBBackup(BackupModel::BACKUP_PATH . "/" . $file, DB_PREFIX, array(), -1);
+                self::generateDBBackup(BackupModel::BACKUP_PATH . "/" . $file, Director::createRequestFromEnvironment(URL),
+                    DB_PREFIX, array(), -1, true);
             } else {
                 $file = isset($args["backupfile"]) ? $args["backupfile"] : "full" . "." . randomString(5) . "." . date("m-d-y_H-i-s", NOW) . ".gfs";
 
-                self::generateBackup(BackupModel::BACKUP_PATH . "/" . $file, array(), array(), DB_PREFIX, true, null, null, -1);
+                self::generateBackup(BackupModel::BACKUP_PATH . "/" . $file, array(), array(), DB_PREFIX, true, null, null, -1, true);
             }
         }
 

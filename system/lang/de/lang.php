@@ -72,7 +72,7 @@ $lang = array(
 	"mandatory field"                              	=> "Pflichtfeld",
 	"rate_site"                                    	=>"Seite bewerten",
 	"php_not_run"                                  	=> "<div class=\"error\"><strong>Fehler</strong><br />Kann PHP code nicht ausf&uuml;hren!!</div>",
-	"mail_not_sent"                                 => "Die E-Mail konnte nicht versendet werden!",
+	"mail_not_sent"                                 => "Die E-Mail konnte nicht versandt werden!",
 	"sent"                                         	=> "Die E-Mail wurde gesendet!",
 	"error"                                        	=> "Fehler",
 	"whole"                                        	=> "Insgesamt",      // like Insgesamt x Stimmen
@@ -252,7 +252,7 @@ $lang = array(
 	'lp_text'										=> "Falls Sie ihr Passwort vergessen haben, klicken Sie bitte auf folgenden Link:",
 	'lp_at'											=> " auf ",
 	'lp_mfg'										=> "Mit freundlichen Gr&uuml;&szlig;en<br />Das Team",
-	'lp_mail_sent'									=> "Die E-Mail wurde versendet." ,
+	'lp_mail_sent'									=> "Die E-Mail wurde erfolgreich versandt." ,
 	"lp_know_password"								=> "Sie wissen Ihr Passwort, sonst w&auml;ren Sie nicht eingeloggt.",
 	"lp_deny"										=> "Klicken Sie auf folgenden Link, wenn Sie diese E-Mail nicht angefordert haben:",
 	"lp_deny_okay"									=> "Verfahren erfolgreich abgebrochen!",

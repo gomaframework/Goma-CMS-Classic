@@ -8,6 +8,7 @@ defined("IN_GOMA") OR die();
  * @license GNU Lesser General Public License, version 3; see "LICENSE.txt"
  * @package Goma\Form
  * @version 2.0.1
+ * @deprecated
  */
 class AutoFormField extends FormField {
 	/**

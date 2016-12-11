@@ -1,6 +1,7 @@
 <div id="login_page">
 	<script type="text/javascript">
 		(function($){
+			$(".login_form").attr("action", $(".login_form").attr("action") + location.hash);
 			$(function(){
 				setTimeout(function(){
 					if($("#login_name").val() == "" || $("#login_name").val() == $("#login_name").attr("placeholder")) {

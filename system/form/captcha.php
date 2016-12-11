@@ -68,9 +68,11 @@ class Captcha extends FormField {
 
 	/**
 	 * validates the captcha
+	 * @param string $value
+	 * @return bool|string
 	 */
-	public function validate() {
-		return (isset($_SESSION['goma_captcha_spam'], $_POST[$this->name]) && $_SESSION['goma_captcha_spam'] == $_POST[$this->name]) ? true : lang("captcha_wrong", "The Code was wrong");
+	public function validate($value) {
+		return (isset($_SESSION['goma_captcha_spam'], $value) && $_SESSION['goma_captcha_spam'] == $value) ? true : lang("captcha_wrong", "The Code was wrong");
 	}
 
 	/**

@@ -110,6 +110,8 @@ class RegisterExtension extends ControllerExtension
 
 			// check if registering is not available on this page
 		} else if (!self::$enabled) {
+			$view = new ViewAccessableData();
+			return $view->renderWith("profile/registerNotAllowed.html");
 			return "<div class=\"notice\">" . lang("register_disabled", "You cannot register on this site!") . "</div>";
 
 			// great, let's show a form

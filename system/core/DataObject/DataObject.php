@@ -29,7 +29,8 @@
  * @method      string[] hasMany($component = null)
  * @method      ModelHasOneRelationshipInfo[]|ModelHasOneRelationshipInfo hasOne($component = null)
  */
-abstract class DataObject extends ViewAccessableData implements PermProvider, IDataObjectSetDataSource, IDataObjectSetModelSource
+abstract class DataObject extends ViewAccessableData implements PermProvider,
+    IDataObjectSetDataSource, IDataObjectSetModelSource, IFormForModelGenerator
 {
     const VERSION_STATE = "state";
     const VERSION_PUBLISHED = "published";
@@ -2120,7 +2121,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      */
     public function canSortBy($field) {
         if(strpos($field, ".") !== false) {
-            return true;
+            return false;
         }
 
         $field = strtolower(trim($field));
@@ -2139,8 +2140,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
         if (strpos($field, ".") !== false) {
             $has_one = $this->HasOne();
 
-            if (isset($has_one[strtolower(substr($field, 0, strpos($field, ".")))])) {
-                return true;
+            $key = strtolower(substr($field, 0, strpos($field, ".")));
+            if (isset($has_one[$key])) {
+                return gObject::instance($has_one[$key]->getTargetClass())->canFilterBy(substr($field, strpos($field, ".") + 1));
             }
         }
 
@@ -2168,7 +2170,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      *
      * @name duplicate
      * @access public
-     * @return DataObject|ViewAccessableData
+     * @return $this
      */
     public function duplicate() {
         $this->consolidate();
@@ -2505,9 +2507,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
             $field = $sort;
             $type = "ASC";
         }
-        if (isset(ClassInfo::$database[$this->Table()][$field])) {
-            SQL::setDefaultSort($this->Table(), $field, $type);
-        }
 
         $this->callExtending("buildDB", $prefix, $log);
 
@@ -2657,7 +2656,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
                 if(isset(ClassInfo::$class_info[$relationShip->getTargetClass()]["baseclass"])) {
                     $extBaseTable = ModelInfoGenerator::ClassTable(ClassInfo::$class_info[$relationShip->getTargetClass()]["baseclass"]);
                     $sql = "DELETE FROM ". DB_PREFIX . $relationShip->getTableName() ." WHERE ". $relationShip->getOwnerField() ." NOT IN (SELECT id FROM ".DB_PREFIX . $this->baseTable.") OR ". $relationShip->getTargetField() ." NOT IN (SELECT id FROM ".DB_PREFIX . $extBaseTable.")";
-                    register_shutdown_function(array("sql", "queryAfterDie"), $sql);
+                    sql::query($sql);
                 }
 
                 self::$tableHasBeenCleanedUp[$relationShip->getTableName()] = true;

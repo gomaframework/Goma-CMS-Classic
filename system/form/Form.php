@@ -349,7 +349,7 @@ class Form extends AbstractFormComponentWithChildren {
 	 * @return GomaFormResponse
 	 */
 	public function render() {
-		return new GomaFormResponse($this);
+		return new GomaFormResponse(null, $this);
 	}
 
 	/**
@@ -360,7 +360,7 @@ class Form extends AbstractFormComponentWithChildren {
 	 * @return GomaResponse
 	 */
 	public function renderWith($model, $view = null, $formName = "form", $inExpansion = null) {
-		return GomaFormResponse::create($this)->setRenderWith($model, $view, $formName, $inExpansion);
+		return GomaFormResponse::create(null, $this)->setRenderWith($model, $view, $formName, $inExpansion);
 	}
 
 	/**
@@ -368,7 +368,7 @@ class Form extends AbstractFormComponentWithChildren {
 	 * @return GomaResponse
 	 */
 	public function renderPrependString($content) {
-		return GomaFormResponse::create($this)->prependContent($content);
+		return GomaFormResponse::create(null, $this)->prependContent($content);
 	}
 
 	/**

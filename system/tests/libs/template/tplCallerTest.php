@@ -36,4 +36,30 @@ class tplCallerTest extends GomaUnitTest {
             $this->assertTrue(isset($lang["title"]));
         }
     }
+
+    /**
+     *
+     */
+    public function testTplCallerWindowsPath() {
+        $tplCaller = new tplCaller(new ViewAccessableData());
+        $tplCaller->setTplPath("C:\\xampp\\htdocs\\template\\view.html", "C:\\xampp\\htdocs\\");
+
+        $property = new ReflectionProperty("tplCaller", "tplBase");
+        $property->setAccessible(true);
+
+        $this->assertEqual("template", $property->getValue($tplCaller));
+    }
+
+    /**
+     *
+     */
+    public function testTplCallerWindowsPathWithWrongSlashes() {
+        $tplCaller = new tplCaller(new ViewAccessableData());
+        $tplCaller->setTplPath("C:\\xampp\\htdocs\\template\\view.html", "C:/xampp/htdocs/");
+
+        $property = new ReflectionProperty("tplCaller", "tplBase");
+        $property->setAccessible(true);
+
+        $this->assertEqual("template", $property->getValue($tplCaller));
+    }
 }

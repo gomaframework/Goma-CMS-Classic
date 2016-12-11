@@ -107,7 +107,9 @@ class Director extends gObject {
             $output = new GomaResponse(HTTPResponse::gomaResponse()->getHeader(), $output);
             $output->setStatus(HTTPResponse::gomaResponse()->getStatus());
 
-            $output->getBody()->setIncludeResourcesInBody(!Core::is_ajax());
+            $output->setBody(
+                $output->getBody()->setIncludeResourcesInBody(!Core::is_ajax())
+            );
         } else {
             $output->merge(HTTPResponse::gomaResponse());
         }
@@ -192,19 +194,22 @@ class Director extends gObject {
         return $content;
     }
 
-        /**
-     * renders the page
+    /**
      * @param string $url
-     * @return string|void
-     * @throws Exception
+     * @param array $server
+     * @param array $get
+     * @param array $post
+     * @param array $files
+     * @param array $headers
+     * @return Request
      */
-    public static function direct($url) {
-
-        if(PROFILE)
-            Profiler::mark("render");
+    public static function createRequestWithData($url, $server, $get, $post, $files, $headers) {
+        if(!isset($server["SERVER_NAME"], $server["SERVER_PORT"])) {
+            throw new InvalidArgumentException("Server name and port are quired.");
+        }
 
         // we will merge $_POST with $_FILES, but before we validate $_FILES
-        foreach($_FILES as $name => $arr) {
+        foreach($files as $name => $arr) {
             if(is_array($arr["tmp_name"])) {
                 foreach($arr["tmp_name"] as $tmp_file) {
                     if($tmp_file && !is_uploaded_file($tmp_file)) {
@@ -218,18 +223,52 @@ class Director extends gObject {
             }
         }
 
-        $request = new Request(
-            (isset($_SERVER['X-HTTP-Method-Override'])) ? $_SERVER['X-HTTP-Method-Override'] : $_SERVER['REQUEST_METHOD'],
+        return new Request(
+            (isset($server['X-HTTP-Method-Override'])) ? $server['X-HTTP-Method-Override'] : $server['REQUEST_METHOD'],
             $url,
-            $_GET,
-            array_merge((array)$_POST, (array)$_FILES),
-            getallheaders(),
-            $_SERVER["SERVER_NAME"],
-            $_SERVER["SERVER_PORT"],
-            (isset($_SERVER["HTTPS"])) && $_SERVER["HTTPS"] != "off",
-            isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : ""
+            $get,
+            array_merge((array)$post, (array)$files),
+            $headers,
+            $server["SERVER_NAME"],
+            $server["SERVER_PORT"],
+            (isset($server["HTTPS"])) && $_SERVER["HTTPS"] != "off",
+            isset($server["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : ""
         );
+    }
 
+    /**
+     * @param string $url
+     * @return Request
+     */
+    public static function createRequestFromEnvironment($url) {
+        return self::createRequestWithData($url, $_SERVER, $_GET, $_POST, $_FILES, getallheaders());
+    }
+
+    /**
+     * renders the page
+     * @param string $url
+     * @param bool $serve
+     * @return string|void
+     * @throws DataNotFoundException
+     */
+    public static function direct($url, $serve = true) {
+
+        if(PROFILE)
+            Profiler::mark("render");
+
+        $request = self::createRequestFromEnvironment($url);
+
+        return self::directRequest($request, $serve);
+    }
+
+    /**
+     * @param Request $request
+     * @param bool $serve
+     * @return false|null|string|void
+     * @throws DataNotFoundException
+     * @throws Exception
+     */
+    public static function directRequest($request, $serve = true) {
         $ruleMatcher = RuleMatcher::initWithRulesAndRequest(self::getSortedRules(), $request);
         while($nextController = $ruleMatcher->matchNext()) {
             if(!ClassInfo::exists($nextController)) {
@@ -243,12 +282,16 @@ class Director extends gObject {
 
             /** @var RequestHandler $inst */
             $data = $inst->handleRequest($ruleMatcher->getCurrentRequest());
+            if(!$serve) {
+                return $data;
+            }
+
             if($data !== false && $data !== null) {
                 self::serve($data, $request);
                 return;
             }
         }
 
-        return "404";
+        throw new DataNotFoundException();
     }
 }

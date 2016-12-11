@@ -30,9 +30,9 @@ class ExpansionManager {
 
         if(isset($folder)) {
             if($forceAbsolute) {
-                return realpath($folder) . "/";
+                return str_replace("\\", "/", realpath($folder)) . "/";
             } else {
-                return ClassInfo::makePathRelative($folder);
+                return str_replace("\\", "/", ClassInfo::makePathRelative($folder));
             }
         } else {
             return null;

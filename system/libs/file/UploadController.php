@@ -48,15 +48,10 @@ class UploadController extends FrontedController {
 		if(!$upload) {
 			return false;
 		}
-		
+
 		if(!file_exists($upload->realfile)) {
 			$upload->remove(true);
 			return false;
-		}
-
-		if($upload->deletable) {
-			$upload->deletable = false;
-			$upload->writeToDB(false, true);
 		}
 
 		GlobalSessionManager::globalSession()->stopSession();

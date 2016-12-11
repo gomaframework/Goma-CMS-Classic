@@ -126,9 +126,9 @@ class GFS {
 	 * @throws GFSFileException
 	 * @throws GFSVersionException
 	 */
-	public function __construct($filename, $flag = null, $writeMode = 0777) {
+	public function __construct($filename, $flag = null, $writeMode = null) {
 		$this->file = $filename;
-		$this->writeMode = $writeMode;
+		$this->writeMode = isset($writeMode) ? $writeMode : 0777;
 		if(is_dir($this->file)) {
 			$this->valid = false;
 			throw new InvalidArgumentException("GFS-File is a Folder.");
@@ -1029,7 +1029,7 @@ class GFS {
 				if($pointer = @fopen($aim, "w")) {
 					try {
 						if (fwrite($pointer, (string)$this->db[$path]["contents"]) !== strlen((string)$this->db[$path]["contents"])) {
-							throw new GFSRealFilePermissionException();
+							throw new GFSRealFilePermissionException($aim);
 						}
 						fclose($pointer);
 						@chmod($aim, $this->writeMode);
@@ -1042,7 +1042,7 @@ class GFS {
 					}
 					return;
 				} else {
-					throw new GFSRealFilePermissionException();
+					throw new GFSRealFilePermissionException($aim);
 				}
 			} else {
 				throw new GFSFileNotFoundException();
@@ -1059,11 +1059,11 @@ class GFS {
 						@unlink($aim);
 
 					if(!rename($aim . ".tmp", $aim)) {
-						throw new GFSRealFilePermissionException();
+						throw new GFSRealFilePermissionException($aim);
 					}
 				} else {
 					@unlink($aim . ".tmp");
-					throw new GFSRealFilePermissionException();
+					throw new GFSRealFilePermissionException($aim . ".tmp");
 				}
 			}
 			

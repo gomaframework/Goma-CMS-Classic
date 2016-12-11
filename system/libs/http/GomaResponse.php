@@ -150,7 +150,7 @@ class GomaResponse extends gObject {
      */
     public function getBody()
     {
-        return $this->body;
+        return clone $this->body;
     }
 
     public function getResponseBodyString() {
@@ -228,7 +228,11 @@ class GomaResponse extends gObject {
 
         $request->setStatus($permanent ? 301 : 302);
         $request->setHeader("location", $url);
-        $request->setBody('<script type="text/javascript">location.href = "'.addSlashes($url).'";</script><br /> Redirecting to: <a href="'.addSlashes($url).'">'.convert::raw2text($url).'</a>');
+        $request->setBody(
+            GomaResponseBody::create(
+                '<script type="text/javascript">location.href = "'.addSlashes($url).'";</script><br /> Redirecting to: <a href="'.addSlashes($url).'">'.convert::raw2text($url).'</a>'
+            )->setParseHTML(false)
+        );
         $request->setShouldServe(false);
 
         return $request;
@@ -333,8 +337,10 @@ class GomaResponse extends gObject {
             Core::callHook("beforeRedirect", $this->header["location"], $isPermanent, $this);
 
             try {
-                // TODO: Fix this hack.
-                addcontent::add(addcontent::get());
+                if(class_exists("addcontent", false)) {
+                    // TODO: Fix this hack.
+                    addcontent::add(addcontent::get());
+                }
             } catch(Exception $e) {}
         }
 
@@ -363,9 +369,11 @@ class GomaResponse extends gObject {
     }
 
     protected function addResourcesToHeaders() {
-        $data = Resources::get(true, true, true);
-        $this->setHeader("X-JavaScript-Load", implode(";", $data["js"]));
-        $this->setHeader("X-CSS-Load", implode(";", $data["css"]));
+        if(class_exists("Resources", false)) {
+            $data = Resources::get(true, true, true);
+            $this->setHeader("X-JavaScript-Load", implode(";", $data["js"]));
+            $this->setHeader("X-CSS-Load", implode(";", $data["css"]));
+        }
     }
 
     /**

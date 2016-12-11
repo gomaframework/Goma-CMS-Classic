@@ -111,6 +111,11 @@ class FileUploadSet extends FormField
     protected $templateView;
 
     /**
+     * @var string|null
+     */
+    protected $chunkKey;
+
+    /**
      * @param string $name
      * @param string $title
      * @param array|null $file_types
@@ -196,9 +201,22 @@ class FileUploadSet extends FormField
                 return $this->sendJSONError(lang("files.upload_failure"));
             }
 
-            $upload = $this->request->post_params["file"];
+            if(!$this->getParam("slice")) {
+                return $this->sendJSONError(lang("files.upload_failure") . " Slice Parameter Mising.");
+            }
 
-            return new JSONResponseBody(array("status" => 1, "file" => $this->getFileArray($this->handleUpload($upload))));
+            $chunkedUpload = new ChunkedUploadHandler($this->request, "file", $this->getParam("slice"));
+            if(!$chunkedUpload->isFinished()) {
+                return new JSONResponseBody(array(
+                    "status" => 2,
+                    "wait" 	 => true,
+                    "done"	 => $chunkedUpload->getStatus()
+                ));
+            }
+
+            return new JSONResponseBody(array("status" => 1, "file" => $this->getFileArray(
+                $this->handleUpload($chunkedUpload->getFileArray())
+            )));
         } catch(Exception $e) {
             return $this->sendJSONError($e->getMessage());
         }
@@ -316,7 +334,7 @@ class FileUploadSet extends FormField
             $responseStack = array();
             foreach ($upload["name"] as $key => $name) {
                 try {
-                    $responseStack[] = $this->handleSingleUpload($upload["name"][$key], $upload["size"][$key], $upload["tmp_name"][$key]);
+                    $responseStack[] = $this->handleSingleUpload($upload["name"][$key], $upload["size"][$key], $upload["tmp_name"][$key], $upload["error"][$key]);
                 } catch(Exception $e) {
                     $responseStack[] = $e->getMessage();
                 }
@@ -324,7 +342,7 @@ class FileUploadSet extends FormField
 
             return $responseStack;
         } else {
-            return $this->handleSingleUpload($upload["name"], $upload["size"], $upload["tmp_name"]);
+            return $this->handleSingleUpload($upload["name"], $upload["size"], $upload["tmp_name"], $upload["error"]);
         }
     }
 
@@ -332,24 +350,27 @@ class FileUploadSet extends FormField
      * @param string $name
      * @param int $size
      * @param string $tmp_name
+     * @param int $error
      * @return Uploads
      * @throws Exception
      */
-    protected function handleSingleUpload($name, $size, $tmp_name) {
+    protected function handleSingleUpload($name, $size, $tmp_name, $error) {
         if (GOMA_FREE_SPACE - $size < 10 * 1024 * 1024) {
             throw new Exception(lang("error_disk_space"));
         }
 
-        if($this->max_filesize != -1 && $size > $this->max_filesize) {
+        if($error == UPLOAD_ERR_INI_SIZE || $error == UPLOAD_ERR_FORM_SIZE || ($this->max_filesize != -1 && $size > $this->max_filesize)) {
             throw new Exception(lang('files.filesize_failure', "The file is too big."));
         }
 
         $ext = strtolower(substr($name, strrpos($name, ".") + 1));
-        if ($this->allowed_file_types != "*" &&
+        if ($error == UPLOAD_ERR_EXTENSION ||
+        ($this->allowed_file_types != "*" &&
             (
                 (is_array($this->allowed_file_types) && !in_array($ext, $this->allowed_file_types)) ||
                 (is_string($this->allowed_file_types) && !preg_match('/\.(' . implode("|", $this->allowed_file_types) . ')$/i', $name))
             )
+        )
         ) {
             throw new Exception(lang("files.filetype_failure", "The filetype isn't allowed."));
         }

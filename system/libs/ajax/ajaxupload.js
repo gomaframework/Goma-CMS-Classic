@@ -408,7 +408,14 @@ AjaxUpload.prototype = {
     generateXHR: function(i, file) {
         var _this = this;
 
-        return new slicedAjaxUpload(this.ajaxurl, file, this.useSlice ? this.sliceSize : -1, {
+        var customUrl = this.ajaxurl;
+        if(customUrl.indexOf("?") == -1) {
+            customUrl += "?slice=" + randomString(10);
+        } else {
+            customUrl += "&slice=" + randomString(10);
+        }
+
+        return new slicedAjaxUpload(customUrl, file, this.useSlice ? this.sliceSize : -1, {
             usePut: this.usePut,
             fileIndex: i + this.queue.length,
             currentStart: new Date().getTime(),
@@ -765,12 +772,18 @@ slicedAjaxUpload.prototype = {
             xhr.setRequestHeader("Content-Range", "bytes " + this._slices[next].start + " - " + this._slices[next].end);
 
             xhr.onreadystatechange = function (event) {
-                if (xhr.readyState === 4 && xhr.responseText !== "" && xhr.status === 200) {
-                    this.upload.uploader._slices[this.upload.slice].done = true;
-                    this.upload.uploader._sendNextJunk();
-                }
+                try {
+                    if (xhr.readyState === 4 && xhr.responseText !== "" && xhr.status === 200) {
+                        var data = JSON.parse(xhr.responseText);
+                        this.upload.uploader._slices[this.upload.slice].done = data.status == 2 ? data.wait : true;
+                        this.upload.uploader._sendNextJunk();
+                    }
 
-                if(xhr.readyState === 4 && xhr.status !== 200) {
+                    if (xhr.readyState === 4 && xhr.status !== 200) {
+                        this.upload.uploader._sendFail(xhr);
+                    }
+                } catch(e) {
+                    console.log && console.log(e);
                     this.upload.uploader._sendFail(xhr);
                 }
             }.bind(xhr);

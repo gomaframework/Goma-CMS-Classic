@@ -472,7 +472,7 @@ class Permission extends DataObject
      * @param int $needed rights
      * @return bool
      */
-    function right($needed)
+    static function right($needed)
     {
         if (!defined("SQL_INIT"))
             return true;

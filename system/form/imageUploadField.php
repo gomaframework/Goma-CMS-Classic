@@ -143,7 +143,14 @@ class ImageUploadField extends FileUpload
 			$upload = $image->addImageVersionBySizeInPx($this->getParam("thumbLeft"), $this->getParam("thumbTop"), $this->getParam("thumbWidth"), $this->getParam("thumbHeight"));
 		}
 
-		$this->value = $upload;
+        // cleanup
+        if($this->getModel()->sourceImage && $this->getModel()->id != $upload->id) {
+            if($this->getModel()->hasNoLinks()) {
+                $this->getModel()->remove(true);
+            }
+        }
+
+		$this->model = $upload;
 
 		return new JSONResponseBody(array(
 			"status" => 1,
@@ -151,7 +158,33 @@ class ImageUploadField extends FileUpload
 		));
 	}
 
-	/**
+    /**
+     * @return ImageUploads|null
+     */
+    public function getModel()
+    {
+        $model = parent::getModel();
+
+        if ($model &&
+            isset($this->getRequest()->post_params[$this->PostName() . "_thumbheight"],
+            $this->getRequest()->post_params[$this->PostName() . "_thumbwidth"],
+            $this->getRequest()->post_params[$this->PostName() . "_thumbleft"],
+            $this->getRequest()->post_params[$this->PostName() . "_thumbtop"])
+        && $this->getRequest()->post_params[$this->PostName() . "_thumbheight"] != -1) {
+            if($model->sourceImage) {
+                $model = $model->sourceImage->addImageVersionBySizeInPx(
+                    $this->getRequest()->post_params[$this->PostName() . "_thumbleft"],
+                    $this->getRequest()->post_params[$this->PostName() . "_thumbtop"],
+                    $this->getRequest()->post_params[$this->PostName() . "_thumbwidth"],
+                    $this->getRequest()->post_params[$this->PostName() . "_thumbheight"]
+                );
+            }
+        }
+
+        return $model;
+    }
+
+    /**
 	 * @param Exception $e
 	 * @return string
 	 * @throws Exception
