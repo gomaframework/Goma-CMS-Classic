@@ -1,0 +1,69 @@
+<% INCLUDE_CSS "filemanager.less" %>
+<% INCLUDE_JS "manageFile.js" %>
+<% INCLUDE_CSS "font-awsome/font-awesome.css" %>
+<script type="text/javascript">
+    $(function(){
+        new fileManagerController("$namespace", ".backtrack", ".different-versions");
+    });
+</script>
+
+<% IF $type == "file" %>
+<div class="file">
+    <a class="icon" target="_blank" class="button" href="$path">
+        <img alt="icon" src="$icon" />
+    </a>
+    <h2>$filename</h2>
+    <h5><a href="$collection.managePath">$collection.filename</a></h5>
+    <p><% lang("filemanager_last_modified") %>: $last_modified</p>
+    <p><% lang("filemanager_created") %>: $created</p>
+    <p>
+        <a target="_blank" class="button" href="$path"><i class="fa fa-eye" aria-hidden="true"></i> <% lang("filemanager_view") %></a>
+        <a class="button red" href="$namespace/delete{URLEND}"><i class="fa fa-trash" aria-hidden="true"></i> <% lang("delete") %></a>
+        <a class="button red" href="$namespace/deleteAll{URLEND}"><i class="fa fa-trash" aria-hidden="true"></i> <% lang("filemanager_delete_all") %></a>
+    </p>
+
+    <div class="backtrack">
+        <h3><% lang("files.backtrack") %></h3>
+        <ul>
+
+        </ul>
+        <div class="zero"><% lang("no_result") %></div>
+        <div class="loading"><img src="images/loading.gif" alt="{$_lang_loading}" /></div>
+        <a href="javascript:;" class="load-more"><% lang("loadMore") %></a>
+    </div>
+    <div class="different-versions">
+        <h3><% lang("versions") %></h3>
+        <ul>
+
+        </ul>
+        <div class="zero"><% lang("no_result") %></div>
+        <div class="loading"><img src="images/loading.gif" alt="{$_lang_loading}" /></div>
+        <a href="javascript:;" class="load-more"><% lang("loadMore") %></a>
+    </div>
+    <div class="clear"></div>
+
+</div>
+<% ELSE %>
+<div class="collection">
+    <h2>$filename</h2>
+
+    <% children.activatePagination($_GET_page, 20) %>
+    <ul>
+    <% CONTROL children() AS $child %>
+        <li><a href="$child.managePath"><img src="$child.icon" width="16" height="16" /> $child.filename
+            <% IF $child.type == "collection" %><em>$child.children.count <% lang("filemanager_files") %></em><% END %>
+        </a></li>
+    <% ENDCONTROL %>
+    </ul>
+    <div class="pages">
+        <% lang("page", "Page") %>
+        <% CONTROL children.pages() as $pages %>
+            <% IF $pages.black %>
+            <span class="black">$pages.page</span>
+            <% ELSE %>
+            <a href="<% echo addParamToURL(URL . URLEND, "page", $pages.page) %>">$pages.page</a>
+            <% ENDIF %>
+        <% ENDCONTROL %>
+    </div>
+</div>
+<% END %>
