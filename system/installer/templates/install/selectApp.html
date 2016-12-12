@@ -15,6 +15,9 @@
                     <h1>{$_lang_install.existent_folder}: $folder.directory</h1>
                     <p>$folder.title ($folder.name)</p>
                     <p>{$_lang_version} $folder.version</p>
+                    <% IF $folder.working %>
+                    <p><img src="images/success.png" /> {$_lang_install.database_working}</p>
+                    <% END %>
                 </div>
                 <div class="clear"></div>
             </div>

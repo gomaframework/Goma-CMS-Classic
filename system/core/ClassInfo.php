@@ -706,7 +706,8 @@ class ClassInfo extends gObject {
 
 			Core::__setRepo(isset($modelRepository) ? $modelRepository : new ModelRepository());
 
-			if(isCommandLineInterface()) {
+			if(isCommandLineInterface() || isset($_SESSION["reinstall"])) {
+				$_SESSION["reinstall"] = null;
 				Dev::buildDevCLI();
 				makeProjectAvailable();
 			}
