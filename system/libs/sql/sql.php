@@ -113,7 +113,10 @@ class SQL
 
         if (file_exists(dirname(__FILE__) . '/driver/' . $driver . ".php")) {
             require_once(dirname(__FILE__) . '/driver/' . $driver . ".php");
-            return call_user_func_array(array($driver . "Driver", "test"), array($dbuser, $dbdb, $dbpass, $dbhost));
+            /** @var SQLDriver $instance */
+            $driverClass = $driver . "Driver";
+            $instance = new $driverClass(false);
+            return $instance->test($dbuser, $dbdb, $dbpass, $dbhost);
         } else {
             return false;
         }
@@ -581,6 +584,17 @@ interface SQLDriver
      * @param hostname
      */
     public function connect($dbuser, $dbdb, $dbpass, $host);
+
+    /**
+     * tests db.
+     * @name connect
+     * @param username
+     * @param databasename
+     * @param password
+     * @param hostname
+     * @return bool
+     */
+    public function test($dbuser, $dbdb, $dbpass, $host);
 
     /**
      * runs a query

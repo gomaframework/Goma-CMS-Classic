@@ -1,29 +1,43 @@
 <a href="./" class="">&laquo; {$_lang_back}</a>
 <div id="apps">
-	<% IF $this %>
-		<% CONTROL this() %>
-			<% IF $this.first %>
-				<div class="app first">
-			<% ELSEIF NOT $this.white %>
-				<div class="app grey">
-			<% ELSE %>
-				<div class="app">
-			<% END %>
+	<% IF $folders %>
+        <% CONTROL folders() AS $folder %>
+            <div class="app">
+                <div class="icon">
+                    <% IF $folder.icon %>
+                    <img src="{$folder.icon}" alt="" width="64" />
+                    <% END %>
+                </div>
+                <div class="button_right">
+                    <a href="{BASE_SCRIPT}install/restoreFolder/$folder.directory.url(){URLEND}" class="button"><% lang("install.restore") %></a>
+                </div>
+                <div class="info">
+                    <h1>{$_lang_install.existent_folder}: $folder.directory</h1>
+                    <p>$folder.title ($folder.name)</p>
+                    <p>{$_lang_version} $folder.version</p>
+                </div>
+                <div class="clear"></div>
+            </div>
+        <% ENDCONTROL %>
+	<% END %>
+
+	<% IF $apps OR $folders %>
+		<% CONTROL apps() AS $app %>
+            <div class="app">
 				<div class="icon">
-					<% IF $this.icon %>
-						<img src="{$this.icon}" alt="" width="64" />
+					<% IF $app.icon %>
+						<img src="{$app.icon}" alt="" width="64" />
 					<% END %>
 				</div>
 				<div class="button_right">
-					<a href="{BASE_SCRIPT}install/installApp/$this.app.url(){URLEND}" class="button"><% lang("install.install") %></a>
+					<a href="{BASE_SCRIPT}install/installApp/$app.app.url(){URLEND}" class="button"><% lang("install.install") %></a>
 				</div>
 				<div class="info">
-					<h1>$this.title</h1>
-					<p>$this.appinfo.autor</p>
-					<p>{$_lang_version} $this.version</p>
+					<h1>$app.title</h1>
+					<p>$app.appinfo.autor</p>
+					<p>{$_lang_version} $app.version</p>
 				</div>
 				<div class="clear"></div>
-
 			</div>
 		<% ENDCONTROL %>
 	<% ELSE %>

@@ -61,14 +61,14 @@ class mysqliDriver implements SQLDriver
             $this->query("SET sql_mode = '';");
             return true;
         } else {
-            die(str_replace('{BASE_URI}', BASE_URI, file_get_contents(ROOT . 'system/templates/framework/database_connect_error.html')));
+            throw new DBConnectError();
         }
     }
 
     /**
      *
      */
-    public static function test($dbuser, $dbdb, $dbpass, $dbhost)
+    public function test($dbuser, $dbdb, $dbpass, $dbhost)
     {
         $test = new MySQLi($dbhost, $dbuser, $dbpass, $dbdb);
         if (!mysqli_connect_errno()) {
