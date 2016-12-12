@@ -527,10 +527,13 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         }, "LogicException");
     }
 
+    /**
+     * tests if ManyMany Fields casting is casted also at reading a value.
+     */
     public function testCastingOnReadManyMany() {
         $one = DataObject::get_one(ManyManyTestObjectOne::class);
         $two = $one->twos()->first();
-
+        
         $this->assertNotNull($two);
         $this->assertIsA($two->extraCasted(), MockStringCasting::class);
         $this->assertEqual(21, $two->extraCasted()->raw());

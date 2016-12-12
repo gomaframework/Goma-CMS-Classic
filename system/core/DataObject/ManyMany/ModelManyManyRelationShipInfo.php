@@ -65,9 +65,11 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
         if(isset($options["ef"])) {
             $this->extraFields = $options["ef"];
         } else {
-            $this->extraFields = ModelInfoGenerator::get_many_many_extraFields($this->owner, $name);
+            $this->extraFields = ArrayLib::map_key("strtolower", ModelInfoGenerator::get_many_many_extraFields($this->owner, $name));
             $belongingExtra = ModelInfoGenerator::get_many_many_extraFields($this->targetClass, $this->inverse);
             foreach ($belongingExtra as $key => $value) {
+                $key = strtolower($key);
+
                 if (isset($this->extraFields[$key]) && $this->extraFields[$key] != $value) {
                     throw new InvalidArgumentException("Multiple definitions of same Extra-Field in relationship-pairs in {$this->relationShipName} on class {$this->owner}.");
                 }
@@ -279,7 +281,7 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
     protected function setExtraFields($extraFields)
     {
         if($extraFields) {
-            $this->extraFields = (array) $extraFields;
+            $this->extraFields = (array) ArrayLib::map_key("strtolower", $extraFields);
         } else if(!$this->extraFields) {
             $this->extraFields = array();
         }
