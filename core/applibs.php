@@ -447,8 +447,9 @@ function getPrivateKey() {
 /**
  * sets a project-folder in the project-stack
  *
- *@name setProject
- *@access public
+ * @name setProject
+ * @access public
+ * @return bool|void
  */
 function setProject($project, $domain = null) {
 	if(file_exists(ROOT . "_config.php")) {

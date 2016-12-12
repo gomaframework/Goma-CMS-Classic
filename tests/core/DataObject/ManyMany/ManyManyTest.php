@@ -526,6 +526,18 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
             $transient->twos()->commitStaging(false, true);
         }, "LogicException");
     }
+
+    /**
+     * tests if ManyMany Fields casting is casted also at reading a value.
+     */
+    public function testCastingOnReadManyMany() {
+        $one = DataObject::get_one(ManyManyTestObjectOne::class);
+        $two = $one->twos()->first();
+        
+        $this->assertNotNull($two);
+        $this->assertIsA($two->extraCasted(), MockStringCasting::class);
+        $this->assertEqual(21, $two->extraCasted()->raw());
+    }
 }
 
 /**
@@ -538,7 +550,6 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
  * @property string random
  */
 class ManyManyTestObjectOne extends DataObject {
-
     static $versions = true;
 
     static $db = array(
@@ -554,7 +565,8 @@ class ManyManyTestObjectOne extends DataObject {
 
     static $many_many_extra_fields = array(
         "twos"  => array(
-            "extra" => "varchar(100)"
+            "extra"         => "varchar(100)",
+            "extraCasted"   => "MockStringCasting"
         )
     );
 }
@@ -585,6 +597,22 @@ class ManyManyTestObjectTwo extends DataObject {
             DataObject::RELATION_INVERSE    => "twos"
         )
     );
+}
+
+class MockStringCasting extends DBField {
+    /**
+     * gets the field-type
+     *
+     * @param array $args
+     * @return string
+     */
+    static public function getFieldType($args = array()) {
+        return "text";
+    }
+
+    public function raw() {
+        return 21;
+    }
 }
 
 /**

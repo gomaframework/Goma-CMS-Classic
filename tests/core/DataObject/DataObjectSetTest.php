@@ -1293,7 +1293,7 @@ class DumpDBElementPerson extends DataObject {
         ));
     }
 
-    public function writeToDBInRepo($repository, $forceInsert = false, $forceWrite = false, $snap_priority = 2, $history = true, $silent = false, $overrideCreated = false)
+    public function writeToDBInRepo($repository, $forceInsert = false, $forceWrite = false, $writeType = 2, $history = true, $silent = false, $overrideCreated = false)
     {
         throw new Exception("Should not be written.");
     }
