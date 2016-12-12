@@ -63,14 +63,24 @@ class SQL
      */
     public static function Init()
     {
-        new SQL();
+        new SQL(
+            null,
+            $GLOBALS["dbuser"],
+            $GLOBALS["dbdb"],
+            $GLOBALS["dbpass"],
+            $GLOBALS["dbhost"]
+        );
     }
 
     /**
-     * @access public
      * @use: connect to db
-     **/
-    public function __construct($driver = null)
+     * @param null $driver
+     * @param null $dbuser
+     * @param null $dbdb
+     * @param null $dbpass
+     * @param null $dbhost
+     */
+    public function __construct($driver = null, $dbuser = null, $dbdb = null, $dbpass = null, $dbhost = null)
     {
         if (!isset($driver)) {
             if (defined("SQL_DRIVER_OVERRIDE")) {
@@ -86,6 +96,7 @@ class SQL
             $driver = "pgsql";
 
         self::$driver = self::factory($driver);
+        self::$driver->connect($dbuser, $dbdb, $dbpass, $dbhost);
     }
 
     /**
