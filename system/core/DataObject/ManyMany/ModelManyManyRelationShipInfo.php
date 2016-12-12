@@ -589,6 +589,17 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
             $this->getTargetSortField()   => "int(10)"
         );
 
+        $extra_fields = $this->extraFields;
+        foreach($extra_fields as $field => $type) {
+            if ($casting = DBField::parseCasting($type)) {
+                $newType = call_user_func_array(array($casting["class"], "getFieldType"),
+                    (isset($casting["args"])) ? $casting["args"] : array());
+                if ($newType != "") {
+                    $extra_fields[$field] = $newType;
+                }
+            }
+        }
+
         return array_merge($fields, $this->extraFields);
     }
 

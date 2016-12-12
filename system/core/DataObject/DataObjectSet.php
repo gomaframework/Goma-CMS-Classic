@@ -1154,6 +1154,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 			$object->queryVersion = $this->queryVersion();
 		}
 
+		if($this->extendedCasting) {
+			$object->extendedCasting = array_merge($object->extendedCasting, $this->extendedCasting);
+		}
+
 		if(is_object($object) && method_exists($object, "customise")) {
 			$object->customise($this->protected_customised);
 			return $object;
