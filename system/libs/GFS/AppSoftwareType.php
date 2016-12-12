@@ -22,8 +22,8 @@ class G_AppSoftwareType extends G_SoftwareType {
 	/**
 	 * default __construct
 	 *
-	 *@name __construct
-	 *@access public
+	 * @name __construct
+	 * @access public
 	 */
 	public function __construct($file = null) {
 		parent::__construct($file);
@@ -31,20 +31,11 @@ class G_AppSoftwareType extends G_SoftwareType {
 
 	/**
 	 * stores the data from the form in $formResult
-	 *
-	 *@name saveFormData
-	 *@access public
 	 */
 	public function saveFormData($data) {
 		$_data = $data["installdata"];
 
-		if(!is_array($_data["postflightCode"])) {
-			$_data["postflightCode"] = array($_data["postflightCode"]);
-		}
-
-		if(defined("PROJECT_LOAD_DIRECTORY") && PROJECT_LOAD_DIRECTORY != $data["folder"]) {
-			$_data["postflightCode"][] = "<?php removeProject(".var_export(PROJECT_LOAD_DIRECTORY, true).");";
-		}
+		$_data["postflightCode"] = array();
 
 		if(isset($data["type"]) && $data["type"] == "copyconfig") {
 			$data["folder"] = APPLICATION;
@@ -227,13 +218,6 @@ class G_AppSoftwareType extends G_SoftwareType {
 			$data["installType"] = "update";
 			$data["installed"] = ClassInfo::AppVersion();
 
-			/*if(isset($appInfo["require_version"]) && goma_version_compare($appInfo["require_version"], ClassInfo::appVersion(), ">")) {
-				$data["error"] = lang("update_version_newer_required") . " " . $appInfo["require_version"];
-				$data["installable"] = false;
-				
-				return $data;
-			}*/
-
 			if(isset($info["changelog"]))
 				$data["changelog"] = $info["changelog"];
 
@@ -253,21 +237,26 @@ class G_AppSoftwareType extends G_SoftwareType {
 				'<?php if(!GFS_Package_Installer::wasUnpacked('.var_export($this->file, true).') || !is_dir('.var_export($dir, true).')) { $gfs = new GFS_Package_installer('.var_export($this->file, true).');$gfs->unpack('.var_export($dir, true).'); }'
 			);
 
+			foreach($info["excludeList"] as $file) {
+				if(preg_match('/^\/application\//', $file) && file_exists(ROOT . CURRENT_PROJECT . $file)) {
+					FileSystem::requireDir($dir . "/backup" . substr($file, 0, strrpos($file, "/")));
+					copy(ROOT . CURRENT_PROJECT . $file, $dir . "/backup" . $file);
+				}
+			}
+
+            copy(ROOT . CURRENT_PROJECT . "/version.php", $dir . "/backup/version.php");
+
+            $data["preflightCode"][] = "<?php rename(".var_export(ROOT . CURRENT_PROJECT . "/application", true).", ".
+                var_export(ROOT . CURRENT_PROJECT . "/temp/application", true).")";
+
 			$data["postflightCode"] = array(
-				'<?php FileSystem::Delete('.var_export($dir, true).');'
+				'<?php FileSystem::Delete('.var_export($dir, true).'); FileSystem::Delete('.var_export(ROOT . CURRENT_PROJECT . "/temp/application", true).');'
 			);
 
 			$data["installFolders"] = array(
 				"source"		=> $dir . "/backup/",
 				"destination"	=> ROOT . CURRENT_PROJECT . "/"
 			);
-
-			/*if($gfs->exists(".getinstallinfo")) {
-				$file = FRAMEWORK_ROOT . "temp/" . md5($this->file . ".installInfo") . ".php";
-				$gfs->writeToFileSystem(".getinstallinfo", $file);
-				include($file);
-				@unlink($file);
-			}*/
 
 			return $data;
 		}
@@ -650,17 +639,17 @@ class G_AppSoftwareType extends G_SoftwareType {
 		}
 	}
 
-	/**
-	 * generates a distro
-	 *
-	 * @param string $file
-	 * @param string|null $name
-	 * @param string|null $changelog
-	 * @return bool
-	 */
-	public static function backup($file, $name, $changelog = null) {
+    /**
+     * generates a distro
+     *
+     * @param Request $request
+     * @param string $file
+     * @param string|null $name
+     * @param string|null $changelog
+     * @return bool
+     */
+	public static function backup($request, $file, $name, $changelog = null) {
 		$tables = array_merge(DBTableManager::Tables("user"), DBTableManager::Tables("UserAuthentication"), DBTableManager::Tables("history"));
-		//$tables = array_merge($tables, ClassInfo::Tables("permission"));
 		if(isset(ClassInfo::$appENV["app"]["excludeModelsFromDistro"])) {
 			foreach(ClassInfo::$appENV["app"]["excludeModelsFromDistro"] as $model) {
 				$tables = array_merge($tables, DBTableManager::Tables($model));
@@ -669,9 +658,7 @@ class G_AppSoftwareType extends G_SoftwareType {
 
 		$excludeFiles = isset(ClassInfo::$appENV["app"]["excludeFiles"]) ? ClassInfo::$appENV["app"]["excludeFiles"] : array();
 
-		Backup::generateBackup($file, $excludeFiles, $tables, '{!#PREFIX}', !isset($_GET["dontIncludeTPL"]), ClassInfo::$appENV["app"]["requireFrameworkVersion"], $changelog);
-
-		return true;
+		return Backup::generateBackup($file, $request, $excludeFiles, $tables, '{!#PREFIX}', !isset($_GET["dontIncludeTPL"]), ClassInfo::$appENV["app"]["requireFrameworkVersion"], $changelog);
 	}
 
 
@@ -741,7 +728,7 @@ class G_AppSoftwareType extends G_SoftwareType {
 	 */
 	public static function buildDistro($file, $name, $controller) {
 		if(GlobalSessionManager::globalSession()->hasKey(g_SoftwareType::FINALIZE_SESSION_VAR))
-			return gObject::instance("g_appSoftwareType")->finalizeDistro(GlobalSessionManager::globalSession()->get(g_SoftwareType::FINALIZE_SESSION_VAR));
+			return gObject::instance("g_appSoftwareType")->finalizeDistro(GlobalSessionManager::globalSession()->get(g_SoftwareType::FINALIZE_SESSION_VAR), null, null, $controller->getRequest());
 
 		if(file_exists($file))
 			@unlink($file);
@@ -753,16 +740,11 @@ class G_AppSoftwareType extends G_SoftwareType {
 			new HTMLField("title", "<h1>".convert::raw2text($title)."</h1><h3>".lang("distro_build")."</h3>"),
 			$version = new TextField("version", lang("version"), ClassInfo::appVersion()),
 			new Textarea("changelog", lang("distro_changelog")),
-
-			/*new HidableFieldSet("advanced", array(
-				new Textarea("preflight", lang("install_option_preflight")),
-				new Textarea("postflight", lang("install_option_postflight")),
-				new Textarea("script_info", lang("install_option_getinfo"))
-			), lang("install_advanced_options", "advanced install-options"))*/
 		), array(
 			new LinkAction("cancel", lang("cancel"), ROOT_PATH . BASE_SCRIPT . "dev/buildDistro"),
 			new FormAction("submit", lang("download"), array(gObject::instance("g_appSoftwareType"), "finalizeDistro"))
 		));
+        $form->removeSecret();
 
 		$version->disable();
 

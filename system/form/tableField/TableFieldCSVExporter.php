@@ -122,7 +122,6 @@ class TableFieldCSVExporter implements TableField_HTMLProvider, TableField_URLHa
 
         $file = ROOT . CACHE_DIRECTORY . "/export_" . randomString(10) . ".csv";
         FileSystem::write($file, $csv->csv());
-        FileSystem::sendFile($file, "export.csv");
-        exit;
+        return FileSystem::sendFile($file, "export.csv");
     }
 }

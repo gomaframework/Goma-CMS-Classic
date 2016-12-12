@@ -12,14 +12,11 @@ class Director extends gObject {
 
     /**
      * addon urls by modules or others
-     *@name urls
-     *@var array
      */
     public static $rules = array();
 
     /**
      * Controllers used in this Request
-     *@name Controllers
      */
     public static $controller = array();
 
@@ -74,9 +71,10 @@ class Director extends gObject {
     /**
      * serves the output given
      *
-     *@param string - content
+     * @param $output
+     * @param $request
      */
-    public static function serve($output) {
+    public static function serve($output, $request = null) {
         if(PROFILE)
             Profiler::unmark("render");
 
@@ -86,13 +84,18 @@ class Director extends gObject {
         Core::callHook("serve", $output);
 
         if(isset(self::$requestController)) {
-            if(is_a($output, "GomaResponse")) {
-                /** @var GomaResponse $output */
-                if($output->shouldServe()) {
-                    $output->setBodyString(self::$requestController->serve($output->getResponseBodyString()));
-                }
-            } else {
-                $output = self::$requestController->serve($output);
+            if(self::$requestController->getRequest() == null) {
+                self::$requestController->setRequest($request);
+            }
+
+            /** @var GomaResponse|GomaResponseBody|string $output */
+            if(!is_a($output, GomaResponse::class) || $output->shouldServe()) {
+                $output = self::setStringToResponse($output,
+                    self::$requestController->serve(
+                        self::getStringFromResponse($output),
+                        self::getBodyObjectFromResponse($output)
+                    )
+                );
             }
         }
         if(PROFILE)
@@ -104,7 +107,9 @@ class Director extends gObject {
             $output = new GomaResponse(HTTPResponse::gomaResponse()->getHeader(), $output);
             $output->setStatus(HTTPResponse::gomaResponse()->getStatus());
 
-            $output->getBody()->setIncludeResourcesInBody(!Core::is_ajax());
+            $output->setBody(
+                $output->getBody()->setIncludeResourcesInBody(!Core::is_ajax())
+            );
         } else {
             $output->merge(HTTPResponse::gomaResponse());
         }
@@ -115,15 +120,96 @@ class Director extends gObject {
     }
 
     /**
-     * renders the page
+     * @param string|GomaResponse|GomaResponseBody $response
+     * @return GomaResponse|GomaResponseBody
      */
-    public static function direct($url) {
+    public static function getBodyObjectFromResponse($response) {
+        if(is_a($response, "GomaResponse")) {
+            /** @var GomaResponse $response */
+            return $response->getBody();
+        }
 
-        if(PROFILE)
-            Profiler::mark("render");
+        if(is_a($response, "GomaResponseBody")) {
+            /** @var GomaResponseBody $response */
+            return $response;
+        }
+
+        return new GomaResponseBody($response);
+    }
+
+    /**
+     * @param string|GomaResponse|GomaResponseBody $response
+     * @return bool
+     */
+    public static function isResponseFullPage($response) {
+        if(is_a($response, "GomaResponse")) {
+            /** @var GomaResponse $response */
+            return $response->isFullPage();
+        }
+
+        if(is_a($response, "GomaResponseBody")) {
+            /** @var GomaResponseBody $response */
+            return $response->isFullPage();
+        }
+
+        return true;
+    }
+
+    /**
+     * @param string|GomaResponse|GomaResponseBody $response
+     * @return string|mixed
+     */
+    public static function getStringFromResponse($response) {
+        if(is_a($response, "GomaResponse")) {
+            /** @var GomaResponse $response */
+            return $response->getResponseBodyString();
+        }
+
+        if(is_a($response, "GomaResponseBody")) {
+            /** @var GomaResponseBody $response */
+            return $response->getBody();
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param string|GomaResponse|GomaResponseBody $response
+     * @param string $content
+     * @return string|GomaResponse|GomaResponseBody|mixed
+     */
+    public static function setStringToResponse($response, $content) {
+        if(is_a($response, "GomaResponse")) {
+            /** @var GomaResponse $response */
+            $response->setBodyString($content);
+            return $response;
+        }
+
+        if(is_a($response, "GomaResponseBody")) {
+            /** @var GomaResponseBody $response */
+            $response->setBody($content);
+            return $response;
+        }
+
+        return $content;
+    }
+
+    /**
+     * @param string $url
+     * @param array $server
+     * @param array $get
+     * @param array $post
+     * @param array $files
+     * @param array $headers
+     * @return Request
+     */
+    public static function createRequestWithData($url, $server, $get, $post, $files, $headers) {
+        if(!isset($server["SERVER_NAME"], $server["SERVER_PORT"])) {
+            throw new InvalidArgumentException("Server name and port are quired.");
+        }
 
         // we will merge $_POST with $_FILES, but before we validate $_FILES
-        foreach($_FILES as $name => $arr) {
+        foreach($files as $name => $arr) {
             if(is_array($arr["tmp_name"])) {
                 foreach($arr["tmp_name"] as $tmp_file) {
                     if($tmp_file && !is_uploaded_file($tmp_file)) {
@@ -137,18 +223,52 @@ class Director extends gObject {
             }
         }
 
-        $request = new Request(
-            (isset($_SERVER['X-HTTP-Method-Override'])) ? $_SERVER['X-HTTP-Method-Override'] : $_SERVER['REQUEST_METHOD'],
+        return new Request(
+            (isset($server['X-HTTP-Method-Override'])) ? $server['X-HTTP-Method-Override'] : $server['REQUEST_METHOD'],
             $url,
-            $_GET,
-            array_merge((array)$_POST, (array)$_FILES),
-            getallheaders(),
-            $_SERVER["SERVER_NAME"],
-            $_SERVER["SERVER_PORT"],
-            (isset($_SERVER["HTTPS"])) && $_SERVER["HTTPS"] != "off",
-            isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : ""
+            $get,
+            array_merge((array)$post, (array)$files),
+            $headers,
+            $server["SERVER_NAME"],
+            $server["SERVER_PORT"],
+            (isset($server["HTTPS"])) && $_SERVER["HTTPS"] != "off",
+            isset($server["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : ""
         );
+    }
 
+    /**
+     * @param string $url
+     * @return Request
+     */
+    public static function createRequestFromEnvironment($url) {
+        return self::createRequestWithData($url, $_SERVER, $_GET, $_POST, $_FILES, getallheaders());
+    }
+
+    /**
+     * renders the page
+     * @param string $url
+     * @param bool $serve
+     * @return string|void
+     * @throws DataNotFoundException
+     */
+    public static function direct($url, $serve = true) {
+
+        if(PROFILE)
+            Profiler::mark("render");
+
+        $request = self::createRequestFromEnvironment($url);
+
+        return self::directRequest($request, $serve);
+    }
+
+    /**
+     * @param Request $request
+     * @param bool $serve
+     * @return false|null|string|void
+     * @throws DataNotFoundException
+     * @throws Exception
+     */
+    public static function directRequest($request, $serve = true) {
         $ruleMatcher = RuleMatcher::initWithRulesAndRequest(self::getSortedRules(), $request);
         while($nextController = $ruleMatcher->matchNext()) {
             if(!ClassInfo::exists($nextController)) {
@@ -162,12 +282,16 @@ class Director extends gObject {
 
             /** @var RequestHandler $inst */
             $data = $inst->handleRequest($ruleMatcher->getCurrentRequest());
-            if($data !== false) {
-                self::serve($data);
+            if(!$serve) {
+                return $data;
+            }
+
+            if($data !== false && $data !== null) {
+                self::serve($data, $request);
                 return;
             }
         }
 
-        return "404";
+        throw new DataNotFoundException();
     }
 }

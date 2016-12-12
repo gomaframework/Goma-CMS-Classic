@@ -81,6 +81,10 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
         } else {
             $this->tableName = $this->generateTableName();
         }
+
+        if(!$this->isControlling() && $this->isBidirectional()) {
+            throw new InvalidArgumentException("Classes which are related and have a ManyMany-relationship should be always defined in the many-many and not belongs-many-many-section.");
+        }
     }
 
     /**
@@ -130,7 +134,7 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
                 throw new InvalidArgumentException("Defined Inverse-Relationship {$this->inverse} not found on class {$this->targetClass} defined in class {$this->owner} relationship {$this->relationShipName}");
             }
         } else {
-            $this->inverse = $this->findInverseRelationshipsWithoutHint($relationships, $this->relationShipName, $this->owner);
+            $this->inverse = self::findInverseRelationshipsWithoutHint($relationships, $this->relationShipName, $this->owner);
 
             if(!$this->controlling && !$this->inverse) {
                 throw new InvalidArgumentException("No Inverse relationship for Relationship for {$this->relationShipName} found in class {$this->targetClass}. Base-Class " . $this->owner, ExceptionManager::RELATIONSHIP_INVERSE_REQUIRED);
@@ -195,10 +199,10 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      */
     public function getOwnerField() {
         if(!$this->controlling && ClassManifest::classesRelated($this->owner, $this->targetClass)) {
-            return $this->owner . "_" . $this->owner . "id";
+            return str_replace("\\", "_", $this->owner) . "_" . str_replace("\\", "_", $this->owner) . "id";
         }
 
-        return $this->owner . "id";
+        return str_replace("\\", "_", $this->owner) . "id";
     }
 
     /**
@@ -208,10 +212,10 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      */
     public function getTargetField() {
         if($this->controlling && ClassManifest::classesRelated($this->owner, $this->targetClass)) {
-            return $this->targetClass . "_" . $this->targetClass . "id";
+            return str_replace("\\", "_", $this->targetClass) . "_" . str_replace("\\", "_", $this->targetClass) . "id";
         }
 
-        return $this->targetClass . "id";
+        return str_replace("\\", "_", $this->targetClass) . "id";
     }
 
     /**
@@ -220,7 +224,11 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      * @return string
      */
     public function getOwnerSortField() {
-        return $this->owner . "_sort";
+        if(!$this->controlling && ClassManifest::classesRelated($this->owner, $this->targetClass)) {
+            return str_replace("\\", "_", $this->owner) . "_" . str_replace("\\", "_", $this->owner) . "_sort";
+        }
+
+        return str_replace("\\", "_", $this->owner) . "_sort";
     }
 
     /**
@@ -229,7 +237,11 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      * @return string
      */
     public function getTargetSortField() {
-        return $this->targetClass . "_sort";
+        if($this->controlling && ClassManifest::classesRelated($this->owner, $this->targetClass)) {
+            return str_replace("\\", "_", $this->targetClass) . "_" . str_replace("\\", "_", $this->targetClass) . "_sort";
+        }
+
+        return str_replace("\\", "_", $this->targetClass) . "_sort";
     }
 
     /**
@@ -301,9 +313,9 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      */
     protected function getNewTableName() {
         if($this->controlling) {
-            return "many_" . $this->owner . "_" . $this->relationShipName;
+            return "many_" . str_replace("\\", "_", $this->owner) . "_" . $this->relationShipName;
         } else {
-            return "many_" . $this->targetClass . "_" . $this->inverse;
+            return "many_" . str_replace("\\", "_", $this->targetClass) . "_" . str_replace("\\", "_", $this->inverse);
         }
     }
 
@@ -314,9 +326,11 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      */
     protected function getOldTableName() {
         if($this->controlling) {
-            return "many_many_" . $this->owner . "_" . $this->relationShipName . "_" . $this->targetClass;
+            return "many_many_" . str_replace("\\", "_", $this->owner) . "_" . $this->relationShipName . "_" .
+            str_replace("\\", "_", $this->targetClass);
         } else {
-            return "many_many_" . $this->targetClass . "_" . $this->inverse . "_" . $this->owner;
+            return "many_many_" . str_replace("\\", "_", $this->targetClass) . "_" .
+            str_replace("\\", "_", $this->inverse) . "_" . str_replace("\\", "_", $this->owner);
         }
     }
 
@@ -327,15 +341,28 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      */
     public function toClassInfo()
     {
-        return array(
+        $info = array(
             "table"                            => $this->tableName,
-            "ef"                               => $this->extraFields,
-            DataObject::RELATION_TARGET        => $this->targetClass,
-            DataObject::RELATION_INVERSE       => $this->inverse,
-            DataObject::MANY_MANY_VERSION_MODE => $this->sourceVersion,
-            "isMain"                           => $this->controlling,
-            "validatedInverse"                 => true
+            DataObject::RELATION_TARGET        => $this->targetClass
         );
+
+        if($this->extraFields) {
+            $info["ef"] = $this->extraFields;
+        }
+
+        if(!$this->isControlling()) {
+            $info["isMain"] = false;
+        }
+
+        if($this->sourceVersion != DataObject::VERSION_MODE_LATEST_VERSION) {
+            $info[DataObject::MANY_MANY_VERSION_MODE] = $this->sourceVersion;
+        }
+
+        if($this->inverse) {
+            $info[DataObject::RELATION_INVERSE] = $this->inverse;
+        }
+
+        return $info;
     }
 
     /**
@@ -376,7 +403,9 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
         $class = ClassManifest::resolveClassName($class);
 
         foreach($info as $name => $record) {
-            $relationShip = new ModelManyManyRelationShipInfo($class, $name, $record, $record["isMain"]);
+            $record["validatedInverse"] = true;
+            $relationShip = new ModelManyManyRelationShipInfo($class, $name, $record,
+                isset($record["isMain"]) ? $record["isMain"] : true);
 
             $relationShips[$name] = $relationShip;
         }
@@ -439,7 +468,7 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      * @param String $class
      * @return String
      */
-    public static function findInverseRelationshipsWithoutHint($relationships, $relationName, $class) {
+    protected static function findInverseRelationshipsWithoutHint($relationships, $relationName, $class) {
         /** @var String $possibleRelationship */
 
         $possibleRelationship = null;

@@ -56,20 +56,27 @@ class GomaFormResponse extends GomaResponse {
     protected $resolveCache = array();
 
     /**
+     * @var string|null
+     */
+    protected $inTplExpansion;
+
+    /**
+     * @param null|array $header
      * @param Form $form
      * @return static
      */
-    public static function create($form = null) {
-        return new static($form);
+    public static function create($header = null, $form = null) {
+        return new static($header, $form);
     }
 
     /**
      * GomaFormResponse constructor.
+     * @param array|null $header
      * @param Form $form
      */
-    public function __construct($form)
+    public function __construct($header, $form)
     {
-        parent::__construct(null);
+        parent::__construct($header);
         if(!isset($form)) {
             throw new InvalidArgumentException("Form must be not null.");
         }
@@ -97,17 +104,16 @@ class GomaFormResponse extends GomaResponse {
     public function resolveForm() {
         if(!isset($this->renderedForm)) {
             $this->renderedForm = $this->form->renderData();
-            if(!is_a($this->renderedForm, "GomaResponse")) {
-                parent::setBody($this->renderedForm);
-                parent::getBody()->setIncludeResourcesInBody(!$this->form->getRequest()->is_ajax());
-            } else if(!isset($this->renderedForm)) {
-                throw new LogicException("Form response can't be null.");
-            }
-
-            foreach($this->functionsForRendering as $function) {
-                if(is_callable($function)) {
-                    call_user_func_array($function, array($this));
+            if(!is_array($this->renderedForm)) {
+                if (!is_a($this->renderedForm, "GomaResponse")) {
+                    parent::setBody($this->renderedForm);
+                    $this->body->setIncludeResourcesInBody(!$this->form->getRequest()->is_ajax());
+                } else if (!isset($this->renderedForm)) {
+                    throw new LogicException("Form response can't be null.");
                 }
+            } else {
+                parent::setBody(print_r($this->renderedForm, true));
+                $this->body->setIncludeResourcesInBody(!$this->form->getRequest()->is_ajax());
             }
         }
     }
@@ -130,9 +136,16 @@ class GomaFormResponse extends GomaResponse {
         if($this->template != null) {
             $content = $this->serveWithModel->customise(array(
                 $this->templateName => $content
-            ))->renderWith($this->template);
+            ))->renderWith($this->template, $this->inTplExpansion);
+        }
 
-            $this->template = null;
+        foreach($this->functionsForRendering as $function) {
+            if(is_callable($function)) {
+                $newContent = call_user_func_array($function, array($content, $this));
+                if($newContent) {
+                    $content = $newContent;
+                }
+            }
         }
 
         $this->resolveCache[$key] = $content;
@@ -175,7 +188,11 @@ class GomaFormResponse extends GomaResponse {
      */
     public function getBody()
     {
-        return $this->isStringResponse()  ? $this->resolveRendering(parent::getBody()) : $this->renderedForm->getBody();
+        if($this->isStringResponse()) {
+            $body = clone parent::getBody();
+            return $body->setBody($this->resolveRendering($body->getBody()));
+        }
+        return $this->renderedForm->getBody();
     }
 
     /**
@@ -200,6 +217,10 @@ class GomaFormResponse extends GomaResponse {
             parent::setBodyString($body);
         }
 
+        $this->template = null;
+        $this->functionsForRendering = array();
+        $this->prependString = array();
+
         return $this;
     }
 
@@ -213,6 +234,12 @@ class GomaFormResponse extends GomaResponse {
         } else {
             return parent::getStatus();
         }
+    }
+
+    public function getResult() {
+        $this->resolveForm();
+
+        return $this->renderedForm;
     }
 
     /**
@@ -303,10 +330,15 @@ class GomaFormResponse extends GomaResponse {
     /**
      * @param string $model
      * @param null $view
-     * @param string $formName
+     * @param string $formName default: "form"
+     * @param string|null $inExpansion
      * @return $this
      */
-    public function setRenderWith($model, $view = null, $formName = "form") {
+    public function setRenderWith($model, $view = null, $formName = null, $inExpansion = null) {
+        if(!isset($formName)) {
+            $formName = "form";
+        }
+
         $this->resolveCache = array();
         if(is_string($model)) {
             if(!isset($view)) {
@@ -320,6 +352,7 @@ class GomaFormResponse extends GomaResponse {
         $this->serveWithModel = $model;
         $this->template = $view;
         $this->templateName = isset($formName) ? $formName : "form";
+        $this->inTplExpansion = $inExpansion;
 
         return $this;
     }
@@ -378,6 +411,14 @@ class GomaFormResponse extends GomaResponse {
     }
 
     /**
+     * @return bool
+     */
+    public function isFullPage()
+    {
+        return $this->isStringResponse();
+    }
+
+    /**
      * @param Callable $function
      * @return $this
      */
@@ -391,6 +432,7 @@ class GomaFormResponse extends GomaResponse {
         }
 
         $this->functionsForRendering[] = $function;
+        $this->resolveCache = array();
         return $this;
     }
 }

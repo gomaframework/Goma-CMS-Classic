@@ -44,7 +44,6 @@ class Dev extends RequestHandler {
 	 *
 	 */
 	public static function redirectToDev() {
-
 		if(GlobalSessionManager::globalSession() == null) {
 			ClassManifest::tryToInclude("SessionManager", "system/security/SessionManager.php");
 			GlobalSessionManager::__setSession(SessionManager::startWithIdAndName(null));
@@ -166,7 +165,7 @@ class Dev extends RequestHandler {
 		makeProjectUnavailable();
 
 		// patch
-		gObject::$cache_singleton_classes = array();
+		StaticsManager::setStatic(gObject::class, "cache_singleton_classes", array(), true);
 
        	$data = self::buildDevCLI();
 
@@ -272,7 +271,7 @@ class Dev extends RequestHandler {
 		if(!$name)
 			return false;
 
-		if(ClassInfo::exists("G_" . $name . "SoftwareType") && is_subclass_of("G_" . $name . "SoftwareType", "G_SoftwareType")) {
+		if(ClassInfo::exists("G_" . $name . "SoftwareType") && is_subclass_of("G_" . $name . "SoftwareType", G_SoftwareType::class)) {
 			$filename = call_user_func_array(array("G_" . $name . "SoftwareType", "generateDistroFileName"), array($subname));
 			if($filename === false)
 				return false;
@@ -280,10 +279,11 @@ class Dev extends RequestHandler {
 
 			/** @var GomaFormResponse $return */
 			$return = call_user_func_array(array("G_" . $name . "SoftwareType", "buildDistro"), array($file, $subname, $this));
-			if(is_a($return, "GomaFormResponse") && $return->isStringResponse() && !is_bool($return->getRawBody()))
-				return $return;
+			if(!is_bool($return) && (!is_a($return, "GomaFormResponse") || !is_bool($return->getResult()))) {
+                return $return;
+            }
 
-			FileSystem::sendFile($file);
+			FileSystem::sendFile($file, null, $this->request);
 			exit;
 		}
 
@@ -308,7 +308,7 @@ class Dev extends RequestHandler {
 						$recordids = array();
 						$ids = array();
 						// first recordids
-						$sql = "SELECT * FROM " . DB_PREFIX . $child . "_state";
+						$sql = "SELECT * FROM " . DB_PREFIX . $baseTable . "_state";
 						if($result = SQL::Query($sql)) {
 							while($row = SQL::fetch_object($result)) {
 								$recordids[$row->id] = $row->id;
@@ -357,7 +357,6 @@ class Dev extends RequestHandler {
  	 * safe-mode.
 	*/
 	public function setPermissionsSafeMode() {
-
 		if(isset($_GET["safemode"])) {
 			if($_GET["safemode"] == 1 || $_GET["safemode"] == 0) {
 				FileSystem::$safe_mode = (boolean) $_GET["safemode"];
@@ -370,18 +369,6 @@ class Dev extends RequestHandler {
 		return "OK";
 	}
 
-	/**
-	 * test-implementation
-	 */
-	public function test() {
-		if(DEV_MODE) {
-			$c = new GomaTestController();
-			return $c->handleRequest($this->request);
-		} else {
-			return false;
-		}
-	}
-
     /**
      * templating.
      */
@@ -389,4 +376,41 @@ class Dev extends RequestHandler {
         $view = new ViewAccessableData();
         return $view->customise($data)->renderWith($name);
     }
+
+    /**
+     * @param array $args
+     * @param int $code
+     */
+    public static function cli($args, &$code = 0) {
+        if(isset($args["-builddistro"])) {
+            $name = $args["-builddistro"];
+            $subname = isset($args["subname"]) ? $args["subname"] : null;
+            if(isset($args["distrofile"])) {
+                if (ClassInfo::exists("G_" . $name . "SoftwareType") && is_subclass_of("G_" . $name . "SoftwareType", G_SoftwareType::class)) {
+                    if(file_exists($args["distrofile"])) {
+                        echo "Distrofile should not exist.\n";
+                        $code = 13;
+                    } else {
+                        call_user_func_array(array(
+                            call_user_func_array(array("G_" . $name . "SoftwareType", "instance"), array()), "finalizeDistro"
+                        ), array(
+                            array(
+                                "file"      => $args["distrofile"],
+                                "expname"   => $subname,
+                                "changelog" => isset($args["changelog"]) ? $args["changelog"] : null
+                            )
+                        ));
+                    }
+                } else {
+                    echo "Distro-class not found.\n";
+                    $code = 14;
+                }
+            } else {
+                echo "Distro required distro-filename.\n";
+                $code = 12;
+            }
+        }
+    }
 }
+
+Core::addToHook("cli", array(Dev::class, "cli"));

@@ -24,6 +24,7 @@ if(typeof goma == "undefined")
 
 		this.id = id;
 		this.form = $("#" + id);
+		this.form.attr("action", this.form.attr("action") + location.hash);
 
 		this.form.bind("formsubmit",function(){
 			that.form.addClass("leave_check");
@@ -172,7 +173,7 @@ if(typeof goma == "undefined")
 			} else {
 				for (var i in fields) {
 					if (fields.hasOwnProperty(i)) {
-						if (fields[i].name.toLowerCase() == name.toLowerCase()) {
+						if (fields[i].name && fields[i].name.toLowerCase() == name.toLowerCase()) {
 							return fields[i];
 						}
 

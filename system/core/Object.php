@@ -29,21 +29,18 @@ abstract class gObject
     /**
      * caches
      */
-    static private $method_cache = array(), $cache_extensions = array(), $wakeUpCache = array(), $hook_called = array();
-
-    /**
-     * Extension methods.
-     */
-    public static $extra_methods = array();
-
+    static private
+        $method_cache = array(),
+        $cache_extensions = array(),
+        $wakeUpCache = array(),
+        $hook_called = array(),
     /**
      * Temporary extension methods.
      */
-    public static $temp_extra_methods = array();
-
-    public static   $cache_extra_methods = array(), // cache for extra-methods
+        $all_extra_methods = array(),
+        $temp_extra_methods = array(),
+        $cache_extra_methods = array(), // cache for extra-methods
         $extensions = array(),  // extensions of all classes
-        $ci_funcs = array(),  // functions called when generating ClassInfo
         $cache_singleton_classes = array(); // cache for Singletons
 
     /**
@@ -60,13 +57,6 @@ abstract class gObject
      * The current lowercase class name.
      */
     public $classname;
-
-    /**
-     * The current lowercase class name.
-     *
-     * @deprecated Bad variable name.
-     */
-    public $class;
 
     /**
      * this variable has a value if the class belongs to an extension, else it is
@@ -89,7 +79,6 @@ abstract class gObject
      */
     const METHOD_FOUND = 1;
 
-
     /**
      * Extends a class with a method.
      *
@@ -108,7 +97,7 @@ abstract class gObject
         if ($temp) {
             self::$temp_extra_methods[$class][$method] = create_function('$obj', $code);
         } else if (!gObject::method_exists($class, $method)) {
-            self::$extra_methods[$class][$method] = create_function('$obj', $code);
+            self::$all_extra_methods[$class][$method] = create_function('$obj', $code);
         }
     }
 
@@ -130,7 +119,7 @@ abstract class gObject
         if ($temp) {
             self::$temp_extra_methods[$class][$method] = $realfunc;
         } else if (!gObject::method_exists($class, $method)) {
-            self::$extra_methods[$class][$method] = $realfunc;
+            self::$all_extra_methods[$class][$method] = $realfunc;
         }
 
         self::$method_cache[$class . "::" . $method] = true;
@@ -222,7 +211,7 @@ abstract class gObject
     protected static function method_exists_native_db($class, $method) {
         // check native
         return (is_callable(array($class, $method)) ||
-            isset(self::$extra_methods[$class][$method]) ||
+            isset(self::$all_extra_methods[$class][$method]) ||
             isset(self::$temp_extra_methods[$class][$method]));
     }
 
@@ -247,7 +236,7 @@ abstract class gObject
      */
     protected static function check_for_extra_methods_recursive($c, $m)
     {
-        if (isset(self::$extra_methods[$c][$m])) {
+        if (isset(self::$all_extra_methods[$c][$m])) {
             // cache result for class
             self::$method_cache[$c . "::" . $m] = true;
         } else if ($c = ClassInfo::get_parent_class($c)) {
@@ -276,9 +265,9 @@ abstract class gObject
             $arguments = $info[1];
 
             if (ClassInfo::hasInterface($name, "ExtensionModel")) {
-                if ($methods = StaticsManager::getStatic($name, 'extra_methods')) {
+                if ($methods = StaticsManager::getStatic($name, 'extra_methods', true)) {
                     foreach ($methods as $method) {
-                        self::$extra_methods[$obj][strtolower($method)] = array("EXT:" . $name, $method);
+                        self::$all_extra_methods[$obj][strtolower($method)] = array("EXT:" . $name, $method);
                     }
                 }
                 self::$extensions[$obj][$name] = $arguments;
@@ -337,11 +326,8 @@ abstract class gObject
     {
         // Set class name
         $this->classname = ClassManifest::resolveClassName($this);
-        $this->class = $this->classname;
 
-        if (isset(ClassInfo::$class_info[$this->classname]["inExpansion"])) {
-            $this->inExpansion = ClassInfo::$class_info[$this->classname]["inExpansion"];;
-        }
+        $this->inExpansion = ClassInfo::getExpansionForClass($this->classname);
 
         $this->checkDefineStatics();
     }
@@ -375,8 +361,8 @@ abstract class gObject
     {
         $methodName = trim(strtolower($methodName));
 
-        if (isset(self::$extra_methods[$this->classname][$methodName])) {
-            return $this->callExtraMethod($methodName, self::$extra_methods[$this->classname][$methodName], $args);
+        if (isset(self::$all_extra_methods[$this->classname][$methodName])) {
+            return $this->callExtraMethod($methodName, self::$all_extra_methods[$this->classname][$methodName], $args);
         }
 
         if (isset(self::$cache_extra_methods[$this->classname][$methodName])) {
@@ -395,12 +381,12 @@ abstract class gObject
         // check parents
         $c = $this->classname;
         while ($c = ClassInfo::GetParentClass($c)) {
-            if (isset(self::$extra_methods[$c][$methodName])) {
+            if (isset(self::$all_extra_methods[$c][$methodName])) {
 
                 // cache result
-                self::$cache_extra_methods[$this->classname][$methodName] = self::$extra_methods[$c][$methodName];
+                self::$cache_extra_methods[$this->classname][$methodName] = self::$all_extra_methods[$c][$methodName];
 
-                return $this->callExtraMethod($methodName, self::$extra_methods[$c][$methodName], $args);
+                return $this->callExtraMethod($methodName, self::$all_extra_methods[$c][$methodName], $args);
             }
         }
 

@@ -134,7 +134,7 @@ class FileUpload extends FormField {
 	{
 		$model = parent::getModel();
 
-		if(!$this->disabled) {
+		if(!$this->isDisabled()) {
 			if (is_array($model) && !empty($model["name"])) {
 				try {
 					$this->model = $model = $this->handleUpload($model);
@@ -171,12 +171,18 @@ class FileUpload extends FormField {
 	 * ajax upload
 	 *
 	 * @return string
+	 *
 	 */
 	public function ajaxUpload() {
 		try {
 			if(!$this->chunkKey) {
 				$this->chunkKey = randomString(10);
 			}
+
+			if($this->max_filesize != -1 && $this->request->getHeader("x-file-size") > $this->max_filesize) {
+				throw new FileUploadException(lang('files.filesize_failure', "The file is too large."), ExceptionManager::FILEUPLOAD_SIZE_FAIL);
+			}
+
 			$chunkedUpload = new ChunkedUploadHandler($this->request, "file", $this->chunkKey);
 			if(!$chunkedUpload->isFinished()) {
 				return new JSONResponseBody(array(
@@ -320,6 +326,10 @@ class FileUpload extends FormField {
 	 */
 	public function js()
 	{
+		if($this->isDisabled()) {
+			return parent::js();
+		}
+
 		return "$(function(){ new FileUpload(
 		form, field,
 		$('#" . $this->divID() . "'), '" . $this->externalURL() . "', " . var_export($this->max_filesize, true) . ", ".json_encode($this->allowed_file_types).");});" .
@@ -347,7 +357,7 @@ class FileUpload extends FormField {
 			$this->templateView
 				->customise(
 					$info->setDefaultIcon($this->defaultIcon)
-						->setUpload($this->value)
+						->setUpload($this->getModel())
 						->ToRestArray(false, false)
 				)->customise(
 					array(
@@ -373,6 +383,7 @@ class FileUpload extends FormField {
 		$info = parent::exportBasicInfo($fieldErrors);
 
 		$info->setShowDeleteButton($this->showDeleteButton);
+		$info->setShowManagePath(Permission::check(Uploads::PERMISSION_ADMIN));
 
 		return $info;
 	}
@@ -396,10 +407,12 @@ class FileUpload extends FormField {
 			throw new InvalidArgumentException("Upload-Object requires name, size, tmp_name.");
 		}
 
-		if($upload["size"] <= $this->max_filesize || $this->max_filesize == -1) {
+		if($upload["error"] != UPLOAD_ERR_INI_SIZE && $upload["error"] != UPLOAD_ERR_FORM_SIZE &&
+			($upload["size"] <= $this->max_filesize || $this->max_filesize == -1)) {
 			$name = $upload["name"];
 			$ext = strtolower(substr($name, strrpos($name, ".") + 1));
-			if($this->allowed_file_types == "*" || in_array($ext, $this->allowed_file_types)) {
+			if($upload["error"] != UPLOAD_ERR_EXTENSION &&
+				($this->allowed_file_types == "*" || in_array($ext, $this->allowed_file_types))) {
 				$name = preg_replace('/[^a-zA-Z0-9_\-\.]/i', '_', $name);
 				$data = call_user_func_array(array(
 					$this->uploadClass,
@@ -411,7 +424,7 @@ class FileUpload extends FormField {
 					$this->uploadClass
 				));
 
-				$this->value = $data;
+				$this->model = $data;
 
 				return $data;
 			} else {

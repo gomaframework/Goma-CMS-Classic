@@ -26,7 +26,7 @@ class HomePageController extends SiteController
             /** @var Page $redirect */
             $redirect = DataObject::get_one("pages", array("id" => $this->getRequest()->get_params["r"]));
             if ($redirect) {
-                $query = preg_replace('/\&?r\=' . preg_quote($this->getRequest()->get_params["r"], "/") . '/', '', $_SERVER["QUERY_STRING"]);
+                $query = preg_replace('/\&?r\=' . preg_quote($this->getRequest()->get_params["r"], "/") . '/', '', $this->getRequest()->queryString());
                 return GomaResponse::redirect($redirect->getURL() . "?" . $query);
             }
         }

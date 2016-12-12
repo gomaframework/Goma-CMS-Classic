@@ -63,14 +63,24 @@ class SQL
      */
     public static function Init()
     {
-        new SQL();
+        new SQL(
+            null,
+            $GLOBALS["dbuser"],
+            $GLOBALS["dbdb"],
+            $GLOBALS["dbpass"],
+            $GLOBALS["dbhost"]
+        );
     }
 
     /**
-     * @access public
      * @use: connect to db
-     **/
-    public function __construct($driver = null)
+     * @param null $driver
+     * @param null $dbuser
+     * @param null $dbdb
+     * @param null $dbpass
+     * @param null $dbhost
+     */
+    public function __construct($driver = null, $dbuser = null, $dbdb = null, $dbpass = null, $dbhost = null)
     {
         if (!isset($driver)) {
             if (defined("SQL_DRIVER_OVERRIDE")) {
@@ -86,6 +96,7 @@ class SQL
             $driver = "pgsql";
 
         self::$driver = self::factory($driver);
+        self::$driver->connect($dbuser, $dbdb, $dbpass, $dbhost);
     }
 
     /**
@@ -113,7 +124,10 @@ class SQL
 
         if (file_exists(dirname(__FILE__) . '/driver/' . $driver . ".php")) {
             require_once(dirname(__FILE__) . '/driver/' . $driver . ".php");
-            return call_user_func_array(array($driver . "Driver", "test"), array($dbuser, $dbdb, $dbpass, $dbhost));
+            /** @var SQLDriver $instance */
+            $driverClass = $driver . "Driver";
+            $instance = new $driverClass(false);
+            return $instance->test($dbuser, $dbdb, $dbpass, $dbhost);
         } else {
             return false;
         }
@@ -152,7 +166,11 @@ class SQL
         if (defined("SLOW_QUERY") && SLOW_QUERY != -1 && $time > SLOW_QUERY) {
             slow_query_log("Slow SQL-Query: " . $sql . " (" . $time . "ms)");
             if($time > 10000 && !$longQuery) {
-                throw new LogicException("SQL-Queries takes way too long, cancelling.");
+                if(!isCommandLineInterface()) {
+                    throw new LogicException("SQL-Queries takes way too long, cancelling.");
+                } else {
+                    echo "SQL-Queries taking very long: " . $time . "\n Query: " . $_sql . "\n";
+                }
             }
         }
 
@@ -161,23 +179,6 @@ class SQL
             self::$errno = self::$driver->errno();
         }
         return $result;
-    }
-
-    /**
-     * in CGI ends send to client and runs query.
-     *
-     * @param string $sql
-     * @param bool $unbuffered
-     * @param bool $track
-     * @param bool $debug
-     * @return
-     */
-    static function queryAfterDie($sql, $unbuffered = false, $track = true, $debug = true)
-    {
-        if (function_exists("fastcgi_finish_request")) {
-            fastcgi_finish_request();
-        }
-        return self::query($sql, $unbuffered, $track, $debug, true);
     }
 
     /**
@@ -434,8 +435,6 @@ class SQL
     /**
      * deletes a table
      *
-     * @name dontRequireTable
-     * @access public
      * @param string - table
      * @param string - prefix
      */
@@ -443,7 +442,6 @@ class SQL
     {
         return self::$driver->dontRequireTable($table, $prefix);
     }
-
 
     /**
      * sets the charset UTF-8
@@ -453,21 +451,6 @@ class SQL
     static function setCharsetUTF8()
     {
         return self::$driver->setCharsetUTF8();
-    }
-
-    /**
-     * sets the default sort
-     *
-     * @name setDefaultSort
-     * @access public
-     * @param string - table
-     * @param string - field
-     * @param string - type
-     * @param bool|string - prefix
-     */
-    static function setDefaultSort($table, $field, $type = "ASC", $prefix = null)
-    {
-        return self::$driver->setDefaultSort($table, $field, $type, $prefix);
     }
 
     static function listStorageEngines()
@@ -572,6 +555,9 @@ class SQL
      */
     static function parseValue($field, $value)
     {
+        if($value === null) {
+            return ' ' . convert::raw2sql($field) . ' IS NULL ';
+        } else
         if (is_array($value) && count($value) == 2 && isset($value[1], $value[0]) && ($value[0] == "LIKE" || $value[0] == ">" || $value[0] == "!=" || $value[0] == "<" || $value[0] == ">=" || $value[0] == "<=" || $value[0] == "<>")) {
             if ($value[0] == "LIKE") {
                 return ' ' . convert::raw2sql($field) . ' ' . (defined("SQL_LIKE") ? SQL_LIKE : "LIKE") . ' "' . convert::raw2sql($value[1]) . '"';
@@ -609,6 +595,17 @@ interface SQLDriver
      * @param hostname
      */
     public function connect($dbuser, $dbdb, $dbpass, $host);
+
+    /**
+     * tests db.
+     * @name connect
+     * @param username
+     * @param databasename
+     * @param password
+     * @param hostname
+     * @return bool
+     */
+    public function test($dbuser, $dbdb, $dbpass, $host);
 
     /**
      * runs a query
@@ -673,8 +670,6 @@ interface SQLDriver
     public function requireTable($table, $fields, $indexes, $defaults, $prefix = null);
 
     public function dontRequireTable($table, $prefix = null);
-
-    public function setDefaultSort($table, $field, $type = "ASC", $prefix = null);
 
     /**
      * INDEX-functions

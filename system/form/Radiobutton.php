@@ -123,7 +123,7 @@ class RadioButton extends FormField
                 $value,
                 $title,
                 $this->valueMatches($value, $this->getModel()),
-                $this->disabled || isset($this->disabledNodes[$value])
+                $this->isDisabled() || isset($this->disabledNodes[$value])
             ));
         }
 
@@ -147,7 +147,7 @@ class RadioButton extends FormField
             $nodes[] = array(
                 "value"     => $value,
                 "title"     => $title,
-                "disabled"  => $this->disabled || isset($this->disabledNodes[$value]),
+                "disabled"  => $this->isDisabled() || isset($this->disabledNodes[$value]),
                 "checked"   => $value == $this->value
             );
         }
@@ -256,5 +256,23 @@ class RadioButton extends FormField
         }
 
         return $value == $compare;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getOptions()
+    {
+        return $this->options;
+    }
+
+    /**
+     * @param mixed $options
+     * @return $this
+     */
+    public function setOptions($options)
+    {
+        $this->options = $options;
+        return $this;
     }
 }

@@ -71,6 +71,11 @@ class RequestHandler extends gObject {
 	 */
 	private $requestHandlerKey;
 
+    /**
+     * @var string
+     */
+    protected $currentActionHandled;
+
 	/**
 	 * sets vars
 	 *
@@ -213,9 +218,10 @@ class RequestHandler extends gObject {
 	 * in the end this function is called to do last modifications
 	 *
 	 * @param   string $content
+	 * @param GomaResponseBody $body
 	 * @return  string
 	 */
-	public function serve($content) {
+	public function serve($content, $body) {
 		return $content;
 	}
 
@@ -246,6 +252,7 @@ class RequestHandler extends gObject {
 	 * @return  mixed|null|false
 	 */
 	public function handleAction($action) {
+        $this->currentActionHandled = $action;
 		$handleWithMethod = true;
 		$content = null;
 
@@ -398,6 +405,8 @@ class RequestHandler extends gObject {
 
 		if(is_a($e, "LogicException")) {
 			throw $e;
+		} else {
+			log_exception($e);
 		}
 
 		if($this->request->canReplyJavaScript()) {
@@ -441,6 +450,33 @@ class RequestHandler extends gObject {
 	public function isSubController()
 	{
 		return $this->subController;
+	}
+
+	/**
+	 * @param gObject $sender
+	 * @return string
+	 */
+	public function getRedirect($sender)
+	{
+        if(isset($this->request)) {
+            if(isset($this->request->get_params["redirect"]) &&
+                isURLFromServer($this->request->get_params["redirect"], $this->request->getServerName())) {
+                return convert::raw2text($this->request->get_params["redirect"]);
+            } else if(isset($this->request->post_params["redirect"]) &&
+                isURLFromServer($this->request->post_params["redirect"], $this->request->getServerName())) {
+                return convert::raw2text($this->request->post_params["redirect"]);
+            }
+        }
+
+        if($this->currentActionHandled != "index") {
+            return $this->namespace;
+        }
+
+        if($this->namespace) {
+            return substr($this->namespace, 0, strrpos($this->namespace, "/"));
+        }
+
+		return BASE_URI;
 	}
 }
 

@@ -31,6 +31,11 @@ class FileUploadRenderData extends FormFieldRenderData {
     protected $showDeleteButton;
 
     /**
+     * @var bool
+     */
+    protected $showManagePath;
+
+    /**
      * @return null|Uploads
      */
     public function getUpload()
@@ -76,10 +81,30 @@ class FileUploadRenderData extends FormFieldRenderData {
 
     /**
      * @param boolean $showDeleteButton
+     * @return $this
      */
     public function setShowDeleteButton($showDeleteButton)
     {
         $this->showDeleteButton = $showDeleteButton;
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isShowManagePath()
+    {
+        return $this->showManagePath;
+    }
+
+    /**
+     * @param boolean $showManagePath
+     * @return $this
+     */
+    public function  setShowManagePath($showManagePath)
+    {
+        $this->showManagePath = $showManagePath;
+        return $this;
     }
 
     /**
@@ -101,10 +126,15 @@ class FileUploadRenderData extends FormFieldRenderData {
                 "id" => $this->upload->id,
                 "icon128" => $this->upload->getIcon(128),
                 "icon128_2x" => $this->upload->getIcon(128, true),
-                "icon" => $this->upload->getIcon()
+                "icon" => $this->upload->getIcon(),
+                "hash"  => $this->upload->md5
             );
         } else {
             $data["upload"] = null;
+        }
+
+        if($this->showManagePath && isset($data["upload"])) {
+            $data["upload"]["managePath"] = isset($this->upload) ? $this->upload->getManagePath() : null;
         }
 
         $data["showDeleteButton"] = $this->showDeleteButton;

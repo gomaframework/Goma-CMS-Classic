@@ -13,8 +13,6 @@ defined("IN_GOMA") OR die();
  * @version 1.0
  */
 abstract class RemoveStagingDataObjectSet extends DataObjectSet {
-    const ID = "RemoveStagingDataObjectSet";
-
     /**
      * remove staging ArrayList.
      *
@@ -54,15 +52,22 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
      */
     public function removeFromSet($record) {
         if($record->id == 0) {
-            throw new InvalidArgumentException("You can not remove a not written DataObject from Set, please use removeFromStaging instead.");
-        }
+            $this->removeFromStage($record);
+        } else {
+            if (!$this->removeStaging->find("id", $record->id)) {
+                $this->removeStaging->add($record);
+            }
 
-        if(!$this->removeStaging->find("id", $record->id)) {
-            $this->removeStaging->add($record);
-        }
 
-        if($this->staging->find("id", $record->id)) {
-            $this->staging->remove($record);
+            if($this->fetchMode == self::FETCH_MODE_EDIT) {
+                if ($this->staging->find("id", $record->id)) {
+                    $this->staging->remove($record);
+                }
+
+                $this->clearCache();
+            } else {
+                $this->removeFromItems($record);
+            }
         }
     }
 
@@ -73,26 +78,43 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
     {
         if($record->id != 0 && $recordToRemove = $this->removeStaging->find("id", $record->id)) {
             $this->removeStaging->remove($recordToRemove);
+
+            if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
+                $this->add($recordToRemove);
+            }
         } else {
             parent::removeFromStage($record);
         }
+
+        if($this->fetchMode == self::FETCH_MODE_EDIT) {
+            $this->clearCache();
+        }
+    }
+
+    /**
+     * @param DataObject $record
+     * @return bool
+     */
+    public function isInStage($record) {
+        return $record->id != 0 ?
+            $this->staging->find("id", $record->id) != null || $this->removeStaging->find("id", $record->id) != null :
+            $this->staging->itemExists($record) || $this->removeStaging->itemExists($record);
     }
 
     /**
      * @param bool $forceInsert
      * @param bool $forceWrite
      * @param int $snap_priority
-     * @param null $repository
-     * @param bool $callRemove
-     * @throws DataObjectSetCommitException
+     * @param IModelRepository $repository
+     * @param array $exceptions
+     * @param array $errorRecords
      */
-    public function commitStaging($forceInsert = false, $forceWrite = false, $snap_priority = 2, $repository = null, $callRemove = true)
+    protected function writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, &$exceptions, &$errorRecords)
     {
-        $repository = isset($repository) ? $repository : Core::repository();
+        parent::writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, $exceptions, $errorRecords);
 
-        parent::commitStaging($forceInsert, $forceWrite, $snap_priority, $repository);
-
-        if($callRemove) $this->commitRemoveStaging($repository, $forceWrite, $snap_priority, $repository);
+        if(!isset($options["callRemove"]) || $options["callRemove"] === true)
+            $this->commitRemoveStaging($repository, $forceWrite, $snap_priority);
     }
 
     /**
@@ -110,7 +132,7 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
      * @param IModelRepository $repository
      * @return mixed
      */
-    abstract public function commitRemoveStaging($repository, $forceWrite = false, $snap_priority = 2, $repository = null);
+    abstract public function commitRemoveStaging($repository, $forceWrite = false, $snap_priority = 2);
 
     /**
      * @param array|string $filter

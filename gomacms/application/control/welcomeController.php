@@ -1,17 +1,17 @@
 <?php defined("IN_GOMA") OR die();
 
 /**
-  * @package goma cms
-  * @link http://goma-cms.org
-  * @license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
-  * @author Goma-Team
-  * last modified: 24.11.2012
-  * $Version 1.3
-*/
+ * @package goma cms
+ * @link http://goma-cms.org
+ * @license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
+ * @author Goma-Team
+ * last modified: 24.11.2012
+ * $Version 1.3
+ */
 class welcomeController extends Controller {
 	/**
 	 * allowed_actions
-	*/
+	 */
 	public $allowed_actions = array(
 		"step2",
 		"step3",
@@ -19,30 +19,30 @@ class welcomeController extends Controller {
 	);
 	/**
 	 * index
-	*/ 
+	 */
 	public function index() {
 		Resources::add("default.css");
 		$_SESSION["welcome_screen"] = true;
 		// make some correction to database
 		if(defined("SQL_LOADUP")) {
-            // remake db
-            $data = "";
-            foreach(classinfo::getChildren("dataobject") as $value)
-            {        
-                    $obj = new $value;
-                    
-                    $data .= nl2br($obj->buildDB(DB_PREFIX));                        
-            }
-        }
-        
-        ClassInfo::write();
-	       
+			// remake db
+			$data = "";
+			foreach(classinfo::getChildren("dataobject") as $value)
+			{
+				$obj = new $value;
+
+				$data .= nl2br($obj->buildDB(DB_PREFIX));
+			}
+		}
+
+		ClassInfo::write();
+
 		return tpl::render("welcome/welcome.html");
 	}
-	
+
 	/**
 	 * step 2
-	*/
+	 */
 	public function step2() {
 		Resources::add("default.css");
 		$form = new Form($this, "user_create", array(
@@ -59,7 +59,7 @@ class welcomeController extends Controller {
 	}
 	/**
 	 * step 3
-	*/
+	 */
 	public function step3() {
 		Resources::add("default.css");
 		$form = new Form($this, "settings", array(
@@ -75,7 +75,7 @@ class welcomeController extends Controller {
 	}
 	/**
 	 * user-creation
-	*/
+	 */
 	public function user_create($result) {
 		$data = new User();
 		$data->nickname = $result["username"];
@@ -89,7 +89,7 @@ class welcomeController extends Controller {
 	}
 	/**
 	 * pwd-validation
-	*/
+	 */
 	public function validatePassword($obj) {
 		$result = $obj->getForm()->result;
 		if($result["password"] != $result["repeat"] && $result["password"] != "") {
@@ -104,9 +104,10 @@ class welcomeController extends Controller {
 	}
 	/**
 	 * saves settings
-	*/ 
+	 */
 	public function saveSettings($result) {
-		$data = DataObject::get_one("newsettings", array("id" => 1));
+		SettingsController::PreInit();
+		$data = SettingsController::$settingsCache;
 		$data->titel = $result["pagetitle"];
 		$data->timezone = $result["timezone"];
 		$data->writeToDB(false, true);
@@ -114,7 +115,7 @@ class welcomeController extends Controller {
 	}
 	/**
 	 * finishes the process
-	*/
+	 */
 	public function finish() {
 		Resources::add("default.css");
 		unset($_SESSION["welcome_screen"]);

@@ -709,16 +709,7 @@ class pgsqlDriver implements SQLDriver
 			
 	}
 	
-	
-	
-	public function setDefaultSort($table, $field, $type = "ASC", $prefix = false)
-	{
-		// not possible in postgresql
-	}
-	
-	
 	// deletes a table
-	
 	public function dontRequireTable($table, $prefix = false) 
 	{
 		if($prefix === false)
@@ -729,9 +720,7 @@ class pgsqlDriver implements SQLDriver
 		}
 		return true;
 	}
-	
-	
-	
+
 	public function writeManipulation($manipulation)
 	{
 		if(PROFILE) Profiler::mark("PGSQL::writeManipulation");

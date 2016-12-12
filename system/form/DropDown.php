@@ -211,12 +211,6 @@ class DropDown extends FormField {
 			"class" => "dropdown_widget",
 			"id" => $this->ID() . "_widget"
 		), array(
-			new HTMLNode("input", array(
-				"type" => "submit",
-				"name" => "field_action_" . $this->name . "_nojs",
-				"value" => "",
-				"class" => "hiddenbutton"
-			)),
 			$this->field = new HTMLNode("div", array(
 				"class" => "field",
 				"id" => $this->ID() . "_field"
@@ -250,6 +244,15 @@ class DropDown extends FormField {
 				new HTMLNode("div", array("class" => "footer"))
 			))
 		));
+
+		if(!$this->isDisabled()) {
+			$this->widget->prepend(new HTMLNode("input", array(
+				"type" => "submit",
+				"name" => "field_action_" . $this->name . "_nojs",
+				"value" => "",
+				"class" => "hiddenbutton"
+			)));
+		}
 
 		if($this->multiselect) {
 			$this->widget->addClass("multi-value");
@@ -321,7 +324,9 @@ class DropDown extends FormField {
 
 			return $node;
 		} else {
-			return new HTMLNode("span", array("class" => "no-value"), lang("form_click_to_select", "Click to select"));
+			return new HTMLNode("span", array("class" => "no-value"),
+				$this->isDisabled() ? "-" : lang("form_click_to_select", "Click to select")
+			);
 		}
 
 	}
@@ -380,7 +385,7 @@ class DropDown extends FormField {
 			gloader::load("sortable");
 		}
 
-		if($this->disabled) {
+		if($this->isDisabled()) {
 			$this->field->disabled = "disabled";
 			$this->container->addClass("disabled", "disabled");
 		}
@@ -404,7 +409,7 @@ class DropDown extends FormField {
 	}
 
 	public function JS() {
-		if($this->disabled) {
+		if($this->isDisabled()) {
 			return parent::JS();
 		}
 
@@ -699,7 +704,7 @@ class DropDown extends FormField {
 	 * @return string rendered dropdown-input
 	 */
 	public function uncheckValue() {
-		if(!$this->disabled) {
+		if(!$this->isDisabled()) {
 			if ($this->multiselect) {
 				$key = array_search($this->getParam("value"), $this->dataset);
 				unset($this->dataset[$key]);
@@ -722,7 +727,7 @@ class DropDown extends FormField {
 	 */
 	protected function redirectToFormOrRespond() {
 		if($this->getRequest()->is_ajax()) {
-			return $this->renderInputWidget();
+			return GomaResponseBody::create($this->renderInputWidget())->setIsFullPage(false);
 		} else {
 			if($this->multiselect)
 				$this->getRequest()->post_params[$this->PostName()] = $this->key;

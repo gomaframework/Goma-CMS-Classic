@@ -56,6 +56,10 @@ class Select extends RadioButton
 		$node->setTag("select");
 		$node->attr("name", $this->PostName());
 
+		if($this->isDisabled()) {
+			$node->attr("disabled", "disabled");
+		}
+
 		$wrapper = new HTMLNode("span", array("class" => "select-wrapper input"));
 		$wrapper->append($node);
 

@@ -134,6 +134,7 @@ class PageCommentsDataObjectExtension extends DataObjectExtension {
     /**
      * append content to sites if needed
      * @param HTMLNode $object
+     * @return $this
      */
     public function appendContent(&$object)
     {
@@ -143,15 +144,11 @@ class PageCommentsDataObjectExtension extends DataObjectExtension {
 
             /** @var GomaFormResponse $form */
             $form = gObject::instance("PageCommentsController")->setModelInst($comments)->form("add");
-            if(!$form->isStringResponse()) {
-                Director::serve($form);
-                exit;
-            }
 
-            $object->append($comments->customise(array(
-                "page"  => $this->getOwner(),
-                "form" => $form
-            ))->renderWith("comments/comments.html"));
+
+            return $form->setRenderWith($comments->customise(array(
+                "page" => $this->getOwner()
+            )), "comments/comments.html");
         }
     }
 }

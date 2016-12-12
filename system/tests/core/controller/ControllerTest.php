@@ -81,4 +81,20 @@ class ControllerTest extends GomaUnitTest {
 		$reflectionMethod->setAccessible(true);
 		return $reflectionMethod->invoke($controller);
 	}
+
+	public function testGetSafableModel() {
+		$controller = new Controller();
+        $controller->setModelInst($user = new User(array(
+            "id" => 2
+        )));
+
+        $this->assertEqual($controller->getSafableModel(array())->id, 0);
+        $this->assertIsA($controller->getSafableModel(array()), User::class);
+
+        $this->assertEqual($user, $controller->getSafableModel(array(), $user));
+
+        $this->assertEqual($controller->getSafableModel(array(
+            "test" => 123
+        ))->test, 123);
+	}
 }

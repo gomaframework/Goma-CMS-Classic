@@ -106,6 +106,17 @@ class ClassInfo extends gObject {
 		return true;
 	}
 
+    /**
+     * @param $class
+     * @return null
+     */
+    public static function getExpansionForClass($class) {
+        $class = ClassManifest::resolveClassName($class);
+
+        return isset(ClassInfo::$class_info[$class]["inExpansion"]) ?
+            ClassInfo::$class_info[$class]["inExpansion"] : null;
+    }
+
 	/**
 	 * gets the childs of a class
 	 *
@@ -293,7 +304,6 @@ class ClassInfo extends gObject {
 	 * @return bool|string
 	 */
 	public static function findFile($file, $class) {
-
 		$class = ClassManifest::resolveClassName($class);
 
 		if($folder = ExpansionManager::getExpansionFolder($class)) {
@@ -304,12 +314,12 @@ class ClassInfo extends gObject {
 
 		if(isset(self::$files[$class])) {
 			if(file_exists(dirname(self::$files[$class]) . "/" . $file) && !is_dir(dirname(self::$files[$class]) . "/" . $file)) {
-				return dirname(self::$files[$class]) . "/" . $file;
+				return str_replace("\\", "/", dirname(self::$files[$class]) . "/" . $file);
 			}
 		}
 
 		if(file_exists(APPLICATION . "/" . $file) && !is_dir(APPLICATION . "/" . $file)) {
-			return APPLICATION . "/" . $file;
+			return str_replace("\\", "/", APPLICATION) . "/" . $file;
 		}
 
 		if(file_exists($file) && !is_dir($file)) {
@@ -376,7 +386,8 @@ class ClassInfo extends gObject {
 
 	/**
 	 * gets the icon of a class
-	 *
+	 * @param string $class
+	 * @return bool|null|string
 	 */
 	public static function getClassIcon($class) {
 		if(StaticsManager::hasStatic($class, "icon")) {
@@ -396,7 +407,7 @@ class ClassInfo extends gObject {
 			filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") ||
 			filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist") ||
 			filemtime($file) + self::$expiringTime < NOW ||
-			isset($args["-rebuild"])
+			isset($args["-rebuild"]) || isset($args["--rebuild"])
 		);
 	}
 
@@ -404,6 +415,7 @@ class ClassInfo extends gObject {
 	 * loads the classinfo from file
 	 * @param IModelRepository|null $modelRepository
 	 * @return null
+	 * @throws ProjectConfigWriteException
 	 */
 	public static function loadfile($modelRepository = null) {
 		self::$tables = array();
@@ -426,7 +438,7 @@ class ClassInfo extends gObject {
 				header("content-type: text/html;charset=UTF-8");
 				header("X-Powered-By: Goma Framework " . GOMA_VERSION . "-" . BUILD_VERSION);
 				echo $data;
-				exit;
+				exit(5);
 			}
 
 			// some global tests for the framework to run
@@ -435,17 +447,25 @@ class ClassInfo extends gObject {
 				self::raiseSoftwareError($dependencies);
 			}
 
-			if(file_exists($file) && (filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") || filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist"))) {
-				if(!preg_match("/^dev/i", URL)) {
-					ClassManifest::tryToInclude("Dev", 'system/core/control/DevController.php');
-					Dev::redirectToDev();
+			if(!isCommandLineInterface()) {
+				if (file_exists($file) && (filemtime($file) < filemtime(FRAMEWORK_ROOT . "info.plist") || filemtime($file) < filemtime(ROOT . APPLICATION . "/info.plist"))) {
+					if (!preg_match("/^dev/i", URL)) {
+						ClassManifest::tryToInclude("Dev", 'system/core/control/DevController.php');
+						Dev::redirectToDev();
+					}
 				}
 			}
 
-			writeProjectConfig();
-			writeSystemConfig();
-
-			// end filesystem checks
+            try {
+                writeProjectConfig();
+                writeSystemConfig();
+            } catch(ProjectConfigWriteException $e) {
+                if(!file_exists($e->getConfig())) {
+                    throw $e;
+                } else {
+                    log_exception($e);
+                }
+            }
 
 			// check for clean-up
 			if(file_exists(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log")) {
@@ -515,7 +535,8 @@ class ClassInfo extends gObject {
 			// check for disk-quote
 			if(GOMA_FREE_SPACE / 1024 / 1024 < 20) {
 				header("HTTP/1.1 500 Server Error");
-				die(file_get_contents(ROOT . "system/templates/framework/disc_quota_exceeded.html"));
+				echo (file_get_contents(ROOT . "system/templates/framework/disc_quota_exceeded.html"));
+				exit(10);
 			}
 
 			// register shutdown hook
@@ -585,9 +606,11 @@ class ClassInfo extends gObject {
 
 					// ci-funcs
 					// that are own function, for generating class-info
-					foreach(StaticsManager::getStatic($class, "ci_funcs") as $name => $func) {
-						self::$class_info[$class][$name] = StaticsManager::callStatic($class, $func);
-						unset($name, $func);
+					if($classInfoFuncs = StaticsManager::getStatic($class, "ci_funcs", true)) {
+						foreach ($classInfoFuncs as $name => $func) {
+							self::$class_info[$class][$name] = StaticsManager::callStatic($class, $func, true);
+							unset($name, $func);
+						}
 					}
 				}
 
@@ -597,17 +620,18 @@ class ClassInfo extends gObject {
 			foreach(self::$class_info as $class => $data) {
 				if(!ClassInfo::isAbstract($class)) {
 					if(ClassInfo::hasInterface($class, "PermProvider")) {
-						$c = new $class();
-						Permission::addPermissions($c->providePerms());
+                        /** @var PermProvider|gObject $currentClassInstance */
+                        $currentClassInstance = new $class();
+						Permission::addPermissions($currentClassInstance->providePerms());
 					}
 
 					if(gObject::method_exists($class, "generateClassInfo")) {
-						if(!isset($c))
-							$c = new $class;
-						$c->generateClassInfo();
+						if(!isset($currentClassInstance))
+							$currentClassInstance = new $class;
+						$currentClassInstance->generateClassInfo();
 					}
 
-					unset($c);
+					unset($currentClassInstance);
 				}
 
 				if(isset($data["interface"])) {
@@ -622,7 +646,6 @@ class ClassInfo extends gObject {
 
 				if(isset(self::$class_info[$class]["child"]) && !empty(self::$class_info[$class]["child"])) {
 					self::$childData[$class] = self::$class_info[$class]["child"];
-					//chmod($f, 0777);
 					self::$class_info[$class]["child"] = null;
 					unset($_file, $f, $children, self::$class_info[$class]["child"]);
 				}
@@ -634,8 +657,6 @@ class ClassInfo extends gObject {
 
 			// reappend
 			self::$class_info["permission"]["providedPermissions"] = Permission::$providedPermissions;
-
-
 
 			if(PROFILE)
 				Profiler::unmark("classinfo_renderafter");
@@ -661,13 +682,13 @@ class ClassInfo extends gObject {
 
 			//chmod(ROOT . CACHE_DIRECTORY . CLASS_INFO_DATAFILE, 0773);
 
-			if(!$wasUnavailable)
+			if(!$wasUnavailable && !isCommandLineInterface())
 				makeProjectAvailable();
 
 			define("CLASS_INFO_GENERATED", true);
 
-			gObject::$cache_singleton_classes = array();
-			// class_info reset
+            // class_info reset
+            StaticsManager::setStatic(gObject::class, "cache_singleton_classes", array(), true);
 
 			// run hooks
 			if(self::$ClassInfoHooks) {
@@ -685,8 +706,10 @@ class ClassInfo extends gObject {
 
 			Core::__setRepo(isset($modelRepository) ? $modelRepository : new ModelRepository());
 
-			if(isCommandLineInterface()) {
+			if(isCommandLineInterface() || isset($_SESSION["reinstall"])) {
+				$_SESSION["reinstall"] = null;
 				Dev::buildDevCLI();
+				makeProjectAvailable();
 			}
 		} else {
 			defined("CLASS_INFO_LOADED") OR define("CLASS_INFO_LOADED", true);
@@ -701,7 +724,8 @@ class ClassInfo extends gObject {
 				return;
 			}
 
-			if(!isset($root) || $root != ROOT || !isset($version) || version_compare($version, self::VERSION, "<")) {
+            /** @var string $version */
+            if(!isset($root) || $root != ROOT || !isset($version) || version_compare($version, self::VERSION, "<")) {
 				ClassInfo::delete();
 				clearstatcache();
 				ClassInfo::loadfile();
@@ -822,12 +846,16 @@ class ClassInfo extends gObject {
 	 * @param 	string error
 	 */
 	public static function raiseSoftwareError($err) {
-		$error = file_get_contents(ROOT . "system/templates/framework/software_run_fail.html");
-		$error = str_replace('{$error}', $err, $error);
-		$error = str_replace('{BASE_URI}', BASE_URI, $error);
+		if(isCommandLineInterface()) {
+			$error = "Configuration-Error: " . $err . "\n";
+		} else {
+			$error = file_get_contents(ROOT . "system/templates/framework/software_run_fail.html");
+			$error = str_replace('{$error}', $err, $error);
+			$error = str_replace('{BASE_URI}', BASE_URI, $error);
+		}
 		header("HTTP/1.1 500 Server Error");
 		echo $error;
-		exit;
+		exit(15);
 	}
 
 	/**
@@ -835,14 +863,13 @@ class ClassInfo extends gObject {
 	 * @param string $interface
 	 */
 	static function addInterface($interface) {
-
 		$interface = strtolower(trim($interface));
 
 		if($interface == "")
 			return;
 
 		if(!isset(self::$interfaces[$interface])) {
-			$parentsi = array_values(class_implements($interface));
+			$parentsi = array_values((array) class_implements($interface));
 			self::$interfaces[$interface] = isset($parentsi[0]) ? $parentsi[0] : false;
 
 			if(isset($parentsi[0])) {
@@ -867,8 +894,10 @@ class ClassInfo extends gObject {
 					}
 					// ci-funcs
 					// that are own function, for generating class-info
-					foreach(StaticsManager::getStatic($class, "ci_funcs", true) as $name => $func) {
-						self::$class_info[$class][$name] = StaticsManager::callStatic($class, $func);
+					if($classInfoFuncs = StaticsManager::getStatic($class, "ci_funcs", true)) {
+						foreach ($classInfoFuncs as $name => $func) {
+							self::$class_info[$class][$name] = StaticsManager::callStatic($class, $func);
+						}
 					}
 
 					if(isset(self::$class_info[$class]["interfaces"])) {
@@ -946,7 +975,8 @@ class ClassInfo extends gObject {
 		// first consolidate data
 		if(self::$childData == array() && file_exists(ROOT . CACHE_DIRECTORY . ".children" . CLASS_INFO_DATAFILE)) {
 			include (ROOT . CACHE_DIRECTORY . ".children" . CLASS_INFO_DATAFILE);
-			if($children === null) {
+            /** @var array $children */
+            if($children === null) {
 				self::delete();
 				return;
 			}

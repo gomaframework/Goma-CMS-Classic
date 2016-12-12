@@ -150,7 +150,7 @@ class GomaResponse extends gObject {
      */
     public function getBody()
     {
-        return $this->body;
+        return clone $this->body;
     }
 
     public function getResponseBodyString() {
@@ -228,7 +228,11 @@ class GomaResponse extends gObject {
 
         $request->setStatus($permanent ? 301 : 302);
         $request->setHeader("location", $url);
-        $request->setBody('<script type="text/javascript">location.href = "'.addSlashes($url).'";</script><br /> Redirecting to: <a href="'.addSlashes($url).'">'.convert::raw2text($url).'</a>');
+        $request->setBody(
+            GomaResponseBody::create(
+                '<script type="text/javascript">location.href = "'.addSlashes($url).'";</script><br /> Redirecting to: <a href="'.addSlashes($url).'">'.convert::raw2text($url).'</a>'
+            )->setParseHTML(false)
+        );
         $request->setShouldServe(false);
 
         return $request;
@@ -332,8 +336,12 @@ class GomaResponse extends gObject {
             $isPermanent = $this->status == 301;
             Core::callHook("beforeRedirect", $this->header["location"], $isPermanent, $this);
 
-            // TODO: Fix this hack.
-            addcontent::add(addcontent::get());
+            try {
+                if(class_exists("addcontent", false)) {
+                    // TODO: Fix this hack.
+                    addcontent::add(addcontent::get());
+                }
+            } catch(Exception $e) {}
         }
 
         $content = $this->render();
@@ -361,9 +369,11 @@ class GomaResponse extends gObject {
     }
 
     protected function addResourcesToHeaders() {
-        $data = Resources::get(true, true, true);
-        $this->setHeader("X-JavaScript-Load", implode(";", $data["js"]));
-        $this->setHeader("X-CSS-Load", implode(";", $data["css"]));
+        if(class_exists("Resources", false)) {
+            $data = Resources::get(true, true, true);
+            $this->setHeader("X-JavaScript-Load", implode(";", $data["js"]));
+            $this->setHeader("X-CSS-Load", implode(";", $data["css"]));
+        }
     }
 
     /**
@@ -426,6 +436,16 @@ class GomaResponse extends gObject {
 
     public function getRawBody() {
         return $this->getBody()->getBody();
+    }
+
+    /**
+     * defines if this response is part of a full page.
+     * false means it should stand for itself.
+     *
+     * @return bool
+     */
+    public function isFullPage() {
+        return $this->getBody()->isFullPage();
     }
 
     /**

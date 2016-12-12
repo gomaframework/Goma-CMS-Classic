@@ -1,29 +1,18 @@
-<?php
+<?php defined("IN_GOMA") OR die();
 /**
-  *@package goma framework
-  *@link http://goma-cms.org
-  *@license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
-  *@author Goma-Team
-  * last modified: 25.11.2011
-  * $Version 2.0
+  * @package goma framework
+  * @link http://goma-cms.org
+  * @license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
+  * @author Goma-Team
 */
-
-defined('IN_GOMA') OR die('<!-- restricted access -->'); // silence is golden ;)
-
 class Tabs extends gObject {
     /**
      * name of this tabset
-     *
-     *@name name
-     *@access public
     */
     public $name;
     
     /**
      * array of tabs
-     *
-     *@name tabs
-     *@access public
     */
     public $tabs = array();
     
@@ -37,16 +26,11 @@ class Tabs extends gObject {
     
     /**
      * contains the tab-navigation
-     *
-     *@name tabNavi
-     *@access public
     */
     public $tabNavi;
     
     /**
-     *@name __construct
-     *@access public
-     *@param string - name
+     *@param string $name
     */
     public function __construct($name) {
         parent::__construct();
@@ -57,17 +41,17 @@ class Tabs extends gObject {
             "id"		=> "tabs_container_" . $name
         ), $this->tabNavi = new HTMLNode("ul"));
     }
-    
+
     /**
      * adds a Tab
      *
-     *@name addTab
-     *@access public
-     *@param string - title
-     *@param string - content
-     *@param numeric - sort: the tabs are sorted downward
-     *@param bool - if prepend or append to sort-group
-    */
+     * @param string $title
+     * @param string $content
+     * @param string $name
+     * @param numeric $sort : the tabs are sorted downward
+     * @param bool $prepend if prepend or append to sort-group
+     * @return bool
+     */
     public function addTab($title, $content, $name = "", $sort = 0, $prepend = false) {
         if($prepend) {
             $this->tabs[$sort] = array_merge(array(array("title" => $title, "content" => $content, "name" => $name)), $this->tabs[$sort]);
@@ -76,17 +60,17 @@ class Tabs extends gObject {
         }
         return true;
     }
-    
+
     /**
      * adds an ajax-Tab
      *
-     *@name addAjaxTab
-     *@access public
-     *@param string - title
-     *@param callback
-     *@param numeric - sort: the tabs are sorted downward
-     *@param bool - if prepend or append to sort-group
-    */
+     * @param $title
+     * @param $content
+     * @param string $name - title
+     * @param int $sort
+     * @param bool $prepend - if prepend or append to sort-group
+     * @return bool
+     */
     public function addAjaxTab($title, $content, $name = "", $sort = 0, $prepend = false) {
         if($prepend) {
             $this->tabs[$sort] = array_merge(array(array("title" => $title, "callback" => $content, "name" => $name)), $this->tabs[$sort]);
@@ -95,13 +79,12 @@ class Tabs extends gObject {
         }
         return true;
     }
-    
+
     /**
      * renders the tabs
      *
-     *@name render
-     *@access public
-    */
+     * @return string
+     */
     public function render() {
         $this->callExtending("beforeRender");
         
@@ -141,7 +124,7 @@ class Tabs extends gObject {
                 if(isset($data["title"], $data["content"])) {
                     $id = isset($data["name"]) ? "tab_" . $this->name . "_" . $data["name"] : md5($data["title"]);
                     
-                    $this->tabNavi->append(new HTMLNode("li", array(), $point = new HTMLNode("a", array("href" => URL . URLEND . "?" . $this->name . "=" . $id, "name" => $id, "id" => $id . "_tab"), $data["title"])));
+                    $this->tabNavi->append(new HTMLNode("li", array(), $point = new HTMLNode("a", array("href" => URL . URLEND . "?" . $this->name . "=" . $id, "name" => $id, "id" => $id . "_tab", "class" => "tab"), $data["title"])));
                     $this->tabContainer->append($content = new HTMLNode("div", array("id" => $id), $data["content"]));
                     if(!$activeFound && ((isset($_GET[$this->name]) && $_GET[$this->name] == $id) || (!isset($_GET[$this->name]) && isset($_COOKIE["tabs_" . $this->name]) && $_COOKIE["tabs_" . $this->name] = $id))) {
                         
@@ -179,12 +162,12 @@ class Tabs extends gObject {
                         }
                         
                         // render to tabs
-                        $this->tabNavi->append(new HTMLNode("li", array(), new HTMLNode("a", array("class" => "active ajax", "name" => $id, "href" => URL . URLEND . "?" . $this->name . "=" . $id, "name" => $id, "id" => $id . "_tab"), $data["title"])));
+                        $this->tabNavi->append(new HTMLNode("li", array(), new HTMLNode("a", array("class" => "active tab ajax", "name" => $id, "href" => URL . URLEND . "?" . $this->name . "=" . $id, "name" => $id, "id" => $id . "_tab"), $data["title"])));
                         $this->tabContainer->append(new HTMLNode("div", array("class" => "active", "id" => $id), $data["content"]));
                         unset($_data);
                     } else {
                         // in case the ajax-tab is not selected, we just draw the menu
-                        $this->tabNavi->append(new HTMLNode("li", array(), new HTMLNode("a", array("class" => "ajax", "name" => $id, "href" => URL . URLEND . "?" . $this->name . "=" . $id, "id" => $id . "_tab"), $data["title"])));
+                        $this->tabNavi->append(new HTMLNode("li", array(), new HTMLNode("a", array("class" => "ajax tab", "name" => $id, "href" => URL . URLEND . "?" . $this->name . "=" . $id, "id" => $id . "_tab"), $data["title"])));
                         $this->tabContainer->append(new HTMLNode("div", array("id" => $id), '<div style="text-align: center;"><img src="images/loading.gif" alt="loading..." /></div>'));
                     }
                 }
@@ -196,7 +179,9 @@ class Tabs extends gObject {
             $this->tabNavi->getNode(0)->getNode(0)->addClass("active");
             $this->tabContainer->getNode(1)->addClass("active");
         }
-        
+
+        $this->tabNavi->append(new HTMLNode("li", array("class" => "clear")));
+
         $this->callExtending("afterRender");
         
   		Resources::addJS('$(function(){ $("#'.$this->tabContainer->id.'").gtabs({"animation": true, "cookiename": "tabs_'.$this->name.'"}); });');

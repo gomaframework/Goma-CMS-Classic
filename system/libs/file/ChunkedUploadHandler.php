@@ -45,7 +45,7 @@ class ChunkedUploadHandler {
     public function __construct($request, $name, $key) {
         $this->request = $request;
         $this->name = $name;
-        $this->key;
+        $this->key = $key;
 
         if(!isset($this->request->post_params[$name])) {
             throw new BadRequestException("Upload not found");
@@ -70,9 +70,17 @@ class ChunkedUploadHandler {
     }
 
     protected function resolveContent() {
+        if(!$this->request->post_params[$this->name]["tmp_name"]) {
+            throw new FileUploadException("File not given.");
+        }
+
         if(preg_match("/([0-9]+)\s*\-\s*([0-9]+)/", $this->request->getHeader("content-range"), $matches)) {
             $rangeStart = $matches[1];
             $rangeEnd = $matches[2];
+
+            if($rangeEnd > $this->request->getHeader("x-file-size") || $rangeStart > $this->request->getHeader("x-file-size")) {
+                throw new BadRequestException("Request-Information wrong.");
+            }
 
             if($rangeStart == 0) {
                 $this->delete();

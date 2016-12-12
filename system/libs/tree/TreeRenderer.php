@@ -192,7 +192,7 @@ class TreeRenderer extends gObject {
 		} else {
 			$text = $child->title;
 			$wrapper->html(array(
-				new HTMLNode("span", array("class" => "img-holder"), new HTMLNode("img", array("src" => $child->icon))),
+				new HTMLNode("span", array("class" => "img-holder"), new HTMLNode("img", array("src" => $child->getIcon()))),
 				new HTMLNode("span", array("class" => "text-holder"), $text),
 				$this->renderBubbles($child->bubbles())
 			));

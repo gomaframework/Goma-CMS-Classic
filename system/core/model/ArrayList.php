@@ -753,6 +753,41 @@ class ArrayList extends ViewAccessableData implements Countable {
 		}
 		return $arr;
 	}
+
+	/**
+	 * picks randomly n records.
+	 *
+	 * @param int $n
+	 * @return ArrayList
+	 */
+	public function pickRandomly($n) {
+		$list = new ArrayList();
+		if($this->count() < $n) {
+			$data = $this->items;
+			shuffle($data);
+			return new ArrayList($data);
+		}
+
+		$propability = 1 / $this->count() * $n;
+		while($list->count() < $n) {
+			foreach($this->items as $item) {
+				if($list->count() < $n && rand(0,1) < $propability) {
+					$list->add($item);
+				}
+			}
+		}
+
+		shuffle($list->items);
+
+		return $list;
+	}
+
+	/**
+	 * clears data.
+	 */
+	public function clear() {
+		$this->items = array();
+	}
 }
 
 class ItemNotFoundException extends GomaException {

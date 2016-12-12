@@ -9,6 +9,12 @@
  * $Version 1.0.3
  */
 class TableFieldAddButton implements TableField_HTMLProvider, TableField_URLHandler {
+
+	/**
+	 * @var string
+	 */
+	protected $lang = "add_record";
+
 	/**
 	 * provides HTML-fragments
 	 *
@@ -19,10 +25,18 @@ class TableFieldAddButton implements TableField_HTMLProvider, TableField_URLHand
 		$view = new ViewAccessableData();
 		if($tableField->getConfig()->getComponentByType('TableFieldPaginator')) {
 			return array(
-				"pagination-footer-right" => $view->customise(array("link" => $tableField->externalURL() . "/addbtn" . URLEND . "?redirect=" . urlencode($_SERVER["REQUEST_URI"])))->renderWith("form/tableField/addButton.html")
+				"pagination-footer-right" => $view->customise(array(
+					"link" => $tableField->externalURL() . "/addbtn" . URLEND . "?redirect=" . urlencode($_SERVER["REQUEST_URI"]),
+					"lang" => lang($this->lang, $this->lang)
+				))->renderWith("form/tableField/addButton.html")
 			);
 		} else {
-			return array("footer" => $view->customise(array("link" => $tableField->externalURL() . "/addbtn" . URLEND . "?redirect=" . urlencode($_SERVER["REQUEST_URI"])))->renderWith("form/tableField/addButtonWithFooter.html"));
+			return array(
+				"footer" => $view->customise(array(
+					"link" => $tableField->externalURL() . "/addbtn" . URLEND . "?redirect=" . urlencode($_SERVER["REQUEST_URI"]),
+					"lang" => lang($this->lang, $this->lang)
+				))->renderWith("form/tableField/addButtonWithFooter.html")
+			);
 		}
 	}
 
@@ -61,8 +75,26 @@ class TableFieldAddButton implements TableField_HTMLProvider, TableField_URLHand
 
 		$content = $controller->getWithModel($obj)->form("add", null, array(), false, $submit);
 
-		Core::setTitle(lang("add_record"));
+		Core::setTitle(lang($this->lang, $this->lang));
 
 		return $content;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getLang()
+	{
+		return $this->lang;
+	}
+
+	/**
+	 * @param string $lang
+	 * @return $this
+	 */
+	public function setLang($lang)
+	{
+		$this->lang = $lang;
+		return $this;
 	}
 }

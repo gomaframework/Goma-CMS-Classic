@@ -13,32 +13,18 @@ defined('IN_GOMA') OR die();
 abstract class ControllerExtension extends Controller implements ExtensionModel {
     /**
      * works the same as on {@link requestHandler}
-     *
-     * @name url_handlers
-     * @access public
      */
     public $url_handlers = array();
 
     /**
      * works the same as on {@link requestHandler}
-     *
-     * @name allowed_actions
-     * @access public
      */
     public $allowed_actions = array();
 
     /**
-     * extra_methods
-     *
-     * @name extra_methods
-     * @access public
-     */
-    public static $extra_methods = array();
-
-    /**
      * the owner-class
-     * @name owner
-     * @access protected
+     *
+     * @var RequestHandler
      */
     protected $owner;
 
@@ -67,7 +53,7 @@ abstract class ControllerExtension extends Controller implements ExtensionModel 
 
     /**
      * gets the owner of class
-     * @name getOwner
+     * @return RequestHandler
      */
     public function getOwner()
     {

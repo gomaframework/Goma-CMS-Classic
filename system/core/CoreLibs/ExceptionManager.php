@@ -130,6 +130,7 @@ class ExceptionManager {
 	const FILE_NOT_FOUND = -804;
 	const FILE_ALREADY_EXISTING = -810;
 	const FILE_COPY_FAIL = -820;
+	const PROJECT_CONFIG_WRITE_ERROR = -825;
 
 	/**
 	 * form
@@ -144,7 +145,9 @@ class ExceptionManager {
 	const FILEUPLOAD_SIZE_FAIL = -602;
 	const FILEUPLOAD_TYPE_FAIL = -603;
 	const FILEUPLOAD_DISK_SPACE_FAIL = -604;
+
 	const TPL_COMPILE_ERROR = -10;
+	const TPL_NOT_FOUND = -650;
 
 	/**
 	 * lists
@@ -159,17 +162,15 @@ class ExceptionManager {
 	/**
 	 * gfs
 	 */
-	const GFSException = 4000;
-	const GFSVersionException = 4001;
-	const GFSFileException = 4002;
-	const GFSDBException = 4003;
-	const GFSReadOnlyException = 4004;
-	const GFSFileNotFoundException = 4005;
-	const GFSFileNotValidException = 4006;
-	const GFSFileExistsException = 4007;
-	const GFSRealFileNotExistsException = 4008;
-	const GFSRealFilePermissionException = 4009;
-
-
-
+	const GFSException = -4000;
+	const GFSVersionException = -4001;
+	const GFSFileException = -4002;
+	const GFSDBException = -4003;
+	const GFSReadOnlyException = -4004;
+	const GFSFileNotFoundException = -4005;
+	const GFSFileNotValidException = -4006;
+	const GFSFileExistsException = -4007;
+	const GFSRealFileNotExistsException = -4008;
+	const GFSRealFilePermissionException = -4009;
+	const GD_FILE_TOO_BIG = -4010;
 }

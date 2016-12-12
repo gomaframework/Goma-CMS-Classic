@@ -172,9 +172,25 @@ class ArrayLib
             return $array;
 
         $keys = array_keys( $array );
-        $keys[ array_search( $old_key, $keys ) ] = $new_key;
+        $keys[ self::array_search_without_zero( $old_key, $keys ) ] = $new_key;
 
         return array_combine( $keys, $array );
+    }
+
+    public static function array_search_without_zero($needle, $haystack) {
+        foreach($haystack as $key => $value) {
+            if($value == $needle) {
+                if($value !== "0" && $value !== 0 && $needle !== 0 && $needle !== "0") {
+                    return $key;
+                } else {
+                    if(($value === 0 || $value === "0") && ($needle === 0 || $needle === "0")) {
+                        return $key;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -13,11 +13,6 @@
 // TODO: Fix multiple model support
 class adminItem extends AdminController implements PermProvider {
 	/**
-	 * rights of this item
-	*/
-	public $rights = 7;
-	
-	/**
 	 * sort
 	*/
 	public $sort = 0;
@@ -67,6 +62,21 @@ class adminItem extends AdminController implements PermProvider {
 		parent::__construct($keyChain);
 
 		$this->initModelFromModels();
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function userHasPermissions() {
+		if(StaticsManager::hasStatic($this->classname, "permission")) {
+			return Permission::check(StaticsManager::getStatic($this->classname, "permission"));
+		}
+
+		if(isset($this->rights)) {
+			return Permission::check($this->rights);
+		}
+
+		return Permission::check("ADMIN");
 	}
 
 	protected function initModelFromModels() {
@@ -283,19 +293,9 @@ class adminItem extends AdminController implements PermProvider {
 	 * @return gObject|null
 	 */
 	protected function getModelByName($name) {
-		if(count($this->models) > 1) {
-			foreach($this->models as $currentModel) {
-				$currentModel = trim(strtolower($currentModel));
-				if(ClassManifest::isOfType($name, $currentModel)) {
-					return new $name();
-				}
-			}
-		} else {
-			$firstModel = ArrayLib::first($this->models);
-			if(ClassManifest::isOfType($name, $firstModel)) {
-				return new $name;
-			}
-		}
+		if (ClassManifest::isOfType($name, $this->model)) {
+            return new $name;
+        }
 
 		return null;
 	}

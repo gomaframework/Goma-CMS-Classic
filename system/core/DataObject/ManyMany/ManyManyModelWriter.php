@@ -37,7 +37,6 @@ class ManyManyModelWriter extends Extension {
         if ($many_many) {
             /** @var ModelManyManyRelationshipInfo $relationShip */
             foreach($many_many as $name => $relationShip) {
-
                 /** @var ModelManyManyRelationShipInfo $relationShip */
                 $relationShip = $this->getOwner()->getModel()->getManyManyInfo($name);
 
@@ -45,11 +44,15 @@ class ManyManyModelWriter extends Extension {
                 if(isset($data[$name]) && is_a($data[$name], "ManyMany_DataObjectSet")) {
                     $set = $data[$name];
                     $set->setRelationENV($relationShip, $this->getOwner()->getModel());
-                    $set->commitStaging(false, true, $this->getOwner()->getWriteType(), $this->getOwner()->getRepository(), $this->getOwner()->getOldId());
+                    $set->commitStaging(false, true, $this->getOwner()->getWriteType(), $this->getOwner()->getRepository(), array(
+                        "oldid" => $this->getOwner()->getOldId()
+                    ));
                 } else {
                     $set = $this->getOwner()->getModel()->getManyMany($name);
                     $set->setRelationENV($relationShip, $this->getOwner()->getModel());
-                    $set->commitStaging(false, true, $this->getOwner()->getWriteType(), $this->getOwner()->getRepository(), $this->getOwner()->getOldId());
+                    $set->commitStaging(false, true, $this->getOwner()->getWriteType(), $this->getOwner()->getRepository(), array(
+                        "oldid" => $this->getOwner()->getOldId()
+                    ));
                 }
             }
         }
@@ -99,7 +102,9 @@ class ManyManyModelWriter extends Extension {
         $set->setVersion($this->getOwner()->getModel()->queryVersion);
         $set->setRelationENV($relationShip, $this->getOwner()->getModel());
 
-        $set->commitStaging(false, true, $this->getOwner()->getWriteType(), $this->getOwner()->getRepository(), $oldId);
+        $set->commitStaging(false, true, $this->getOwner()->getWriteType(), $this->getOwner()->getRepository(), array(
+            "oldid" => $oldId
+        ));
     }
 
     /**

@@ -1,4 +1,28 @@
-<?php defined("IN_GOMA") OR die();
+<?php
+namespace Goma\Test;
+use AbstractFormComponent;
+use ClassInfo;
+use Controller;
+use Exception;
+use FieldSet;
+use Form;
+use FormAction;
+use FormField;
+use FormNotValidException;
+use FormValidator;
+use GlobalSessionManager;
+use GomaUnitTest;
+use MockSessionManager;
+use RadioButton;
+use ReflectionClass;
+use Request;
+use RequestHandler;
+use stdClass;
+use TestAble;
+use TextField;
+use tpl;
+
+defined("IN_GOMA") OR die();
 /**
  * Unit-Tests for Form.
  *
@@ -11,21 +35,35 @@
 class FormTest extends GomaUnitTest implements TestAble {
 	/**
 	 * area
-	*/
+	 */
 	static $area = "Form";
 
 	/**
 	 * internal name.
-	*/
+	 */
 	public $name = "Form";
 
 	/**
 	 * tests form RequestHandler connection.
-	*/
+	 */
 	public function testFormRequestHandler() {
 		$form = new Form($c = new Controller(), "test");
 
 		$this->assertEqual($form->name(), "test");
+		$this->assertEqual($form->controller, $c);
+		$this->assertTrue((boolean) $form->render());
+	}
+
+	/**
+	 * tests form RequestHandler connection.
+	 */
+	public function testFormWithSimpleFieldRequestHandler() {
+		$form = new Form($c = new Controller(), "test");
+        $form->add(new TextField("name", "Name"));
+
+		$this->assertEqual($form->name(), "test");
+        $this->assertIsA($form->name, TextField::class);
+        $this->assertNull($form->name->getModel());
 		$this->assertEqual($form->controller, $c);
 		$this->assertTrue((boolean) $form->render());
 	}
@@ -55,13 +93,13 @@ class FormTest extends GomaUnitTest implements TestAble {
 
 	/**
 	 * tests if fields are accessable by name.
-	*/
+	 */
 	public function testFieldAccessable() {
 		$this->caseFieldAccessable("name", new TextField("name", "name"));
 		$this->caseFieldAccessable("surname", new TextField("surname", "name"));
 		$this->caseFieldAccessable("address1", new TextField("address1", "name"));
 		$this->caseFieldAccessable("_1", new TextField("_1", "name"));
-        $this->caseFieldAccessable("test", new TextField("test", "blub"));
+		$this->caseFieldAccessable("test", new TextField("test", "blub"));
 
 		$this->caseFieldAccessable("test", new FieldSet("test", array(), "blub"));
 		$this->caseFieldAccessable("blah", new FieldSet("BLAH", array(), "blub"));
@@ -177,7 +215,7 @@ class FormTest extends GomaUnitTest implements TestAble {
 
 	/**
 	 * @param FormValidator $obj
-     */
+	 */
 	public function validateFieldsActive($obj) {
 		$this->validationCalled = true;
 		$result = $obj->getForm()->result;
@@ -249,9 +287,12 @@ class FormTest extends GomaUnitTest implements TestAble {
 					$reflectionProp->setAccessible(true);
 					$tpl = $reflectionProp->getValue($inst);
 
+					$expansion = isset(ClassInfo::$class_info[$field]["inExpansion"]) ?
+						ClassInfo::$class_info[$field]["inExpansion"] : null;
+
 					if ($tpl) {
-						$this->assertTrue(!!tpl::getFilename($tpl), "Template $tpl for class $field %s");
-						$this->assertTrue(file_exists(tpl::getFilename($tpl)), "Template $tpl exists for class $field %s");
+						$this->assertTrue(!!tpl::getFilename($tpl, "", false, $expansion), "Template $tpl for class $field %s");
+						$this->assertTrue(file_exists(tpl::getFilename($tpl, "", false, $expansion)), "Template $tpl exists for class $field %s");
 					}
 				}
 			}
@@ -325,4 +366,85 @@ class FormTest extends GomaUnitTest implements TestAble {
 
 		$this->assertEqual($form->action1, $action1);
 	}
+
+	public function testSwitchState() {
+		$form = new Form(new Controller(), "blub", array(), array(
+			new FormAction("test", "test", array($this, "manipulateState"))
+		));
+		$form->state->blah = 123;
+		$form->render()->render();
+
+		$this->assertEqual($form->state->blah, 123);
+
+		$form->setRequest(new Request("post", "test", array(), array(
+			"test" => "test"
+		)));
+		$form->trySubmit();
+		$this->assertEqual($form->state->blah, 321);
+	}
+
+	public function manipulateState($data, $form) {
+		$this->assertEqual($form->state->blah, 123);
+		$form->state->blah = 321;
+	}
+
+	public function testChangeModel() {
+		$form = new Form(new Controller(), "blub", array(), array(
+			new FormAction("test", "test")
+		));
+        $form->setSubmission(array($this, "manipulateModel"));
+		$form->setModel($model = new StdClass());
+		$form->state->blah = 123;
+		$form->render()->render();
+
+		$this->assertEqual(123, $form->state->blah);
+		$this->assertEqual($model, $form->getModel());
+
+		$form->setRequest(new Request("post", "test", array(), array(
+			"test" => "test"
+		)));
+		$form->trySubmit();
+		$this->assertEqual(null, $form->getModel()->test);
+		$this->assertEqual(321, $form->state->blah);
+
+        $form->getModel()->test = 0;
+        $form->state->blah = 123;
+        $this->assertNotEqual(321, $form->state->blah);
+        $this->assertEqual(0, $form->getModel()->test);
+        $form->setSubmission(array($this, "manipulateModelException"));
+
+        $form->setRequest(new Request("post", "test", array(), array(
+            "test" => "test"
+        )));
+        $form->trySubmit();
+        $this->assertEqual(0, $form->getModel()->test);
+        $this->assertEqual(321, $form->state->blah);
+	}
+
+	/**
+	 * @param $data
+	 * @param Form $form
+     */
+	public function manipulateModel($data, $form) {
+		$this->assertEqual($form->state->blah, 123);
+		$form->state->blah = 321;
+
+		$form->getModel()->test = 1;
+        $this->assertEqual(1, $form->getModel()->test);
+	}
+
+
+    /**
+     * @param $data
+     * @param Form $form
+     * @throws Exception
+     */
+    public function manipulateModelException($data, $form) {
+        $this->assertEqual($form->state->blah, 123);
+        $form->state->blah = 321;
+
+        $form->getModel()->test = 1;
+        $this->assertEqual(1, $form->getModel()->test);
+        throw new Exception("blub");
+    }
 }

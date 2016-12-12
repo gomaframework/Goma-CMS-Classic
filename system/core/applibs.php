@@ -10,6 +10,8 @@
  * @version 1.0.5
  */
 
+$__errorCount = 0;
+
 /**
  * Load a language file from /languages.
  *
@@ -160,12 +162,12 @@ function session_store_exists($key) {
  */
 function getRedirect($parentDir = false, $controller = null) {
 	// AJAX Request
-	if(Core::is_ajax() && isset($_SERVER["HTTP_X_REFERER"]) && protectUrl($_SERVER["HTTP_X_REFERER"])) {
+	if(Core::is_ajax() && isset($_SERVER["HTTP_X_REFERER"]) && isURLFromServer($_SERVER["HTTP_X_REFERER"])) {
 		return htmlentities($_SERVER["HTTP_X_REFERER"], ENT_COMPAT, "UTF-8", false);
 	}
 
 	if($parentDir) {
-		if(isset($_GET["redirect"]) && protectUrl($_GET["redirect"])) {
+		if(isset($_GET["redirect"]) && isURLFromServer($_GET["redirect"])) {
 			return htmlentities($_GET["redirect"], ENT_COMPAT, "UTF-8", false);
 		} else if(isset($controller)) {
 			return htmlentities(ROOT_PATH . BASE_SCRIPT . $controller->originalNamespace, ENT_COMPAT, "UTF-8", false);
@@ -181,7 +183,7 @@ function getRedirect($parentDir = false, $controller = null) {
 			}
 		}
 	} else {
-		if(isset($_GET["redirect"]) && protectUrl($_GET["redirect"])) {
+		if(isset($_GET["redirect"]) && isURLFromServer($_GET["redirect"])) {
 			return htmlentities($_GET["redirect"], ENT_COMPAT, "UTF-8", false);
 		} else if(isset($controller)) {
 			return htmlentities(ROOT_PATH . BASE_SCRIPT . $controller->originalNamespace, ENT_COMPAT, "UTF-8", false);
@@ -194,9 +196,12 @@ function getRedirect($parentDir = false, $controller = null) {
 	}
 }
 
-function protectUrl($url) {
+function isURLFromServer($url, $server) {
 	if(preg_match('/^(http|https|ftp)\:\/\/(.*)/i', $url, $matches)) {
-		$server = $_SERVER["SERVER_NAME"];
+		if(!isset($server)) {
+			$server = $_SERVER["SERVER_NAME"];
+		}
+
 		if(strtolower(substr($matches[2], 0, strlen($server))) != strtolower($server)) {
 			return "";
 		} else {
@@ -236,9 +241,10 @@ function goma_date($format, $date = NOW) {
  * @param string|null $ip
  */
 function makeProjectUnavailable($project = APPLICATION, $ip = null) {
-	$ip = isCommandLineInterface() ? "cli" : (isset($ip) ? $ip : $_SERVER["REMOTE_ADDR"]);
+	$ip = isCommandLineInterface() ? "cli" : ((isset($ip) ? $ip : $_SERVER["REMOTE_ADDR"]));
 	if(!file_put_contents(ROOT . $project . "/503.goma", $ip, LOCK_EX)) {
-		die("Could not make project unavailable.");
+		echo ("Could not make project unavailable.");
+		exit(11);
 	}
 	chmod(ROOT . $project . "/503.goma", 0777);
 }
@@ -289,7 +295,7 @@ function isProjectUnavailableForIP($ip, $project = APPLICATION) {
  *
  * @param array[] $data An array with configuration variables.
  *
- * @return void
+ * @throws ProjectConfigWriteException
  */
 function writeSystemConfig($data = array()) {
 
@@ -326,9 +332,8 @@ function writeSystemConfig($data = array()) {
 
 	if(@file_put_contents(ROOT . "_config.php", $contents, LOCK_EX)) {
 		@chmod(ROOT . "_config.php", 0644);
-		return true;
 	} else {
-		throw new LogicException("Could not write System-Config. Please apply Permissions 0777 to /_config.php");
+		throw new ProjectConfigWriteException("./_config.php", "Could not write System-Config.");
 	}
 }
 
@@ -373,7 +378,6 @@ function getSSLPrivateKey() {
  * @return void
  */
 function writeProjectConfig($data = array(), $project = CURRENT_PROJECT) {
-
 	$config = $project . "/config.php";
 
 	if(file_exists($config)) {
@@ -418,9 +422,8 @@ function writeProjectConfig($data = array(), $project = CURRENT_PROJECT) {
 	$config_content = str_replace('{folder}', $project, $config_content);
 	if(@file_put_contents($config, $config_content, LOCK_EX)) {
 		@chmod($config, 0644);
-		return true;
 	} else {
-		die("6: Could not write Project-Config '" . $config . "'. Please set Permissions to 0777!");
+        throw new ProjectConfigWriteException($config, "Could not write Project-Config.");
 	}
 }
 
@@ -444,8 +447,9 @@ function getPrivateKey() {
 /**
  * sets a project-folder in the project-stack
  *
- *@name setProject
- *@access public
+ * @name setProject
+ * @access public
+ * @return bool|void
  */
 function setProject($project, $domain = null) {
 	if(file_exists(ROOT . "_config.php")) {
@@ -467,20 +471,22 @@ function setProject($project, $domain = null) {
 				return true;
 			} else {
 				$apps[$key]["domain"] = $app["domain"];
-				return writeSystemConfig(array("apps" => $apps));
+				writeSystemConfig(array("apps" => $apps));
+				return;
 			}
 		}
 	}
 	$apps[] = $app;
 
-	return writeSystemConfig(array("apps" => $apps));
+	writeSystemConfig(array("apps" => $apps));
 }
 
 /**
  * removes a given project from project-stack
  *
- *@name removeProject
- *@access public
+ * @name removeProject
+ * @access public
+ * @return bool|void
  */
 function removeProject($project) {
 	if(file_exists(ROOT . "_config.php")) {
@@ -497,7 +503,7 @@ function removeProject($project) {
 
 	$apps = array_values($apps);
 
-	return writeSystemConfig(array("apps" => $apps));
+	writeSystemConfig(array("apps" => $apps));
 }
 
 // alias for setProject
@@ -655,7 +661,7 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 				$content = str_replace('$uri', $uri, $content);
 				echo $content;
 			}
-			exit(2);
+			exit(7);
 			break;
 
 		case E_WARNING:
@@ -698,8 +704,11 @@ function Goma_ErrorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 				$content = str_replace('$uri', $uri, $content);
 				echo $content;
 			}
-			exit(2);
+			exit(4);
 	}
+
+	global $__errorCount;
+	$__errorCount++;
 
 	// block PHP's internal Error-Handler
 	return true;
@@ -717,7 +726,8 @@ function Goma_ExceptionHandler($exception) {
 
 	log_exception($exception);
 
-	$details = $exception->getMessage() . "\n<br />\n<br />\n<textarea style=\"width: 100%; height: 300px;\">" . $exception->getTraceAsString() . "</textarea>";
+	$details = $exception->getMessage() . "\n<br />"." in ".
+		$exception->getFile() . " on line ".$exception->getLine() . ".\n<br />\n<textarea style=\"width: 100%; height: 300px;\">" . $exception->getTraceAsString() . "</textarea>";
 	$current = $exception;
 	while($current = $current->getPrevious()) {
 		$details .= $current->getMessage() . "\n<br />\n<br />\n<textarea style=\"width: 100%; height: 300px;\">" . $current->getTraceAsString() . "</textarea>";
@@ -740,22 +750,53 @@ function Goma_ExceptionHandler($exception) {
 		echo $content;
 	}
 
-	exit(2);
+	exit($exception->getCode() != 0 ? $exception->getCode() : 8);
 }
 
-
-function log_exception(Exception $exception) {
+/**
+ * @param Throwable $exception
+ */
+function log_exception($exception) {
 	$uri = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : (isset($_SERVER["argv"]) ? implode(" ", $_SERVER["argv"]) : null);
 
-	$message = get_class($exception) . " " . $exception->getCode() . ":\n\n" . $exception->getMessage() . "\n\n Backtrace: " . $exception->getTraceAsString();
+	$message = get_class($exception) . " " . $exception->getCode() . ":\n\n" . $exception->getMessage() . "\n".
+		exception_get_dev_message($exception)." in ".
+		$exception->getFile() . " on line ".$exception->getLine().".\n\n Backtrace: " . $exception->getTraceAsString();
 	$current = $exception;
 	while($current = $current->getPrevious()) {
-		$message .= "\nPrevious: " . $current->getMessage() . "\n" . $current->getTraceAsString();
+		$message .= "\nPrevious: " . $current->getMessage() . "\n" . exception_get_dev_message($current)."\n in "
+			. $current->getFile() . " on line ".$current->getLine() . ".\n" . $current->getTraceAsString();
 	}
 	log_error($message);
 	
 	$debugMsg = "URL: " . $uri . "\nGoma-Version: " . GOMA_VERSION . "-" . BUILD_VERSION . "\nApplication: " . print_r(ClassInfo::$appENV, true) . "\n\n" . $message;
 	debug_log($debugMsg);
+}
+
+function exception_get_dev_message($exception) {
+	if(method_exists($exception, "getDeveloperMessage")) {
+		return "\n\t\t" . str_replace("\n", "\n\t\t", $exception->getDeveloperMessage()) . "\n";
+	}
+
+	return "";
+}
+
+/**
+ * @return int
+ */
+function getMemoryLimit() {
+	if(function_exists("ini_get")) {
+		$memory_limit = ini_get('memory_limit');
+		if (preg_match('/^(\d+)(.)$/', $memory_limit, $matches)) {
+			if ($matches[2] == 'M') {
+				return $matches[1] * 1024 * 1024; // nnnM -> nnn MB
+			} else if ($matches[2] == 'K') {
+				return $matches[1] * 1024; // nnnK -> nnn KB
+			}
+		}
+	}
+
+	return 64 * 1024 * 1024;
 }
 
 //!Logging
@@ -848,6 +889,10 @@ function logging($string) {
  *@param string - debug-string
  */
 function debug_log($data) {
+	if(!defined("CURRENT_PROJECT")) {
+		return;
+	}
+
 	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/");
 	FileSystem::requireFolder(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/" . date("m-d-y"));
 	$folder = ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/debug/" . date("m-d-y") . "/" . date("H_i_s");
@@ -879,6 +924,10 @@ function RetinaPath($file) {
  * Writes the server configuration file
  */
 function writeServerConfig() {
+	if(!defined("ROOT_PATH")) {
+		return;
+	}
+
 	$args = getCommandLineArgs();
 	$server = isset($_SERVER["SERVER_SOFTWARE"]) ? $_SERVER["SERVER_SOFTWARE"] :
 		(isset($args["server"]) ? $args["server"] : "");
@@ -895,7 +944,8 @@ function writeServerConfig() {
 	require (ROOT . "system/resources/" . $file . ".php");
 
 	if(!file_put_contents(ROOT . $toFile, $serverconfig, FILE_APPEND | LOCK_EX)) {
-		die("Could not write " . $file);
+		echo ("Could not write " . $file);
+		exit(6);
 	}
 }
 
@@ -976,9 +1026,16 @@ function loadFramework($modelRepository = null) {
 /**
  * this function loads an application
  * @param $directory
+ * @throws Exception
  */
 function loadApplication($directory) {
+	if(getMemoryLimit() < 64 * 1024 * 1024) {
+		throw new Exception("Memory of at least 64M is required.");
+	}
+
 	define("URL", parseUrl());
+
+    validateServerConfig();
 
 	if (is_dir(ROOT . $directory) && file_exists(ROOT . $directory . "/application/application.php")) {
 		// defines
@@ -1039,7 +1096,8 @@ function loadApplication($directory) {
 			header('HTTP/1.1 503 Service Temporarily Unavailable');
 			header('Status: 503 Service Temporarily Unavailable');
 			header('Retry-After: 10');
-			die($content);
+			echo ($content);
+			exit(503);
 		}
 
 		if(isCommandLineInterface()) {
@@ -1047,7 +1105,7 @@ function loadApplication($directory) {
 				require (ROOT . $directory . "/application/cli-application.php");
 			} else {
 				echo("CLI is not supported by that project.\n");
-				exit(1);
+				exit(9);
 			}
 		} else {
 			require (ROOT . $directory . "/application/application.php");
@@ -1131,6 +1189,34 @@ function parseUrl() {
 	}
 }
 
+function validateServerConfig() {
+    if (!file_exists(ROOT . ".htaccess") && !file_exists(ROOT . "web.config")) {
+        writeServerConfig();
+    }
+
+// some hacks for changes in .htaccess
+    if (file_exists(ROOT . ".htaccess") && !strpos(file_get_contents(".htaccess"), "ErrorDocument 404")) {
+        if (!file_put_contents(ROOT . ".htaccess", "\nErrorDocument 404 " . ROOT_PATH . "system/application.php", FILE_APPEND)) {
+            die("Could not write .htaccess");
+        }
+    }
+
+    if (file_exists(ROOT . ".htaccess") && !strpos(file_get_contents(".htaccess"), "ErrorDocument 500")) {
+        if (!file_put_contents(ROOT . ".htaccess", "\nErrorDocument 500 " . ROOT_PATH . "system/templates/framework/500.html", FILE_APPEND)) {
+            die("Could not write .htaccess");
+        }
+    }
+
+    if (file_exists(ROOT . ".htaccess") && (strpos(file_get_contents(".htaccess"), " system"))) {
+        $contents = file_get_contents(ROOT . ".htaccess");
+        $contents = str_replace(' system', ' ' . ROOT_PATH . "system", $contents);
+        if (!file_put_contents(ROOT . ".htaccess", $contents)) {
+            die("Could not write .htaccess");
+        }
+        unset($contents);
+    }
+}
+
 /**
  * returns all http-headers.
  */
@@ -1150,9 +1236,16 @@ if (!function_exists('getallheaders'))
 	}
 }
 
+$__isCommandLineInterface = null;
 function isCommandLineInterface()
 {
-	return (php_sapi_name() === 'cli');
+    global $__isCommandLineInterface;
+
+    if(!isset($__isCommandLineInterface)) {
+        $__isCommandLineInterface = (!isset($_SERVER['SERVER_SOFTWARE']) && (php_sapi_name() == 'cli' || (is_numeric($_SERVER['argc']) && $_SERVER['argc'] > 0)));
+    }
+
+    return $__isCommandLineInterface;
 }
 
 function isPHPUnit() {
@@ -1207,6 +1300,37 @@ class GomaException extends Exception {
 	public function http_status() {
 		return 500;
 	}
+
+    public function getDeveloperMessage() {
+        return $this->http_status() != 200 ? " Status: " . $this->http_status() : "";
+    }
+}
+
+class ProjectConfigWriteException extends GomaException {
+    protected $standardCode = ExceptionManager::PROJECT_CONFIG_WRITE_ERROR;
+    protected $config;
+
+    /**
+     * ProjectConfigWriteException constructor.
+     * @param string $file
+     * @param string $message
+     * @param null $code
+     * @param Exception|null $previous
+     */
+    public function __construct($file, $message = "Could not write Project-Config", $code = null, Exception $previous = null)
+    {
+        $this->config = $file;
+
+        parent::__construct($message . " File: " . $file, $code, $previous);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getConfig()
+    {
+        return $this->config;
+    }
 }
 
 class MySQLException extends SQLException {
@@ -1241,6 +1365,11 @@ class PermissionException extends GomaException {
 
     public function getMissingPerm() {
         return $this->missingPerm;
+    }
+
+    public function getDeveloperMessage()
+    {
+        return parent::getDeveloperMessage() . " Missing Permission: " . $this->missingPerm;
     }
 
 }

@@ -14,24 +14,16 @@ class adminController extends Controller
 {
     /**
      * current title
-     *
-     * @name title
      */
     static $title;
 
     /**
      * object of current admin-view
-     *
-     * @name activeController
-     * @access protected
      */
     protected static $activeController;
 
     /**
      * some default url-handlers for this controller
-     *
-     * @name url_handkers
-     * @access public
      */
     public $url_handlers = array(
         "switchlang"              => "switchlang",
@@ -43,9 +35,6 @@ class adminController extends Controller
 
     /**
      * we allow those actions
-     *
-     * @name allowed_actions
-     * @access public
      */
     public $allowed_actions = array("handleItem", "switchlang", "handleUpdate", "flushLog", "history");
 
@@ -53,7 +42,6 @@ class adminController extends Controller
      * this var contains the templatefile
      * the str {admintpl} will be replaced with the current admintpl
      *
-     * @name template
      * @var string
      */
     public $template = "admin/index.html";
@@ -119,7 +107,7 @@ class adminController extends Controller
         if (!Permission::check("ADMIN"))
             return $this->modelInst()->renderWith("admin/index_not_permitted.html");
 
-        $class = $this->request->getParam("item") . "admin";
+        $class = str_replace("-", "\\", $this->request->getParam("item")) . "admin";
 
         if (ClassInfo::exists($class)) {
             /** @var RequestHandler $controller */
@@ -495,7 +483,7 @@ class admin extends ViewAccessableData implements PermProvider
                         $active = false;
 
                     $data->push(array('text'   => parse_lang($class->text),
-                                      'uname'  => substr($class->classname, 0, -5),
+                                      'uname'  => str_replace("\\", "-", substr($class->classname, 0, -5)),
                                       'sort'   => $class->sort,
                                       "active" => $active,
                                       "icon"   => ClassInfo::getClassIcon($class->classname)));

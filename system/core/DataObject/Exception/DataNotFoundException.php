@@ -2,12 +2,13 @@
 defined("IN_GOMA") OR die();
 
 /**
- * Describe your class
+ * When controller does not find suitable data in model, this is thrown.
  *
  * @package Goma
  *
- * @author D
- * @copyright 2016 D
+ * @author Goma-Team
+ * @copyright 2016 Goma-Team
+ * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  *
  * @version 1.0
  */
@@ -24,7 +25,7 @@ class DataNotFoundException extends GomaException {
      * @param null|int $code
      * @param Exception|null $previous
      */
-    public function __construct($message = "Data not found.", $code = null, Exception $previous = null) {
+    public function __construct($message = "Data not found.", $code = null, $previous = null) {
         parent::__construct($message, $code, $previous);
     }
 

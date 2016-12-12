@@ -23,6 +23,18 @@ class AjaxResponse extends GomaResponse
      */
     protected $shouldServe = false;
 
+    /**
+     * AjaxResponse constructor.
+     * @param array|null $header
+     * @param null|string $body
+     */
+    public function __construct($header = null, $body = null)
+    {
+        parent::__construct($header, $body);
+
+        $this->body->setIsFullPage(false);
+    }
+
     public function setDefaultHeader()
     {
         parent::setDefaultHeader();
@@ -125,7 +137,7 @@ class AjaxResponse extends GomaResponse
     /**
      * slides a node up (hide)
      */
-    public function slideUp($node, $duration = "200", $exec, $exec = "")
+    public function slideUp($node, $duration = "200", $exec = "")
     {
 
         if (is_int($exec)) {

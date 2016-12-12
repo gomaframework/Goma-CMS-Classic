@@ -26,6 +26,11 @@ class TabSet extends FieldSet
     protected $template = "form/TabSet.html";
 
     /**
+     * @var bool
+     */
+    protected $hideTabsIfOnlyOne = false;
+
+    /**
      * @param string|null $name
      * @param array $fields
      * @param Form|null $form
@@ -64,6 +69,23 @@ class TabSet extends FieldSet
     }
 
     /**
+     * @return FormFieldRenderData
+     */
+    public function createsRenderDataClass()
+    {
+        return TabSetRenderData::create($this->name, $this->classname, $this->ID(), $this->divID());
+    }
+
+    /**
+     * @param null $fieldErrors
+     * @return mixed
+     */
+    public function exportBasicInfo($fieldErrors = null)
+    {
+        return parent::exportBasicInfo($fieldErrors)->setShouldRenderTabsIfOnlyOne(!$this->hideTabsIfOnlyOne);
+    }
+
+    /**
      * @param FormFieldRenderData $info
      */
     protected function markTabActive($info) {
@@ -91,7 +113,7 @@ class TabSet extends FieldSet
                 $i = 0;
                 /** @var TabRenderData $item */
                 foreach ($children as $item) {
-                    if ($item->getName()== "tabs_" . $active) {
+                    if ($item->getName() == $active) {
                         $item->setTabActive(true);
                         $activeTabFound = true;
                         break;
@@ -110,13 +132,48 @@ class TabSet extends FieldSet
 
     /**
      * generates js
-     * @name JS
-     * @access public
+     *
      * @return string
      */
     public function JS()
     {
         return '$(function(){ $("#' . $this->divID() . '").gtabs({"animation": true, "cookiename": "tabs_' . $this->name . '"}); });' .
             parent::JS();
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getActiveTab()
+    {
+        return $this->activeTab;
+    }
+
+    /**
+     * @param null|string $activeTab
+     * @return $this
+     */
+    public function setActiveTab($activeTab)
+    {
+        $this->activeTab = $activeTab;
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isHideTabsIfOnlyOne()
+    {
+        return $this->hideTabsIfOnlyOne;
+    }
+
+    /**
+     * @param boolean $hideTabsIfOnlyOne
+     * @return $this
+     */
+    public function setHideTabsIfOnlyOne($hideTabsIfOnlyOne)
+    {
+        $this->hideTabsIfOnlyOne = $hideTabsIfOnlyOne;
+        return $this;
     }
 }

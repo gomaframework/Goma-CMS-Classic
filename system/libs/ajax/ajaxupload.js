@@ -67,6 +67,10 @@ var AjaxUpload = function(DropZone, options) {
     if(typeof this.browse !== "undefined") {
         this.browse = $(this.browse);
         this.placeBrowseHandler();
+
+        this.browse.on("click", function(e){
+            $("#" + $this.id + "_uploadForm").find(".fileSelectInput").click();
+        });
     }
 
     return this;
@@ -76,7 +80,7 @@ AjaxUpload.prototype = {
     uploadRateRefreshTime: 500,
     usePut: true,
     useSlice: false,
-    sliceSize: 4194304, // 4MB
+    sliceSize: 2048000, // ~2MB
 
     frames: [],
     name: "file",
@@ -268,8 +272,10 @@ AjaxUpload.prototype = {
             }
         } catch(e) {
             this._fail(e, e, -1, null);
+            setTimeout(function(){
+                throw e
+            });
         }
-
 
         event.stopPropagation();
         event.preventDefault();
@@ -287,7 +293,6 @@ AjaxUpload.prototype = {
 
         if(this.browse) {
             this.browse.removeAttr("disabled");
-            this.placeBrowseHandler();
         }
 
         if(this.queue[fileIndex]) {
@@ -403,7 +408,14 @@ AjaxUpload.prototype = {
     generateXHR: function(i, file) {
         var _this = this;
 
-        return new slicedAjaxUpload(this.ajaxurl, file, this.useSlice ? this.sliceSize : -1, {
+        var customUrl = this.ajaxurl;
+        if(customUrl.indexOf("?") == -1) {
+            customUrl += "?slice=" + randomString(10);
+        } else {
+            customUrl += "&slice=" + randomString(10);
+        }
+
+        return new slicedAjaxUpload(customUrl, file, this.useSlice ? this.sliceSize : -1, {
             usePut: this.usePut,
             fileIndex: i + this.queue.length,
             currentStart: new Date().getTime(),
@@ -574,15 +586,17 @@ AjaxUpload.prototype = {
         var $this = this;
 
         // now create the form
-        if($("#" + this.id + "_uploadForm").length == 0) {
+        var $form = $("#" + this.id + "_uploadForm");
+        if($form.length == 0) {
             $("body").append('<form id="' + this.id+'_uploadForm" style="position: absolute; left: -500px;z-index: 900;" method="post" action="'+this.url+'" enctype="multipart/form-data"><input name="file" style="font-size: 200px;float: right;" type="file" class="fileSelectInput" /></form>');
-            $("#" + this.id + "_uploadForm").find(".fileSelectInput").change(function(){
+            $form = $("#" + this.id + "_uploadForm");
+            $form.find(".fileSelectInput").change(function(){
                 $this.transportFrame(this);
             });
 
             if(this.multiple) {
-                $("#" + this.id + "_uploadForm").find(".fileSelectInput").attr("multiple", "multiple");
-                $("#" + this.id + "_uploadForm").find(".fileSelectInput").attr("name", "file[]");
+                $form.find(".fileSelectInput").attr("multiple", "multiple");
+                $form.find(".fileSelectInput").attr("name", "file[]");
             }
         }
 
@@ -592,17 +606,15 @@ AjaxUpload.prototype = {
             $this.browse.attr("disabled", "disabled");
         }
 
-        var $form = $("#" + this.id + "_uploadForm");
         $form.css("display", "block");
         $form.css({
-            top: this.browse.offset().top,
-            left: this.browse.offset().left + this.browse.outerWidth() - $form.width(),
-            width: this.browse.outerWidth(),
-            height: this.browse.outerHeight(), overflow: "hidden"
+            top: "-100px",
+            left: "auto",
+            width: "50px",
+            height: "50px",
+            overflow: "hidden"
         });
         $form.fadeTo(0, 0);
-
-        setTimeout(this.placeBrowseHandler.bind(this), 500);
     },
 
     /**
@@ -615,8 +627,6 @@ AjaxUpload.prototype = {
             return false;
         }
 
-        var $form = $("#" + this.id + "_uploadForm");
-        $form.css({top: - 400, left: this.browse.offset().left});
         this.browse.attr("disabled", "disabled");
     },
 
@@ -762,12 +772,18 @@ slicedAjaxUpload.prototype = {
             xhr.setRequestHeader("Content-Range", "bytes " + this._slices[next].start + " - " + this._slices[next].end);
 
             xhr.onreadystatechange = function (event) {
-                if (xhr.readyState === 4 && xhr.responseText !== "" && xhr.status === 200) {
-                    this.upload.uploader._slices[this.upload.slice].done = true;
-                    this.upload.uploader._sendNextJunk();
-                }
+                try {
+                    if (xhr.readyState === 4 && xhr.responseText !== "" && xhr.status === 200) {
+                        var data = JSON.parse(xhr.responseText);
+                        this.upload.uploader._slices[this.upload.slice].done = data.status == 2 ? data.wait : true;
+                        this.upload.uploader._sendNextJunk();
+                    }
 
-                if(xhr.readyState === 4 && xhr.status !== 200) {
+                    if (xhr.readyState === 4 && xhr.status !== 200) {
+                        this.upload.uploader._sendFail(xhr);
+                    }
+                } catch(e) {
+                    console.log && console.log(e);
                     this.upload.uploader._sendFail(xhr);
                 }
             }.bind(xhr);

@@ -1,4 +1,9 @@
-<?php defined('IN_GOMA') OR die();
+<?php use Goma\GD\GD;
+use Goma\GD\GDException;
+use Goma\GD\GDImageSizeException;
+use Goma\GD\ROOTImage;
+
+defined('IN_GOMA') OR die();
 
 /**
  *
@@ -92,6 +97,21 @@ class ImageUploads extends Uploads {
     );
 
     /**
+     * @var bool
+     */
+    static $autoImageResize = true;
+
+    /**
+     * @var bool
+     */
+    static $useCommandLineforAutoResize = true;
+
+    /**
+     * @var int
+     */
+    static $destinationSize = 3000;
+
+    /**
      * returns the raw-path
      *
      * @name raw
@@ -143,11 +163,8 @@ class ImageUploads extends Uploads {
     public function getIcon($size = 128, $retina = false) {
         $ext = substr($this->filename, strrpos($this->filename, "."));
         if ($this->width() >= $size) {
-            if ($retina && $this->width() >= $size * 2) {
-                $icon = $this->path;
-            } else {
-                $icon = $this->path . "/setSize/" . $size . "/" . $size . $ext;
-            }
+            $realSize = $retina ? $size * 2 : $size;
+            $icon = $this->path . "/setSize/" . $realSize . "/" . $realSize . $ext;
         } else {
             switch ($size) {
                 case 16:
@@ -208,6 +225,12 @@ class ImageUploads extends Uploads {
         if(is_dir(ROOT . $this->path)) {
             FileSystem::delete(ROOT . $this->path);
         }
+
+        foreach($this->imageVersions() as $childImage) {
+            $this->imageVersions()->removeFromSet($childImage);
+        }
+
+        $this->imageVersions()->commitStaging(false, true);
     }
 
     /**
@@ -225,11 +248,11 @@ class ImageUploads extends Uploads {
 
         // get action
         $action = ($noCrop === true) ? "NoCrop" : "";
-        if($desiredWidth == -1 && $desiredHeight == -1) {
+        if((!isset($desiredWidth) || $desiredWidth == -1) && ($desiredHeight == -1 || !isset($desiredHeight))) {
             throw new InvalidArgumentException("At least one of the size-parameters should be set.");
-        } else if($desiredHeight == -1) {
+        } else if(!isset($desiredHeight) || $desiredHeight == -1) {
             $action .= "SetWidth";
-        } else if($desiredWidth == -1) {
+        } else if(!isset($desiredWidth) || $desiredWidth == -1) {
             $action .= "SetHeight";
         } else {
             $action .= "SetSize";
@@ -446,7 +469,11 @@ class ImageUploads extends Uploads {
      * @return ImageUploads
      */
     public function addImageVersionBySizeInPx($left, $top, $width, $height, $write = true) {
-        $imageUploads = clone $this;
+        if($this->sourceImage) {
+            throw new InvalidArgumentException("Transitive source-images are not allowed.");
+        }
+
+        $imageUploads = $this->duplicate();
         $imageUploads->thumbHeight = min($height / $imageUploads->height * 100, 100);
         $imageUploads->thumbWidth = min($width / $imageUploads->width * 100, 100);
 
@@ -457,6 +484,17 @@ class ImageUploads extends Uploads {
         $imageUploads->thumbTop = $topPercentage;
 
         $imageUploads->sourceImage = $this;
+
+        // check for existing
+        if($file = DataObject::get_one(ImageUploads::class, array(
+            "thumbHeight" => $imageUploads->thumbHeight,
+            "thumbWidth" => $imageUploads->thumbWidth,
+            "thumbTop"  => $imageUploads->thumbTop,
+            "thumbLeft" => $imageUploads->thumbLeft,
+            "sourceImageId" => $this->id
+        ))) {
+            return $file;
+        }
         $imageUploads->path = $imageUploads->buildPath($imageUploads->collection, $imageUploads->filename);
 
         if($this->id != 0 && $write) {
@@ -466,6 +504,63 @@ class ImageUploads extends Uploads {
         $this->data["imageversions"] = null;
 
         return $imageUploads;
+    }
+
+    /**
+     * @param ModelWriter $modelWriter
+     * @throws GDImageSizeException
+     * @throws MySQLException
+     */
+    public function onBeforeWrite($modelWriter)
+    {
+        parent::onBeforeWrite($modelWriter);
+
+        $gd = new GD($this->realfile);
+        try {
+            $tmpFile = ROOT . CACHE_DIRECTORY . "/" . md5($this->realfile). "_fixed2";
+            $usage = memory_get_usage();
+            $gd->fixRotationInPlace()->toFile($tmpFile);
+
+            if (self::$autoImageResize) {
+                $gd->autoImageResizeInPlace(self::$destinationSize, self::$useCommandLineforAutoResize)->toFile($tmpFile);
+            }
+
+            $gd->gd();
+            if (memory_get_usage() - $usage > 0.5 * getMemoryLimit()) {
+                if (DataObject::count(Uploads::class, array("realfile" => $this->realfile)) == 0) {
+                    unlink($this->realfile);
+                    unlink($tmpFile);
+                }
+
+                throw new GDImageSizeException(lang("imageTooBig"));
+            }
+            $gd->destroy();
+
+            if(md5_file($tmpFile) != $this->md5) {
+                /** @var Uploads $upload */
+                if ($upload = DataObject::get_one(Uploads::class, array(
+                    "md5" => md5_file($tmpFile)
+                ))
+                ) {
+                    $this->realfile = $upload->realfile;
+                } else {
+                    $i = 0;
+                    while (file_exists($this->realfile)) {
+                        $this->realfile = substr($this->realfile, 0, strrpos($this->realfile, ".")) . "_" . $i .
+                            substr($this->realfile, strrpos($this->realfile, "."));
+
+                    }
+                    copy($tmpFile, $this->realfile);
+                }
+                unlink($tmpFile);
+
+                $this->width = $gd->width;
+                $this->height = $gd->height;
+                $this->md5 = md5_file($this->realfile);
+            }
+        } finally {
+            $gd->destroy();
+        }
     }
 
     /**

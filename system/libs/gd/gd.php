@@ -1,4 +1,6 @@
-<?php defined('IN_GOMA') OR die();
+<?php
+namespace Goma\GD;
+defined('IN_GOMA') OR die();
 
 /**
  * This class provides methods to resample images.
@@ -9,7 +11,7 @@
  * @author 	Goma-Team
  * @version 1.1
  */
-class GD extends gObject
+class GD extends \gObject
 {
     /***
      * default expires-time for images in browser-cache.
@@ -40,7 +42,7 @@ class GD extends gObject
     /**
      * type of the image
      *
-     * @var Array
+     * @var array
      */
     protected $type;
 
@@ -66,11 +68,18 @@ class GD extends gObject
     public $gd;
 
     /**
+     * @var array
+     */
+    protected $info;
+
+    /**
      * filename used to send to browser. if null, filename in storage is used or no filename is used.
      *
      * @var string
      */
     public $filename;
+
+    protected $originalOrientedBy = 0;
 
     /**
      * file types supported.
@@ -88,8 +97,8 @@ class GD extends gObject
             "extension"     => "png",
             "create"        => "ImageCreateFromPNG",
             "content_type"  => "image/png",
-            "output"        => array("GD", "imagepng"),
-            "generation"    => array("GD", "generatePNG")
+            "output"        => array(GD::class, "imagepng"),
+            "generation"    => array(GD::class, "generatePNG")
         ),
         1 => array(
             "type"          => 1,
@@ -108,13 +117,13 @@ class GD extends gObject
         array(
             "extension"     => "ico",
             "content_type"  => "image/x-icon",
-            "output"        => array("gd", "toICO")
+            "output"        => array(GD::class, "toICO")
         ),
     );
 
     /**
      * @param null $image
-     * @throws FileNotFoundException
+     * @throws \FileNotFoundException
      * @throws GDFileMalformedException
      * @throws GDFiletypeNotSupportedException
      */
@@ -129,7 +138,7 @@ class GD extends gObject
 
         $this->pic = $image;
         if(!is_file($image)) {
-            throw new FileNotFoundException("File for GD-Lib not found. " . $image);
+            throw new \FileNotFoundException("File for GD-Lib not found. " . $image);
         }
 
         $this->initWithImage($image);
@@ -153,7 +162,7 @@ class GD extends gObject
      * it does not validate if image exists.
      *
      * @param string $image
-     * @throws FileNotFoundException
+     * @throws \FileNotFoundException
      * @throws GDFileMalformedException
      * @throws GDFiletypeNotSupportedException
      */
@@ -162,6 +171,28 @@ class GD extends gObject
             $this->width = $this->info[0];
             $this->height = $this->info[1];
             $type = $this->info[2];
+
+            // fix for some devices
+            // see http://stackoverflow.com/questions/29301931/php-getimagesize-mixes-up-width-and-height
+            if($exif = exif_read_data($this->pic)) {
+                if (!empty($exif['Orientation'])) {
+                    switch ($exif['Orientation']) {
+                        case 8:
+                            $this->originalOrientedBy = 90;
+                            $this->width = $this->info[1];
+                            $this->height = $this->info[0];
+                            break;
+                        case 3:
+                            $this->originalOrientedBy = 180;
+                            break;
+                        case 6:
+                            $this->originalOrientedBy = -90;
+                            $this->width = $this->info[1];
+                            $this->height = $this->info[0];
+                            break;
+                    }
+                }
+            }
 
             if(isset(self::$supported_types[$type])) {
                 $this->type = self::$supported_types[$type];
@@ -185,6 +216,8 @@ class GD extends gObject
         {
             $this->pic = null;
             $this->gd = $gd;
+            $this->width = imagesx($gd);
+            $this->height = imagesy($gd);
         }
 
         if(isset($this->gd))
@@ -210,8 +243,8 @@ class GD extends gObject
      * @param int $width
      * @param int $height
      * @param bool $crop
-     * @param Position $cropPosition position to start cropping
-     * @param Size $cropSize size for cropping
+     * @param \Position $cropPosition position to start cropping
+     * @param \Size $cropSize size for cropping
      * @return bool|GD
      */
     public function resize($width, $height, $crop = true, $cropPosition = null, $cropSize = null)
@@ -221,12 +254,20 @@ class GD extends gObject
             $old = $this->gd();
             $newgd = clone $this;
 
+            if($this->originalOrientedBy != 0) {
+                $old = imagerotate($old, $this->originalOrientedBy, 0);
+            }
+
             if($crop) {
                 $new = $this->resizeCropped($old, $width, $height, $cropPosition, $cropSize);
             } else {
                 $new = $this->generateImage($width, $height, $this->type);
                 // just resize
                 imagecopyresampled($new, $old, 0, 0, 0, 0, $width, $height, $this->width, $this->height);
+            }
+
+            if(is_null($new)) {
+                throw new \LogicException("Something got wrong resizing image.");
             }
 
             $newgd->width = imagesx($new);
@@ -244,13 +285,90 @@ class GD extends gObject
     }
 
     /**
+     * fixes problems with rotation in-place.
+     *
+     * @return $this
+     */
+    public function fixRotationInPlace() {
+        if($this->originalOrientedBy != 0) {
+            $old = $this->gd();
+
+            $old = imagerotate($old, $this->originalOrientedBy, 0);
+
+            $this->destroy();
+            $this->gd($old);
+
+            return $this;
+        }
+
+        return $this;
+    }
+
+    /**
+     * resized image in place to match destination size.
+     *
+     * @param int $destinationSize
+     * @param bool $useCommandLine
+     * @return $this
+     */
+    public function autoImageResizeInPlace($destinationSize, $useCommandLine = false) {
+        if($useCommandLine && function_exists("exec")) {
+            $rand = randomString(20);
+            $file = ROOT . CACHE_DIRECTORY . "/" . $rand;
+            $this->toFile($file);
+            $output = array();
+            $return = 0;
+            exec('export PATH=/usr/local/bin:$PATH' . "\n" . 'convert ' . $file . ' -resize ' . $destinationSize . 'x' . $destinationSize . '\\> ' . $file, $output, $return);
+            if($return == 0) {
+                $this->initWithImage($file);
+                return $this;
+            } else {
+                log_exception(new GDException("convert did not work. Status-Code: " . $return . " Output: " . print_r($output, true)));
+            }
+        }
+
+        if($this->width > $destinationSize) {
+            $newWidth = $destinationSize;
+            $newHeight = $destinationSize / $this->width * $this->height;
+
+            if($newHeight > $destinationSize) {
+                $newHeight = $destinationSize;
+                $newWidth = $destinationSize / $this->height * $this->width;
+            }
+        } else if($this->height > $destinationSize) {
+            $newHeight = $destinationSize;
+            $newWidth = $destinationSize / $this->height * $this->width;
+        }
+
+        if(isset($newWidth, $newHeight)) {
+            $new = $this->generateImage($newWidth, $newHeight, $this->type);
+
+            imagecopyresampled(
+                $new,
+                $this->gd(),
+
+                0, 0, 0, 0,
+
+                $newWidth,
+                $newHeight,
+                $this->width,
+                $this->height);
+
+            $this->destroy();
+            $this->gd($new);
+        }
+
+        return $this;
+    }
+
+    /**
      * resizes cropped and returns new image
      *
      * @param $old
      * @param int $width
      * @param int $height
-     * @param Position $cropPosition position to start cropping
-     * @param Size $cropSize size for cropping
+     * @param \Position $cropPosition position to start cropping
+     * @param \Size $cropSize size for cropping
      * @return resource
      * @internal param resource $gd
      */
@@ -290,7 +408,7 @@ class GD extends gObject
      * @return Size
      */
     protected function getDestImageSize($srcWidth, $srcHeight, $destWidth, $destHeight) {
-        return new Size($destWidth, $destHeight);
+        return new \Size($destWidth, $destHeight);
     }
 
     /**
@@ -299,14 +417,14 @@ class GD extends gObject
      *
      * @param int $srcWidth
      * @param int $srcHeight
-     * @param Size $imageSize
-     * @param Position|null $cropPosition
-     * @param Size|null $cropSize
-     * @return Tuple <Position,Size> information about the area where we get data from
+     * @param \Size $imageSize
+     * @param \Position|null $cropPosition
+     * @param \Size|null $cropSize
+     * @return \Tuple <Position,Size> information about the area where we get data from
      */
     protected function getSrcImageArea($srcWidth, $srcHeight, $imageSize, $cropPosition = null, $cropSize = null) {
-        $size = new Size($srcWidth, $srcHeight);
-        $position = new Position(0, 0);
+        $size = new \Size($srcWidth, $srcHeight);
+        $position = new \Position(0, 0);
         $cropLeft = isset($cropPosition) ? $cropPosition->getX() : 50;
         $cropTop = isset($cropPosition) ? $cropPosition->getY() : 50;
 
@@ -350,7 +468,7 @@ class GD extends gObject
 
         }
 
-        return new Tuple($position, $size);
+        return new \Tuple($position, $size);
     }
 
     /**
@@ -361,7 +479,7 @@ class GD extends gObject
      * @param int $imageSize size that destination image should have
      * @param int $cropPosition percentage where it will be cropped
      * @param int $cropSize percentage on how big the crop will be
-     * @return Tuple<int, int>
+     * @return \Tuple<int, int>
      */
     protected function calculateCropSize($srcSize, $calculatedSrcSize, $imageSize, $cropPosition = 50, $cropSize = 100) {
         $position = 0;
@@ -374,21 +492,21 @@ class GD extends gObject
             $position = round(($srcSize - $size) * $cropPosition / 100);
         }
 
-        return new Tuple($position, $size);
+        return new \Tuple($position, $size);
     }
 
     /**
      * returns destination image "area" where we put the image-data to.
      * the first value of the tuple is the position and second is the size.
      *
-     * @param Size $srcArea
-     * @param Size $imageSize
-     * @return Tuple<Position,Size> information about the area where we put data to
+     * @param \Size $srcArea
+     * @param \Size $imageSize
+     * @return \Tuple<Position,Size> information about the area where we put data to
      */
     protected function getDestImageArea($srcArea, $imageSize) {
-        /** @var Size $size */
+        /** @var \Size $size */
         $size = $imageSize->copy();
-        $position = new Position(0, 0);
+        $position = new \Position(0, 0);
 
         $relation = $srcArea->getWidth() / $srcArea->getHeight();
         if($relation > 1) {
@@ -406,7 +524,7 @@ class GD extends gObject
             }
         }
 
-        return new Tuple($position, $size);
+        return new \Tuple($position, $size);
     }
 
     /**
@@ -525,7 +643,7 @@ class GD extends gObject
             return null;
         }
 
-        if(!PermissionChecker::isValidPermission($mode)) {
+        if(!\PermissionChecker::isValidPermission($mode)) {
             $mode = 0777;
         }
 
@@ -552,9 +670,10 @@ class GD extends gObject
      * @param string $file destination-file
      * @param array $sizes icon sizes embedded
      * @return string $file
+     * @throws \LogicException
      */
     public function toIco($file, $sizes = array()) {
-        $ico = new PHP_ICO();
+        $ico = new \PHP_ICO();
 
         if(isset($this->pic) && !isset($this->gd)) {
             $ico->add_image($this->pic, $sizes);
@@ -563,7 +682,7 @@ class GD extends gObject
         }
 
         if(!$ico->save_ico($file)) {
-            throw new LogicException("Could not convert Image to Icon.");
+            throw new \LogicException("Could not convert Image to Icon.");
         }
 
         return $file;
@@ -582,7 +701,7 @@ class GD extends gObject
             $this->setHTTPHeaders($type["content_type"]);
         }
 
-        HTTPResponse::sendHeader();
+        \HTTPResponse::sendHeader();
 
         if($this->pic != "" && file_exists($this->pic))
         {
@@ -590,10 +709,10 @@ class GD extends gObject
         } else if(isset($type["output"])) {
             call_user_func_array($type["output"], array($this->gd(), null, $quality));
         } else {
-            throw new LogicException("Type ".print_r($type, true) . " can not be sent to browser.");
+            throw new \LogicException("Type ".print_r($type, true) . " can not be sent to browser.");
         }
 
-        if(PROFILE) Profiler::End();
+        if(PROFILE) \Profiler::End();
 
         exit;
     }
@@ -628,7 +747,7 @@ class GD extends gObject
      * @name imageIco
      */
     public static function imageICO($gd, $file) {
-        $ico = new PHP_ICO();
+        $ico = new \PHP_ICO();
         $ico->add_image_resource($gd);
         $ico->save_ico($file);
     }
@@ -643,14 +762,14 @@ class GD extends gObject
      * @param int $expires how long is the period the file is valid?
      */
     public function checkAndSend304($etag, $mtime, $expires) {
-        HTTPResponse::setCachable(time() + $expires, $mtime, true);
-        HTTPResponse::addHeader("Etag", '"'.$etag.'"');
+        \HTTPResponse::setCachable(time() + $expires, $mtime, true);
+        \HTTPResponse::addHeader("Etag", '"'.$etag.'"');
 
         $modifiedHTTPHeader = isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) ?: null;
         $noneMatchHTTPHeader = isset($_SERVER["HTTP_IF_NONE_MATCH"]) ?: null;
         if($this->check304($etag, $mtime, $modifiedHTTPHeader, $noneMatchHTTPHeader)) {
-            HTTPResponse::setResHeader(304);
-            HTTPResponse::sendHeader();
+            \HTTPResponse::setResHeader(304);
+            \HTTPResponse::sendHeader();
 
             if(PROFILE) Profiler::End();
 
@@ -693,13 +812,13 @@ class GD extends gObject
      * defines HTTP-Headers for Caching.
      */
     protected function setHTTPHeaders($contentType) {
-        HTTPResponse::addHeader('Cache-Control','public, max-age=5511045');
-        HTTPResponse::addHeader('content-type', $contentType);
+        \HTTPResponse::addHeader('Cache-Control','public, max-age=5511045');
+        \HTTPResponse::addHeader('content-type', $contentType);
 
-        HTTPResponse::addHeader("pragma","Public");
+        \HTTPResponse::addHeader("pragma","Public");
 
         $filename = isset($this->filename) ? $this->filename : $this->pic;
-        HTTPResponse::addHeader('content-disposition', "inline; filename='".basename($filename)."'");
+        \HTTPResponse::addHeader('content-disposition', "inline; filename='".basename($filename)."'");
 
         if(isset($this->pic) && $this->pic != "")
         {
@@ -707,7 +826,7 @@ class GD extends gObject
             $etag = strtolower(md5_file($this->pic));
             $this->checkAndSend304($etag, $mtime, $this->expires);
 
-            HTTPResponse::addHeader("content-length", filesize($this->pic));
+            \HTTPResponse::addHeader("content-length", filesize($this->pic));
         }
     }
 
@@ -738,7 +857,7 @@ class GD extends gObject
     }
 
     /**
-     * destroys image to restore ram.
+     * destroys image to restore memory.
      */
     public function destroy() {
         if(isset($this->gd)) {
@@ -758,11 +877,11 @@ if (!function_exists('imagecreatefrombmp')) {
         // version 1.00
 
         if(!file_exists($filename)) {
-            throw new FileNotFoundException("imagecreatefrombmp: Can not find" . $filename);
+            throw new \FileNotFoundException("imagecreatefrombmp: Can not find" . $filename);
         }
 
         if (!($fh = fopen($filename, 'rb'))) {
-            throw new FileNotPermittedException('imagecreatefrombmp: Can not open ' . $filename);
+            throw new \FileNotPermittedException('imagecreatefrombmp: Can not open ' . $filename);
         }
 
         // read file header
@@ -892,10 +1011,10 @@ if (!function_exists('imagecreatefrombmp')) {
     }
 }
 
-class GDException extends Exception {
-    protected $standardCode = ExceptionManager::GD_EXCEPTION;
+class GDException extends \Exception {
+    protected $standardCode = \ExceptionManager::GD_EXCEPTION;
 
-    public function __construct($message = "Unknown GD-Exception occurred.", $code = null, Exception $previous = null) {
+    public function __construct($message = "Unknown GD-Exception occurred.", $code = null, \Exception $previous = null) {
         if(!isset($code)) {
             $code =  $this->standardCode;
         }
@@ -905,13 +1024,17 @@ class GDException extends Exception {
 }
 
 class GDFileMalformedException extends GDException {
-    protected $standardCode = ExceptionManager::GD_FILE_MALFORMED;
+    protected $standardCode = \ExceptionManager::GD_FILE_MALFORMED;
 }
 class GDFiletypeNotSupportedException extends GDException {
-    protected $standardCode = ExceptionManager::GD_TYPE_NOT_SUPPORTED;
+    protected $standardCode = \ExceptionManager::GD_TYPE_NOT_SUPPORTED;
 }
 class GDFileMalformedWithDataException extends GDFileMalformedException {
     public $data;
 
-    protected $standardCode = ExceptionManager::GD_FILE_MALFORMED;
+    protected $standardCode = \ExceptionManager::GD_FILE_MALFORMED;
+}
+
+class GDImageSizeException extends GDException {
+    protected $standardCode = \ExceptionManager::GD_FILE_TOO_BIG;
 }

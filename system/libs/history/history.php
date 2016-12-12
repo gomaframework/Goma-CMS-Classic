@@ -49,7 +49,8 @@ class History extends DataObject {
 			"type"		=> "INDEX",
 			"name"		=> "dbobject",
 			"fields"	=> "dbobject,class_name"
-		)
+		),
+		"created" => true
 	);
 
 	/**
@@ -59,32 +60,21 @@ class History extends DataObject {
 
 	/**
 	 * disable history for this dataobject, because we would have an endless loop
-	 *
-	 *@name history
-	 *@access public
 	 */
 	static $history = false;
 
 	/**
 	 * small cache for classes supporting HistoryView
-	 *
-	 *@name supportHistoryView
-	 *@access private
 	 */
 	static $supportHistoryView;
 
 	/**
 	 * sort-direction of the history
-	 *
-	 *@name default_sort
 	 */
 	static $default_sort = "created DESC";
 
 	/**
 	 * cache for history-data
-	 *
-	 *@name data
-	 *@access private
 	 */
 	private $historyData;
 
@@ -173,7 +163,6 @@ class History extends DataObject {
 	/**
 	 * if we can this history-event
 	 *
-	 * @name canSeeEvent
 	 * @return bool
 	 */
 	public function canSeeEvent() {
@@ -424,18 +413,12 @@ class History extends DataObject {
 	/**
 	 * clean up DB
 	 *
-	 * @name cleanUpDB
-	 * @access public
+	 * @param $prefix
+	 * @param null $log
 	 */
-	public function cleanUpDB($prefix = DB_PREFIX, &$log) {
+	public function cleanUpDB($prefix = DB_PREFIX, &$log = null) {
 		parent::cleanUpDB();
 
-		if(self::$storeHistoryForDays > 0) {
-			register_shutdown_function(array($this, "cleanUpOnShutdown"));
-		}
-	}
-
-	public function cleanUpOnShutdown() {
 		if(self::$storeHistoryForDays > 0) {
 			$id = null;
 			$sql = "SELECT id FROM " . DB_PREFIX . $this->Table() . " WHERE last_modified < " . (NOW - self::$storeHistoryForDays * 60 * 60 * 24) . " ORDER BY id DESC LIMIT 1";
@@ -450,8 +433,8 @@ class History extends DataObject {
 				$sqlDeleteData = "DELETE FROM " . DB_PREFIX . $this->Table() . " WHERE id < " . $id . "";
 				$sqlDeleteState = "DELETE FROM " . DB_PREFIX . $this->baseTable . "_state WHERE publishedid < " . $id . "";
 
-				SQL::Query($sqlDeleteData, true);
-				SQL::Query($sqlDeleteState, true);
+				SQL::Query($sqlDeleteData);
+				SQL::Query($sqlDeleteState);
 			}
 		}
 	}

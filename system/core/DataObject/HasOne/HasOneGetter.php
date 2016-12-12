@@ -18,7 +18,7 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
     /**
      * extra-methods.
      */
-    public static $extra_methods = array(
+    protected static $extra_methods = array(
         "HasOne",
         "GetHasOne"
     );
@@ -49,6 +49,7 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
             foreach($has_one as $key => $val) {
                 $this->linkMethodWithInstance(self::class, $key, $key, "getHasOne", "Something got wrong wiring the HasOne-Relationship.");
                 $this->linkMethodWithInstance(self::class, "set" . $key, $key, "setHasOne", "Something got wrong wiring the HasOne-Relationship.");
+                $this->linkMethodWithInstance(self::class, "set" . $key . "id", $key, "setHasOneId", "Something got wrong wiring the HasOne-Relationship.");
             }
         }
     }
@@ -73,6 +74,7 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
             $has_one = isset(ClassInfo::$class_info[$owner->classname]["has_one"]) ? ClassInfo::$class_info[$owner->classname]["has_one"] : array();
 
             foreach($has_one as $name => $value) {
+                $value['validatedInverse'] = true;
                 $hasOneClasses[$name] = new ModelHasOneRelationshipInfo($owner->classname, $name, $value);
             }
 
@@ -82,6 +84,7 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
                         $has_one = array_merge(ClassInfo::$class_info[$class]["has_one"], $has_one);
 
                         foreach(ClassInfo::$class_info[$class]["has_one"] as $name => $value) {
+                            $value['validatedInverse'] = true;
                             $hasOneClasses[$name] = new ModelHasOneRelationshipInfo($class, $name, $value);
                         }
                     }
@@ -241,10 +244,12 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
             if (isset($has_one[$hasOnePrefix])) {
                 $baseClass = ClassInfo::$class_info[$has_one[$hasOnePrefix]->getTargetClass()]["baseclass"];
                 $baseTable = (ClassInfo::$class_info[$baseClass]["table"]);
+                $ownerTable = ClassInfo::$class_info[$has_one[$hasOnePrefix]->getOwner()]["table"];
+
                 if(!$query->aliasExists($baseTable . "_" . $hasOnePrefix . "_state")) {
                     $query->innerJoin(
                         $baseTable . '_state',
-                        $baseTable . "_" . $hasOnePrefix . '_state.'.$versionField.' = ' . $hasOnePrefix . '.id',
+                        $baseTable . "_" . $hasOnePrefix . '_state.'.$versionField.' = ' . $ownerTable . '.'. $has_one[$hasOnePrefix]->getRelationShipName() .'id',
                         $baseTable . "_" . $hasOnePrefix . '_state',
                         false
                     );
@@ -311,6 +316,14 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
         }
 
         if(PROFILE) Profiler::unmark("HasOneGetter::argumentQueryResult");
+    }
+
+    /**
+     * @param string $value
+     */
+    public function setHasOneId($name, $value) {
+        $this->getOwner()->setField($name . "id", $value);
+        $this->getOwner()->setField($name, null);
     }
 
     /**

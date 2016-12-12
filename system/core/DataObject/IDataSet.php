@@ -60,18 +60,10 @@ interface IDataSet extends Countable {
     public function sort();
 
     /**
-     * get DataSet of groups.
-     *
-     * @param string $field
-     * @return array
-     */
-    public function getGroupedSet($field);
-
-    /**
      * get array of groups.
      *
      * @param string $field
-     * @return array
+     * @return IDataSet
      */
     public function groupBy($field);
 
@@ -164,4 +156,10 @@ interface IDataSet extends Countable {
      * @return bool
      */
     public function canFilterBy($field);
+
+    /**
+     * @param int $n
+     * @return ArrayList
+     */
+    public function pickRandomly($n);
 }

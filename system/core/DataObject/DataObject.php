@@ -29,7 +29,8 @@
  * @method      string[] hasMany($component = null)
  * @method      ModelHasOneRelationshipInfo[]|ModelHasOneRelationshipInfo hasOne($component = null)
  */
-abstract class DataObject extends ViewAccessableData implements PermProvider, IDataObjectSetDataSource, IDataObjectSetModelSource
+abstract class DataObject extends ViewAccessableData implements PermProvider,
+    IDataObjectSetDataSource, IDataObjectSetModelSource, IFormForModelGenerator
 {
     const VERSION_STATE = "state";
     const VERSION_PUBLISHED = "published";
@@ -147,6 +148,12 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      * @return array|DataObjectSet|DataObject[]
      */
     public static function get_versioned($class, $version = null, $filter = array(), $sort = array(), $limits = array(), $joins = array(), $group = false, $pagination = false) {
+        if(!is_null($version) && !is_bool($version) &&
+            $version != self::VERSION_PUBLISHED && $version != self::VERSION_STATE
+            && $version != self::VERSION_GROUP) {
+            throw new InvalidArgumentException("Version must be boolean, null or valid string.");
+        }
+
         $data = self::get($class, $filter, $sort, $limits, $joins, $version, $pagination);
         if ($group !== false) {
             return $data->groupBy($group);
@@ -366,7 +373,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
         }
 
         if ($groupby !== false) {
-            return $DataSet->getGroupedSet($groupby);
+            return $DataSet->groupBy($groupby);
         }
 
 
@@ -421,15 +428,11 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
     }
 
     /**
-     * public function to make permission-calls
+     * checks if one of the given permissions is allowed for the current user.
      *
-     * @name can
-     * @access public
      * @param string|array $permissions name(s) of permission
      * @param DataObject $record optional
      * @return bool
-     *
-     * TODO: Check if this makes sense by only having required one permission to have to be true
      */
     public function can($permissions, $record = null) {
 
@@ -472,7 +475,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
     /**
      * returns if you can access a specific history-record
      *
-     * @param string|gObject $record
+     * @param History $record
      * @return bool
      */
     public static function canViewHistory($record = null) {
@@ -904,15 +907,15 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
             // delete connection in state-table
 
             // base class
-            if (!isset($manipulation[$baseClass . "_state"]))
-                $manipulation[$baseClass . "_state"] = array(
+            if (!isset($manipulation[$baseTable . "_state"]))
+                $manipulation[$baseTable . "_state"] = array(
                     "command"		=> "delete",
                     "table_name"	=> $baseTable . "_state",
                     "where"			=> array(
 
                     ));
 
-            $manipulation[$baseClass . "_state"]["where"]["id"][] = $this->id;
+            $manipulation[$baseTable . "_state"]["where"]["id"][] = $this->id;
 
             // if not versioning, delete data, too
             if (!self::Versioned($this->classname) || $forceAll || !isset($this->data["stateid"])) {
@@ -975,7 +978,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
             if (StaticsManager::getStatic($this->classname, "history") && $history) {
                 History::push($this->classname, $this->versionid, 0, $this->id, "remove");
             }
-            $this->onAfterRemove($this);
+            $this->onAfterRemove();
             $this->callExtending("onAfterRemove", $this);
             unset($this->data);
             return true;
@@ -1569,10 +1572,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
         // limiting
         $query->limit($limit);
 
-        if ($join)
-            foreach($join as $currentJoin)
-            {
-                if(isset($currentJoin[self::JOIN_TYPE], $currentJoin[self::JOIN_TABLE], $currentJoin[self::JOIN_STATEMENT])) {
+        if ($join) {
+            foreach ($join as $currentJoin) {
+                if (isset($currentJoin[self::JOIN_TYPE], $currentJoin[self::JOIN_TABLE], $currentJoin[self::JOIN_STATEMENT])) {
                     $query->join(
                         $currentJoin[self::JOIN_TYPE],
                         $currentJoin[self::JOIN_TABLE],
@@ -1581,9 +1583,10 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
                         isset($currentJoin[self::JOIN_INCLUDEDATA]) ? $currentJoin[self::JOIN_INCLUDEDATA] : true
                     );
                 } else {
-                    throw new InvalidArgumentException("Joins must follow Join-Format. array(type=>,table=>,statement=>,[alias=>],[includeFields=>}), got " . print_r($currentJoin, true));
+                    throw new InvalidArgumentException("Joins must follow Join-Format. array(type=>,table=>,statement=>[,alias=>][,includeFields=>]), got " . print_r($currentJoin, true));
                 }
             }
+        }
 
         // don't forget filtering on class-name
         if ($forceClasses) {
@@ -1878,22 +1881,17 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
 
         $query->distinct = true;
 
-        $query->fields = array($groupField);
-
         $query->groupby($groupField);
         $this->tryToBuild($query);
 
         $query->execute();
 
         while($row = $query->fetch_assoc()) {
-            if (isset($row[$groupField])) {
-                if (is_array($filter)) {
-                    $filter[$groupField] = $row[$groupField];
-                } else {
-                    $filter = array($groupField => $row[$groupField], $filter);
-                }
-
-                $data[$row[$groupField]] = DataObject::get($this->classname, $filter, $sort, array(), $joins, $version);
+            if ($id = $this->getGroupIdentifier($groupField, $row)) {
+                $set = new Goma\Model\Group\GroupDataObjectSet($this->classname, $filter, $sort, $joins, array(), $version);
+                $set->setGroupFilter($this->getGroupFilter($groupField, $row));
+                $set->setFirstCache($row);
+                $data[$id] = $set;
             }
             unset($row);
         }
@@ -1902,6 +1900,40 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
         if (PROFILE) Profiler::unmark("DataObject::getGroupedRecords");
 
         return $data;
+    }
+
+    /**
+     * @param array|string $groupField
+     * @param array $row
+     * @return null|string
+     */
+    private function getGroupIdentifier($groupField, $row) {
+        if(is_string($groupField)) {
+            return isset($row[$groupField]) ? $row[$groupField] : null;
+        }
+
+        $id = "";
+        foreach($groupField as $field) {
+            if(isset($row[$field])) {
+                $id .= $row[$field];
+            }
+        }
+
+        return $id ? md5($id) : null;
+    }
+
+    private function getGroupFilter($groupField, $row) {
+        if(is_string($groupField)) {
+            return array($groupField => $row[$groupField]);
+        }
+
+        $filter = array();
+        foreach($groupField as $field) {
+            if(isset($row[$field])) {
+                $filter[$field] =  $row[$field];
+            }
+        }
+        return $filter;
     }
 
 
@@ -1947,11 +1979,11 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
 
         $aggregateSQL = "";
         $i = 0;
+        $aggregateField = $query->getFieldIdentifier($aggregateField);
         foreach($aggregates as $singleAggregate) {
             if($i == 0) $i++;
             else $aggregateSQL .= ",";
 
-            $aggregateField = $query->getFieldIdentifier($aggregateField);
             $aggregateSQL .= $singleAggregate . "( " . $distinctSQL . " " . $aggregateField . ") as " . strtolower($singleAggregate);
         }
 
@@ -2088,6 +2120,10 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      * @return bool
      */
     public function canSortBy($field) {
+        if(strpos($field, ".") !== false) {
+            return false;
+        }
+
         $field = strtolower(trim($field));
         $fields = $this->DataBaseFields(true);
         return isset($fields[$field]);
@@ -2104,8 +2140,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
         if (strpos($field, ".") !== false) {
             $has_one = $this->HasOne();
 
-            if (isset($has_one[strtolower(substr($field, 0, strpos($field, ".")))])) {
-                return true;
+            $key = strtolower(substr($field, 0, strpos($field, ".")));
+            if (isset($has_one[$key])) {
+                return gObject::instance($has_one[$key]->getTargetClass())->canFilterBy(substr($field, strpos($field, ".") + 1));
             }
         }
 
@@ -2133,7 +2170,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
      *
      * @name duplicate
      * @access public
-     * @return DataObject|ViewAccessableData
+     * @return $this
      */
     public function duplicate() {
         $this->consolidate();
@@ -2469,9 +2506,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
             $field = $sort;
             $type = "ASC";
         }
-        if (isset(ClassInfo::$database[$this->Table()][$field])) {
-            SQL::setDefaultSort($this->Table(), $field, $type);
-        }
 
         $this->callExtending("buildDB", $prefix, $log);
 
@@ -2621,7 +2655,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
                 if(isset(ClassInfo::$class_info[$relationShip->getTargetClass()]["baseclass"])) {
                     $extBaseTable = ModelInfoGenerator::ClassTable(ClassInfo::$class_info[$relationShip->getTargetClass()]["baseclass"]);
                     $sql = "DELETE FROM ". DB_PREFIX . $relationShip->getTableName() ." WHERE ". $relationShip->getOwnerField() ." NOT IN (SELECT id FROM ".DB_PREFIX . $this->baseTable.") OR ". $relationShip->getTargetField() ." NOT IN (SELECT id FROM ".DB_PREFIX . $extBaseTable.")";
-                    register_shutdown_function(array("sql", "queryAfterDie"), $sql);
+                    sql::query($sql);
                 }
 
                 self::$tableHasBeenCleanedUp[$relationShip->getTableName()] = true;
@@ -2645,7 +2679,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider, ID
             return array(
                 'id'			=> 'INT(10) AUTO_INCREMENT  PRIMARY KEY',
                 'last_modified' => 'DateTime()',
-                'class_name' 	=> 'enum("'.implode('","', array_merge(Classinfo::getChildren($class), array($class))).'")',
+                'class_name' 	=> 'enum("'.implode('","', array_map(function($class) {
+                        return str_replace("\\", "\\\\", $class);
+                    }, array_merge(Classinfo::getChildren($class), array($class)))).'")',
                 "created"		=> "DateTime()"
             );
         } else {

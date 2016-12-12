@@ -12,7 +12,6 @@ defined("IN_GOMA") OR die();
  * @version 1.0
  */
 interface IDataObjectSetDataSource {
-
     /**
      * gets records.
      *
@@ -105,18 +104,23 @@ interface IDataObjectSetDataSource {
      * @return bool
      */
     public function manipulate($manipulation);
+
+    /**
+     * @param $version
+     * @param array $filter
+     * @param array $sort
+     * @param array $limit
+     * @param array $joins
+     * @param bool $forceClasses
+     * @return SelectQuery
+     */
+    public function buildExtendedQuery($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $forceClasses = true);
 }
 
-interface IDataObjectSetModelSource {
+interface IFormForModelGenerator {
     /**
-     * @param array $data
-     * @return ViewAccessableData
-     */
-    public function createNew($data = array());
-
-    /**
-     * @param Form $form
-     */
+    * @param Form $form
+    */
     public function getForm(&$form);
 
     /**
@@ -128,6 +132,14 @@ interface IDataObjectSetModelSource {
      * @param Form $form
      */
     public function getActions(&$form);
+}
+
+interface IDataObjectSetModelSource {
+    /**
+     * @param array $data
+     * @return ViewAccessableData
+     */
+    public function createNew($data = array());
 
     /**
      * @return string

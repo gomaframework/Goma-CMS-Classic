@@ -7,6 +7,11 @@ var multiFormFieldController = function(element, options) {
         }
     }
 
+    if(options.disabled) {
+        this.sortable = false;
+        this.deletable = false;
+    }
+
     this.init();
 
     return this;
@@ -29,12 +34,12 @@ multiFormFieldController.prototype = {
                     opacity: 0.6,
                     helper: 'clone',
                     handle: ".part-sort-button",
-                    placeholder: 'placeholder',
+                    placeholder: 'placeholder-multi-form-field-' + this.element.attr("id"),
                     revert: true,
                     tolerance: 'pointer',
                     cancel: "a, img, .actions",
                     start: function(event, ui) {
-                        $(".placeholder")
+                        $(".placeholder-multi-form-field-" + _this.element.attr("id"))
                             .css({'width' : ui.item.width(), 'height': ui.item.height()})
                             .attr("class", ui.item.attr("class") + " placeholder");
                     },
@@ -69,16 +74,30 @@ multiFormFieldController.prototype = {
                 return false;
             });
         }
+
+        this.element.find("input[name*=__shoulddeletepart]").each(function(){
+            if($(this).val() == 1) {
+                var cluster = $(this).parent().parent().parent();
+                _this.hideCluster(cluster);
+            }
+        });
+
+        if(this.addedNewField) {
+            setTimeout(function(){
+                scrollToHash(_this.element.find(" > .clusterformfield").last().attr("id"));
+            }, 200);
+            /*this.element.parents(".tab").each(function(){
+                $("#" + $(this).attr("id") + "_tab").click();
+            });*/
+        }
     },
 
     updateOrder: function() {
         var i = 0;
         this.element.find(".form-component").each(function(){
-            if(!$(this).parent().hasClass("part-hidden")) {
-                $(this).attr("order", i);
-                $(this).find("input[name*=__sortpart]").val(i);
-                i++;
-            }
+            $(this).attr("order", i);
+            $(this).find("input[name*=__sortpart]").val(i);
+            i++;
         });
     },
 

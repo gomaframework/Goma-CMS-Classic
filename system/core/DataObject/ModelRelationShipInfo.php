@@ -96,15 +96,13 @@ abstract class ModelRelationShipInfo
         $this->owner = strtolower(trim($ownerClass));
         $this->relationShipName = strtolower(trim($name));
 
-        if(is_string($options)) {
+        if(is_string($options) && $options) {
             $this->targetClass = strtolower($options);
         } else {
             if(isset($options[DataObject::RELATION_TARGET])) {
                 $this->targetClass = $options[DataObject::RELATION_TARGET];
             } else if(isset($options["class"])) {
                 $this->targetClass = $options["class"];
-            } else {
-                throw new InvalidArgumentException("No Target class defined.");
             }
 
             $this->targetClass = strtolower(trim($this->targetClass));
@@ -120,6 +118,10 @@ abstract class ModelRelationShipInfo
             if(isset($options[DataObject::FETCH_TYPE])) {
                 $this->fetchType = $options[DataObject::FETCH_TYPE];
             }
+        }
+
+        if(!ClassInfo::exists($this->targetClass)) {
+            throw new InvalidArgumentException("Target {$this->targetClass} must exist.");
         }
 
         if(!isset($options["validatedInverse"])) {

@@ -64,6 +64,11 @@ class Core extends gObject {
 	 */
 	private static $hooks = array();
 
+    /**
+     * @var array
+     */
+    private static $localHooks = array();
+
 	/**
 	 * file which contains data from php://input
 	 *
@@ -97,10 +102,11 @@ class Core extends gObject {
 	 *
 	 */
 	public static function Init() {
-		ob_start();
+		if(!isCommandLineInterface())
+            ob_start();
 
 		StaticsManager::addSaveVar("gObject", "extensions");
-		StaticsManager::addSaveVar("gObject", "extra_methods");
+		StaticsManager::addSaveVar("gObject", "all_extra_methods");
 		StaticsManager::AddSaveVar(Core::class, "hooks");
 		StaticsManager::AddSaveVar(Core::class, "cmsVarCallbacks");
 		StaticsManager::AddSaveVar("Director", "rules");
@@ -120,8 +126,7 @@ class Core extends gObject {
 			Profiler::unmark("session");
 			
 			
-		// init language-support
-		i18n::Init(i18n::SetSessionLang());
+		self::initLang();
 
 		if(defined("SQL_LOADUP"))
 			member::Init();
@@ -135,6 +140,23 @@ class Core extends gObject {
 
 		if(PROFILE)
 			Profiler::unmark("Core::Init");
+	}
+
+	/**
+	 * init lang and rebuilds if rebuild is required.
+	 */
+	protected static function initLang() {
+		$args = getCommandLineArgs();
+		if(isset($args["--rebuild"]) || isset($args["-rebuild"])) {
+			foreach(scandir(ROOT . LANGUAGE_DIRECTORY) as $file) {
+				if($file != "." && $file != ".." && is_dir(ROOT . LANGUAGE_DIRECTORY . "/" . $file)) {
+					i18n::Init($file);
+				}
+			}
+		}
+
+		// init language-support
+		i18n::Init(i18n::SetSessionLang());
 	}
 
 	/**
@@ -229,14 +251,16 @@ class Core extends gObject {
 		Resources::add("system/libs/thirdparty/modernizr/modernizr.js", "js", "main");
 		Resources::add("system/libs/thirdparty/jquery/jquery.js", "js", "main");
 		Resources::add("system/libs/thirdparty/jquery/jquery.ui.js", "js", "main");
-		Resources::add("system/libs/thirdparty/hammer.js/hammer.js", "js", "main");
-		Resources::add("system/libs/thirdparty/respond/respond.min.js", "js", "main");
 		Resources::add("system/libs/thirdparty/jResize/jResize.js", "js", "main");
 		Resources::add("system/libs/javascript/loader.js", "js", "main");
 		Resources::add("box.css", "css", "main");
 
 		Resources::add("default.css", "css", "main");
 		Resources::add("goma_default.css", "css", "main");
+
+        if(preg_match('/(?i)msie [5-8]/',$_SERVER['HTTP_USER_AGENT'])) {
+            Resources::add("system/libs/thirdparty/respond/respond.min.js", "js", "main");
+        }
 
 		if(isset($_GET["debug"])) {
 			Resources::enableDebug();
@@ -264,16 +288,44 @@ class Core extends gObject {
 	}
 
 	/**
+	 * @return string
+	 */
+	public static function getTitle()
+	{
+		return self::$title;
+	}
+
+	/**
 	 * adds a callback to a hook
 	 *
 	 * @param string $name
-	 * @param Closure|array $callback
+	 * @param array $callback
 	 */
 	public static function addToHook($name, $callback) {
+        if(is_a($name, Closure::class)) {
+            throw new InvalidArgumentException();
+        }
+
 		if(!isset(self::$hooks[strtolower($name)]) || !in_array($callback, self::$hooks[strtolower($name)])) {
 			self::$hooks[strtolower($name)][] = $callback;
 		}
 	}
+
+    /**
+     * adds a closure to a hook
+     *
+     * @param string $name
+     * @param Closure $callback
+     */
+    public static function addToLocalHook($name, $callback) {
+        if(!is_a($callback, Closure::class)) {
+            throw new InvalidArgumentException();
+        }
+
+        if(!isset(self::$localHooks[strtolower($name)]) || !in_array($callback, self::$localHooks[strtolower($name)])) {
+            self::$localHooks[strtolower($name)][] = $callback;
+        }
+    }
 
 	/**
 	 * calls all callbacks for a hook
@@ -289,6 +341,14 @@ class Core extends gObject {
 				}
 			}
 		}
+
+        if(isset(self::$localHooks[strtolower($name)]) && is_array(self::$localHooks[strtolower($name)])) {
+            foreach(self::$localHooks[strtolower($name)] as $callback) {
+                if(is_callable($callback)) {
+                    call_user_func_array($callback, array(&$p1, &$p2, &$p3, &$p4, &$p5, &$p6, &$p7));
+                }
+            }
+        }
 	}
 
 	/**
@@ -558,20 +618,6 @@ class Core extends gObject {
 		return (!defined("IS_BACKEND") && GlobalSessionManager::globalSession()->hasKey(SystemController::ADMIN_AS_USER));
 	}
 
-	//!Rendering-Methods
-	/**
-	 * Rendering-Methods
-	 */
-
-	/**
-	 * serves the output given
-	 *
-	 *@param string - content
-	 */
-	public static function serve($output) {
-		Director::serve($output);
-	}
-
 	/**
 	 * renders the page
 	 * @param string $url
@@ -580,6 +626,26 @@ class Core extends gObject {
 		self::InitResources();
 
 		Director::direct($url);
+	}
+
+	/**
+	 * renders cli.
+	 */
+	public function cli()
+	{
+        $args = getCommandLineArgs();
+        if(isset($args["-cron"])) {
+            CronController::handleCron();
+        }
+
+        $code = 0;
+		Core::callHook("cli", $args, $code);
+
+        Core::callHook("onBeforeShutdown");
+
+        if($code != 0) {
+            exit($code);
+        }
 	}
 }
 

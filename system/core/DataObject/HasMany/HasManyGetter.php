@@ -15,7 +15,7 @@ class HasManyGetter extends AbstractGetterExtension {
     /**
      * extra-methods.
      */
-    public static $extra_methods = array(
+    protected static $extra_methods = array(
         "getHasMany",
         "HasMany"
     );
@@ -109,6 +109,7 @@ class HasManyGetter extends AbstractGetterExtension {
 
             $hasManyClasses = array();
             foreach($has_many as $name => $value) {
+                $value["validatedInverse"] = true;
                 $hasManyClasses[$name] = new ModelHasManyRelationShipInfo($owner->classname, $name, $value);
             }
 
@@ -123,12 +124,77 @@ class HasManyGetter extends AbstractGetterExtension {
     }
 
     /**
+     * @param SelectQuery $query
+     * @param string $version
+     * @param array|string $filter
+     * @param array|string $sort
+     * @param array|string|int $limit
+     * @param array|string|int $joins
+     * @param bool $forceClasses if to only get objects of this type of every object from the table
+     */
+    public function argumentQuery($query, $version, $filter, $sort, $limit, $joins, $forceClasses)
+    {
+        $hasManyRelationShips = $this->HasMany();
+
+        if(is_array($query->filter)) {
+            $query->filter = $this->factorOutFilter($query->filter, $version, $forceClasses, $hasManyRelationShips);
+        }
+    }
+
+    /**
+     * @param array $filterArray
+     * @param string $version
+     * @param bool $forceClasses
+     * @param ModelHasManyRelationShipInfo[] $relationShips
+     * @return array
+     */
+    protected function factorOutFilter($filterArray, $version, $forceClasses, $relationShips) {
+        foreach($filterArray as $key => $value) {
+            if(isset($relationShips[strtolower($key)])) {
+                $filterArray[$key] = " EXISTS ( ".
+                    $this->buildRelationQuery($relationShips[strtolower($key)], $version, $value, $forceClasses)->build()
+                    ." ) ";
+                $filterArray = ArrayLib::change_key($filterArray, $key, ArrayLib::findFreeInt($filterArray));
+            } else if(strtolower(substr($key, -6)) == ".count" && isset($relationShips[strtolower(substr($key, 0, -6))])) {
+                $filterArray[$key] = " (".
+                    $this->buildRelationQuery($relationShips[strtolower(substr($key, 0, -6))], $version, array(), $forceClasses)->build("count(*)")
+                    .") = " . $value;
+                $filterArray = ArrayLib::change_key($filterArray, $key, ArrayLib::findFreeInt($filterArray));
+            } else {
+                if (is_array($value)) {
+                    $filterArray[$key] = $this->factorOutFilter($filterArray[$key], $version, $forceClasses, $relationShips);
+                }
+            }
+        }
+
+        return $filterArray;
+    }
+
+    /**
+     * @param ModelHasManyRelationShipInfo $relationShip
+     * @param string $version
+     * @param array $filter
+     * @param bool $forceClasses
+     * @return SelectQuery
+     */
+    protected function buildRelationQuery($relationShip, $version, $filter, $forceClasses) {
+        $target = $relationShip->getTargetClass();
+        /** @var DataObject $targetObject */
+        $targetObject = new $target();
+        $query = $targetObject->buildExtendedQuery($version, $filter, array(), array(), array(), $forceClasses);
+        $query->addFilter( $targetObject->baseTable . ".".$relationShip->getInverse()."id = " . $this->getOwner()->baseTable . ".id");
+
+        return $query;
+    }
+
+    /**
      * sets has-many-ids.
      * @param string $name
      * @param array $ids
      */
     public function setHasManyIDs($name, $ids) {
         $this->getHasMany($name)->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+        $this->getHasMany($name)->clearStaging();
         /** @var DataObject $record */
         foreach(DataObject::get($this->getOwner(), array("id" => $ids)) as $record) {
             $this->getHasMany($name)->add($record);

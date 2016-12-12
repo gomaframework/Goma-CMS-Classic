@@ -19,6 +19,44 @@ class ManyManyDataObjectSet extends GomaUnitTest implements TestAble {
      */
     public $name = "ManyManyDataObjectSet";
 
+    protected $daniel;
+    protected $kathi;
+    protected $patrick;
+    protected $janine;
+    protected $nik;
+    protected $julian;
+    protected $fabian;
+    protected $franz;
+    protected $lisa;
+    protected $julia;
+    protected $jenny;
+
+    protected $allPersons;
+
+    public function setUp()
+    {
+        $this->daniel =  new DumpDBElementPerson("Daniel", 20, "M");
+        $this->kathi = new DumpDBElementPerson("Kathi", 22, "W");
+        $this->patrick = new DumpDBElementPerson("Patrick", 16, "M");
+        $this->janine = new DumpDBElementPerson("Janine", 19, "W");
+        $this->nik = new DumpDBElementPerson("Nik", 21, "M");
+        $this->julian = new DumpDBElementPerson("Julian", 20, "M");
+        $this->fabian = new DumpDBElementPerson("Fabian", 22, "M");
+        $this->franz = new DumpDBElementPerson("Franz", 56, "M");
+        $this->lisa = new DumpDBElementPerson("Lisa", 18, "W");
+        $this->julia = new DumpDBElementPerson("Julia", 25, "W");
+        $this->jenny = new DumpDBElementPerson("Jenny", 35, "W");
+
+        $this->allPersons = array($this->daniel, $this->kathi, $this->patrick, $this->nik,
+                                  $this->julian, $this->janine, $this->fabian, $this->franz,
+                                  $this->lisa, $this->julia, $this->jenny);
+
+
+        foreach($this->allPersons as $person) {
+            $person->queryVersion = DataObject::VERSION_PUBLISHED;
+        }
+    }
+
     /**
      * test filter.
      */
@@ -57,5 +95,112 @@ class ManyManyDataObjectSet extends GomaUnitTest implements TestAble {
     public function testEmpty() {
         $set = new ManyMany_DataObjectSet();
         $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $this->assertEqual(0, $set->count());
+        $this->assertEqual(array(), $set->ToArray());
+    }
+
+    public function testSort() {
+        $set = new ManyMany_DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $set->add($this->janine);
+        $set->add($this->nik);
+        $set->add($this->daniel);
+
+        $this->assertEqual(3, $set->count());
+        $this->assertEqual(3, count($set->ToArray()));
+
+        $set->sortCallback(function($a, $b) {
+            if($a->age == $b->age) {
+                return 0;
+            }
+
+            return $a->age > $b->age ? 1 : -1;
+        });
+
+        $firstAge = $set[0]->age;
+        foreach($set as $current) {
+            $this->assertTrue($current->age >= $firstAge);
+            $firstAge = $current->age;
+        }
+    }
+
+    public function testSortBig() {
+        $set = new ManyMany_DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        foreach($this->allPersons as $person) {
+            $set->add($person);
+        }
+
+        $this->assertEqual(count($this->allPersons), $set->count());
+        $this->assertEqual(count($this->allPersons), count($set->ToArray()));
+
+        $set->sortCallback(function($a, $b) {
+            if($a->age == $b->age) {
+                return 0;
+            }
+
+            return $a->age > $b->age ? 1 : -1;
+        });
+
+        $firstAge = $set[0]->age;
+        foreach($set as $current) {
+            $this->assertTrue($current->age >= $firstAge);
+            $firstAge = $current->age;
+        }
+    }
+
+    public function testRemoveInLoop() {
+        $set = new ManyMany_DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $this->assertTrue(count($this->allPersons) > 10);
+
+        foreach($this->allPersons as $person) {
+            $set->add($person);
+        }
+
+        $this->assertEqual(count($this->allPersons), $set->count());
+        $this->assertEqual(count($this->allPersons), count($set->ToArray()));
+
+        $i = 0;
+        foreach($set as $record) {
+            $this->assertEqual($this->allPersons[$i], $record);
+            if($i == 3) {
+                $set->removeFromStage($record);
+            }
+            $i++;
+        }
+        $this->assertEqual(count($this->allPersons), $i);
+        $this->assertEqual(count($this->allPersons) - 1, $set->count());
+        $this->assertEqual(count($this->allPersons) - 1, count($set->ToArray()));
+    }
+
+    public function testRemoveFromSetInLoop() {
+        $set = new ManyMany_DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $this->assertTrue(count($this->allPersons) > 10);
+
+        foreach($this->allPersons as $person) {
+            $set->add($person);
+        }
+
+        $this->assertEqual(count($this->allPersons), $set->count());
+        $this->assertEqual(count($this->allPersons), count($set->ToArray()));
+
+        $i = 0;
+        foreach($set as $record) {
+            $this->assertEqual($this->allPersons[$i], $record);
+            if($i == 3) {
+                $set->removeFromSet($record);
+            }
+            $i++;
+        }
+        $this->assertEqual(count($this->allPersons), $i);
+        $this->assertEqual(count($this->allPersons) - 1, $set->count());
+        $this->assertEqual(count($this->allPersons) - 1, count($set->ToArray()));
     }
 }

@@ -19,16 +19,29 @@ class AbstractFormComponentTest extends GomaUnitTest {
      */
     public $name = "AbstractFormComponent";
 
-    /**
-     *
-     */
-    public function testCreate() {
+    public function testCreateNormal() {
         $this->unitTestCreate("test", "blah", null);
-        $this->unitTestCreate("TEST  ", "BLAHJ ", null);
+    }
 
+    public function testCreateWithWhitespace() {
+        $this->unitTestCreate("TEST  ", "BLAHJ ", null);
+    }
+
+    public function testCreateWithBrackets() {
+        $this->unitTestCreate("TEST[test]", "BLAHJ ", null);
+    }
+
+    public function testCreateWithDots() {
+        $this->unitTestCreate("TEST.test", "BLAHJ ", null);
+    }
+
+    public function testCreateSet() {
         $set = new FieldSet();
         $this->unitTestCreate("TEST", "blah", $set);
+    }
 
+    public function testCreateWithRequestAndController() {
+        $set = new FieldSet();
         $controller = new Controller();
         $controller->setRequest(new Request("get", "blah"));
         $form = new Form($controller, "blah", array(
@@ -48,8 +61,8 @@ class AbstractFormComponentTest extends GomaUnitTest {
     public function unitTestCreate($name, $model, $parent) {
         $field = new MockAbstractFormComponentImpl($name, $model, $parent);
 
-        $this->assertEqual($field->getName(), $name);
-        $this->assertEqual($field->getDbname(), strtolower(trim($name)));
+        $this->assertEqual($field->getName(), preg_replace("/[^a-zA-Z0-9_\\.\\-[\]\{\}]/", "_", $name));
+        $this->assertEqual($field->getDbname(), strtolower(trim(preg_replace("/[^a-zA-Z0-9_\\.\\-[\]\{\}]/", "_", $name))));
         $this->assertEqual($field->PostName(), $field->getDbname());
         $this->assertEqual($field->getModel(), $model);
         if($parent) {

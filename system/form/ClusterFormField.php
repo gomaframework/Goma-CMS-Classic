@@ -165,7 +165,7 @@ class ClusterFormField extends FieldSet {
             if($this->POST) {
                 if (!$this->isDisabled() && $this->parent && ($postData = $this->parent->getFieldPost($this->PostName()))) {
                     return $postData;
-                } else if ($this->model == null) {
+                } else if ($this->model === null) {
                     $this->model = $this->parent ? $this->parent->getFieldValue($this->dbname) : null;
                 }
             }
@@ -200,5 +200,36 @@ class ClusterFormField extends FieldSet {
             return $this->namespace;
 
         return parent::form()->externalURL() . "/" . $this->name;
+    }
+
+    /**
+     * registers a field in this form
+     *
+     * @param string $name
+     * @param AbstractFormComponent $field
+     */
+    public function registerField($name, $field) {
+        if(!is_a($field, "AbstractFormComponent")) {
+            throw new InvalidArgumentException('$field must be AbstractFormComponent');
+        }
+
+        $this->fields[strtolower($name)] = $field;
+    }
+
+    /**
+     * unregisters the field from this form
+     * this means that the field will not be rendered
+     *
+     * @param string $name
+     */
+    public function unRegisterField($name) {
+        unset($this->fields[strtolower($name)]);
+    }
+
+    /**
+     *
+     */
+    protected function setFormRegisterOnParent()
+    {
     }
 }

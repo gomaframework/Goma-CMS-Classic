@@ -45,7 +45,17 @@ class MultiFormFormField extends ClusterFormField {
     protected $secret;
 
     /**
-     * @return DataObjectSet|IDataSet
+     * @var bool
+     */
+    protected $loadedFromSession = false;
+
+    /**
+     * @var bool
+     */
+    protected $addedNewField = false;
+
+    /**
+     * @return DataObjectSet|IDataSet|RemoveStagingDataObjectSet|ISortableDataObjectSet
      */
     public function getModel() {
         if (!isset($this->hasNoValue) || !$this->hasNoValue) {
@@ -54,8 +64,9 @@ class MultiFormFormField extends ClusterFormField {
                     $this->secret = randomString(10);
                     $this->add($hidden = new HiddenField("secret", $this->secret));
 
-                    if($oldSecret = $this->parent->getFieldPost($hidden->PostName())) {
+                    if(!$this->loadedFromSession && ($oldSecret = $this->parent->getFieldPost($hidden->PostName())) !== null) {
                         if($model = Core::globalSession()->get(self::SESSION_PREFIX . $this->PostName() . $oldSecret)) {
+                            $this->loadedFromSession = true;
                             return $this->model = $model;
                         }
                     }
@@ -86,6 +97,51 @@ class MultiFormFormField extends ClusterFormField {
     }
 
     /**
+     * modify add and sort.
+     *
+     * @return bool
+     */
+    protected function modifyAddAndSort() {
+        $hasBeenAddedNewField = false;
+
+        foreach($this->getAddableClasses() as $class) {
+            if($this->parent->getFieldPost($this->PostName() . "_add_" . $class)) {
+                $this->getModel()->add(
+                    $this->getModel()->createNew(array(
+                        "class_name" => $class
+                    ))
+                );
+                $hasBeenAddedNewField = true;
+            }
+        }
+
+        if(is_a($this->getModel(), ISortableDataObjectSet::class) && $this->getRequest()->post_params) {
+            $keyField = $this->modelKeyField;
+            $postData = $this->getRequest()->post_params;
+            $parent = $this->getParent();
+            $this->getModel()->sortCallback(function($a, $b) use($keyField, $postData, $parent) {
+                if(isset($a->{$keyField}) && isset($b->{$keyField}) &&
+                    ($postA = $parent->getFieldPost($a->{$keyField} . "___sortpart")) !== null &&
+                    ($postB = $parent->getFieldPost($b->{$keyField} . "___sortpart")) !== null) {
+                    if($postA == $postB) {
+                        return 0;
+                    }
+
+                    return ((int) $postA) < ((int) $postB) ? -1 : 1;
+                } else if(isset($a->{$keyField}) && $parent->getFieldPost($a->{$keyField} . "___sortpart") !== null) {
+                    return -1;
+                } else if(isset($b->{$keyField}) && $parent->getFieldPost($b->{$keyField} . "___sortpart") !== null) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
+        }
+
+        return $hasBeenAddedNewField;
+    }
+
+    /**
      *
      */
     protected function defineFields()
@@ -98,15 +154,7 @@ class MultiFormFormField extends ClusterFormField {
             $this->getModel()->setModifyAllMode();
         }
 
-        foreach($this->getAddableClasses() as $class) {
-            if($this->parent->getFieldPost($this->PostName() . "_add_" . $class)) {
-                $this->getModel()->add(
-                    $this->getModel()->createNew(array(
-                        "class_name" => $class
-                    ))
-                );
-            }
-        }
+        $this->addedNewField = $this->modifyAddAndSort();
 
         /** @var DataObject $record */
         $i = 0;
@@ -158,6 +206,7 @@ class MultiFormFormField extends ClusterFormField {
                 if($this->getField($record->{$this->modelKeyField})) {
                     $this->getField($record->{$this->modelKeyField})->argumentResult($record);
                     if ($record->__shouldDeletePart) {
+                        /** @var RemoveStagingDataObjectSet $result */
                         $result->removeFromSet($record);
                     } else {
                         $sortInfo[$record->{$this->modelKeyField}] = $record->__sortPart;
@@ -166,7 +215,7 @@ class MultiFormFormField extends ClusterFormField {
             }
         }
 
-        if(is_a($result, "ISortableDataObjectSet")) {
+        if(is_a($result, ISortableDataObjectSet::class)) {
             /** @var ISortableDataObjectSet $result */
             $keyField = $this->modelKeyField;
             $result->sortCallback(function($a, $b) use($sortInfo, $keyField) {
@@ -177,7 +226,17 @@ class MultiFormFormField extends ClusterFormField {
 
                     return $sortInfo[$a->{$keyField}] < $sortInfo[$b->{$keyField}] ? -1 : 1;
                 } else {
-                    throw new LogicException("Sort-Information not available.");
+                    $fieldA = $this->getField($a->{$keyField});
+                    $fieldB = $this->getField($b->{$keyField});
+                    $hasFieldA = $fieldA != null;
+                    $hasFieldB = $fieldB != null;
+                    $infoA = array();
+                    $infoB = array();
+                    $fieldA != null && $fieldA->argumentResult($infoA);
+                    $fieldB != null && $fieldB->argumentResult($infoB);
+                    throw new LogicException("Sort-Information not available. Query for: {$a->{$keyField}}: $hasFieldA, " .
+                    " {$b->{$keyField}}: $hasFieldB | Data for: " . print_r($sortInfo, true) . " A: " . print_r($infoA, true) .
+                    "B: " . print_r($infoB, true));
                 }
             });
         }
@@ -197,7 +256,8 @@ class MultiFormFormField extends ClusterFormField {
         return $data
             ->setSortable(is_a($this->getModel(), "ISortableDataObjectSet"))
             ->setDeletable(is_a($this->getModel(), "RemoveStagingDataObjectSet"))
-            ->setAddAble($this->getAddableClasses());
+            ->setAddAble($this->getAddableClasses())
+            ->setAddedNewField($this->addedNewField);
     }
 
     public function addRenderData($info, $notifyField = true)

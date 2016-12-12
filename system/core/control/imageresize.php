@@ -1,4 +1,7 @@
 <?php
+use Goma\GD\Image;
+defined("IN_GOMA") OR die();
+
 /**
  * @package goma framework
  * @link http://goma-cms.org
@@ -6,9 +9,6 @@
  * @author Goma-Team
  * last modified: 30.04.2013
  */
-
-defined('IN_GOMA') OR die('<!-- restricted access -->'); // silence is golden ;)
-
 class imageResize extends RequestHandler
 {
     /**

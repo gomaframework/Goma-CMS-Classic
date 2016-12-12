@@ -35,10 +35,18 @@ abstract class g_SoftwareType {
 	 * folder for Packages.
 	*/
 	public static $package_folder = DEFAULT_PACKAGE_FOLDER;
-	
+
+	/**
+	 *
+	 */
+	public static function instance() {
+		return new static();
+	}
+
 	/**
 	 * default __construct
-	*/
+	 * @param null|string $file
+	 */
 	public function __construct($file = null) {
 		$this->file = $file;
 	}
@@ -75,12 +83,13 @@ abstract class g_SoftwareType {
 	/**
 	 * makes a backup of the given name of software
 	 *
+	 * @param Request $request
 	 * @param string $file
 	 * @param string $name
 	 * @param string|null $changelog
-	 * @return boolean
+	 * @return bool
 	 */
-	abstract public static function backup($file, $name, $changelog = null);
+	abstract public static function backup($request, $file, $name, $changelog = null);
 
 	/**
 	 * builds a distributable version of this software
@@ -262,134 +271,165 @@ abstract class g_SoftwareType {
      * installs with information
      *
      * @name install
-     * @access public
      * @return bool
+     * @throws Exception
+     * @throws Throwable
+     * @access public
      */
 	public static function install($data) {
-		if(is_object($data)) {
-			$data = $data->ToArray();
-		}
-		
-		$data = ArrayLib::map_key("strtolower", $data);
-		
-		if($data["installable"] && isset($data["installfolders"]["source"], $data["installfolders"]["destination"])) {
-			
-			$log = "Installing new Software.\nInformation:\n" . print_r($data, true) . "\n\n\n";
-			
-			// preflight
-			if(isset($data["preflightcode"])) {
-				if(is_array($data["preflightcode"])) {
-					foreach($data["preflightcode"] as $code) {
-						$file = FRAMEWORK_ROOT . "temp/" . md5($code) . ".php";
-						file_put_contents($file, $code);
-						include($file);
-						@unlink($file);
-					}
-				} else {
-					$file = FRAMEWORK_ROOT . "temp/" . md5($data["preflightcode"]) . ".php";
-					file_put_contents($file, $data["preflightcode"]);
-					include($file);
-					@unlink($file);	
-				}
-			}
-			
-			if(isset($data["preflight"])) {
-				if(is_array($data["preflight"])) {
-					foreach($data["preflight"] as $file) {
-						include($file);
-					}
-				} else {
-					include($data["preflight"]);
-				}
-			}
-			
-			$log .= "Preflight OK.\n\nFlight:\n";
-			
-			// flight
-			
-			if(is_array($data["installfolders"]["source"])) {
-				foreach($data["installfolders"]["source"] as $key => $folder) {
-					
-					if(file_exists($folder))
-						$folder = realpath($folder);
-					
-					if(file_exists($data["installfolders"]["destination"][$key]))
-						$data["installfolders"]["destination"][$key] = realpath($data["installfolders"]["destination"][$key]);
-					
-					if(isset($data["installfolders"]["destination"][$key])) {
-						$log .= "Moving {$folder} to ".$data["installfolders"]["destination"][$key]."\n";
-						$log .= FileSystem::moveLogged($folder, $data["installfolders"]["destination"][$key], false);
-
-						$log .= "\n\n";
-					}
-				}
-			} else {
-				if(file_exists($data["installfolders"]["source"])) {
-					$data["installfolders"]["source"] = realpath($data["installfolders"]["source"]);
-				}
-				
-				if(file_exists($data["installfolders"]["destination"])) {
-					$data["installfolders"]["destination"] = realpath($data["installfolders"]["destination"]);
-				}
-				
-				$log .= "Moving ".$data["installfolders"]["source"]." to ".$data["installfolders"]["destination"].".\n";
-				if(($return = FileSystem::moveLogged($data["installfolders"]["source"], $data["installfolders"]["destination"])) === false) {
-					throw new FileMoverCannotMoveException("Failed in file " . FileSystem::errFile());
-				}
-				
-				$log .= $return;
-				$log .= "\n\n";
-			}
-			
-			$log .= "FLIGT OK.\n";
-			
-			// postflight
-			if(isset($data["postflightcode"])) {
-				if(is_array($data["postflightcode"])) {
-					foreach($data["postflightcode"] as $code) {
-						$file = FRAMEWORK_ROOT . "temp/" . md5($code) . ".php";
-						file_put_contents($file, $code);
-						include($file);
-						@unlink($file);
-					}
-				} else {
-					$file = FRAMEWORK_ROOT . "temp/" . md5($data["postflightcode"]) . ".php";
-					file_put_contents($file, $data["postflightcode"]);
-					include($file);
-					@unlink($file);	
-				}
-			}
-			
-			if(isset($data["postflight"])) {
-				if(is_array($data["postflight"])) {
-					foreach($data["postflight"] as $file) {
-						include($file);
-					}
-				} else {
-					include($data["postflight"]);
-				}
-			}
-			
-			$log .= "POSTFLIGHT OK.\n";
-
-			FileSystem::applySafeMode();
-			
-			// save log
-			FileSystem::RequireDir(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/install/");
-			file_put_contents(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/install/" . date("m-d-y_H-i-s") . ".log", $log);
-			
-			if(isset($data["installType"]) && $data["installType"] == "update") {
-                AddContent::addSuccess(lang("updateSuccess"));
+        $log = "";
+        try {
+            if (is_object($data)) {
+                $data = $data->ToArray();
             }
-			
-			Dev::RedirectToDev();
-			exit;
-			
-		} else {
-			return false;
-		}
+
+            $data = ArrayLib::map_key("strtolower", $data);
+
+            if ($data["installable"] && isset($data["installfolders"]["source"], $data["installfolders"]["destination"])) {
+
+                $log .= "Installing new Software.\nInformation:\n" . print_r($data, true) . "\n\n\n";
+
+                // preflight
+                if (isset($data["preflightcode"])) {
+                    if (is_array($data["preflightcode"])) {
+                        foreach ($data["preflightcode"] as $code) {
+                            $file = FRAMEWORK_ROOT . "temp/" . md5($code) . ".php";
+                            if(file_put_contents($file, $code) === false) {
+                                throw new FileException("Could not write $file");
+                            }
+
+                            include($file);
+                            @unlink($file);
+                        }
+                    } else {
+                        $file = FRAMEWORK_ROOT . "temp/" . md5($data["preflightcode"]) . ".php";
+                        if(file_put_contents($file, $data["preflightcode"]) === false) {
+                            throw new FileException("Could not write $file");
+                        }
+
+                        include($file);
+                        @unlink($file);
+                    }
+                }
+
+                if (isset($data["preflight"])) {
+                    if (is_array($data["preflight"])) {
+                        foreach ($data["preflight"] as $file) {
+                            include($file);
+                        }
+                    } else {
+                        include($data["preflight"]);
+                    }
+                }
+
+                $log .= "Preflight OK.\n\nFlight:\n";
+
+                // flight
+
+                if (is_array($data["installfolders"]["source"])) {
+                    foreach ($data["installfolders"]["source"] as $key => $folder) {
+
+                        if (file_exists($folder))
+                            $folder = realpath($folder);
+
+                        if (file_exists($data["installfolders"]["destination"][$key]))
+                            $data["installfolders"]["destination"][$key] = realpath($data["installfolders"]["destination"][$key]);
+
+                        if (isset($data["installfolders"]["destination"][$key])) {
+                            $log .= "Moving {$folder} to " . $data["installfolders"]["destination"][$key] . "\n";
+                            $log .= FileSystem::moveLogged($folder, $data["installfolders"]["destination"][$key], false);
+
+                            $log .= "\n\n";
+                        }
+                    }
+                } else {
+                    if (file_exists($data["installfolders"]["source"])) {
+                        $data["installfolders"]["source"] = realpath($data["installfolders"]["source"]);
+                    }
+
+                    if (file_exists($data["installfolders"]["destination"])) {
+                        $data["installfolders"]["destination"] = realpath($data["installfolders"]["destination"]);
+                    }
+
+                    $log .= "Moving " . $data["installfolders"]["source"] . " to " . $data["installfolders"]["destination"] . ".\n";
+                    if (($return = FileSystem::moveLogged($data["installfolders"]["source"], $data["installfolders"]["destination"])) === false) {
+                        throw new FileMoverCannotMoveException(FileSystem::errFile(), "Failed in file " . FileSystem::errFile());
+                    }
+
+                    $log .= $return;
+                    $log .= "\n\n";
+                }
+
+                $log .= "FLIGT OK.\n";
+
+                // postflight
+                if (isset($data["postflightcode"])) {
+                    $log .= "Postflight found\n";
+                    if (is_array($data["postflightcode"])) {
+                        foreach ($data["postflightcode"] as $code) {
+                            $log .= "Postflight " . md5($code) . "\n";
+                            $file = FRAMEWORK_ROOT . "temp/" . md5($code) . ".php";
+                            if(file_put_contents($file, $code) === false) {
+                                throw new FileException("Could not write $file");
+                            }
+
+                            include($file);
+                            //@unlink($file);
+                        }
+                    } else {
+                        $log .= "Postflight " . md5($data["postflightcode"]) . "\n";
+                        $file = FRAMEWORK_ROOT . "temp/" . md5($data["postflightcode"]) . ".php";
+                        if(file_put_contents($file, $data["postflightcode"]) === false) {
+                            throw new FileException("Could not write $file");
+                        }
+
+                        include($file);
+                        @unlink($file);
+                    }
+                }
+
+                if (isset($data["postflight"])) {
+                    if (is_array($data["postflight"])) {
+                        foreach ($data["postflight"] as $file) {
+                            include($file);
+                        }
+                    } else {
+                        include($data["postflight"]);
+                    }
+                }
+
+                $log .= "POSTFLIGHT OK.\n";
+
+                FileSystem::applySafeMode();
+
+                self::writeLog($log);
+
+                if (isset($data["installType"]) && $data["installType"] == "update") {
+                    AddContent::addSuccess(lang("updateSuccess"));
+                }
+
+                Dev::RedirectToDev();
+                exit;
+            } else {
+                return false;
+            }
+        } catch(Throwable $e) {
+            $log .= $e->getMessage() . $e->getTraceAsString();
+            self::writeLog($log);
+            throw $e;
+        } catch(Exception $e) {
+            $log .= $e->getMessage() . $e->getTraceAsString();
+            self::writeLog($log);
+            throw $e;
+        }
 	}
-	
+
+    protected static function writeLog($log) {
+        // save log
+        FileSystem::RequireDir(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/install/");
+        file_put_contents(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/install/" . date("m-d-y_H-i-s") . ".log", $log);
+    }
+
 	/**
 	 * forces that installer/data/apps/.index-db is Live
 	 *
@@ -572,7 +612,7 @@ abstract class g_SoftwareType {
      * @access public
      * @return string|bool
      */
-	public function getAppStorePublic() {
+	public static function getAppStorePublic() {
 		if(file_exists(FRAMEWORK_ROOT . "libs/GFS/appStorePublic.php")) {
 			include(FRAMEWORK_ROOT . "libs/GFS/appStorePublic.php");
 			return $publicKey;
@@ -758,7 +798,6 @@ abstract class g_SoftwareType {
 					$info["file"] = $file;
 
 					self::fillPackageArray($data["packages"], $info, $appFolder . "/" . $file, $appFolder . "/" . $file . ".plist", $appFolder);
-					
 				}
 			}
 
@@ -900,16 +939,31 @@ abstract class g_SoftwareType {
 		return new FileMover($files, null, $destination);
 	}
 
-	/**
-	 * finalizes the build
-	 *
-	 * @return bool
-	 */
-	public function finalizeDistro($data) {
+    /**
+     * finalizes the build
+     *
+     * @param array $data
+     * @param Form $form
+     * @param null $controller
+     * @param Request|null $request
+     * @return bool
+     * @throws GFSFileExistsException
+     * @throws GFSRealFilePermissionException
+     */
+	public function finalizeDistro($data, $form = null, $controller = null, $request = null) {
+        if(!isset($request) && !isset($form)) {
+            throw new InvalidArgumentException();
+        }
+        
+        $request = isset($request) ? $request : $form->getRequest();
+
 		GlobalSessionManager::globalSession()->set(self::FINALIZE_SESSION_VAR, $data);
 
 		$changelog = (empty($data["changelog"])) ? null : $data["changelog"];
-		static::backup($data["file"], $this->getDistroName($data), $changelog);
+		$out = static::backup($request, $data["file"], $this->getDistroName($data), $changelog);
+		if(is_a($out, GomaResponse::class)) {
+			return $out;
+		}
 
 		$gfs = new GFS($data["file"]);
 		if(isset($data["preflight"])) {

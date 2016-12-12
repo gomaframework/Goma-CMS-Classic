@@ -388,7 +388,7 @@ class i18n extends gObject {
 			return array($code);
 	}
 
-	public function prefered_language ($available_languages, $http_accept_language="auto") {
+	public static function prefered_language ($available_languages, $http_accept_language="auto") {
 		// if $http_accept_language was left out, read it from the HTTP-Header
 		if ($http_accept_language == "auto") $http_accept_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
 

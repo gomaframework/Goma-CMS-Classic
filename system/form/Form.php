@@ -26,6 +26,7 @@ class Form extends AbstractFormComponentWithChildren {
 	 * session-prefix for form.
 	 */
 	const SESSION_PREFIX = "form";
+    const SESSION_STATE_PREFIX = "form_state_";
 	const DEFAULT_SUBMSSION = "@default";
 
 	/**
@@ -224,21 +225,27 @@ class Form extends AbstractFormComponentWithChildren {
 			$this->state = $data->state;
 			$this->restorer = $data;
 
-			if($data->secret) {
+			if($data->secretKey) {
 				$this->activateSecret($data->secretKey);
 			}
 
 			$this->session->remove("form_restore." . $this->name());
 		} else {
 			// get form-state
-			if($this->session->hasKey("form_state_" . $this->name)) {
-				$this->state = new FormState($this->session->get("form_state_" . $this->name));
-				$this->activateSecret($this->state->secret);
-			} else {
+			if(!$this->checkForStateRestore()) {
 				$this->state = new FormState();
 				$this->activateSecret();
 			}
 		}
+	}
+
+	public function checkForStateRestore() {
+		if($this->session->hasKey(self::SESSION_STATE_PREFIX . $this->name)) {
+			$this->state = new FormState($this->session->get(self::SESSION_STATE_PREFIX . $this->name));
+			$this->activateSecret($this->state->secret);
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -285,7 +292,7 @@ class Form extends AbstractFormComponentWithChildren {
 		Resources::add("system/form/form.js", "js", "tpl");
 
 		if(!isset($this->fields["redirect"]))
-			$this->add(new HiddenField("redirect", getredirect()));
+			$this->add(new HiddenField("redirect", $this->controller->getRedirect($this)));
 	}
 
 	/**
@@ -342,17 +349,18 @@ class Form extends AbstractFormComponentWithChildren {
 	 * @return GomaFormResponse
 	 */
 	public function render() {
-		return new GomaFormResponse($this);
+		return new GomaFormResponse(null, $this);
 	}
 
 	/**
 	 * @param string|ViewAccessableData $model
 	 * @param string $view
 	 * @param string $formName
+	 * @param string|null $inExpansion
 	 * @return GomaResponse
 	 */
-	public function renderWith($model, $view = null, $formName = "form") {
-		return GomaFormResponse::create($this)->setRenderWith($model, $view, $formName);
+	public function renderWith($model, $view = null, $formName = "form", $inExpansion = null) {
+		return GomaFormResponse::create(null, $this)->setRenderWith($model, $view, $formName, $inExpansion);
 	}
 
 	/**
@@ -360,7 +368,7 @@ class Form extends AbstractFormComponentWithChildren {
 	 * @return GomaResponse
 	 */
 	public function renderPrependString($content) {
-		return GomaFormResponse::create($this)->prependContent($content);
+		return GomaFormResponse::create(null, $this)->prependContent($content);
 	}
 
 	/**
@@ -458,7 +466,7 @@ class Form extends AbstractFormComponentWithChildren {
 		if(PROFILE)
 			Profiler::unmark("Form::renderForm::render");
 
-		$this->session->set("form_state_" . $this->name, $this->state->ToArray());
+		$this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
 
 		$this->saveToSession();
 
@@ -655,12 +663,12 @@ class Form extends AbstractFormComponentWithChildren {
 		$data->request = $this->request;
 		$data->submitRequest = $this->submitRequest;
 		$data->secretKey = $this->secretKey;
-		$data->state->secret = $this->secretKey;
+		$data->state = $this->state;
 
-		$this->session->set("form_state_" . $this->name, $this->state->ToArray());
+		$this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
 
 		try {
-			$content = $data->handleSubmit();
+            $content = $data->handleSubmit();
 
 			/** @var Form|GomaFormResponse $content */
 			if(is_a($content, "Form")) {
@@ -685,8 +693,8 @@ class Form extends AbstractFormComponentWithChildren {
 				$errors = array();
 			}
 
-			$this->state = $data->state;
-			$this->state->secret = $this->secretKey;
+			$this->activatesecret();
+			$this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
 
 			return $this->renderForm($errors);
 		}
@@ -918,12 +926,14 @@ class Form extends AbstractFormComponentWithChildren {
 	/**
 	 * sets the default submission
 	 * @param string|array $submission
+	 * @return $this
 	 */
 	public function setSubmission($submission) {
 		if (is_callable($submission) || gObject::method_exists($this->controller, $submission)) {
 			$this->submission = $submission;
+			return $this;
 		} else {
-			throw new LogicException("Unknown Function '$submission'' for Controller {$this->controller}.");
+			throw new LogicException("Unknown Function '$submission'' for Controller {$this->controller->classname}.");
 		}
 	}
 

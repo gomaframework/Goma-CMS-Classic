@@ -32,11 +32,13 @@ class mysqliDriver implements SQLDriver
     /**
      * @access public
      * @use: connect to db
-     **/
-    public function __construct($autoConnect = true)
+     * @param bool $autoConnect
+     * @throws DBConnectError
+     */
+    public function __construct($autoConnect = false)
     {
         /* --- */
-        if (!defined("NO_AUTO_CONNECT") || !$autoConnect) {
+        if (!defined("NO_AUTO_CONNECT") && $autoConnect) {
             global $dbuser;
 
             global $dbdb;
@@ -61,14 +63,14 @@ class mysqliDriver implements SQLDriver
             $this->query("SET sql_mode = '';");
             return true;
         } else {
-            die(str_replace('{BASE_URI}', BASE_URI, file_get_contents(ROOT . 'system/templates/framework/database_connect_error.html')));
+            throw new DBConnectError();
         }
     }
 
     /**
      *
      */
-    public static function test($dbuser, $dbdb, $dbpass, $dbhost)
+    public function test($dbuser, $dbdb, $dbpass, $dbhost)
     {
         $test = new MySQLi($dbhost, $dbuser, $dbpass, $dbdb);
         if (!mysqli_connect_errno()) {
@@ -99,9 +101,9 @@ class mysqliDriver implements SQLDriver
             $this->__construct();
         }
 
-        if ($result = $this->_db->query($sql, $unbuffered ? MYSQLI_ASYNC : MYSQLI_STORE_RESULT))
+        if ($result = $this->_db->query($sql, $unbuffered ? MYSQLI_ASYNC : MYSQLI_STORE_RESULT)) {
             return $result;
-        else {
+        } else {
             $this->error = $this->_db->error;
             $this->errno = $this->_db->errno;
 
@@ -738,7 +740,7 @@ class mysqliDriver implements SQLDriver
                 $sql .= ",";
             }
             $sql .= ' ' . $name . ' ' . $value . ' ';
-            if (isset($defaults[$name])) {
+            if (isset($defaults[$name]) && trim(strtolower($value)) != "text" && trim(strtolower($value)) != "blob") {
                 $sql .= " DEFAULT '" . addslashes($defaults[$name]) . "'";
             } else {
                 $sql .= " NOT NULL";
@@ -806,32 +808,6 @@ class mysqliDriver implements SQLDriver
         } else {
             throw new MySQLException();
         }
-    }
-
-    /**
-     * sets the default sort of a specific table
-     *
-     * @param string $table
-     * @param string $field
-     * @param string $type optional: DESC/ASC
-     * @param string $prefix
-     * @return bool
-     */
-    public function setDefaultSort($table, $field, $type = null, $prefix = null)
-    {
-        if(!isset($type)) {
-            $type = "ASC";
-        }
-
-        if (!isset($prefix)) {
-            $prefix = DB_PREFIX;
-        }
-
-        $sql = "ALTER TABLE " . $prefix . $table . " ORDER BY " . $field . " " . $type;
-        if (SQL::Query($sql))
-            return true;
-        else
-            return false;
     }
 
     /**
@@ -1042,7 +1018,11 @@ class mysqliDriver implements SQLDriver
                     $sql .= ", ";
                 }
 
-                $casting = DBField::getObjectByCasting(ClassInfo::$database[$table][$field], $field, $record[$field]);
+                $casting = DBField::getObjectByCasting(
+                    isset(ClassInfo::$database[$table][$field]) ? ClassInfo::$database[$table][$field] : null,
+                    $field,
+                    $record[$field]
+                );
                 $sql .= $casting->forDBQuery();
             }
         }

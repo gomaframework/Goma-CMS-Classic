@@ -69,44 +69,80 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
         $i = 0;
         foreach ($models as $model => $info) {
             foreach ($info as $field => $fetchInfo) {
-                if($fetchInfo == "n") {
-                    if($this->fetchMode == self::FETCH_MODE_SINGLE) {
-                        $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field => array(
-                                "id" => $this->upload->id
-                            )
-                        ));
-                    } else {
-                        $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field => array(
-                                "md5" => $this->upload->md5
-                            )
-                        ));
+                foreach(array(DataObject::VERSION_STATE, DataObject::VERSION_PUBLISHED) as $version) {
+                    if($version == DataObject::VERSION_STATE && !DataObject::Versioned($model)) {
+                        continue;
                     }
-                } else {
-                    if($this->fetchMode == self::FETCH_MODE_SINGLE) {
-                        $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field . "id" => $this->upload->id
-                        ));
+
+                    if ($fetchInfo == "n") {
+                        if ($this->fetchMode == self::FETCH_MODE_SINGLE) {
+                            $currentData = DataObject::get($model, $filter)->addFilter(array(
+                                $field => array(
+                                    "id"            => $this->upload->id,
+                                    "OR",
+                                    "sourceImageId" => $this->upload->id
+                                )
+                            ));
+                        } else {
+                            $currentData = DataObject::get($model, $filter)->addFilter(array(
+                                $field => array(
+                                    "md5"           => $this->upload->md5,
+                                    "OR",
+                                    "sourceImageId" => $this->upload->id
+                                )
+                            ));
+                        }
                     } else {
-                        $currentData = DataObject::get($model, $filter)->addFilter(array(
-                            $field . ".md5" => $this->upload->md5
-                        ));
+                        if ($this->fetchMode == self::FETCH_MODE_SINGLE) {
+                            $currentData = DataObject::get($model, $filter)->addFilter(array(
+                                $field . "id"             => $this->upload->id,
+                                "OR",
+                                $field . ".sourceImageId" => $this->upload->id
+                            ));
+                        } else {
+                            $currentData = DataObject::get($model, $filter)->addFilter(array(
+                                $field . ".md5"           => $this->upload->md5,
+                                "OR",
+                                $field . ".sourceImageId" => $this->upload->id
+                            ));
+                        }
+                    }
+
+                    $currentData->setVersion($version);
+
+                    $remaining = ($limitLength - $i);
+                    if ($currentData->count() >= $remaining) {
+                        $records = array_merge($records, $currentData->getArrayRange(0, $remaining));
+                        break 3;
+                    } else {
+                        if ($i > $start) {
+                            $records = array_merge($records, $currentData->getArrayRange(0, $currentData->count()));
+                        } else if ($i + $currentData->count() > $start) {
+                            $records = array_merge($records, $currentData->getArrayRange($start - $i, $currentData->count()));
+                        }
+
+                        $i += $currentData->count();
                     }
                 }
+            }
 
-                $remaining = ($limitLength - $i);
-                if($currentData->count() > $remaining) {
-                    $records = array_merge($records, $currentData->getArrayRange(0, $remaining));
-                    break;
+            if (gObject::method_exists($model, "provideLinkingUploads")) {
+                $data = call_user_func_array(array($model, "provideLinkingUploads"), array($model, $this->upload));
+                if(is_array($data)) {
+                    /** @var IDataSet $source */
+                    foreach($data as $source) {
+                        if(!is_a($source, IDataSet::class)) {
+                            throw new InvalidArgumentException();
+                        }
+
+                        $i += $source->count();
+                    }
                 } else {
-                    if($i > $start) {
-                        $records = array_merge($records, $currentData->getArrayRange(0, $currentData->count()));
-                    } else if($i + $currentData->count() > $start) {
-                        $records = array_merge($records, $currentData->getArrayRange($start - $i, $currentData->count()));
+                    if(!is_a($data, IDataSet::class)) {
+                        throw new InvalidArgumentException();
                     }
 
-                    $i += $currentData->count();
+                    $i += $data->count();
                 }
             }
         }
@@ -186,6 +222,26 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
                         }
                     }
                 }
+
+                if (gObject::method_exists($model, "provideLinkingUploads")) {
+                    $data = call_user_func_array(array($model, "provideLinkingUploads"), array($model, $this->upload));
+                    if(is_array($data)) {
+                        /** @var IDataSet $source */
+                        foreach($data as $source) {
+                            if(!is_a($source, IDataSet::class)) {
+                                throw new InvalidArgumentException();
+                            }
+
+                            $i += $source->count();
+                        }
+                    } else {
+                        if(!is_a($data, IDataSet::class)) {
+                            throw new InvalidArgumentException();
+                        }
+
+                        $i += $data->count();
+                    }
+                }
             }
 
             $this->upload->propLinks = $i;
@@ -219,7 +275,9 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
                             $models[$model][$relationShip->getRelationShipName()] = "1";
                         }
                     }
-                } else if (isset(ClassInfo::$class_info[$model]["many_many"])) {
+                }
+
+                if (isset(ClassInfo::$class_info[$model]["many_many"])) {
                     /** @var ModelManyManyRelationShipInfo $relationShip */
                     foreach (gObject::instance($model)->ManyManyRelationships() as $relationShip) {
                         if (ClassManifest::isOfType($relationShip->getTargetClass(), $class)) {
@@ -229,7 +287,7 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
                 }
 
                 if (gObject::method_exists($model, "provideLinkingUploads")) {
-                    call_user_func_array(array($model, "provideLinkingUploads"), array($model));
+                    $model[$model] = array();
                 }
             }
         }
@@ -360,5 +418,19 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
     public function getUpload()
     {
         return $this->upload;
+    }
+
+    /**
+     * @param $version
+     * @param array $filter
+     * @param array $sort
+     * @param array $limit
+     * @param array $joins
+     * @param bool $forceClasses
+     * @return SelectQuery
+     */
+    public function buildExtendedQuery($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $forceClasses = true)
+    {
+        throw new LogicException("This datasource does not support building queries.");
     }
 }

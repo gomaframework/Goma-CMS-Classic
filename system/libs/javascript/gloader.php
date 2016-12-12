@@ -13,9 +13,6 @@ class gLoader extends RequestHandler
     const VERSION = "1.1.3";
     /**
      * url-handlers
-     *
-     * @name url_handlers
-     * @access public
      */
     public $url_handlers = array(
         "v2/\$name" => "deliver",
@@ -31,24 +28,16 @@ class gLoader extends RequestHandler
 
     /**
      * loadable resources
-     *
-     * @name resources
-     * @access public
      */
     public static $resources = array();
 
     /**
      * preloaded resources
-     *
-     * @name preloaded
-     * @access public
      */
     public static $preloaded = array();
 
     /**
      * adds a loadable resource
-     * @name addLoadAble
-     * @access public
      * @param string - name
      * @param string - filename
      * @param array - required other resources
@@ -64,8 +53,6 @@ class gLoader extends RequestHandler
 
     /**
      * this is the php-function for the js-function gloader.load, it loads it for pageload
-     * @name load
-     * @access public
      */
     public static function load($name)
     {
@@ -82,9 +69,6 @@ class gLoader extends RequestHandler
 
     /**
      * delivers a specified resource
-     *
-     * @name deliver
-     * @access public
      */
     public function deliver()
     {
@@ -152,8 +136,10 @@ class gLoader extends RequestHandler
     /**
      * this is building the file and modifiing mtime
      *
-     * @name buildFile
-     * @access protected
+     * @param $name
+     * @param $data
+     * @return string
+     * @throws DataNotFoundException
      */
     protected function buildFile($name, $data)
     {
@@ -164,8 +150,7 @@ class gLoader extends RequestHandler
                     if (file_exists(self::$resources[$_name]["file"])) {
                         $js .= $this->buildFile($_name, self::$resources[$name]);
                     } else {
-                        header("HTTP/1.1 404 Not Found");
-                        exit;
+                        throw new DataNotFoundException();
                     }
                 }
             }
@@ -184,6 +169,7 @@ goma.ui.setLoaded('" . $name . "'); goma.ui.registerResource('js', '" . $data["f
      *
      * @name buildMTime
      * @access protected
+     * @return bool
      */
     protected function checkMTime($name, $data, &$mtime)
     {
@@ -202,9 +188,7 @@ goma.ui.setLoaded('" . $name . "'); goma.ui.registerResource('js', '" . $data["f
         if ($mtime < filemtime($data["file"])) {
             $mtime = filemtime($data["file"]);
         }
-
-
     }
 }
 
-StaticsManager::addSaveVar("gLoader", "resources");
+StaticsManager::addSaveVar(gloader::class, "resources");

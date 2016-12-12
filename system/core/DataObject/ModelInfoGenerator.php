@@ -19,7 +19,7 @@ class ModelInfoGenerator {
     public static function generate_combined_array($class, $staticProp, $extensionMethod = null, $useParents = false) {
         $class = ClassManifest::resolveClassName($class);
 
-        $fields = (array) self::getNotExtendedStatic($class, $staticProp);
+        $fields = (array)StaticsManager::getNotExtendedStatic($class, $staticProp);
 
         // fields of extensions
         if($extensionMethod !== null) {
@@ -41,30 +41,6 @@ class ModelInfoGenerator {
         $fields = ArrayLib::map_key("strtolower", $fields, false);
 
         return $fields;
-    }
-
-    /**
-     * gets static property while checking if it is only extended property.
-     *
-     * @param string $class
-     * @param string $staticProp
-     * @internal
-     * @return mixed
-     */
-    public static function getNotExtendedStatic($class, $staticProp) {
-        if (StaticsManager::hasStatic($class, $staticProp)) {
-            // validates that it is not just the extended property.
-            $parent = get_parent_class($class);
-            $fields = (array)StaticsManager::getStatic($class, $staticProp);
-
-            if($parent && (array) StaticsManager::getStatic($parent, $staticProp) == $fields) {
-                return array();
-            }
-
-            return $fields;
-        }
-
-        return null;
     }
 
     /**
@@ -188,7 +164,6 @@ class ModelInfoGenerator {
      * @return array
      */
     public static function generate_search_fields($class, $parents = false) {
-
         $searchFields = self::generate_combined_array($class, "search_fields", "search_fields", $parents);
 
         $searchFields = array_map("strtolower", $searchFields);
@@ -304,7 +279,7 @@ class ModelInfoGenerator {
 
         $indexes = array_merge(self::getHasOneArrayWithValue($class, "INDEX"), $indexes);
 
-        $searchable_fields = StaticsManager::getStatic($class, "search_fields");
+        $searchable_fields = StaticsManager::getNotExtendedStatic($class, "search_fields");
         if ($searchable_fields) {
             // we add an index for fast searching
             $indexes["searchable_fields"] = array("type" => "INDEX", "fields" => implode(",", $searchable_fields), "name" => "searchable_fields");
@@ -330,8 +305,8 @@ class ModelInfoGenerator {
     protected static function validateIndexes($indexes) {
         foreach($indexes as $name => $type) {
             if (is_array($type)) {
-                if (!isset($type["type"]) || !isset($type["fields"])) {
-                    throw new LogicException("Index $name in DataObject $class is invalid. Type and Fields are required.", ExceptionManager::INDEX_INVALID);
+                if (!isset($type["fields"])) {
+                    throw new LogicException("Index $name in DataObject $class is invalid. Fields are required.", ExceptionManager::INDEX_INVALID);
                 }
             }
         }

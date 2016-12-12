@@ -104,8 +104,8 @@ class contentControllerTest extends GomaUnitTest
     }
 
     public function testTrackLinking() {
-        $upload1 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_480.png", "test.cms");
-        $upload2 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_750.jpg", "test.cms");
+        $upload1 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_480.png", "test.cms", null, false);
+        $upload2 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_750.jpg", "test.cms", null, false);
         $page = new Page(array(
             "data" => '<a href="'.$upload1->path.'" lala="pu">Blub 123 haha</a> <a href="'.$upload2->path.'" lala="pu">Blub 123 haha</a>'
         ));
@@ -124,8 +124,8 @@ class contentControllerTest extends GomaUnitTest
     }
 
     public function testTrackImage() {
-        $upload1 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_480.png", "test.cms");
-        $upload2 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_750.jpg", "test.cms");
+        $upload1 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_480.png", "test.cms", null, false);
+        $upload2 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_750.jpg", "test.cms", null, false);
         $page = new Page(array(
             "data" => '<img src="'.$upload1->path.'" lala="pu" /> <img src="'.$upload2->path.'" lala="pu" />'
         ));

@@ -21,7 +21,7 @@ defined("IN_GOMA") OR die();
  * @package		Goma\Core
  * @version		2.3.4
  */
-class ViewAccessableData extends gObject implements Iterator, ArrayAccess {
+class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IFormForModelGenerator {
 
 	const ID = "ViewAccessableData";
 
@@ -93,7 +93,7 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess {
 	 *
 	 * @var array
 	 */
-	public static $notViewableMethods = array("getdata", "get_versioned", "getform", "geteditform", "getwholedata", "set_many_many", "get_has_one", "get_many", "get", "setfield", "setwholedata", "write", "writerecord", "__construct", "method_exists", "callmethodbyrecord", "getmanymany", "gethasmany", "search", "where", "fields", "getoffset", "getversion", "_get", "getobject", "versioned");
+	public static $notViewableMethods = array("getdata", "get_versioned", "getform", "geteditform", "getactions", "getwholedata", "set_many_many", "get_has_one", "get_many", "get", "setfield", "setwholedata", "write", "writerecord", "__construct", "method_exists", "callmethodbyrecord", "getmanymany", "gethasmany", "search", "where", "fields", "getoffset", "getversion", "_get", "getobject", "versioned");
 
 	/**
 	 * a list of methods can't be called as getters. this is for internal usage.
@@ -329,7 +329,7 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess {
 	/**
 	 * gets a duplicated object
 	 *
-	 * @return ViewAccessableData
+	 * @return $this
 	 */
 	public function duplicate() {
 		$duplicate = clone $this;
@@ -1073,6 +1073,30 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess {
 	public function raw() {
 		return $this->data;
 	}
+
+	/**
+	 * @param Form $form
+	 */
+	public function getForm(&$form)
+	{
+
+	}
+
+	/**
+	 * @param Form $form
+	 */
+	public function getEditForm(&$form)
+	{
+
+	}
+
+	/**
+	 * @param Form $form
+	 */
+	public function getActions(&$form)
+	{
+
+	}
 }
 
 
@@ -1087,7 +1111,7 @@ abstract class Extension extends gObject implements ExtensionModel {
 	/**
 	 * extra_methods
 	 */
-	public static $extra_methods = array();
+	public static $all_extra_methods = array();
 	/**
 	 * the owner-class
 	 *@name owner
@@ -1118,4 +1142,3 @@ abstract class Extension extends gObject implements ExtensionModel {
 		return $this->owner;
 	}
 }
-

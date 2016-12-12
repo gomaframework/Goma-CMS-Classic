@@ -73,7 +73,7 @@ abstract class AbstractFormComponent extends RequestHandler {
      *
      * @var bool
      */
-    public $disabled = false;
+    private $disabled = false;
 
     /**
      * overrides the post-name
@@ -103,10 +103,11 @@ abstract class AbstractFormComponent extends RequestHandler {
     {
         parent::__construct();
 
-        $this->name = $name;
-        $this->__fieldname = strtolower(trim($name));
-        $this->dbname = strtolower(trim($name));
+        $this->name = preg_replace("/[^a-zA-Z0-9_\\.\\-\[\]\{\}]/", "_", $name);
+        $this->__fieldname = strtolower(trim($this->name));
+        $this->dbname = strtolower(trim($this->name));
         $this->setModel($model);
+
 
         if ($parent) {
             $parent->add($this);
@@ -182,6 +183,7 @@ abstract class AbstractFormComponent extends RequestHandler {
      * @return null
      */
     public function getFieldPost($field) {
+        $field = strtolower($field);
         if($this->parent) {
             return $this->parent->getFieldPost($field);
         }
@@ -271,7 +273,7 @@ abstract class AbstractFormComponent extends RequestHandler {
     /**
      * disables this field
      */
-    public function disable()
+    final public function disable()
     {
         $this->disabled = true;
         return $this;
@@ -280,7 +282,7 @@ abstract class AbstractFormComponent extends RequestHandler {
     /**
      * reenables the field
      */
-    public function enable()
+    final public function enable()
     {
         $this->disabled = false;
         return $this;
@@ -355,7 +357,7 @@ abstract class AbstractFormComponent extends RequestHandler {
         }
 
         return $this->createsRenderDataClass()
-            -> setIsDisabled($this->disabled)
+            -> setIsDisabled($this->isDisabled())
             -> setField($this)
             -> setHasError(count($this->errors) > 0)
             -> setPostName($this->PostName());

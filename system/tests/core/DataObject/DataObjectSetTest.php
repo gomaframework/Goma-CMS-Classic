@@ -23,6 +23,13 @@ class DataObjectSetTests extends GomaUnitTest
     protected $janine;
     protected $nik;
     protected $julian;
+    protected $fabian;
+    protected $franz;
+    protected $lisa;
+    protected $julia;
+    protected $jenny;
+
+    protected $allPersons;
 
     public function setUp()
     {
@@ -32,9 +39,20 @@ class DataObjectSetTests extends GomaUnitTest
         $this->janine = new DumpDBElementPerson("Janine", 19, "W");
         $this->nik = new DumpDBElementPerson("Nik", 21, "M");
         $this->julian = new DumpDBElementPerson("Julian", 20, "M");
+        $this->fabian = new DumpDBElementPerson("Fabian", 22, "M");
+        $this->franz = new DumpDBElementPerson("Franz", 56, "M");
+        $this->lisa = new DumpDBElementPerson("Lisa", 18, "W");
+        $this->julia = new DumpDBElementPerson("Julia", 25, "W");
+        $this->jenny = new DumpDBElementPerson("Jenny", 35, "W");
 
-        $this->daniel->queryVersion = $this->kathi->queryVersion = $this->patrick->queryVersion = $this->janine->queryVersion =
-            $this->nik->queryVersion = $this->julian->queryVersion = DataObject::VERSION_PUBLISHED;
+        $this->allPersons = array($this->daniel, $this->kathi, $this->patrick, $this->nik,
+                                  $this->julian, $this->janine, $this->fabian, $this->franz,
+                                  $this->lisa, $this->julia, $this->jenny);
+
+
+        foreach($this->allPersons as $person) {
+            $person->queryVersion = DataObject::VERSION_PUBLISHED;
+        }
     }
 
     /**
@@ -55,7 +73,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testAssignFields() {
-        $this->unittestAssignFields("MockDataObjectForDataObjectSet");
+        $this->unittestAssignFields(MockDataObjectForDataObjectSet::class);
         $this->unittestAssignFields(new MockDataObjectForDataObjectSet());
         $this->unittestAssignFields(new MockIDataObjectSetDataSource("User"));
 
@@ -84,9 +102,9 @@ class DataObjectSetTests extends GomaUnitTest
 
     public function unittestAssignFields($object, $inExpansion = null) {
         $set = new DataObjectSet($object);
-        $this->assertIsA($set->getModelSource(), "IDataObjectSetModelSource");
-        $this->assertIsA($set->getDbDataSource(), "IdataObjectSetDataSource");
-        $this->assertEqual($set->inExpansion, $inExpansion);
+        $this->assertIsA($set->getModelSource(), IDataObjectSetModelSource::class);
+        $this->assertIsA($set->getDbDataSource(), IdataObjectSetDataSource::class);
+        $this->assertEqual($inExpansion, $set->inExpansion);
 
         return $set;
     }
@@ -156,26 +174,47 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($set->count(), 2);
     }
 
-    public function testSearch() {
-        $user = new User(array(
-            "nickname" => "______test",
-            "password" => "test"
-        ));
-        $user->writeToDB(true, true);
+    /**
+     * tests if user which was created at build is searchable.
+     * @throws MySQLException
+     */
+    public function testSearchCreatedTestUserAtBuild() {
         $data = DataObject::get("user");
         $clone = clone $data;
 
         $count = $data->count();
-        $first = $data->first();
 
         $data->search("admin");
-        $this->assertNotEqual($count, $data->count());
         $this->assertIsA($data->first(), "DataObject");
         $this->assertEqual($clone->count(), $count);
+    }
 
-        $this->assertEqual($clone->first(), $first);
+    /**
+     * tests if user which was created at build is searchable.
+     * @throws MySQLException
+     */
+    public function testSearchCreatedUserAtRuntime() {
+        try {
+            $user = new User(array(
+                "nickname" => "______test",
+                "password" => "test"
+            ));
+            $user->writeToDB(true, true);
+            $data = DataObject::get("user");
+            $clone = clone $data;
 
-        $user->remove(true);
+            $count = $data->count();
+            $first = $data->first();
+
+            $data->search("______test");
+            $this->assertNotEqual($count, $data->count());
+            $this->assertIsA($data->first(), "DataObject");
+            $this->assertEqual($clone->count(), $count);
+
+            $this->assertEqual($clone->first(), $first);
+        } finally {
+            $user->remove(true);
+        }
     }
 
     public function testFirstLast() {
@@ -388,9 +427,36 @@ class DataObjectSetTests extends GomaUnitTest
             $this->kathi
         );
 
+        $this->assertFalse($set->isDataLoaded());
+
         $this->assertIsA($set->getRange(0, 1), DataSet::class);
         $this->assertIsA($set->getRange(0, 1)->ToArray(), "array");
         $this->assertIsA($set->getArrayRange(0, 1), "array");
+
+        $this->assertFalse($set->isDataLoaded());
+
+        $this->assertIsA($set->ToArray(), "array");
+        $this->assertEqual($source->records, $set->ToArray());
+
+        $this->assertTrue($set->isDataLoaded());
+
+        $this->assertEqual(array($this->julian), $set->getArrayRange(0, 1));
+
+        $set->add($this->patrick);
+        $this->assertTrue($set->isDataLoaded());
+
+        $this->assertTrue($set->isInStage($this->patrick));
+        $this->assertFalse($set->isInStage($this->daniel));
+
+        $merged = array_merge($source->records, array($this->patrick));
+        $this->assertIsA($merged, "array");
+
+        $this->assertEqual($merged, $set->ToArray());
+        $this->assertEqual($merged, $set->getArrayRange(0, 5));
+
+        $set->removeFromStage($this->patrick);
+        $this->assertEqual($source->records, $set->ToArray());
+        $this->assertEqual($source->records, $set->getArrayRange(0, 5));
     }
 
     public function testRangesNew() {
@@ -630,6 +696,345 @@ class DataObjectSetTests extends GomaUnitTest
         $set->addFilter(array("true"));
         $this->assertEqual($set->count(), 0);
     }
+
+    public function testCreateNew() {
+        $set = new DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $set->add($this->nik);
+        $set->add($this->janine);
+        $set->add($this->patrick);
+
+        $this->assertEqual(3, $set->count());
+        $this->assertEqual(3, count($set->ToArray()));
+        $this->assertEqual(3, $set->getStaging()->count());
+        $this->assertEqual(3, count($set->getStaging()->ToArray()));
+
+        $this->assertEqual($this->nik, $set[0]);
+        $this->assertEqual($this->janine, $set[1]);
+        $this->assertEqual($this->patrick, $set[2]);
+
+        $this->assertEqual($this->nik, $set->first());
+        $this->assertEqual($this->patrick, $set->last());
+
+        $set->add($this->kathi);
+
+        $this->assertEqual($this->kathi, $set->last());
+        $this->assertEqual($this->patrick, $set[2]);
+    }
+
+    public function testCreateNewBig() {
+        $set = new DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $this->assertTrue(count($this->allPersons) > 10);
+
+        foreach($this->allPersons as $person) {
+            $set->add($person);
+        }
+
+        $this->assertEqual(count($this->allPersons), $set->count());
+        $this->assertEqual(count($this->allPersons), count($set->ToArray()));
+
+        $i = 0;
+        foreach($set as $record) {
+            $i++;
+        }
+        $this->assertEqual(count($this->allPersons), $i);
+    }
+
+    public function testRemoveInLoop() {
+        $set = new DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $this->assertTrue(count($this->allPersons) > 10);
+
+        foreach($this->allPersons as $person) {
+            $set->add($person);
+        }
+
+        $this->assertEqual(count($this->allPersons), $set->count());
+        $this->assertEqual(count($this->allPersons), count($set->ToArray()));
+
+        $i = 0;
+        foreach($set as $record) {
+            $this->assertTrue($set->isInStage($record));
+            $this->assertEqual($this->allPersons[$i], $record);
+            if($i == 3) {
+                $set->removeFromStage($record);
+                $this->assertFalse($set->isInStage($record));
+            }
+            $i++;
+        }
+        $this->assertEqual(count($this->allPersons), $i);
+        $this->assertEqual(count($this->allPersons) - 1, $set->count());
+        $this->assertEqual(count($this->allPersons) - 1, count($set->ToArray()));
+    }
+
+    public function testfilterTroughNew() {
+        $set = new DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $set->add($this->janine);
+        $set->add($this->daniel);
+        $set->add($this->patrick);
+
+        $this->assertEqual(3, $set->count());
+        $this->assertEqual($this->janine, $set->first());
+        $this->assertEqual($this->patrick, $set->last());
+
+        $this->assertThrows(function() use($set) {
+            $set->addFilter(array(
+                "gender" => "M"
+            ));
+        }, "LogicException");
+    }
+
+    public function testSort() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $set->sort("name", "DESC");
+        $this->assertEqual($this->kathi, $set->first());
+        $this->assertEqual($this->daniel, $set->last());
+
+        $set->sort("age", "ASC");
+        $this->assertEqual($this->janine, $set->first());
+        $this->assertEqual($this->kathi, $set->last());
+    }
+
+    public function testResetSort() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $set->sort("name", "DESC");
+        $this->assertEqual($this->kathi, $set->first());
+        $this->assertEqual($this->daniel, $set->last());
+        $this->assertEqual($this->julian, $set[1]);
+
+        $this->assertTrue($set->isDataLoaded());
+
+        $set->sort();
+        $this->assertFalse($set->isDataLoaded());
+
+        $this->assertEqual($this->julian, $set->first());
+        $this->assertFalse($set->isDataLoaded());
+
+        $this->assertEqual($this->daniel, $set[1]);
+        $this->assertTrue($set->isDataLoaded());
+    }
+
+    public function testSortWithArray() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $set->sort(array("name" => "DESC"));
+        $this->assertEqual($this->kathi, $set->first());
+        $this->assertEqual($this->daniel, $set->last());
+
+        $set->sort(array("age" => "ASC"));
+        $this->assertEqual($this->janine, $set->first());
+        $this->assertEqual($this->kathi, $set->last());
+
+        $secondSet = new DataObjectSet("DumpDBElementPerson");
+        $secondSet->setVersion(DataObject::VERSION_PUBLISHED);
+        $secondSet->sort("age");
+
+        $secondSource = $secondSet->getDbDataSource();
+        $secondSource->records = $source->records;
+
+        $this->assertEqual($this->janine, $secondSet->first());
+        $this->assertEqual($this->kathi, $secondSet->last());
+    }
+
+    public function testMultiSortWithArray() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $set->sort(array("age" => "ASC", "name" => "DESC"));
+        $this->assertEqual($this->janine, $set->first());
+        $this->assertEqual($this->julian, $set[1]);
+        $this->assertEqual($this->daniel, $set[2]);
+        $this->assertEqual($this->kathi, $set->last());
+
+        $set->sort(array("age" => "ASC", "name" => "ASC"));
+        $this->assertEqual($this->janine, $set->first());
+        $this->assertEqual($this->julian, $set[2]);
+        $this->assertEqual($this->daniel, $set[1]);
+        $this->assertEqual($this->kathi, $set->last());
+    }
+
+    /**
+     * tests grouping.
+     */
+    public function testGroupBy() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $source->group = array(
+            array(
+                $this->julian,
+                $this->daniel,
+            ),
+            array(
+                $this->janine,
+                $this->kathi
+            )
+        );
+
+        $this->assertEqual($set->ToArray(), $source->records);
+        $set->groupBy("blub");
+        $this->assertEqual($set->ToArray(), $source->group);
+    }
+
+    /**
+     * tests reset at grouping.
+     */
+    public function testGroupByReset() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $source->group = array(
+            array(
+                $this->julian,
+                $this->daniel,
+            ),
+            array(
+                $this->janine,
+                $this->kathi
+            )
+        );
+
+        $set->groupBy("blub");
+        $this->assertEqual($set->ToArray(), $source->group);
+        $set->groupBy(null);
+        $this->assertEqual($set->ToArray(), $source->records);
+    }
+
+    /**
+     * tests if getForm is called on the model.
+     */
+    public function testGetFormOnModel() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setModelSource($source = new MockIModelSource());
+
+        $source->model = new MockFormModel();
+
+        $this->assertEqual($source->model->getFormCalled, 0);
+        $this->assertEqual($source->model->getEditFormCalled, 0);
+        $this->assertEqual($source->model->getActionsCalled, 0);
+
+        $set->generateForm(null, false, false, null, new Controller());
+
+        $this->assertEqual($source->model->getFormCalled, 1);
+        $this->assertEqual($source->model->getEditFormCalled, 0);
+        $this->assertEqual($source->model->getActionsCalled, 1);
+    }
+
+    /**
+     * tests if getEditForm is called on the model.
+     */
+    public function testGetEditFormOnModel() {
+        $set = new DataObjectSet("DumpDBElementPerson");
+        $set->setModelSource($source = new MockIModelSource());
+
+        $source->model = new MockFormModel();
+
+        $this->assertEqual($source->model->getFormCalled, 0);
+        $this->assertEqual($source->model->getEditFormCalled, 0);
+        $this->assertEqual($source->model->getActionsCalled, 0);
+
+        $set->generateForm(null, true, false, null, new Controller());
+
+        $this->assertEqual($source->model->getFormCalled, 0);
+        $this->assertEqual($source->model->getEditFormCalled, 1);
+        $this->assertEqual($source->model->getActionsCalled, 1);
+    }
+}
+
+class MockFormModel extends ViewAccessableData {
+
+    public $getFormCalled = 0;
+    public $getEditFormCalled = 0;
+    public $getActionsCalled = 0;
+
+    public function getForm(&$form)
+    {
+        $this->getFormCalled++;
+        parent::getForm($form);
+    }
+
+    public function getEditForm(&$form)
+    {
+        $this->getEditFormCalled++;
+        parent::getEditForm($form);
+    }
+
+    public function getActions(&$form)
+    {
+        $this->getActionsCalled++;
+        parent::getActions($form);
+    }
 }
 
 class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
@@ -749,7 +1154,6 @@ class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
      */
     public function onBeforeManipulateManyMany(&$manipulation, $set, $writeData)
     {
-        // TODO: Implement onBeforeManipulateManyMany() method.
     }
 
     /**
@@ -757,7 +1161,6 @@ class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
      */
     public function clearCache()
     {
-        // TODO: Implement clearCache() method.
     }
 
     /**
@@ -766,7 +1169,19 @@ class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
      */
     public function manipulate($manipulation)
     {
-        // TODO: Implement manipulate() method.
+    }
+
+    /**
+     * @param $version
+     * @param array $filter
+     * @param array $sort
+     * @param array $limit
+     * @param array $joins
+     * @param bool $forceClasses
+     * @return SelectQuery
+     */
+    public function buildExtendedQuery($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $forceClasses = true)
+    {
     }
 }
 
@@ -816,7 +1231,6 @@ class MockIModelSource implements IDataObjectSetModelSource {
 
     public function callExtending($method, &$p1 = null, &$p2 = null, &$p3 = null, &$p4 = null, &$p5 = null, &$p6 = null, &$p7 = null)
     {
-        // TODO: Implement callExtending() method.
     }
 }
 

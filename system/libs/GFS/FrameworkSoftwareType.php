@@ -32,8 +32,11 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 
 		$data = array("filename" => basename($this->file), "installType" => "update");
 		if(isset($info["type"]) && $info["type"] == "framework") {
+            if(is_dir("__system_temp")) {
+                FileSystem::delete("__system_temp");
+            }
 
-			$dir = FRAMEWORK_ROOT . "temp/" . md5($this->file);
+			$dir = "__system_temp/update/" . md5($this->file);
 
 			FileSystem::requireDir($dir);
 
@@ -46,12 +49,6 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 				$data["error"] = lang("update_version_error");
 				return $data;
 			}
-
-			/*if(isset($appInfo["required_version"]) && goma_version_compare($appInfo["requiredVersion"], GOMA_VERSION . "-" . BUILD_VERSION, ">")) {
-				$data["installable"] = false;
-				$data["error"] = lang("update_version_newer_required") . " <strong>".$appInfo["requiredVersion"]."</strong>";
-				return $data;
-			}*/
 
 			if(!isset($info["isDistro"])) {
 				return false;
@@ -74,6 +71,9 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 				'<?php if(!GFS_Package_Installer::wasUnpacked('.var_export($this->file, true).') || !is_dir('.var_export($dir, true).')) { $gfs = new GFS_Package_installer('.var_export($this->file, true).');$gfs->unpack('.var_export($dir, true).'); }'
 			);
 
+			copy(FRAMEWORK_ROOT . "/version.php", $dir . "/version.php");
+			$data["preflightCode"][] = "<?php rename('".FRAMEWORK_ROOT."', '__system_temp/oldsystem'); FileSystem::requireDir('".FRAMEWORK_ROOT . "temp/');";
+
 			$data["installFolders"] = array(
 				"source"		=> $dir . "/data/",
 				"destination"	=> ROOT
@@ -83,17 +83,13 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 			$data["permCheck"] = false;
 
 			$data["postflightCode"] = array(
-				'<?php FileSystem::Delete('.var_export($dir, true).');'
+				'<?php FileSystem::delete("__system_temp");'
 			);
 
 			return $data;
 		} else {
 			return false;
 		}
-	}
-
-	public function checkMovePermissions() {
-
 	}
 
 	/**
@@ -196,23 +192,27 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 		return false;
 	}
 
-	/**
-	 * generates a distro
-	 *
-	 * @param string $file
-	 * @param string $name
-	 * @param string|null $changelog
-	 * @return bool
-	 */
-	public static function backup($file, $name, $changelog = null) {
+    /**
+     * generates a distro
+     *
+     * @param Request $request
+     * @param string $file
+     * @param string $name
+     * @param string|null $changelog
+     * @return bool
+     * @throws GFSFileExistsException
+     * @throws GFSRealFileNotFoundException
+     * @throws GFSRealFilePermissionException
+     */
+	public static function backup($request, $file, $name, $changelog = null) {
 		// if we are currently building the file, don't delete
-		if(!GFS_Package_Creator::wasPacked($file)) {
+		if(!GFS_Package_Creator::wasPacked($file, $request)) {
 			if(file_exists($file)) {
 				@unlink($file);
 			}
 		}
 
-		$gfs = new GFS_Package_Creator($file);
+		$gfs = GFS_Package_Creator::createWithRequest($file, $request);
 
 
 		$plist = new CFPropertyList();
@@ -229,12 +229,15 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 
 		$gfs->write("info.plist", $plist->toXML());
 
-		if(!GFS_Package_Creator::wasPacked($file)) {
+		if(!GFS_Package_Creator::wasPacked($file, $request)) {
 			$gfs->setAutoCommit(false);
 			$gfs->add(FRAMEWORK_ROOT, "/data/system/", array("temp", LOG_FOLDER, "/installer/data", "version.php"));
 			$gfs->add(ROOT . "images/", "/data/images/", array("resampled"));
 			$gfs->add(ROOT . "languages/", "/data/languages/");
-			$gfs->commit();
+			$out = $gfs->commitReply(null, null, isCommandLineInterface() ? -1 : 2.0, isCommandLineInterface());
+            if(is_a($out, GomaResponse::class)) {
+                return $out;
+            }
 		}
 
 		// add some files
@@ -266,7 +269,7 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 	 */
 	public static function buildDistro($file, $name, $controller) {
 		if(GlobalSessionManager::globalSession()->hasKey(g_SoftwareType::FINALIZE_SESSION_VAR))
-			return gObject::instance("g_frameworkSoftWareType")->finalizeDistro(GlobalSessionManager::globalSession()->get(g_SoftwareType::FINALIZE_SESSION_VAR));
+			return gObject::instance("g_frameworkSoftWareType")->finalizeDistro(GlobalSessionManager::globalSession()->get(g_SoftwareType::FINALIZE_SESSION_VAR), null, null, $controller->getRequest());
 
 		if(file_exists($file))
 			@unlink($file);
@@ -280,6 +283,7 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 			new LinkAction("cancel", lang("cancel"), ROOT_PATH . BASE_SCRIPT . "dev/buildDistro"),
 			new FormAction("submit", lang("download"), array(gObject::instance("g_frameworkSoftWareType"), "finalizeDistro"))
 		));
+        $form->removeSecret();
 
 		$version->disable();
 

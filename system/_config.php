@@ -50,6 +50,8 @@ gloader::addLoadAble("accordion", "system/libs/javascript/ui/accordion.js");
 gloader::addLoadAble("autocomplete", "system/libs/javascript/ui/autocomplete.js", array("menu"));
 gloader::addLoadAble("menu", "system/libs/javascript/ui/menu.js");
 gloader::addLoadAble("button", "system/libs/javascript/ui/button.js");
+gloader::addLoadAble("endlessScrolling", "system/libs/javascript/endlessScrolling.js");
+gloader::addLoadAble("pusher", "system/libs/javascript/pusher.js");
 gloader::addLoadAble("uidialog", "system/libs/javascript/ui/dialog.js", array(
 	"button",
 	"resizable",
@@ -73,6 +75,9 @@ gloader::addLoadAble("notifications", "system/libs/notifications/notifications.j
 gloader::addLoadAble("json", "system/libs/javascript/json.js");
 gloader::addLoadAble("jquery-color", "system/libs/thirdparty/jquery-color/jquery.color.min.js");
 gloader::addLoadAble("helpbox", "system/libs/javascript/helpBox.js");
+gloader::addLoadAble("hammer", "system/libs/thirdparty/hammer.js/hammer.js");
+gloader::addLoadAble("ajaxLoader", "system/libs/javascript/ajaxLoader.js");
+gloader::addLoadAble("placeholderPolyfill", "system/libs/javascript/placeholderPolyfill.js");
 
 // Breadcrump seperator
 define('BREADCRUMB_SEPERATOR', ' &raquo; ');

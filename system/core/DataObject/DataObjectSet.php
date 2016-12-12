@@ -2,7 +2,9 @@
 
 
 /**
- * Basic class for getting Data as DataSet from DataBase. It implements all types of DataBase-Queriing and always needs a DataObject to query the DataBase.
+ * Basic class for getting Data as DataSet from DataBase.
+ * It implements all types of DataBase-Queriing and always needs a DataObject to query the DataBase.
+ * All methods are in-place.
  *
  * @package     Goma\Model
  *
@@ -12,11 +14,9 @@
  * @version     1.5.2
  */
 class DataObjectSet extends ViewAccessableData implements IDataSet {
-
-	const ID = "DataObjectSet";
-
 	const FETCH_MODE_CREATE_NEW = "fetch_create_new";
 	const FETCH_MODE_EDIT = "fetch_mode_edit";
+	const POOL_PROP_SIZE = 2;
 
 	/**
 	 * how many items per page
@@ -105,12 +105,12 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 *
 	 * @var ViewAccessableData
 	 */
-	private $firstCache;
+	protected $firstCache;
 
 	/**
 	 * @var ViewAccessableData
 	 */
-	private $lastCache;
+	protected $lastCache;
 
 	/**
 	 * @var int
@@ -329,13 +329,22 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	}
 
 	/**
-	 * this function returns the data as an array
+	 * this function returns the current data as an array
 	 *
+	 * @param array $additional_fields unused here
 	 * @return array
 	 */
-	public function ToArray()
+	public function ToArray($additional_fields = array())
 	{
-		return array_merge((array) $this->items, $this->staging->ToArray());
+		$this->forceData();
+		return $this->items;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isDataLoaded() {
+		return isset($this->items);
 	}
 
 	/**
@@ -585,7 +594,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * gets the current value
 	 *
 	 * @name current
-	 * @return mixed|ViewAccessableData
+	 * @return DataObject
 	 */
 	public function current($position = null)
 	{
@@ -675,7 +684,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 					$limit[0]++;
 					$limit[1]--;
 				}
-				$this->items = $this->getRecordsByRange($limit[0], $limit[1]);
+				$this->items = array_values($this->getRecordsByRange($limit[0], $limit[1]));
 				if(isset($this->firstCache)) array_unshift($this->items, $this->firstCache);
 				if(isset($this->lastCache)) $this->items[count($this->items) - $offsetInsertLast] = $this->lastCache;
 
@@ -734,7 +743,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		if(isset($filter)) {
 			$this->filter = array_merge((array) $this->filter, (array) $filter);
-			$this->clearCache();
+            $this->clearCache();
 		}
 		return $this;
 	}
@@ -742,21 +751,52 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	/**
 	 * group by a specific field
 	 * @param  string $field
-	 * @return array
+	 * @return DataObjectSet
 	 */
 	public function groupBy($field) {
-		return $this->dbDataSource()->getGroupedRecords($this->version, $field, $this->getFilterForQuery(), $this->getSortForQuery(), array(), $this->getJoinForQuery(), $this->search);
+        if ($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
+            throw new LogicException("Group by is only possible when using FETCH_MODE_EDIT.");
+        }
+
+		if($field === null) {
+			if (is_a($this->dbDataSource, \Goma\Model\Group\GroupedDataObjectSetDataSource::class)) {
+				$this->dbDataSource = $this->dbDataSource->getDataSource();
+                $this->clearCache();
+			}
+		} else {
+			if ($this->hasChanged()) {
+				throw new LogicException("Group by is only possible on not changed DataObjectSet, call commitStaging before grouping.");
+			}
+
+			if (is_string($field) && strpos($field, ",") !== false) {
+				$field = array_map("trim", explode(",", $field));
+			}
+
+			if (is_a($this->dbDataSource, \Goma\Model\Group\GroupedDataObjectSetDataSource::class)) {
+				$this->dbDataSource->setGroupField($field);
+			} else {
+				$this->setDbDataSource(new \Goma\Model\Group\GroupedDataObjectSetDataSource(
+					$this->dbDataSource(),
+					$this->modelSource,
+					$field
+				));
+			}
+
+            $this->clearCache();
+		}
+
+		return $this;
 	}
 
-	/**
-	 * @param string $field
-	 * @return DataSet
-	 */
-	public function getGroupedSet($field) {
-		return new DataSet($this->groupBy($field));
-	}
+    /**
+     * @return bool
+     */
+    public function hasChanged()
+    {
+        return $this->getStaging()->bool();
+    }
 
-	/**
+    /**
 	 * adds a join
 	 * @param string $join
 	 * @return $this
@@ -854,28 +894,33 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		$columns = $types = array();
 		if(is_string($args[0])) {
-			if(substr(strtolower($args[0]), -4) == "desc") {
-				$args[0] = substr($args[0], 0, -4);
-				$types = array("desc");
-			} else if(substr(strtolower($args[0]), -3) == "asc") {
-				$args[0] = substr($args[0], 0, -3);
-				$types = array("asc");
-			} else {
-				$types = array(isset($args[1]) && strtolower($args[1]) == "desc" ? "desc" : "asc");
-			}
-			$columns = array($args[0]);
+            if(strpos($args[0], ",") !== false) {
+                $columns = array_map("trim", explode(",", $args[0]));
+            } else {
+                $columns = array($args[0]);
+            }
 		} else if(is_array($args[0])) {
 			$columns = array_keys($args[0]);
-			$types = array_values($args[0]);
 		}
 
-		foreach($columns as $column) {
+        $sort = array();
+        foreach($columns as $column) {
+            if(substr(strtolower($column), -4) == "desc") {
+                $sort[substr($column, 0, -4)] = "desc";
+            } else if(substr(strtolower($column), -3) == "asc") {
+                $sort[substr($column, 0, -3)] = "asc";
+            } else if(isset($args[0][$column])) {
+                $sort[$column] = strtolower($args[0][$column]) == "desc" ? "desc" : "asc";
+            } else {
+                $sort[$column] = isset($args[1]) && strtolower($args[1]) == "desc" ? "desc" : "asc";
+            }
+        }
+
+        foreach($sort as $column => $type) {
 			if (!$this->canSortBy($column)) {
 				throw new InvalidArgumentException("can not sort by $column");
 			}
 		}
-
-		$sort = array_combine($columns, $types);
 
 		if($this->sort == $sort) {
 			return $this;
@@ -1031,9 +1076,9 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		$this->staging->add($record);
 
-		if(($this->page === null || count($this->items) == $this->perPage)) {
-			if(count($this->items) < $this->perPage || $matchesFilter) {
-				if ($this->items !== null) {
+		if (($this->page === null || count($this->items) == $this->perPage)) {
+			if (count($this->items) < $this->perPage || $matchesFilter) {
+				if ($this->items !== null && $this->fetchMode == self::FETCH_MODE_EDIT) {
 					$this->items[] = $record;
 				}
 
@@ -1155,36 +1200,78 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @param null|IModelRepository $repository
 	 * @throws DataObjectSetCommitException
 	 */
-	public function commitStaging($forceInsert = false, $forceWrite = false, $snap_priority = 2, $repository = null) {
+	final public function commitStaging($forceInsert = false, $forceWrite = false, $snap_priority = 2, $repository = null, $options = array()) {
 		$exceptions = array();
 		$errorRecords = array();
 
 		$repository = isset($repository) ? $repository : Core::repository();
 
-		/** @var DataObject $record */
-		foreach($this->staging as $record) {
-			if(is_array($record)) {
-				$record = $this->getConverted($record);
-			}
+		$this->writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, (array) $options, $exceptions, $errorRecords);
 
-			try {
-				$record->writeToDBInRepo($repository, $forceInsert, $forceWrite, $snap_priority);
+        $this->setFetchMode(DataObjectSet::FETCH_MODE_EDIT);
+        $this->clearCache();
 
-				$this->staging->remove($record);
-			} catch(Exception $e) {
-				$exceptions[] = $e;
-				$errorRecords[] = $record;
-			}
-		}
+        $this->version = $snap_priority <= 1 ? DataObject::VERSION_STATE : DataObject::VERSION_PUBLISHED;
 
-		$this->setFetchMode(DataObjectSet::FETCH_MODE_EDIT);
-		$this->clearCache();
-
-		if(count($exceptions) > 0) {
+        if(count($exceptions) > 0) {
 			throw new DataObjectSetCommitException($exceptions, $errorRecords, count($errorRecords) . " could not be written.");
 		}
 
 		$this->dbDataSource()->clearCache();
+	}
+
+    /**
+     * @param bool $forceInsert
+     * @param bool $forceWrite
+     * @param int $snap_priority
+     * @param IModelRepository $repository
+     * @param array $options
+     * @param array $exceptions
+     * @param array $errorRecords
+     */
+    protected function writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, &$exceptions, &$errorRecords) {
+        if($this->queryVersion() == "state" && $snap_priority > 1) {
+            $this->publishStateRecords($repository, $forceWrite, $exceptions, $errorRecords);
+        }
+
+        /** @var DataObject $record */
+        foreach($this->staging as $record) {
+            if(is_array($record)) {
+                $record = $this->getConverted($record);
+            }
+
+            try {
+                $record->writeToDBInRepo($repository, $forceInsert, $forceWrite, $snap_priority);
+
+                $this->staging->remove($record);
+            } catch(Exception $e) {
+                $exceptions[] = $e;
+                $errorRecords[] = $record;
+            }
+        }
+    }
+
+    /**
+     * @param IModelRepository $repository
+     * @param bool $forceWrite
+     * @param Exception[] $exceptions
+     * @param DataObject[] $errorRecords
+     */
+	protected function publishStateRecords($repository, $forceWrite, &$exceptions, &$errorRecords) {
+        if($this->fetchMode == self::FETCH_MODE_EDIT) {
+            $info = clone $this;
+            $info->addFilter($this->dbDataSource()->baseTable() . '_state.publishedid != '.
+                $this->dbDataSource()->baseTable() . '_state.stateid');
+
+            foreach ($info as $record) {
+                try {
+                    $repository->publish($record, $forceWrite);
+                } catch (Exception $e) {
+                    $exceptions[] = $e;
+                    $errorRecords = $record;
+                }
+            }
+        }
 	}
 
 	/**
@@ -1204,17 +1291,11 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @param DataObject $record
 	 */
 	public function removeFromStage($record) {
-		$this->staging->remove($record);
-
-		if(isset($this->items)) {
-			foreach ($this->items as $key => $item) {
-				if ($item === $record) {
-					unset($this->items[$key]);
-				}
-			}
-
-			$this->items = array_values($this->items);
+		if($this->fetchMode == self::FETCH_MODE_EDIT) {
+			$this->staging->remove($record);
 		}
+
+		$this->removeFromItems($record);
 
 		if($this->firstCache === $record) {
 			$this->firstCache = null;
@@ -1226,6 +1307,22 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		if(isset($this->count)) {
 			$this->count--;
+		}
+	}
+
+	/**
+	 * @param DataObject $record
+	 */
+	protected function removeFromItems($record) {
+		if(isset($this->items)) {
+			foreach ($this->items as $key => $item) {
+				if ($item === $record) {
+					$this->position--;
+					unset($this->items[$key]);
+				}
+			}
+
+			$this->items = array_values($this->items);
 		}
 	}
 
@@ -1386,14 +1483,14 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		// render form
 		if($edit) {
-			$this->modelSource()->getEditForm($form);
+			$model->getEditForm($form);
 		} else {
-			$this->modelSource()->getForm($form);
+			$model->getForm($form);
 		}
 
-		$this->modelSource()->callExtending('getForm', $form, $edit);
-		$this->modelSource()->getActions($form, $edit);
-		$this->modelSource()->callExtending('getActions', $form, $edit);
+		$model->callExtending('getForm', $form, $edit);
+		$model->getActions($form, $edit);
+		$model->callExtending('getActions', $form, $edit);
 
 		return $form;
 	}
@@ -1588,6 +1685,73 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		return $this;
 	}
+
+	/**
+	 * @param DataObject $record
+	 * @return bool
+	 */
+	public function isInStage($record) {
+		return $record->id != 0 ? $this->staging->find("id", $record->id) != null : $this->staging->itemExists($record);
+	}
+
+	/**
+	 * picks n records randomly.
+	 *
+	 * @param int $n
+	 * @return ArrayList
+	 */
+	public function pickRandomly($n) {
+		$set = new ArrayList();
+		$propability = 1 / $this->countWholeSet() * $n;
+		if($this->staging->count() == $this->countWholeSet()) {
+			return $this->staging->pickRandomly($n);
+		}
+		foreach($this->staging as $record) {
+			if($set->count() < $n && rand(0, 1) < $propability) {
+				$set->add($record);
+			}
+		}
+
+		if($set->count() < $n) {
+			/*
+			 * we limit the propability of the pool, so mysql does not need to sort
+			 * the whole table, but just a small amount of that.
+			 * the POOL_PROP_SIZE defines the factor how much greater the pool is than the set we want to get.
+			 * It's a good compromise to use something like 2 here.
+			 */
+			$poolPropability = ($n - $set->count()) / $this->countWholeSet() * self::POOL_PROP_SIZE;
+			$subQuery = $this->dbDataSource()->buildExtendedQuery($this->version, array_merge(
+				$this->getFilterForQuery(),
+				array(" RAND() < {$poolPropability} ")
+			), array(), array(), $this->getJoinForQuery(), true);
+
+			$join = $this->getJoinForQuery();
+			$randomPoolId = "randompool_" . randomString(5);
+			$join[] = array(
+				DataObject::JOIN_TYPE => "INNER",
+				DataObject::JOIN_TABLE => "(".$subQuery->build($this->dbDataSource()->baseTable() . ".id").")",
+				DataObject::JOIN_STATEMENT => $this->dbDataSource()->baseTable() . ".id = " .
+					$this->dbDataSource()->baseTable() . "_".$randomPoolId.".id",
+				DataObject::JOIN_ALIAS => $this->dbDataSource()->baseTable() . "_" . $randomPoolId
+			);
+			foreach($this->dbDataSource()->getRecords($this->version, $this->getFilterForQuery(), array(),
+				array(0, $n - $set->count()), $join, $this->search) as $record) {
+				$set->add($this->getConverted($record));
+			}
+		}
+
+		$items = $set->ToArray();
+		shuffle($items);
+
+		return new ArrayList($items);
+	}
+
+	/**
+	 * clears staging.
+	 */
+	public function clearStaging() {
+		$this->staging->clear();
+	}
 }
 
 class DataObjectSetCommitException extends GomaException {
@@ -1619,5 +1783,18 @@ class DataObjectSetCommitException extends GomaException {
 
 		$this->exceptions = $exceptions;
 		$this->records = $records;
+	}
+
+	public function getDeveloperMessage()
+	{
+		$message =  parent::getDeveloperMessage();
+
+		foreach($this->exceptions as $exception) {
+			$message .= get_class($exception) . ": " . $exception->getCode() . ": " . $exception->getMessage() . " in ".
+            $exception->getFile() . " on line ".$exception->getLine() . "\n" .
+			exception_get_dev_message($exception) . "\n" . $exception->getTraceAsString() . "\n\n";
+		}
+
+        return $message;
 	}
 }

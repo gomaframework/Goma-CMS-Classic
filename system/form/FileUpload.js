@@ -15,14 +15,28 @@ function FileUpload(form, field, formelement, url, size, types) {
 	field.fileUpload = this;
 	this.url = url;
 
+	form.form.on("formsubmit", function(){
+		if(this.uploader.loading) {
+			if(!FileUpload.hasAsked) {
+				FileUpload.hasAsked = true;
+				setTimeout(function(){
+					FileUpload.hasAsked = false;
+				}, 300);
+				return confirm(lang("leave_page_upload_confirm"));
+			}
+		}
+	}.bind(this));
+
+	this.fieldElement = $("#" + field.divId);
+
 	this.formelement = $(formelement);
-	this.element = $(formelement).find(".icon").get(0);
+	this.element = $(formelement).find(".drop-area").get(0);
 	this.destInput = $(formelement).find(".FileUploadValue");
 	this.defaultIcon = field.defaultIcon;
 
-	this.actions = this.formelement.find(".actions");
+	this.actions = this.fieldElement.find(".fileupload-actions");
 	// the info-zone
-	this.infoZone = this.formelement.find(".progress_info");
+	this.infoZone = this.fieldElement.find(".progress_info");
 
 	// append fallback for not drag'n'drop-browsers
 	this.browse = this.formelement.find(".fileSelect");
@@ -35,6 +49,10 @@ function FileUpload(form, field, formelement, url, size, types) {
 
 	if(!field.upload || !field.showDeleteButton) {
 		$this.formelement.find(".delete-file-button").hide();
+	}
+
+	if(!field.upload || !field.upload.managePath) {
+		$this.formelement.find(".manage-file-button").hide();
 	}
 
 	this.uploader = new AjaxUpload("#" + this.element.id, {
@@ -56,17 +74,18 @@ function FileUpload(form, field, formelement, url, size, types) {
 				that.abort();
 			});
 			$($this.element).append('<div class="loading"></div>');
+            $this.form.setLeaveCheck(true);
 		},
 		dragInDocument: function() {
-			$($this.element).addClass("active");
+			$($this.element).addClass("upload-active");
 		},
 		dragLeaveDocument: function() {
-			$($this.element).removeClass("active");
+			$($this.element).removeClass("upload-active");
 			$($this.element).removeClass("beforeDrop");
 		},
 
 		dragOver: function() {
-			$($this.element).addClass("active");
+			$($this.element).addClass("upload-active");
 			$($this.element).addClass("beforeDrop");
 		},
 
@@ -118,27 +137,37 @@ function FileUpload(form, field, formelement, url, size, types) {
 				} else {
 					$this.infoZone.html('<div class="error">An Error occured. '+err+'</div>');
 				}
+				throw err;
 			}
 		},
 
 		updateFile: function(data) {
 			if(data == null) {
 				$this.formelement.find("input.FileUploadValue").val("");
-				$($this.element).find("img").attr({
+				$($this.fieldElement).find(".img img").attr({
 					"src": $this.defaultIcon,
 					"alt": "",
 					"style": ""
 				});
-				$($this.element).find("a").removeAttr("href");
-				$($this.element).find("span").html("");
+				$this.fieldElement.find(".upload-link").removeAttr("href");
+				$this.fieldElement.find(".filename").html("");
 				$this.formelement.find(".delete-file-button").hide();
+				$this.formelement.find(".manage-file-button").hide();
+				$this.formelement.find(".image-source-preview-img, .image-preview-img").removeAttr("src");
 
 				$this.field.upload = null;
+				$this.fieldElement.find(".image-area").removeClass("with-upload");
 			} else if(data.status == 0) {
-				$this.infoZone.html('<div class="error">'+data.error+'</div>');
+				if(data.error) {
+					$this.infoZone.html('<div class="error">' + data.error + '</div>');
+				}
 			} else {
 				if(field.showDeleteButton) {
-					$this.formelement.find(".delete-file-button").show();
+					$this.fieldElement.find(".delete-file-button").show();
+				}
+
+				if(data.file.managePath) {
+					$this.fieldElement.find(".manage-file-button").attr("href", data.file.managePath).show();
 				}
 
 				$this.field.upload = data.file;
@@ -152,16 +181,30 @@ function FileUpload(form, field, formelement, url, size, types) {
 					this.updateIcon(data.file.icon);
 				}
 				if(data.file.path)
-					$($this.element).find("a").attr("href", data.file.path);
+					$this.fieldElement.find(".upload-link").attr("href", data.file.path);
 				else
-					$($this.element).find("a").removeAttr("href");
-				$($this.element).find("span").html(data.file.name);
+					$this.fieldElement.find(".upload-link").removeAttr("href");
+				$this.fieldElement.find(".filename").html(data.file.name);
 				$this.destInput.val(data.file.realpath);
+				$this.fieldElement.find(".image-area").addClass("with-upload");
+
+				if(data.file.imageHeight400) {
+					$this.formelement.find(".image-source-preview-img, .image-preview-img").css({
+						width: "",
+						height: ""
+					}).attr({
+						"src": data.file.imageHeight400,
+						"data-retina": null
+					});
+				}
+				if(data.file.sourceImageHeight400) {
+					$this.formelement.find(".image-source-preview-img").attr("src", data.file.sourceImageHeight400);
+				}
 			}
 		},
 
 		updateIcon: function(icon) {
-			$($this.element).find("img").attr("src", icon);
+			$($this.element).find(".img img").attr("src", icon);
 		},
 
 		failSize: function(i) {
@@ -182,3 +225,5 @@ function FileUpload(form, field, formelement, url, size, types) {
 
 	return this;
 }
+
+FileUpload.hasAsked = false;

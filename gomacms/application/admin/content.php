@@ -34,7 +34,7 @@ class contentAdmin extends LeftAndMain {
     /**
      * models this admin-panel manages
      */
-    public $models = array("pages");
+    public $model = "pages";
 
     static $icon = "templates/images/content.png";
 
@@ -283,17 +283,14 @@ class contentAdmin extends LeftAndMain {
         $controller->selectModel($model, true);
         $form = new Form($controller, "add_page");
 
-        if (isset($this->request->get_params["parentid"]) && $this->request->get_params["parentid"] != 0) {
-            $form->setModel(new Page(array(
-                "parenttype" => "subpage",
-                "parentid"   => $this->request->get_params["parentid"]
-            )));
+        if (isset($this->request->get_params["parentid"]) && $this->request->get_params["parentid"]) {
+            $model->parenttype = "subpage";
+            $model->parentid = $this->request->get_params["parentid"];
         } else {
-            $form->setModel(new Page(array(
-                "parenttype" => "root",
-                "parentid"   => 0
-            )));
+            $model->parenttype = "root";
         }
+
+        $form->setModel($model);
 
         $form->useStateData = true;
 
@@ -377,9 +374,11 @@ class contentAdmin extends LeftAndMain {
      *
      * @param array $data
      * @param FormAjaxResponse $response
+     * @param Form $form
+     * @param Controller $controller
      * @return FormAjaxResponse
      */
-    public function ajaxSaveGenerate($data, $response)
+    public function ajaxSaveGenerate($data, $response, $form, $controller)
     {
         $data["mainbartitle"] = $data["title"];
         $value = PageUtils::cleanPath($data["title"]);
@@ -397,7 +396,7 @@ class contentAdmin extends LeftAndMain {
 
         $data["path"] = $current;
 
-        return $this->ajaxSave($data, $response);
+        return $this->ajaxSave($data, $response, $form, $controller);
     }
 
     /**

@@ -27,8 +27,15 @@ class ImageUploadField extends FileUpload
 	/**
 	 * @var array
 	 */
+	public $url_handlers = array(
+		"getResizeUrls/\$height"	=> "getResizeUrls"
+	);
+
+	/**
+	 * @var array
+	 */
 	public $allowed_actions = array(
-		"setCropInfo"
+		"setCropInfo", "getResizeUrls"
 	);
 
 	/**
@@ -42,6 +49,21 @@ class ImageUploadField extends FileUpload
 	protected $widgetTemplate = "form/ImageUploadWidget.html";
 
 	/**
+	 * @var double|null
+	 */
+	protected $aspect = null;
+
+	/**
+	 * advanced mode means, that aspect ratio is used.
+	 *
+	 * @return $this
+	 */
+	public function enableAdvancedMode() {
+		$this->template = "form/ImageUpload.html";
+		return $this;
+	}
+
+	/**
 	 * @param FormFieldRenderData $info
 	 * @param bool $notifyField
 	 */
@@ -51,6 +73,8 @@ class ImageUploadField extends FileUpload
 
 		$info->addJSFile("system/libs/thirdparty/jcrop/jquery.Jcrop.js");
 		$info->addJSFile("system/form/imageUpload.js");
+		$info->addJSFile("system/libs/tabs/tabs.js");
+		$info->addCSSFile("system/templates/css/tabs.css");
 		$info->addCSSFile("system/libs/thirdparty/jcrop/jquery.Jcrop.css");
 
 		$info->getRenderedField()->append(
@@ -58,8 +82,24 @@ class ImageUploadField extends FileUpload
 		);
 	}
 
+	/**
+	 * @param null $fieldErrors
+	 * @return $this
+	 */
+	public function exportBasicInfo($fieldErrors = null)
+	{
+		return parent::exportBasicInfo($fieldErrors)->setAspect($this->aspect);
+	}
+
+	/**
+	 * @return string
+	 */
 	public function js()
 	{
+		if($this->isDisabled()) {
+			return parent::js();
+		}
+
 		return parent::js() . '
 			$(function(){
 				new ImageUploadController(field, '.var_export($this->externalURL() . "/setCropInfo" . URLEND, true).')
@@ -75,7 +115,7 @@ class ImageUploadField extends FileUpload
 			throw new BadRequestException("You need to use POST.");
 		}
 
-		if(!is_a($this->value, "ImageUploads")) {
+		if(!is_a($this->getModel(), "ImageUploads")) {
 			throw new InvalidArgumentException("Value is not type of ImageUpload.");
 		}
 
@@ -87,7 +127,7 @@ class ImageUploadField extends FileUpload
 		}
 
 		/** @var ImageUploads $image */
-		$image = $this->value;
+		$image = $this->getModel();
 
 		if($this->getParam("useSource") && $this->getParam("useSource") != "false") {
 			if(!$image->sourceImage) {
@@ -103,7 +143,14 @@ class ImageUploadField extends FileUpload
 			$upload = $image->addImageVersionBySizeInPx($this->getParam("thumbLeft"), $this->getParam("thumbTop"), $this->getParam("thumbWidth"), $this->getParam("thumbHeight"));
 		}
 
-		$this->value = $upload;
+        // cleanup
+        if($this->getModel()->sourceImage && $this->getModel()->id != $upload->id) {
+            if($this->getModel()->hasNoLinks()) {
+                $this->getModel()->remove(true);
+            }
+        }
+
+		$this->model = $upload;
 
 		return new JSONResponseBody(array(
 			"status" => 1,
@@ -111,27 +158,73 @@ class ImageUploadField extends FileUpload
 		));
 	}
 
-	/**
+    /**
+     * @return ImageUploads|null
+     */
+    public function getModel()
+    {
+        $model = parent::getModel();
+
+        if ($model &&
+            isset($this->getRequest()->post_params[$this->PostName() . "_thumbheight"],
+            $this->getRequest()->post_params[$this->PostName() . "_thumbwidth"],
+            $this->getRequest()->post_params[$this->PostName() . "_thumbleft"],
+            $this->getRequest()->post_params[$this->PostName() . "_thumbtop"])
+        && $this->getRequest()->post_params[$this->PostName() . "_thumbheight"] != -1) {
+            if($model->sourceImage) {
+                $model = $model->sourceImage->addImageVersionBySizeInPx(
+                    $this->getRequest()->post_params[$this->PostName() . "_thumbleft"],
+                    $this->getRequest()->post_params[$this->PostName() . "_thumbtop"],
+                    $this->getRequest()->post_params[$this->PostName() . "_thumbwidth"],
+                    $this->getRequest()->post_params[$this->PostName() . "_thumbheight"]
+                );
+            }
+        }
+
+        return $model;
+    }
+
+    /**
 	 * @param Exception $e
 	 * @return string
 	 * @throws Exception
 	 */
 	public function handleException($e) {
-		if(strtolower($this->request->getParam("action")) == "setcropinfo") {
-			if(method_exists($e, "http_status")) {
-				HTTPResponse::setResHeader($e->http_status());
-			} else {
-				HTTPResponse::setResHeader(500);
-			}
-
-			return json_encode(array(
+		if(in_array($this->request->getParam("action"), $this->allowed_actions)) {
+			return GomaResponse::create(null, JSONResponseBody::create(array(
 				"class" => get_class($e),
 				"errstring" => $e->getMessage(),
 				"code" => $e->getCode()
-			));
+			)))->setStatus(
+				method_exists($e, "http_status") ?
+					$e->http_status() :
+					500
+			);
 		}
 
 		return parent::handleException($e);
+	}
+
+	/**
+	 * gets resize-urls.
+	 */
+	public function getResizeUrls() {
+		if($this->getParam("height") < 1) {
+			throw new InvalidArgumentException();
+		}
+
+		if(!$this->getModel()) {
+			return new JSONResponseBody(null);
+		}
+		/** @var ImageUploads $image */
+		$image = $this->getModel();
+		$data = array(
+			"url" => $image->getResizeUrl(null, $this->getParam("height")),
+			"sourceUrl" => $image->sourceImage ? $image->sourceImage->getResizeUrl(null, $this->getParam("height")) :
+				$image->getResizeUrl(null, $this->getParam("height"))
+		);
+
+		return new JSONResponseBody($data);
 	}
 
 	/**
@@ -140,5 +233,27 @@ class ImageUploadField extends FileUpload
 	protected function createsRenderDataClass()
 	{
 		return ImageFileUploadRenderData::create($this->name, $this->classname, $this->ID(), $this->divID());
+	}
+
+	/**
+	 * @return float|null
+	 */
+	public function getAspect()
+	{
+		return $this->aspect;
+	}
+
+	/**
+	 * @param float|null $aspect
+	 * @return $this
+	 */
+	public function setAspect($aspect)
+	{
+		if(!is_null($aspect) && !RegExpUtil::isDouble($aspect)) {
+			throw new InvalidArgumentException("Double or null expected.");
+		}
+
+		$this->aspect = is_null($aspect) ? $aspect : (double) $aspect;
+		return $this;
 	}
 }

@@ -29,7 +29,7 @@ class RatingController extends Controller
             $ratingRecord->rators = serialize(array_merge(array($this->request->getRemoteAddr()), (array)unserialize($ratingRecord->rators)));
             $ratingRecord->writeToDB(false, true);
 
-            if ($this->getRequest()->isJSResponse()) {
+            if ($this->getRequest()->canReplyJavaScript()) {
                 $response = new AjaxResponse;
                 $response->exec('$("#rating_' . $name . '").html("' . convert::raw2js($ratingRecord->stars) . '<div class=\"message\">' . lang("exp_gomacms_rating.thanks_for_voting") . '</div>");');
 
@@ -38,7 +38,7 @@ class RatingController extends Controller
                 return $this->redirectback();
             }
         } else {
-            if ($this->getRequest()->isJSResponse()) {
+            if ($this->getRequest()->canReplyJavaScript()) {
                 $response = new AjaxResponse;
                 $response->exec("alert('" . lang("exp_gomacms_rating.already_rated") . "');");
 

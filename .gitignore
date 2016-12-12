@@ -2,6 +2,9 @@
 .DS_Store
 Thumbs.db
 
+system/libs/thirdparty/phpqrcode/cache
+system/libs/thirdparty/phpqrcode/cache/*
+
 # Aptana
 .settings/
 .project
@@ -14,13 +17,6 @@ nbproject/
 .index-db
 .htaccess
 web.config
-
-# Goma Core
-system/installer/log_*****/*
-system/temp/*
-system/installer/log/*
-system/installer/temp/*
-system/version.php
 
 # Goma Application
 gomacms/*
@@ -55,3 +51,5 @@ tpl/
 
 .idea
 .idea/*
+system/version.php
+system/installer/version.php

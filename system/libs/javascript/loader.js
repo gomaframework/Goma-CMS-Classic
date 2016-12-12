@@ -20,18 +20,14 @@ if (window.console === undefined) {
 
 // some regular expressions
 var json_regexp = /^\(?\{/,
-	html_regexp = new RegExp("<body");
+    html_regexp = new RegExp("<body");
 
-if (goma.ui === undefined) {
+    if (goma.ui === undefined) {
 	goma.ui = (function ($) {
 
 		'use strict';
 
-		var external_regexp = /https?\:\/\/|ftp\:\/\//,
-			run_regexp = /\/[^\/]*(script|raw)[^\/]+\.js/,
-			load_alwaysLoad = /\/[^\/]*(data)[^\/]+\.js/,
-			http_regexp = /https?\:\/\//,
-			loadSubscribers = [],
+		var run_regexp = /\/[^\/]*(script|raw)[^\/]+\.js/,
 			prefixes = ["webkit", "moz", "ms", "o"],
 
 			/**
@@ -81,27 +77,59 @@ if (goma.ui === undefined) {
 				return deferred.promise();
 			},
 
-		// retina support
+            CheckForDomUpdate = function() {
+                RetinaReplace();
+                checkForEndlessContainer();
+            },
+
 			RetinaReplace = function () {
-				$("img").each(function () { //.on("load", "img", function () {
-					var $this = $(this),
-						img = new Image();
+                if (goma.ui.getDevicePixelRatio() > 1.5) {
+                    $("img").each(function () {
+                        var $this = $(this),
+                            img = new Image();
 
-					if ($this.attr("data-retined") !== "complete" && $this.attr("data-retina") && $this.width() !== 0 && $this.height() !== 0) {
-						if (goma.ui.IsImageOk($(this).get(0))) {
-							img.onload = function () {
-								$this.css("width", $this.width());
-								$this.css("height", $this.height());
-								$this.attr("src", $this.attr("data-retina"));
-								img = null;
-							};
-							img.src = $this.attr("data-retina");
-							$this.attr("data-retined", "complete");
-						}
-					}
-				});
-
+                        if ($this.attr("data-retined") !== "complete" && $this.attr("data-retina") && $this.width() !== 0 && $this.height() !== 0) {
+                            if (goma.ui.IsImageOk($(this).get(0))) {
+                                img.onload = function () {
+                                    $this.css("width", $this.width());
+                                    $this.css("height", $this.height());
+                                    $this.attr("src", $this.attr("data-retina"));
+                                    img = null;
+                                };
+                                img.src = $this.attr("data-retina");
+                                $this.attr("data-retined", "complete");
+                            }
+                        }
+                    });
+                }
 			},
+
+			checkForEndlessContainer = function() {
+                $(".endless-wrapper").each(function(){
+                    if(!$(this).hasClass("endless-appended")) {
+                        $(this).addClass("endless-appended");
+
+                        goma.ui.loadAsync("endlessScrolling").done(function () {
+                            console.log("add");
+                            var opts = {
+                                baseElement: $(this),
+                                endlessElement: ".endless-end"
+                            };
+                            if ($(this).css("overflow") == "auto" || $(this).css("overflow") == "scroll") {
+                                opts.scrollElement = $(this);
+                            } else if ($(this).attr("data-scroll-element") && $($(this).attr("data-scroll-element")).length > 0) {
+                                opts.scrollElement = $($(this).attr("data-scroll-element"));
+                            }
+
+                            if ($(this).attr("data-wrapper")) {
+                                opts.urlWrapperElement = $(this).attr("data-wrapper");
+                            }
+
+                            new endlessScroller(opts);
+                        }.bind(this));
+                    }
+                });
+            },
 
 			flexBoxes = [],
 
@@ -109,7 +137,6 @@ if (goma.ui === undefined) {
 			 * this is the algorythm to calculate the 100% size of a box.
 			 */
 			updateFlexHeight = function ($container, setHeight) {
-
 				var maxHeight,
 					inFloat = false;
 
@@ -156,7 +183,6 @@ if (goma.ui === undefined) {
 				});
 
 				// calculate the padding and border
-				var paddingMargin = ($container.outerHeight(true) - $container.height());
 				maxHeight = maxHeight - ($container.outerHeight(true) - $container.height());
 
 				if(setHeight !== false && ($container.hasClass("flexbox") || $container.css("overflow").toLowerCase() == "auto" || $container.css("overflow").toLowerCase() == "scroll" || $container.css("overflow").toLowerCase() == "hidden"))
@@ -179,16 +205,14 @@ if (goma.ui === undefined) {
 				DocRoot: ($(".documentRoot").length === 1) ? $(".documentRoot") : $("body")
 			});
 
-			if (goma.ui.getDevicePixelRatio() > 1.5) {
-				RetinaReplace();
-				// add retina-updae-event
-				document.addEventListener && document.addEventListener("DOMContentLoaded", RetinaReplace, false);
-				if (/WebKit/i.test(navigator.userAgent)) {
-					setInterval(function () {
-						/loaded|complete/.test(document.readyState) && RetinaReplace();
-					}, 100);
-				}
-			}
+            CheckForDomUpdate();
+            // add retina-updae-event
+            document.addEventListener && document.addEventListener("DOMContentLoaded", CheckForDomUpdate, false);
+            if (/WebKit/i.test(navigator.userAgent)) {
+                setInterval(function () {
+                    /loaded|complete/.test(document.readyState) && requestAnimationFrame(CheckForDomUpdate);
+                }, 250);
+            }
 
 			$(window).bind('beforeunload', goma.ui.fireUnloadEvents);
 
@@ -196,12 +220,6 @@ if (goma.ui === undefined) {
 				var i;
 				for ( i in flexBoxes) {
 					updateFlexHeight($(flexBoxes[i]));
-				}
-			});
-
-			window.hammer = $(document.body).hammer({
-				stop_browser_behavior: {
-					userSelect: ""
 				}
 			});
 		});
@@ -250,6 +268,16 @@ if (goma.ui === undefined) {
 					goma.ui.mainContent = $(node);
 				}
 			},
+
+            loadHammer: function() {
+                return goma.ui.loadAsync("hammer").done(function(){
+                    window.hammer = $(document.body).hammer({
+                        stop_browser_behavior: {
+                            userSelect: ""
+                        }
+                    });
+                });
+            },
 
 			/**
 			 * enables css-transforms on a specified element with specified time and easing.
@@ -369,9 +397,7 @@ if (goma.ui === undefined) {
 			 *@name updateRetina
 			 */
 			updateRetina: function () {
-				if (goma.ui.getDevicePixelRatio() > 1.5) {
-					RetinaReplace();
-				}
+				RetinaReplace();
 			},
 
 			/**
@@ -407,7 +433,6 @@ if (goma.ui === undefined) {
 			/**
 			 * binds unload-event on specfic html-node
 			 *
-			 *@name bindUnloadEvent
 			 *@param string - selector for event-binding
 			 *@param object - data //optional
 			 *@param function - handler
@@ -462,66 +487,21 @@ if (goma.ui === undefined) {
 			 *@name setProgress
 			 */
 			setProgress: function (percent, slowp) {
-				var deferred = $.Deferred(),
-
-					slow = (slowp === undefined) ? false : slowp,
-
-					duration = (slow && percent != 100) ? 5000 : 500,
-					i;
-
-				if ($("#loadingBar").length == 0) {
-					$("body").append('<div id="loadingBar"></div>');
-					$("#loadingBar").css("width", 0);
-				}
-
-				goma.ui.progress = percent;
-				$("#loadingBar").stop().css({opacity: 1}).animate({
-					width: percent + "%"
-				}, {
-					duration: duration,
-					queue: false,
-					complete: function () {
-						if (percent != 100) {
-							deferred.resolve();
-						}
-					},
-					fail: function () {
-						if (percent != 100) {
-							deferred.reject();
-						}
-					}
-				});
-
-				if (percent == 100) {
-					$("#loadingBar").animate({
-						opacity: 0
-					}, {
-						duration: 1000,
-						queue: false,
-						complete: function () {
-							$("#loadingBar").css({width: 0, opacity: 1});
-							deferred.resolve();
-						},
-						fail: function () {
-							deferred.reject();
-						}
-					});
-					goma.ui.progress = undefined;
-				}
-
-				for (i in loadSubscribers) {
-					loadSubscribers[i](percent, slow);
-				}
-
-				return deferred.promise();
+                var deferred = $.Deferred();
+                goma.ui.loadAsync("ajaxLoader").done(function(){
+                    goma.ui.ajaxloader.setProgress(percent, slowp).done(deferred.resolve).fail(deferred.reject);
+                });
+                return deferred.promise();
 			},
+
+            loadSubscribers: [],
 
 			/**
 			 * registers to the progress-event.
 			 */
 			onProgress: function (fn) {
 				if (typeof fn == "function") {
-					loadSubscribers.push(fn);
+					goma.ui.loadSubscribers.push(fn);
 				}
 			},
 
@@ -532,62 +512,11 @@ if (goma.ui === undefined) {
 			 *@access public
 			 */
 			renderResponse: function (html, xhr, node, object, checkUnload, progress) {
-				var deferred = $.Deferred(),
-					method;
-
-				node = ($(node).length > 0) ? $(node) : goma.ui.getContentRoot();
-
-				if (checkUnload !== false) {
-					var data = goma.ui.fireUnloadEvents(node);
-					if (typeof data == "string") {
-						if (!confirm(lang("unload_lang_start") + data + lang("unload_lang_end"))) {
-							setTimeout(function () {
-								deferred.reject("unload");
-							}, 1);
-							return deferred.promise();
-						}
-					}
-				}
-
-				goma.ui.loadResources(xhr, progress).done(function () {
-					if (xhr === undefined) {
-						throw new Error("xhr is not defined but required param.");
-					}
-
-					var content_type = xhr.getResponseHeader("content-type"),
-
-						regexp = new RegExp("<body"),
-						id = randomString(5);
-
-					if (content_type.indexOf("text/javascript") != -1) {
-						if (object !== undefined) {
-							var method = new Function(html);
-							method.call(object);
-						} else {
-							eval_global(html);
-						}
-						RunAjaxResources(xhr);
-						return true;
-					} else if (content_type == "text/x-json" && json_regexp.test(html)) {
-						RunAjaxResources(xhr);
-						return false;
-					}
-
-					if (regexp.test(html)) {
-						window.top[id + "_html"] = html;
-						node.html('<iframe src="javascript:document.write(top.'+id+'_html);" height="500" width="100%" name="'+id+'" frameborder="0"></iframe>');
-					} else {
-						node.html(html);
-					}
-
-					RunAjaxResources(xhr);
-
-					deferred.resolve();
-				}).fail(function (err) {
-					deferred.reject(err);
-				});
-
-				return deferred.promise();
+                var deferred = $.Deferred();
+                goma.ui.loadAsync("ajaxLoader").done(function(){
+                    goma.ui.ajaxloader.renderResponse(html, xhr, node, object, checkUnload, progress).done(deferred.resolve).fail(deferred.reject);
+                });
+                return deferred.promise();
 			},
 
 			/**
@@ -630,155 +559,11 @@ if (goma.ui === undefined) {
 			},
 
 			loadResources: function (request, progress) {
-
-				var deferred = $.Deferred(),
-
-					css = request.getResponseHeader("X-CSS-Load"),
-					js = request.getResponseHeader("X-JavaScript-Load"),
-					base_uri = request.getResponseHeader("x-base-uri"),
-				//root_path = request.getResponseHeader("x-root-path"),
-					cssfiles = (css != null) ? css.split(";") : [],
-					jsfiles = (js != null) ? js.split(";") : [],
-
-					perProgress = Math.round((50 / (jsfiles.length + cssfiles.length))),
-					p = progress,
-
-					i = 0,
-				// we create a function which we call for each of the files and it iterates through the files
-				// if it finishes it notifies the deferred object about the finish
-					loadFile = function () {
-
-						// i is for both js and css files
-						// first we load js files and then css, cause when js files fail we can't show the page anymore, so no need of loading css is needed
-						if (i >= jsfiles.length) {
-
-							// get correct index for css-files
-							var a = i - jsfiles.length;
-							if (a < cssfiles.length) {
-
-								var file = cssfiles[a],
-									loadfile = (!http_regexp.test(file)) ? base_uri + file : file;
-
-								// scope to don't have problems with data
-								(function (f) {
-									var file = f;
-									if (!external_regexp.test(file) && file != "") {
-										if (goma.ui.CSSFiles[file] === undefined) {
-											return $.ajax({
-												cache: true,
-												url: loadfile,
-												noRequestTrack: true,
-												dataType: "html"
-											}).done(function (css) {
-												if (goma.ui.progress !== undefined && p) {
-													goma.ui.setProgress(goma.ui.progress + perProgress);
-												}
-
-												// patch uris
-												var base = file.substring(0, file.lastIndexOf("/"));
-												//css = css.replace(/url\(([^'"]+)\)/gi, 'url(' + root_path + base + '/$2)');
-												//css = css.replace(/url\(['"]?([^'"#\>\!\s]+)['"]?\)/gi, 'url(' + base_uri + base + '/$1)');
-
-												goma.ui.CSSFiles[file] = css;
-												goma.ui.CSSIncluded[file] = true;
-
-												$("head").prepend('<style type="text/css" id="css_'+file.replace(/[^a-zA-Z0-9_\-]/g, "_")+'">'+css+'</style>');
-
-												i++;
-												loadFile();
-											}).fail(function () {
-												deferred.reject();
-											});
-										} else if (goma.ui.CSSIncluded[file] === undefined) {
-											$("head").prepend('<style type="text/css" id="css_'+file.replace(/[^a-zA-Z0-9_\-]/g, "_")+'">'+CSSLoaded[file]+'</style>');
-											goma.ui.CSSIncluded[file] = true;
-										}
-									} else {
-										goma.ui.CSSFiles[file] = css;
-										goma.ui.CSSIncluded[file] = true;
-										if ($("head").html().indexOf(file) != -1) {
-											$("head").prepend('<link rel="stylesheet" href="'+file+'" type="text/css" />');
-										}
-									}
-
-									i++;
-									loadFile();
-								})(file);
-							} else {
-								setTimeout(function () {
-									deferred.notify("loaded");
-								}, 10);
-							}
-						} else {
-							var file = jsfiles[i],
-								loadfile = (!http_regexp.test(file)) ? base_uri + file : file;
-
-							if (file != "") {
-								// check for internal cache
-								// we don't load modenizr, because it causes trouble sometimes if you load it via AJAX
-								if (goma.ui.JSFiles[file] === undefined && goma.ui.JSIncluded[file] === undefined && !file.match(/modernizr\.js/)) {
-
-									// we create a new scope for this to don't have problems with overwriting vars and then callbacking with false ones
-									return (function (file) {
-										$.ajax({
-											cache: true,
-											url: loadfile,
-											noRequestTrack: true,
-											dataType: "html"
-										}).done(function (js) {
-											if (goma.ui.progress !== undefined && p) {
-												goma.ui.setProgress(goma.ui.progress + perProgress);
-											}
-											// build into internal cache
-											goma.ui.JSFiles[file] = js;
-											i++;
-											loadFile();
-										}).fail(function () {
-											deferred.reject();
-										});
-									})(file);
-								} else {
-									if (goma.ui.progress !== undefined && p) {
-										goma.ui.setProgress(goma.ui.progress + perProgress);
-									}
-
-									i++;
-									return loadFile();
-								}
-							} else {
-								i++;
-								loadFile();
-							}
-						}
-					};
-
-				// init loading
-				loadFile();
-
-
-				deferred.progress(function () {
-					var i,
-						file;
-
-					for (i in jsfiles) {
-						file = jsfiles[i];
-						if (((!run_regexp.test(file) && goma.ui.JSIncluded[file] !== true) || load_alwaysLoad.test(file)) && goma.ui.JSFiles[file] !== undefined) {
-							goma.ui.JSIncluded[file] = true;
-							eval_global(goma.ui.JSFiles[file]);
-						}
-					}
-
-					setTimeout(function () {
-						deferred.resolve();
-					}, 10);
-
-					if (!respond.mediaQueriesSupported) {
-						respond.update();
-					}
-
-				});
-
-				return deferred.promise();
+                var deferred = $.Deferred();
+                goma.ui.loadAsync("ajaxLoader").done(function(){
+                    goma.ui.ajaxloader.loadResources(request, progress).done(deferred.resolve).fail(deferred.reject);
+                });
+                return deferred.promise();
 			},
 
 			/**
@@ -857,132 +642,12 @@ if (goma.ui === undefined) {
 	var gloader = {load: goma.ui.load, loadAsync: goma.ui.loadAsync};
 }
 
-if (goma.help === undefined) {
-	goma.help = (function ($) {
-
-		'use strict';
-
-		$(function () {
-			if (goma.help.link == null) {
-				goma.help.setHelpLink($("a.help"));
-			}
-		});
-
-		return {
-			link: null,
-			setHelpLink: function (node) {
-				if ($(node).length > 0) {
-					goma.help.link = $(node);
-					$(node).css("display", "none");
-					if ($(node).parent().hasClass("help-wrapper")) {
-						$(node).parent().css("display", "none");
-					}
-				} else {
-					goma.help.link = null;
-				}
-			},
-
-			initWithParams: function (params) {
-				$(function () {
-					var url = root_path + BASE_SCRIPT + "system/help?";
-
-					if (params.yt !== undefined) {
-						url += "yt=" + escape(params.yt);
-					}
-
-					if (params.wiki !== undefined) {
-						url += "&wiki=" + escape(params.wiki);
-					}
-
-					if ($(goma.help.link).length > 0) {
-						goma.help.link.attr("href", url);
-						goma.help.link.attr("rel", "dropdownDialog");
-						$(goma.help.link).css("display", "");
-						if ($(goma.help.link).parent().hasClass("help-wrapper")) {
-							$(goma.help.link).parent().css("display", "");
-						}
-					}
-				});
-			}
-		};
-	})(jQuery);
-}
-
 if (goma.ENV === undefined) {
 	goma.ENV = (function () {
 		return {
 			"jsversion": "2.0"
 		};
 	})();
-}
-
-if (goma.Pusher === undefined) {
-	goma.Pusher = (function () {
-		'use strict';
-
-		var js = "//js.pusher.com/3.0/pusher.min.js";
-		return {
-
-			init: function (pub_key, options) {
-				goma.Pusher.key = pub_key;
-				goma.Pusher.options = options;
-			},
-
-			subscribe: function (id, fn) {
-				console.log && console.log("subscribe " + id);
-				if (!goma.Pusher.channel(id)) {
-					var cid = id;
-					if (cid === undefined) {
-						return false;
-					}
-
-					if (fn === undefined) {
-						//throw new Error("subscribing without function is not supported");
-						fn = function(){};
-					}
-
-					if (goma.Pusher.key !== undefined) {
-						if (goma.Pusher.pusher !== undefined) {
-							fn.apply(goma.Pusher.pusher.subscribe(id));
-						} else {
-							$.getScript(js, function () {
-								goma.Pusher.pusher = new Pusher(goma.Pusher.key, goma.Pusher.options);
-								Pusher.channel_auth_endpoint = root_path + 'pusher/auth';
-								goma.Pusher.pusher.connection.bind('connected', function() {
-									fn.apply(goma.Pusher.pusher.subscribe(cid));
-								});
-							});
-							return true;
-						}
-					} else {
-						return false;
-					}
-				} else {
-					if (fn !== undefined) {
-						fn.apply(goma.Pusher.channel(id));
-					}
-
-					return true;
-				}
-			},
-			unsubscribe: function (id) {
-				if (goma.Pusher.pusher !== undefined) {
-					goma.Pusher.pusher.unsubscribe(id);
-				}
-			},
-			channel: function (id) {
-				if (id === undefined) {
-					id = "presence-goma";
-				}
-
-				if (goma.Pusher.pusher !== undefined) {
-					return goma.Pusher.pusher.channel(id);
-				}
-
-				return false;
-			}
-		};
-	})(jQuery);
 }
 
 // prevent from being executed twice
@@ -1099,33 +764,9 @@ if (window.loader === undefined) {
 				$(".windowzindex").parent().css('z-index', 900);
 				$(this).parent().css("z-index", 901);
 			});
-			if (!Modernizr.input.placeholder) {
-				// html5 placeholder
-				$("input").each(
-					function () {
-						if (($(this).attr("type") == "text" || $(this).attr("type") == "search") && ($(this).val()=="" || $(this).val() == $(this).attr("placeholder")) && $(this).attr("placeholder")!="") {
-
-							$(this).val($(this).attr("placeholder"));
-							$(this).css("color", "#999");
-
-							$(this).focus(function () {
-								if ($(this).val()==$(this).attr("placeholder")) {
-									$(this).val("");
-								}
-								$(this).css("color", "");
-							});
-							$(this).blur(function () {
-								if ($(this).val()=="") {
-									$(this).val($(this).attr("placeholder"));
-									$(this).css("color", "#999");
-
-								}
-							});
-
-						}
-					}
-				);
-			};
+			if (!Modernizr.placeholder) {
+				goma.ui.loadAsync("placeholderPolyfill");
+			}
 
 			// scroll fix
 			$(document).on("click", "a", function () {
@@ -1231,7 +872,6 @@ if (window.loader === undefined) {
 		 *@param node
 		 */
 		w.unbindFromFormSubmit = function (node) {
-
 			// first make sure it works!
 			var active = false;
 			$(node).focus(function () {
@@ -1261,8 +901,7 @@ if (window.loader === undefined) {
 					return false;
 				}
 			});
-		}
-
+		};
 
 		/**
 		 * if you have a dropdown and you want to close it on click on the document, but not on the dropdown, use this function
@@ -1318,7 +957,7 @@ if (window.loader === undefined) {
 					}
 				} catch(e) {}
 			});
-		}
+		};
 		w.callOnDocumentClick = w.CallonDocumentClick;
 
 		// jQuery Extensions
@@ -1421,7 +1060,7 @@ if (window.loader === undefined) {
 		/* API to run earlier Requests with a bit different options */
 		w.runLastRequest = function (data) {
 			return w.runPreRequest(0, data);
-		}
+		};
 		w.runPreRequest = function (i, data) {
 			var a = self.request_history.length - 1 - parseInt(i);
 			var options = $.extend(self.request_history[a], data);
@@ -1447,13 +1086,13 @@ if (window.loader === undefined) {
 	// thanks to @url http://www.somacon.com/p355.php
 	String.prototype.trim = function () {
 		return this.replace(/^\s+|\s+$/g,"");
-	}
+	};
 	String.prototype.ltrim = function () {
 		return this.replace(/^\s+/,"");
-	}
+	};
 	String.prototype.rtrim = function () {
 		return this.replace(/\s+$/,"");
-	}
+	};
 
 	function randomString(string_length) {
 		var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
@@ -1508,7 +1147,7 @@ if (window.loader === undefined) {
 	{
 		var exdate=new Date();
 		exdate.setDate(exdate.getDate() + exdays);
-		var c_value=escape(value) + ((exdays==null) ? "" : "; expires="+exdate.toUTCString()) + "; path=/";
+		var c_value=encodeURIComponent(value) + ((exdays==null) ? "" : "; expires="+exdate.toUTCString()) + "; path=/";
 		document.cookie=c_name + "=" + c_value;
 	}
 
@@ -1522,7 +1161,7 @@ if (window.loader === undefined) {
 			x=x.replace(/^\s+|\s+$/g,"");
 			if (x==c_name)
 			{
-				return unescape(y);
+				return decodeURIComponent(y);
 			}
 		}
 	}
@@ -1592,18 +1231,24 @@ if (window.loader === undefined) {
 	}
 
 	var scrollToHash = function (hash) {
-		if ($("#" + hash).length > 0) {
-			var scrollPosition = $("#" + hash).offset().top;
+		var scrollPosition,
+			hashJqueryById = $("#" + hash);
+		if (hashJqueryById.length > 0) {
+			scrollPosition = hashJqueryById.offset().top;
 		} else if ($("a[name="+hash+"]").length > 0) {
-			var scrollPosition = $("a[name="+hash+"]").offset().top;
+			scrollPosition = $("a[name="+hash+"]").offset().top;
 		} else {
-			var scrollPosition = 0;
+			scrollPosition = 0;
 		}
 
 		scrollPosition = Math.round(scrollPosition);
 
 		if (scrollPosition != 0 && $("#frontedbar").length == 1) {
 			scrollPosition -= $("#frontedbar").height();
+		}
+
+		if (scrollPosition != 0 && $("#head").length == 1) {
+			scrollPosition -= $("#head").height();
 		}
 
 		var scroll = $(window).scrollTop();
@@ -1613,11 +1258,11 @@ if (window.loader === undefined) {
 		$("html, body").animate({
 			"scrollTop": scrollPosition
 		}, 200);
-	}
+	};
 
 	var now = function () {
 		return Math.round(+new Date()/1000);
-	}
+	};
 
 	/**
 	 * returns a string like 2 seconds ago

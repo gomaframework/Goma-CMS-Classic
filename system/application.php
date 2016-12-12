@@ -54,13 +54,15 @@ if (isset($_REQUEST["profile"]) || defined("PROFILE")) {
 // check if we are running on nginx without mod_rewrite
 if (isset($_SERVER["SERVER_SOFTWARE"]) && preg_match('/nginx/i', $_SERVER["SERVER_SOFTWARE"]) && !MOD_REWRITE) {
 	header("HTTP/1.1 500 Server Error");
-	die(file_get_contents(dirname(__FILE__) . "/templates/framework/nginx_no_rewrite.html"));
+	echo (file_get_contents(dirname(__FILE__) . "/templates/framework/nginx_no_rewrite.html"));
+	exit(2);
 }
 
 // check if we are running without mod-php-xml
 if (!class_exists("DOMDocument")) {
 	header("HTTP/1.1 500 Server Error");
-	die(file_get_contents(dirname(__FILE__) . "/templates/framework/no_php_xml.html"));
+	echo (file_get_contents(dirname(__FILE__) . "/templates/framework/no_php_xml.html"));
+	exit(3);
 }
 
 /* --- */
@@ -73,7 +75,7 @@ define("DEFAULT_TIMEZONE", "Europe/Berlin");
 /**
  * the language-directory
  */
-define('LANGUAGE_DIRECTORY', 'languages/');
+define('LANGUAGE_DIRECTORY', 'system/lang/');
 
 /**
  * you shouldn't edit anything below this if you don't know, what you do
@@ -121,6 +123,7 @@ if (PROFILE)
 	Profiler::mark("core_requires");
 
 // core
+require_once (FRAMEWORK_ROOT . 'core/CoreLibs/ExceptionManager.php');
 require_once (FRAMEWORK_ROOT . 'core/applibs.php');
 require_once (FRAMEWORK_ROOT . 'core/CoreLibs/StaticsManager.php');
 require_once (FRAMEWORK_ROOT . 'core/Object.php');
@@ -247,31 +250,5 @@ define("SYSTEM_TPL_PATH", "system/templates");
 
 // set timezone for security
 date_default_timezone_set(DEFAULT_TIMEZONE);
-
-if (!file_exists(ROOT . ".htaccess") && !file_exists(ROOT . "web.config")) {
-	writeServerConfig();
-}
-
-// some hacks for changes in .htaccess
-if (file_exists(ROOT . ".htaccess") && !strpos(file_get_contents(".htaccess"), "ErrorDocument 404")) {
-	if (!file_put_contents(ROOT . ".htaccess", "\nErrorDocument 404 " . ROOT_PATH . "system/application.php", FILE_APPEND)) {
-		die("Could not write .htaccess");
-	}
-}
-
-if (file_exists(ROOT . ".htaccess") && !strpos(file_get_contents(".htaccess"), "ErrorDocument 500")) {
-	if (!file_put_contents(ROOT . ".htaccess", "\nErrorDocument 500 " . ROOT_PATH . "system/templates/framework/500.html", FILE_APPEND)) {
-		die("Could not write .htaccess");
-	}
-}
-
-if (file_exists(ROOT . ".htaccess") && (strpos(file_get_contents(".htaccess"), " system"))) {
-	$contents = file_get_contents(ROOT . ".htaccess");
-	$contents = str_replace(' system', ' ' . ROOT_PATH . "system", $contents);
-	if (!file_put_contents(ROOT . ".htaccess", $contents)) {
-		die("Could not write .htaccess");
-	}
-	unset($contents);
-}
 
 loadApplication($application);

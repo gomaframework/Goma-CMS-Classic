@@ -134,7 +134,7 @@ class livecounter extends DataObject
 		self::setGomaCookies($user_identifier, $host);
 				
 		//self::onBeforeShutdownUsingLife();
-		register_shutdown_function(array("livecounter", "onBeforeShutdownUsingLife"));
+		Core::addToHook("onBeforeShutdown", array("livecounter", "onBeforeShutdownUsingLife"));
 		
 		self::checkForMigrationScript();
 	}
@@ -213,6 +213,10 @@ class livecounter extends DataObject
 	}
 
 	public static function onBeforeShutdownUsingLife() {
+		if(function_exists("ignore_user_abort")) {
+			ignore_user_abort(true);
+		}
+
 		GlobalSessionManager::globalSession()->stopSession();
 
 		if(isCommandLineInterface()) return;
@@ -447,15 +451,16 @@ class livecounter extends DataObject
 		
 		return $dataobject;
 	}
-	
+
 	/**
 	 * gets stats for the last x month
 	 *
-	 *@name statisticsByMonth
-	 *@access public
-	 *@param numeric - number of periods
-	 *@param numeric - length of a period in month
-	*/
+	 * @name statisticsByMonth
+	 * @access public
+	 * @param numeric - number of periods
+	 * @param numeric - length of a period in month
+	 * @return DataSet
+	 */
 	public static function statisticsByMonth($showcount = 10, $page = 1) {
 		if(!isset($page) || !preg_match('/^[0-9]+$/', $page) || $page < 1)
 			$page = 1;
@@ -606,6 +611,9 @@ class livecounter extends DataObject
 	}
 
 	public static function migrateStats() {
+		if(function_exists("ignore_user_abort")) {
+			ignore_user_abort(true);
+		}
 
 		$cacher = new Cacher("cron_for_migratev2");
 		$cacher->write("", 3600);

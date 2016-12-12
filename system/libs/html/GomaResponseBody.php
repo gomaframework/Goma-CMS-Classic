@@ -30,6 +30,11 @@ class GomaResponseBody extends gObject {
     protected $parseHTML = true;
 
     /**
+     * @var bool
+     */
+    protected $isFullPage = true;
+
+    /**
      * @param null $body
      * @return static
      */
@@ -135,4 +140,23 @@ class GomaResponseBody extends gObject {
         return $body;
     }
 
+    /**
+     * defines if this response is part of a full page.
+     * false means it should stand for itself.
+     *
+     * @return bool
+     */
+    public function isFullPage() {
+        return $this->isFullPage;
+    }
+
+    /**
+     * @param boolean $isFullPage
+     * @return $this
+     */
+    public function setIsFullPage($isFullPage)
+    {
+        $this->isFullPage = $isFullPage;
+        return $this;
+    }
 }

@@ -8,12 +8,13 @@ class DBField extends gObject implements IDataBaseField
 {
     /**
      * this var contains the value
-     *@ var mixed
+     * @var mixed
      */
     protected $value;
 
     /**
      * this field contains the field-name of this object
+     * @var string
      */
     protected $name;
 
@@ -29,48 +30,52 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * @param string $name
-     * @param string $value
+     * @param mixed $value
      * @param array $args
      */
     public function __construct($name, $value, $args = array())
     {
+        parent::__construct();
+
         $this->name = $name;
         $this->value = $value;
         $this->args = $args;
-        parent::__construct();
     }
 
     /**
      * sets the value
+     * @param mixed $value
+     * @return $this
      */
-    public function setValue($value)
-    {
+    public function setValue($value) {
         $this->value = $value;
+        return $this;
     }
     /**
      * gets the value
      */
-    public function getValue()
-    {
+    public function getValue() {
         return $this->value;
     }
+
     /**
      * sets the name
+     * @param string $name
+     * @return $this
      */
-    public function setName($name)
-    {
+    public function setName($name) {
         $this->name = $name;
+        return $this;
     }
     /**
      * gets the anme
      */
-    public function getName()
-    {
+    public function getName() {
         return $this->name;
     }
 
     /**
-     *
+     * @return mixed
      */
     public function raw()
     {
@@ -79,6 +84,7 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * get it as text
+     * @return string
      */
     public function text()
     {
@@ -87,6 +93,7 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * get it as text and correct  linebreaks
+     * @return string
      */
     public function textLines()
     {
@@ -95,6 +102,7 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * get this as url
+     * @return string
      */
     public function url()
     {
@@ -102,6 +110,7 @@ class DBField extends gObject implements IDataBaseField
     }
     /**
      * for js
+     * @return string
      */
     public function js()
     {
@@ -109,6 +118,7 @@ class DBField extends gObject implements IDataBaseField
     }
     /**
      * converts string to uppercase
+     * @return string
      */
     public function UpperCase()
     {
@@ -154,7 +164,7 @@ class DBField extends gObject implements IDataBaseField
     /**
      * this function uses more than one convert-method
      * @param array $methods
-     * @return string
+     * @return mixed
      */
     public function convertMulti($methods)
     {

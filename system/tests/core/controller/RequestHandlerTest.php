@@ -67,7 +67,7 @@ class TestableRequestHandler extends RequestHandler {
 		"testAction" => true
 	);
 
-	public function serve($content) {
+	public function serve($content, $body) {
 		return $content . 1;
 	}
 

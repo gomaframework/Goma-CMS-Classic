@@ -11,8 +11,12 @@
  * @version     2.2.8
  */
 class LeftAndMain extends AdminItem {
+    /**
+     * used to identify correct sort request.
+     */
+    const SESSION_KEY_SORT = "lam_sort_session";
 
-	/**
+    /**
 	 * the base template of the view
 	*/
 	public $baseTemplate = "admin/leftandmain.html";
@@ -287,11 +291,16 @@ class LeftAndMain extends AdminItem {
 	 *
 	 * @param array $data
 	 * @param FormAjaxResponse $response
+	 * @param Form $form
+	 * @param null $controller
+	 * @param bool $forceInsert
+	 * @param bool $forceWrite
+	 * @param bool $overrideCreated
 	 * @return FormAjaxResponse
 	 */
-	public function ajaxSave($data, $response, $form = null, $controller = null, $forceInsert = false, $forceWrite = false, $overrideCreated = false) {
+	public function ajaxSave($data, $response, $form, $controller, $forceInsert = false, $forceWrite = false, $overrideCreated = false) {
 		try {
-			$model = $this->save($data, 1, $forceInsert, $forceWrite, $overrideCreated);
+			$model = $this->save($data, 1, $forceInsert, $forceWrite, $overrideCreated, $form->getModel());
 			// notify the user
 			Notification::notify($model->classname, lang("SUCCESSFUL_SAVED", "The data was successfully written!"), lang("SAVED"));
 
@@ -310,15 +319,28 @@ class LeftAndMain extends AdminItem {
 	*/
 	public function savesort() {
 		if(isset($this->request->post_params["treenode"])) {
-			$field = $this->sort_field;
-			foreach ($this->request->post_params["treenode"] as $key => $value) {
-				DataObject::update($this->tree_class, array($field => $key), array("recordid" => $value), "", true);
-			}
-			$this->marked = $this->getParam("id");
+			if(isset($this->request->get_params["t"])) {
+                if (Core::globalSession()->hasKey(self::SESSION_KEY_SORT)) {
+                    $lastSession = Core::globalSession()->get(self::SESSION_KEY_SORT);
+                    if ((int)$lastSession > (int)$this->request->get_params["t"]) {
+                        return GomaResponse::create()->setShouldServe(false)->setBody(
+                            GomaResponseBody::create($this->createTree())->setParseHTML(false)
+                        );
+                    }
+                }
 
-			return GomaResponse::create()->setShouldServe(false)->setBody(
-				GomaResponseBody::create($this->createTree())->setParseHTML(false)
-			);
+                Core::globalSession()->set(self::SESSION_KEY_SORT, $this->request->get_params["t"]);
+
+                $field = $this->sort_field;
+                foreach ($this->request->post_params["treenode"] as $key => $value) {
+                    DataObject::update($this->tree_class, array($field => $key), array("recordid" => $value), "");
+                }
+                $this->marked = $this->getParam("id");
+
+                return GomaResponse::create()->setShouldServe(false)->setBody(
+                    GomaResponseBody::create($this->createTree())->setParseHTML(false)
+                );
+            }
 		}
 
 		throw new BadRequestException();
@@ -336,13 +358,13 @@ class LeftAndMain extends AdminItem {
 	 * publishes data for editing a site via ajax
 	 * @param array $data
 	 * @param AjaxResponse $response
-	 * @param null $form
+	 * @param Form $form
 	 * @param null $controller
 	 * @param bool $overrideCreated
 	 * @return AjaxResponse
 	 */
 	public function ajaxPublish($data, $response, $form = null, $controller = null, $overrideCreated = false) {
-		if($model = $this->save($data, 2, false, false, $overrideCreated)) {
+		if($model = $this->save($data, 2, false, false, $overrideCreated, $form->getModel())) {
 			// notify the user
 			Notification::notify($model->classname, lang("successful_published", "The data was successfully published!"), lang("published"));
 

@@ -58,4 +58,20 @@ class HasManyDataObjectSetTest extends GomaUnitTest implements TestAble
 
         $this->assertEqual($set->first()->blubid, 1);
     }
+
+    /**
+     * tests if create model is assigning the field correctly.
+     */
+    public function createNewModel() {
+        $set = new HasMany_DataObjectSet("MockWriteEntity");
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $set->setRelationENV($info = new ModelHasManyRelationShipInfo("myclass", "blah", array(
+            "target" => "User",
+            "inverse"   => "blub",
+            "validatedInverse"  => true
+        )), 1);
+
+        $this->assertEqual($set->createNewModel()->blahid, 1);
+    }
 }

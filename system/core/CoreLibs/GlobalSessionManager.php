@@ -92,7 +92,7 @@ class GlobalSessionManager {
      * @return string
      */
     public static function getCookieHost($host = null) {
-        if(isCommandLineInterface()) {
+        if(isCommandLineInterface() && !isset($host)) {
             return null;
         }
 

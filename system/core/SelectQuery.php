@@ -102,6 +102,13 @@ class SelectQuery {
 	protected static $new_field_cache = array();
 
 	/**
+	 * order by rand.
+	 *
+	 * @var bool
+	 */
+	protected $orderByRand = false;
+
+	/**
 	 * from-hash.
 	 */
 	private $fromHash;
@@ -191,9 +198,13 @@ class SelectQuery {
 	 * @param array|string $filter
 	 */
 	public function addFilter($filter) {
-		if(is_string($this->filter)) {
-			$this->filter = array($this->filter, $filter);
-		} else if(is_array($filter)) {
+		if(is_string($this->filter) || is_string($filter)) {
+            if($this->filter) {
+                $this->filter = array($this->filter, $filter);
+            } else {
+                $this->filter = $filter;
+            }
+		} else if(is_array($this->filter)) {
 			foreach($filter as $k => $v) {
 				if(is_int($k)) {
 					$this->filter[] = $v;
@@ -239,6 +250,10 @@ class SelectQuery {
 	 * @return $this
 	 */
 	public function sort($field, $type = "ASC", $order = 0) {
+		if($field == "rand") {
+			$this->orderByRand = true;
+			return $this;
+		}
 
 		$collate = null;
 
@@ -307,6 +322,7 @@ class SelectQuery {
 	 * adds group-by
 	 *
 	 * @param string|array fields
+	 * @param bool $prepend
 	 * @return $this
 	 */
 	public function groupby($fields, $prepend = false) {
@@ -381,8 +397,10 @@ class SelectQuery {
 	public function join($type, $table, $statement, $alias = "", $includeFields = true) {
 		$this->getAliasAndStatement($table, $statement, $alias);
 
+		// allow subqueries here
+		$tableWithPrefix = trim($table)[0] == "(" ? $table : DB_PREFIX . $table;
 		$this->from($table, $includeFields, $alias,
-			$type . " JOIN " . DB_PREFIX . $table . " AS " . $alias . " ON " . $statement . " ");
+			$type . " JOIN " . $tableWithPrefix . " AS " . $alias . " ON " . $statement . " ");
 
 		return $this;
 	}
@@ -503,10 +521,14 @@ class SelectQuery {
 
 	/**
 	 * resolves correct identifier for field.
-	 * @param string $field
+	 * @param string|array $field
 	 * @return string
 	 */
 	public function getFieldIdentifier($field) {
+		if(is_array($field)) {
+			return implode(",", array_map(array($this, "getFieldIdentifier"), $field));
+		}
+
 		$field = strtolower(trim($field));
 
 		$data = $this->generateDBFieldColidingCache();
@@ -660,7 +682,7 @@ class SelectQuery {
 				$table = $alias;
 			}
 
-			if(is_string($table)) {
+			if(is_string($table) && !trim($table)[0] == "(") {
 				if(ClassInfo::$database && !isset(ClassInfo::$database[$table])) {
 					throw new Exception("Table " . $table . " does not exist! " . print_r($fromHash, true));
 				}
@@ -690,9 +712,14 @@ class SelectQuery {
 
 		ksort($this->orderby);
 		// ORDER BY
-		if(count($this->orderby) > 0) {
+		if(count($this->orderby) > 0 || $this->orderByRand) {
 			$sql .= " ORDER BY ";
 			$i = 0;
+			if($this->orderByRand) {
+				$sql .= "RAND(), ";
+				$i++;
+			}
+
 			foreach($this->orderby as $data) {
 				if($i == 0) {
 					$i++;
