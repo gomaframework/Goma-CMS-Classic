@@ -1148,7 +1148,9 @@ class GFS {
 		if($path == ".." || $path == "." OR $path == "") {
 			return "";
 		}
-		
+
+		$path = str_replace(array("\r", "\n"), "", $path);
+
 		$pathparts = array();
 		$parts = explode("/", $path);
 		
