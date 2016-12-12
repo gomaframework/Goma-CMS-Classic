@@ -532,6 +532,7 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
         $two = $one->twos()->first();
 
         $this->assertNotNull($two);
+        $this->assertIsA($two->extraCasted(), MockStringCasting::class);
         $this->assertEqual(21, $two->extraCasted()->raw());
     }
 }
