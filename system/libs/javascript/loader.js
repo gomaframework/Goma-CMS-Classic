@@ -123,7 +123,17 @@ var json_regexp = /^\(?\{/,
 
                             if ($(this).attr("data-wrapper")) {
                                 opts.urlWrapperElement = $(this).attr("data-wrapper");
-                            }
+                            } else {
+                                var wrapper = "";
+                                var classList = $(this).attr('class').split(/\s+/);
+                                $.each(classList, function(index, item) {
+                                    if(item != "endless-appended") {
+                                        wrapper += "." + item;
+                                    }
+                                });
+
+                                opts.urlWrapperElement = wrapper;
+							}
 
                             new endlessScroller(opts);
                         }.bind(this));
@@ -316,6 +326,12 @@ var json_regexp = /^\(?\{/,
 				return goma.ui.mainContent;
 			},
 
+            triggerContentLoaded: function() {
+                var DOMContentLoaded_event = document.createEvent("Event");
+                DOMContentLoaded_event.initEvent("DOMContentLoaded", true, true);
+                window.document.dispatchEvent(DOMContentLoaded_event);
+            },
+
 			ajax: function (destination, options, unload, hideLoading) {
 				if (hideLoading === undefined) {
 					hideLoading = false;
@@ -364,6 +380,8 @@ var json_regexp = /^\(?\{/,
 					}
 
 					goma.ui.renderResponse(r, a, node, undefined, false, true).done( function() {
+						goma.ui.triggerContentLoaded();
+
 						deferred.resolve(r,c,a);
 						node.removeClass("loading");
 						if (goma.ui.progress !== undefined) {

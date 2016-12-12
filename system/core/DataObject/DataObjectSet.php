@@ -1196,26 +1196,28 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 		return $arr;
 	}
 
-	/**
-	 * write to DB
-	 * @param bool $forceInsert
-	 * @param bool $forceWrite
-	 * @param int $snap_priority
-	 * @param null|IModelRepository $repository
-	 * @throws DataObjectSetCommitException
-	 */
-	final public function commitStaging($forceInsert = false, $forceWrite = false, $snap_priority = 2, $repository = null, $options = array()) {
+    /**
+     * write to DB
+     * @param bool $forceInsert
+     * @param bool $forceWrite
+     * @param int $writeType
+     * @param null|IModelRepository $repository
+     * @param array $options
+     * @throws DataObjectSetCommitException
+     */
+	final public function commitStaging($forceInsert = false, $forceWrite = false, $writeType = IModelRepository::WRITE_TYPE_PUBLISH, $repository = null, $options = array()) {
 		$exceptions = array();
 		$errorRecords = array();
 
 		$repository = isset($repository) ? $repository : Core::repository();
 
-		$this->writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, (array) $options, $exceptions, $errorRecords);
+		$this->writeCommit($forceInsert, $forceWrite, $writeType, $repository, (array) $options, $exceptions, $errorRecords);
 
         $this->setFetchMode(DataObjectSet::FETCH_MODE_EDIT);
         $this->clearCache();
 
-        $this->version = $snap_priority <= 1 ? DataObject::VERSION_STATE : DataObject::VERSION_PUBLISHED;
+        $this->version = DataObject::Versioned($this->DataClass()) && $writeType <=  IModelRepository::WRITE_TYPE_SAVE ?
+            DataObject::VERSION_STATE : DataObject::VERSION_PUBLISHED;
 
         if(count($exceptions) > 0) {
 			throw new DataObjectSetCommitException($exceptions, $errorRecords, count($errorRecords) . " could not be written.");

@@ -579,13 +579,11 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      */
     public function getWriteAccess()
     {
-        if (!self::Versioned($this->classname) && $this->can("Write"))
-        {
+        if (!self::Versioned($this->classname) && $this->can("Write")) {
             return true;
         } else if ($this->can("Publish")) {
             return true;
-        } else if ($this->can("Delete"))
-        {
+        } else if ($this->can("Delete")) {
             return true;
         }
 
@@ -603,7 +601,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
             return $this->checkPermission($record, "publish");
         }
 
-        return $this->canWrite($record);
+        return $record->id == 0 ? $this->canInsert($record) : $this->canWrite($record);
     }
 
     /**
@@ -754,17 +752,17 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * @param IModelRepository $repository
      * @param bool $forceInsert
      * @param bool $forceWrite
-     * @param int $snap_priority
+     * @param int $writeType
      * @param bool $history
      * @param bool $silent
      * @param bool $overrideCreated
      */
-    public function writeToDBInRepo($repository, $forceInsert = false, $forceWrite = false, $snap_priority = 2, $history = true, $silent = false, $overrideCreated = false) {
+    public function writeToDBInRepo($repository, $forceInsert = false, $forceWrite = false, $writeType =  IModelRepository::WRITE_TYPE_PUBLISH, $history = true, $silent = false, $overrideCreated = false) {
         if(!$history) {
             HistoryWriter::disableHistory();
         }
 
-        if($snap_priority > 1) {
+        if($writeType >  IModelRepository::WRITE_TYPE_SAVE) {
             if($forceInsert) {
                 $repository->add($this, $forceWrite, $silent, $overrideCreated);
             } else {

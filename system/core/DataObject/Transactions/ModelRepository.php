@@ -78,10 +78,11 @@ class ModelRepository extends IModelRepository {
      * @param bool|if $forceWrite if to override permissions
      * @param bool $silent if to not update last-modified and editorid
      * @param bool $overrideCreated if to not force created and autorid to not be changed
-     * @throws PermissionException
+     * @throws OperationNotValidException
      */
     public function writeState($record, $forceWrite = false, $silent = false, $overrideCreated = false) {
-        $writer = $this->buildWriter($record, -1, $silent, $overrideCreated, self::WRITE_TYPE_SAVE);
+        $writeType = DataObject::Versioned($record->classname) ? self::WRITE_TYPE_SAVE : self::WRITE_TYPE_PUBLISH;
+        $writer = $this->buildWriter($record, -1, $silent, $overrideCreated, $writeType);
 
         if(!$forceWrite) {
             $writer->validatePermission();
@@ -119,7 +120,8 @@ class ModelRepository extends IModelRepository {
      * @throws PermissionException
      */
     public function addState($record, $forceInsert = false, $silent = false, $overrideCreated = false) {
-        $writer = $this->buildWriter($record, self::COMMAND_TYPE_INSERT, $silent, $overrideCreated, self::WRITE_TYPE_SAVE);
+        $writeType = DataObject::Versioned($record->classname) ? self::WRITE_TYPE_SAVE : self::WRITE_TYPE_PUBLISH;
+        $writer = $this->buildWriter($record, self::COMMAND_TYPE_INSERT, $silent, $overrideCreated, $writeType);
 
         if(!$forceInsert) {
             $writer->validatePermission();
@@ -154,8 +156,7 @@ class ModelRepository extends IModelRepository {
      * @param bool $forceWrite
      * @param bool $silent
      */
-    public function publish($record, $forceWrite, $silent = false)
-    {
+    public function publish($record, $forceWrite, $silent = false) {
         $writer = $this->buildWriter($record, self::COMMAND_TYPE_PUBLISH, $silent, false);
 
         if(!$forceWrite) {

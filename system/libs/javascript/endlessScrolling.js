@@ -56,6 +56,7 @@ endlessScroller.prototype = {
                     .done(this.onFinishInsertingData.bind(this)).always(function(){
                         this.currentEndlessEndLoading = null;
                         this.checkForEndlessUpdate();
+                        goma.ui.triggerContentLoaded();
 
                         setTimeout(this.checkForEndlessUpdate.bind(this), 250);
                     }.bind(this));
