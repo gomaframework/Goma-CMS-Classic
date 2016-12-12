@@ -526,6 +526,14 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
             $transient->twos()->commitStaging(false, true);
         }, "LogicException");
     }
+
+    public function testCastingOnReadManyMany() {
+        $one = DataObject::get_one(ManyManyTestObjectOne::class);
+        $two = $one->twos()->first();
+
+        $this->assertNotNull($two);
+        $this->assertEqual(21, $two->extraCasted()->raw());
+    }
 }
 
 /**
@@ -596,6 +604,10 @@ class MockStringCasting extends DBField {
      */
     static public function getFieldType($args = array()) {
         return "text";
+    }
+
+    public function raw() {
+        return 21;
     }
 }
 
