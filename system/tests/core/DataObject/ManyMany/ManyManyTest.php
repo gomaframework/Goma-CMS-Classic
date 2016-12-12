@@ -588,7 +588,15 @@ class ManyManyTestObjectTwo extends DataObject {
 }
 
 class MockStringCasting extends DBField {
-
+    /**
+     * gets the field-type
+     *
+     * @param array $args
+     * @return string
+     */
+    static public function getFieldType($args = array()) {
+        return "text";
+    }
 }
 
 /**
