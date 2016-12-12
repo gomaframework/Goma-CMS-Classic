@@ -52,3 +52,4 @@ tpl/
 .idea
 .idea/*
 system/version.php
+system/installer/version.php

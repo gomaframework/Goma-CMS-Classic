@@ -31,9 +31,6 @@ class G_AppSoftwareType extends G_SoftwareType {
 
 	/**
 	 * stores the data from the form in $formResult
-	 *
-	 * @name saveFormData
-	 * @access public
 	 */
 	public function saveFormData($data) {
 		$_data = $data["installdata"];

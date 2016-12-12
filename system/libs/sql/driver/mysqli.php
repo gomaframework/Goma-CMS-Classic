@@ -32,11 +32,13 @@ class mysqliDriver implements SQLDriver
     /**
      * @access public
      * @use: connect to db
-     **/
-    public function __construct($autoConnect = true)
+     * @param bool $autoConnect
+     * @throws DBConnectError
+     */
+    public function __construct($autoConnect = false)
     {
         /* --- */
-        if (!defined("NO_AUTO_CONNECT") || !$autoConnect) {
+        if (!defined("NO_AUTO_CONNECT") && $autoConnect) {
             global $dbuser;
 
             global $dbdb;
@@ -61,14 +63,14 @@ class mysqliDriver implements SQLDriver
             $this->query("SET sql_mode = '';");
             return true;
         } else {
-            die(str_replace('{BASE_URI}', BASE_URI, file_get_contents(ROOT . 'system/templates/framework/database_connect_error.html')));
+            throw new DBConnectError();
         }
     }
 
     /**
      *
      */
-    public static function test($dbuser, $dbdb, $dbpass, $dbhost)
+    public function test($dbuser, $dbdb, $dbpass, $dbhost)
     {
         $test = new MySQLi($dbhost, $dbuser, $dbpass, $dbdb);
         if (!mysqli_connect_errno()) {
@@ -99,9 +101,9 @@ class mysqliDriver implements SQLDriver
             $this->__construct();
         }
 
-        if ($result = $this->_db->query($sql, $unbuffered ? MYSQLI_ASYNC : MYSQLI_STORE_RESULT))
+        if ($result = $this->_db->query($sql, $unbuffered ? MYSQLI_ASYNC : MYSQLI_STORE_RESULT)) {
             return $result;
-        else {
+        } else {
             $this->error = $this->_db->error;
             $this->errno = $this->_db->errno;
 

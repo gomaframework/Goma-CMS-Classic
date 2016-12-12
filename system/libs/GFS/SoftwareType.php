@@ -798,7 +798,6 @@ abstract class g_SoftwareType {
 					$info["file"] = $file;
 
 					self::fillPackageArray($data["packages"], $info, $appFolder . "/" . $file, $appFolder . "/" . $file . ".plist", $appFolder);
-					
 				}
 			}
 

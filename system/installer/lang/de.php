@@ -35,5 +35,7 @@ $lang = array(
 	"arbitrary"			=> "frei wählbar",
 	"phpVersionError"	=> "Sie benötigen für diese Software eine höhere PHP-Version!",
 	"frameworkVerErr"	=> "Sie benötigen eine höhere Goma-Basissystem-Version, um diese Applikation zu installieren!",
-	"version"			=> "Version"
+	"version"			=> "Version",
+	"existent_folder"	=> "Existenter Ordner",
+	"database_working" 	=> "Datenbank funktioniert"
 );
