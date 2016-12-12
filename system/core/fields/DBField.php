@@ -8,6 +8,7 @@ class DBField extends gObject implements IDataBaseField
 {
     /**
      * this var contains the value
+     * @var mixed
      */
     protected $value;
 
@@ -83,7 +84,6 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * get it as text
-     *
      * @return string
      */
     public function text()
@@ -93,7 +93,6 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * get it as text and correct  linebreaks
-     *
      * @return string
      */
     public function textLines()
@@ -103,7 +102,6 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * get this as url
-     *
      * @return string
      */
     public function url()
@@ -112,7 +110,6 @@ class DBField extends gObject implements IDataBaseField
     }
     /**
      * for js
-     *
      * @return string
      */
     public function js()
@@ -121,7 +118,6 @@ class DBField extends gObject implements IDataBaseField
     }
     /**
      * converts string to uppercase
-     *
      * @return string
      */
     public function UpperCase()
@@ -131,7 +127,6 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * converts string to lowerase
-     *
      * @return string
      */
     public function LowerCase()
@@ -146,9 +141,7 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * generates the default form-field for this field
-     * @name formfield
-     * @access public
-     * @param string - title
+     * @param string $title
      * @return FormField
      */
     public function formfield($title = null)
@@ -160,9 +153,7 @@ class DBField extends gObject implements IDataBaseField
 
     /**
      * search-field for searching
-     * @name searchfield
-     * @access public
-     * @param string - title
+     * @param string $title
      * @return FormField
      */
     public function searchfield($title = null)
@@ -191,6 +182,7 @@ class DBField extends gObject implements IDataBaseField
     /**
      * gets the field-type
      *
+     * @param array $args
      * @return string
      */
     static public function getFieldType($args = array()) {
@@ -260,13 +252,12 @@ class DBField extends gObject implements IDataBaseField
     /**
      * calls
      *
-     * @name __call
-     * @access public
+     * @param string $methodName
+     * @param array $args
      * @return mixed|string
      */
     public function __call($methodName, $args) {
-
-        if(defined("IN_UNIT_TEST")) {
+        if(isPHPUnit()) {
             $trace = debug_backtrace();
             if(isset($trace[0]['file'])) {
                 throw new LogicException('Call to undefined method ' . $this->classname . '::' . $methodName . ' in '.$trace[0]['file'].' on line '.$trace[0]['line']);
@@ -300,9 +291,7 @@ class DBField extends gObject implements IDataBaseField
     /**
      * parses casting-args and gives back the result
      *
-     * @name parseCasting
-     * @access public
-     * @param string - casting
+     * @param string $casting
      * @return array|null
      */
     public static function parseCasting($casting) {
@@ -390,7 +379,6 @@ class DBField extends gObject implements IDataBaseField
     /**
      * gets a var for template
      *
-     * @name getTemplateVar
      * @return string|null
      */
     public function getTemplateVar($var) {
@@ -416,8 +404,6 @@ class DBField extends gObject implements IDataBaseField
     /**
      * converts by casting
      *
-     * @name convertByCasting
-     * @access public
      * @param string|array casting
      * @param string - name
      * @param mixed - value
@@ -443,8 +429,6 @@ class DBField extends gObject implements IDataBaseField
     /**
      * converts by casting if convertDefault
      *
-     * @name convertByCastingIfDefault
-     * @access public
      * @param string|array casting
      * @param string - name
      * @param mixed - value
@@ -465,8 +449,6 @@ class DBField extends gObject implements IDataBaseField
     /**
      * gets an object by casting
      *
-     * @name getObjectByCasting
-     * @access public
      * @param string|array casting
      * @param string - name
      * @param mixed - value
@@ -489,7 +471,6 @@ class DBField extends gObject implements IDataBaseField
     /**
      * returns false because no object can be done
      *
-     * @name canDoObject
      * @return bool
      */
     public function canDoObject() {

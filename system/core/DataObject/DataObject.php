@@ -2297,7 +2297,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     /**
      * table
      *
-     * @name hasTable
      * @return bool
      */
     public function hasTable() {
