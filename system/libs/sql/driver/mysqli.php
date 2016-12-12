@@ -32,11 +32,13 @@ class mysqliDriver implements SQLDriver
     /**
      * @access public
      * @use: connect to db
-     **/
-    public function __construct($autoConnect = true)
+     * @param bool $autoConnect
+     * @throws DBConnectError
+     */
+    public function __construct($autoConnect = false)
     {
         /* --- */
-        if (!defined("NO_AUTO_CONNECT") || !$autoConnect) {
+        if (!defined("NO_AUTO_CONNECT") && $autoConnect) {
             global $dbuser;
 
             global $dbdb;
@@ -99,9 +101,9 @@ class mysqliDriver implements SQLDriver
             $this->__construct();
         }
 
-        if ($result = $this->_db->query($sql, $unbuffered ? MYSQLI_ASYNC : MYSQLI_STORE_RESULT))
+        if ($result = $this->_db->query($sql, $unbuffered ? MYSQLI_ASYNC : MYSQLI_STORE_RESULT)) {
             return $result;
-        else {
+        } else {
             $this->error = $this->_db->error;
             $this->errno = $this->_db->errno;
 
