@@ -558,25 +558,35 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             $sort++;
         }
 
-        // update not written records to indicate changes
-        $baseClassTarget = ClassInfo::$class_info[$this->relationShip->getTargetClass()]["baseclass"];
-        DataObject::update($baseClassTarget, array("last_modified" => NOW),
-            array(
-                "id" => array_keys(
-                    array_filter($addedRecords,
-                        function($item){
-                            return !$item;
-                        }
-                    )
-                )
-            )
-        );
+        $this->updateAddedRecordsLastModified($addedRecords);
 
         $this->dbDataSource()->clearCache();
         $this->dbDataSource()->onBeforeManipulateManyMany($manipulation, $this, $addedRecords);
         $this->modelSource()->callExtending("onBeforeManipulateManyMany", $manipulation, $this, $addedRecords);
         if(!$this->dbDataSource()->manipulate($manipulation)) {
             $exceptions[] = new LogicException("Could not manipulate Database. Manipulation corrupted. <pre>" . print_r($manipulation, true) . "</pre>");
+        }
+    }
+
+    /**
+     * @param array $addedRecords
+     * @throws MySQLException
+     */
+    protected function updateAddedRecordsLastModified($addedRecords) {
+        // update not written records to indicate changes
+        $baseClassTarget = ClassInfo::$class_info[$this->relationShip->getTargetClass()]["baseclass"];
+        if($filteredAddedRecords = array_keys(
+            array_filter($addedRecords,
+                function($item){
+                    return !$item;
+                }
+            )
+        )) {
+            DataObject::update($baseClassTarget, array("last_modified" => NOW),
+                array(
+                    "id" => $filteredAddedRecords
+                )
+            );
         }
     }
 
