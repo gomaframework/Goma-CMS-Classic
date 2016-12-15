@@ -240,9 +240,14 @@ class GFS_Package_installer extends GFS {
 			FileSystem::requireDir($this->tempFolder() . "/" . $path);
 		} else {
 			if(!file_exists($this->tempFolder() . "/" . $path)) {
-				FileSystem::RequireDir(substr($this->tempFolder() . "/" . $path, 0, strrpos($this->tempFolder() . "/" . $path, "/")));
-				$this->writeToFileSystem($path, $this->tempFolder() . "/" . $path);
-				@chmod($this->tempFolder() . "/" . $path, isset($this->writeMode) ? $this->writeMode : 0777);
+				try {
+					FileSystem::RequireDir(substr($this->tempFolder() . "/" . $path, 0, strrpos($this->tempFolder() . "/" . $path, "/")));
+					$this->writeToFileSystem($path, $this->tempFolder() . "/" . $path);
+					@chmod($this->tempFolder() . "/" . $path, isset($this->writeMode) ? $this->writeMode : 0777);
+				} catch(GFSFileNotFoundException $e) {
+					// this can happen :)
+					log_exception($e);
+				}
 			}
 		}
 		$this->current = basename($path);

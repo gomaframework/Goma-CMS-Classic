@@ -1,4 +1,6 @@
-<?php defined("IN_GOMA") OR die();
+<?php use Goma\Test\Children\RootClass;
+
+defined("IN_GOMA") OR die();
 /**
  * Unit-Tests for ClassInfoTests.
  *
@@ -37,4 +39,16 @@ class ClassInfoTests extends GomaUnitTest {
 		unset(ClassInfo::$appENV["expansion"][$name]);
 	}
 
+	public function getNamespacedChildren() {
+		$this->assertTrue(in_array(
+			Goma\Test\Children\Child\ChildClass::class,
+			ClassInfo::getChildren(RootClass::class)
+		));
+		$this->assertTrue(in_array(
+			Goma\Test\Children\ChildClass::class,
+			ClassInfo::getChildren(RootClass::class)
+		));
+	}
 }
+
+
