@@ -146,8 +146,6 @@ class userAdmin extends adminItem {
 						return $this->actionComplete("unlock_user", $user);
 					}
 				}
-
-
 			}
 		}
 
