@@ -202,17 +202,19 @@ class ContentController extends FrontedController
      * output-hook
      *
      * @param string|GomaResponse $content
+     * @param Request $request
      * @return bool
+     * @throws DataObjectSetCommitException
      */
-    public static function outputHook($content)
+    public static function outputHook($content, $request)
     {
         if (PROFILE) Profiler::mark("contentController checkupload");
 
-        if (self::$enableBacktracking && is_a(Director::$requestController, "contentController")) {
+        if (self::$enableBacktracking && is_a($request->getRequestController(), "contentController")) {
             $content = is_a($content, "GomaResponse") ? $content->getBody() : $content;
 
             $contentmd5 = md5($content);
-            $cache = new Cacher("uploadTracking_" . $contentmd5 . "_" . Director::$requestController->modelInst()->versionid);
+            $cache = new Cacher("uploadTracking_" . $contentmd5 . "_" . $request->getRequestController()->modelInst()->versionid);
             if ($cache->checkValid()) {
                 return true;
             } else {
@@ -220,12 +222,12 @@ class ContentController extends FrontedController
 
                 if (count($uploadObjects) > 0) {
                     $hash = md5($uploadHash);
-                    $cacher = new Cacher("track_" . Director::$requestController->modelInst()->versionid . "_" . $hash);
+                    $cacher = new Cacher("track_" . $request->getRequestController()->modelInst()->versionid . "_" . $hash);
                     if ($cacher->checkValid()) {
                         return true;
                     } else {
                         /** @var ManyMany_DataObjectSet $uploadTracking */
-                        $uploadTracking = Director::$requestController->modelInst()->UploadTracking();
+                        $uploadTracking = $request->getRequestController()->modelInst()->UploadTracking();
                         /** @var Uploads $upload */
                         foreach ($uploadObjects as $upload) {
                             if(!$uploadTracking->find("versionid", $upload->versionid)) {

@@ -9,8 +9,6 @@
  */
 class ContentAdminTest extends GomaUnitTest implements TestAble
 {
-
-
     static $area = "cms";
     /**
      * name
