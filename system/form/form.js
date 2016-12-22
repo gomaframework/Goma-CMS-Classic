@@ -61,14 +61,6 @@ if(typeof goma == "undefined")
 			button = false;
 		});
 
-		this.form.find("select, input, textarea").change(function(){
-			that.form.addClass("leave_check");
-		});
-
-		this.form.find("select, input, textarea").keydown(function(){
-			that.form.addClass("leave_check");
-		});
-
 		$("#"+id+" input.default_submit").click(function(){
 			$("#"+id+" > .actions  button[type=submit]").each(function(){
 				if($(this).attr("name") != "cancel" && !$(this).hasClass("cancel")) {
@@ -86,7 +78,19 @@ if(typeof goma == "undefined")
 		this.runScripts(fields);
 
 		goma.form._list[id.toLowerCase()] = this;
-		return this;
+
+        // let init and then check for leave-check
+        setTimeout(function(){
+            that.form.find("select, input, textarea").change(function(){
+                that.form.addClass("leave_check");
+            });
+
+            that.form.find("select, input, textarea").keydown(function(){
+                that.form.addClass("leave_check");
+            });
+        }, 500);
+
+        return this;
 	};
 
 	goma.form.prototype = {
@@ -142,6 +146,9 @@ if(typeof goma == "undefined")
 				this.form.addClass("leave_check");
 			else
 				this.form.removeClass("leave_check");
+		},
+		getLeaveCheck: function() {
+			return this.form.hasClass("leave_check");
 		},
 
 		unloadEvent: function() {

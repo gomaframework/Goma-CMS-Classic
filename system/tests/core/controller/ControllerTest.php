@@ -1,4 +1,15 @@
-<?php defined("IN_GOMA") OR die();
+<?php
+namespace Goma\Test\Controller\ControllerTestENV;
+
+use Controller;
+use DataObject;
+use GomaUnitTest;
+use ReflectionMethod;
+use Request;
+use User;
+use ViewAccessableData;
+
+defined("IN_GOMA") OR die();
 /**
  * Unit-Tests for Controller-Class.
  *
@@ -7,8 +18,6 @@
  * @author		Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  */
-
-
 class ControllerTest extends GomaUnitTest {
 
 	static $area = "Controller";
@@ -97,4 +106,92 @@ class ControllerTest extends GomaUnitTest {
             "test" => 123
         ))->test, 123);
 	}
+
+    /**
+     * tests if Allowed Actions work
+     * tests if RequestController is set correctly when just going trough the hierarchy with a subcontroller
+     * @throws \Exception
+     */
+	public function testRequestControllerWithSubController() {
+        $request = new Request(
+            "POST",
+            "test"
+        );
+
+        $controller = new TestControllerForRequestController();
+        $this->assertEqual("SubSub", $controller->handleRequest($request));
+
+        $this->assertEqual(2, count($request->getController()));
+        $this->assertInstanceOf(TestControllerForRequestController::class, $request->getRequestController());
+	}
+
+    /**
+     * tests if Allowed Actions work
+     * tests if RequestController is set correctly when just going trough the hierarchy with a normal controller
+     * @throws \Exception
+     */
+    public function testRequestControllerWithoutSubController() {
+        $request = new Request(
+            "POST",
+            "lala"
+        );
+
+        $controller = new TestControllerForRequestController();
+        $this->assertEqual("Sub", $controller->handleRequest($request));
+
+        $this->assertEqual(2, count($request->getController()));
+        $this->assertInstanceOf(TestSubControllerForRequestController::class, $request->getRequestController());
+    }
+
+    /**
+     * tests if Allowed Actions work
+     * tests if RequestController is set correctly when going through hierarchy and trying a second controller.
+     * @throws \Exception
+     */
+    public function testRequestController() {
+        $request = new Request(
+            "GET",
+            "test"
+        );
+
+        $controller = new TestControllerForRequestController();
+        $this->assertEqual("Sub", $controller->handleRequest($request));
+
+        $this->assertEqual(2, count($request->getController()));
+        $this->assertInstanceOf(TestSubControllerForRequestController::class, $request->getRequestController());
+    }
+}
+
+class TestControllerForRequestController extends \RequestHandler {
+    public $allowed_actions = array(
+        "test"
+    );
+    public function index() {
+        $controller = new TestSubControllerForRequestController();
+        return $controller->handleRequest($this->request);
+    }
+
+    public function lala() {
+        return "lala";
+    }
+
+    public function test() {
+        if($this->request->isPOST())  {
+            $controller = new TestSubControllerWithSubForRequestController();
+            return $controller->handleRequest($this->request, true);
+        }
+    }
+}
+
+class TestSubControllerForRequestController extends \RequestHandler {
+    public function index() {
+        return "Sub";
+    }
+}
+
+class TestSubControllerWithSubForRequestController extends \RequestHandler {
+    public function index()
+    {
+        return "SubSub";
+    }
 }

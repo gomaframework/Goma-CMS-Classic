@@ -38,6 +38,18 @@ class GroupDataObjectSet extends \DataObjectSet {
     }
 
     /**
+     * @param string $field
+     * @return bool
+     */
+    public function canSortBy($field) {
+        if(strpos($field, ".") !== false) {
+            return true;
+        }
+
+        return parent::canSortBy($field);
+    }
+
+    /**
      * sets first cache.
      * @param array $data
      * @return $this

@@ -856,6 +856,8 @@ class Controller extends RequestHandler
             $redirect = null;
         }
 
+        $this->callExtending("redirectback", $redirect);
+
         return ControllerRedirectBackResponse::create(
             $redirect,
             $this->request ? $this->request->getShiftedPart() : null,

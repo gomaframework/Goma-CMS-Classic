@@ -385,10 +385,12 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             $name = $this->relationShip->getRelationShipName();
             $sorts = ArrayLib::map_key("strtolower", StaticsManager::getStatic($this->getOwnRecord()->DataClass(), "many_many_sort"));
             if(isset($sorts[$name]) && $sorts[$name]) {
-                return $sorts[$name];
+                return call_user_func_array(array(static::class, "parseSort"), $sorts[$name]);
             } else {
-                return $this->relationShip->getTableName() . ".".$this->relationShip->getOwnerSortField()." ASC , " .
-                $this->relationShip->getTableName() . ".id ASC";
+                return array(
+                    $this->relationShip->getTableName() . ".".$this->relationShip->getOwnerSortField() => "ASC",
+                    $this->relationShip->getTableName() . ".id " => "ASC"
+                );
             }
         }
 
@@ -558,35 +560,25 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             $sort++;
         }
 
-        $this->updateAddedRecordsLastModified($addedRecords);
+        // update not written records to indicate changes
+        $baseClassTarget = ClassInfo::$class_info[$this->relationShip->getTargetClass()]["baseclass"];
+        DataObject::update($baseClassTarget, array("last_modified" => NOW),
+            array(
+                "id" => array_keys(
+                    array_filter($addedRecords,
+                        function($item){
+                            return !$item;
+                        }
+                    )
+                )
+            )
+        );
 
         $this->dbDataSource()->clearCache();
         $this->dbDataSource()->onBeforeManipulateManyMany($manipulation, $this, $addedRecords);
         $this->modelSource()->callExtending("onBeforeManipulateManyMany", $manipulation, $this, $addedRecords);
         if(!$this->dbDataSource()->manipulate($manipulation)) {
             $exceptions[] = new LogicException("Could not manipulate Database. Manipulation corrupted. <pre>" . print_r($manipulation, true) . "</pre>");
-        }
-    }
-
-    /**
-     * @param array $addedRecords
-     * @throws MySQLException
-     */
-    protected function updateAddedRecordsLastModified($addedRecords) {
-        // update not written records to indicate changes
-        $baseClassTarget = ClassInfo::$class_info[$this->relationShip->getTargetClass()]["baseclass"];
-        if($filteredAddedRecords = array_keys(
-            array_filter($addedRecords,
-                function($item){
-                    return !$item;
-                }
-            )
-        )) {
-            DataObject::update($baseClassTarget, array("last_modified" => NOW),
-                array(
-                    "id" => $filteredAddedRecords
-                )
-            );
         }
     }
 
@@ -646,13 +638,13 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
         $sort = parent::getSortForQuery();
         if(isset($this->manyManyData)) {
             if ($sort) {
-                return array_merge((array)$sort, array("versionid", array_keys($this->manyManyData)));
+                return array_merge((array)$sort, array("versionid" => array_keys($this->manyManyData)));
             } else {
-                return array(array("versionid", array_keys($this->manyManyData)));
+                return array(array("versionid" => array_keys($this->manyManyData)));
             }
         } else {
             if(is_array($sort)) {
-                $sort[] = $this->getManyManySort();
+                $sort = array_merge($this->getManyManySort(), $sort);
             } else {
                 $sort = $this->getManyManySort($sort);
             }
@@ -689,29 +681,27 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
     {
         $join = parent::getJoinForQuery();
 
-        if(!$this->manyManyData) {
-            $relationTable = $this->relationShip->getTableName();
-            // search second join
-            foreach ((array)$join as $table => $data) {
-                if (strpos($data, $relationTable)) {
-                    unset($join[$table]);
-                }
+        $relationTable = $this->relationShip->getTableName();
+        // search second join
+        foreach ((array)$join as $table => $data) {
+            if (strpos($data, $relationTable)) {
+                unset($join[$table]);
             }
+        }
 
-            if($this->getQueryVersionID()) {
-                $join[$relationTable] = array(
-                    DataObject::JOIN_TYPE      => "INNER",
-                    DataObject::JOIN_TABLE     => $relationTable,
-                    DataObject::JOIN_STATEMENT => $relationTable . "." . $this->relationShip->getTargetField() . " = " . $this->dbDataSource()->baseTable() . ".id AND " .
-                        $relationTable . "." . $this->relationShip->getOwnerField() . " = '" . $this->getQueryVersionID() . "'"
-                );
-            } else {
-                $join[$relationTable] = array(
-                    DataObject::JOIN_TYPE      => "INNER",
-                    DataObject::JOIN_TABLE     => $relationTable,
-                    DataObject::JOIN_STATEMENT => "0 = 1"
-                );
-            }
+        if($this->getQueryVersionID()) {
+            $join[$relationTable] = array(
+                DataObject::JOIN_TYPE      => $this->manyManyData ? "LEFT" : "INNER",
+                DataObject::JOIN_TABLE     => $relationTable,
+                DataObject::JOIN_STATEMENT => $relationTable . "." . $this->relationShip->getTargetField() . " = " . $this->dbDataSource()->baseTable() . ".id AND " .
+                    $relationTable . "." . $this->relationShip->getOwnerField() . " = '" . $this->getQueryVersionID() . "'"
+            );
+        } else {
+            $join[$relationTable] = array(
+                DataObject::JOIN_TYPE      => $this->manyManyData ? "LEFT" : "INNER",
+                DataObject::JOIN_TABLE     => $relationTable,
+                DataObject::JOIN_STATEMENT => "0 = 1"
+            );
         }
 
         return $join;

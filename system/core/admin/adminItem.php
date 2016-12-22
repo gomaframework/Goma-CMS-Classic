@@ -293,6 +293,8 @@ class adminItem extends AdminController implements PermProvider {
 	 * @return gObject|null
 	 */
 	protected function getModelByName($name) {
+		$name = str_replace("-", "\\", $name);
+
 		if (ClassManifest::isOfType($name, $this->model)) {
             return new $name;
         }

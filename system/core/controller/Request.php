@@ -103,6 +103,16 @@ class Request extends gObject {
 	protected $phpInputFile;
 
 	/**
+	 * @var RequestHandler[]
+	 */
+	protected $controller = array();
+
+    /**
+     * @var RequestHandler
+     */
+    protected $requestController;
+
+	/**
 	 * @param string $method
 	 * @param string $url
 	 * @param array $get_params
@@ -578,4 +588,53 @@ class Request extends gObject {
 		}
 		return $string;
 	}
+
+	/**
+	 * @return RequestHandler[]
+	 */
+	public function getController()
+	{
+		return $this->controller;
+	}
+
+    /**
+     * @param RequestHandler[] $controller
+     * @param RequestHandler|null $requestController
+     * @return $this
+     */
+	public function setController($controller, $requestController)
+	{
+		$this->controller = $controller;
+        if($requestController && !$requestController->getRequest()) {
+            throw new InvalidArgumentException("RequestController requires request.");
+        }
+
+        $this->requestController = $requestController;
+		return $this;
+	}
+
+    /**
+     * @param RequestHandler $controller
+     * @param bool $isRequestController
+     * @return $this
+     */
+    public function addController($controller, $isRequestController = true) {
+        array_push($this->controller, $controller);
+        if($isRequestController) {
+            if(!$controller->getRequest()) {
+                throw new InvalidArgumentException("RequestController requires request.");
+            }
+
+            $this->requestController = $controller;
+        }
+        return $this;
+    }
+
+    /**
+     * @return RequestHandler
+     */
+    public function getRequestController()
+    {
+        return $this->requestController;
+    }
 }

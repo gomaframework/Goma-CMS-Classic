@@ -86,7 +86,9 @@ class SessionManager implements ISessionManager {
                     throw new LogicException("Cannot modify session: Headers already sent in file $file on line $line");
                 }
 
-                session_start();
+                if(!session_start()) {
+                    throw new LogicException("Could not start session");
+                }
 
                 $this->id = session_id();
                 self::$existing = $this->id;
@@ -116,6 +118,10 @@ class SessionManager implements ISessionManager {
      * @return mixed
      */
     public function get($key) {
+        if(!self::$existing) {
+            throw new InvalidArgumentException("Session has been stopped or not every started.");
+        }
+
         $data = null;
 
         if(isset($_SESSION[ROOT][$key])) {
@@ -139,7 +145,7 @@ class SessionManager implements ISessionManager {
      */
     public function set($key, $value) {
         if(!self::$existing) {
-            throw new InvalidArgumentException("Session has been stopped.");
+            throw new InvalidArgumentException("Session has been stopped or not ever started.");
         }
 
         $matchValue = (is_array($value) || is_object($value)) ? serialize($value) : $value;

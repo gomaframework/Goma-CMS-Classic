@@ -835,15 +835,15 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
         } else if($this->id != 0) {
 
             if($this->can("Delete")) {
-                $form->addAction(new HTMLAction("deletebutton", '<a rel="dropdownDialog" href="'.Director::$requestController->namespace.'/delete'.URLEND.'?redirect='.ROOT_PATH.'admin/content/" class="button red delete formaction">'.lang("delete").'</a>'));
+                $form->addAction(new HTMLAction("deletebutton", '<a rel="dropdownDialog" href="'.$form->getController()->namespace.'/delete'.URLEND.'?redirect='.ROOT_PATH.'admin/content/" class="button red delete formaction">'.lang("delete").'</a>'));
             }
 
             if($this->everPublished() && !$this->isOrgPublished() && $this->can("Write")) {
-                $form->addAction(new HTMLAction("revert_changes", '<a class="draft_delete red button" href="'.Director::$requestController->namespace.'/revert_changes" rel="dropdownDialog">'.lang("draft_delete", "delete draft").'</a>'));
+                $form->addAction(new HTMLAction("revert_changes", '<a class="draft_delete red button" href="'.$form->getController()->namespace.'/revert_changes" rel="dropdownDialog">'.lang("draft_delete", "delete draft").'</a>'));
             }
 
             if($this->everPublished() && $this->can("Publish")) {
-                $form->addAction(new HTMLAction("unpublish", '<a class="button" href="'.Director::$requestController->namespace.'/unpublish" rel="ajaxfy">'.lang("unpublish", "Unpublish").'</a>'));
+                $form->addAction(new HTMLAction("unpublish", '<a class="button" href="'.$form->getController()->namespace.'/unpublish" rel="ajaxfy">'.lang("unpublish", "Unpublish").'</a>'));
             }
 
             if($this->can("Write"))

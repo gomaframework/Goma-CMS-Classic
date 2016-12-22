@@ -306,7 +306,7 @@ class SelectQuery {
 				$type = "ASC";
 			}
 		} else if(!is_array($type)) {
-			throw new InvalidArgumentException("Type not supported for sort.");
+			throw new InvalidArgumentException("Type ".gettype($type)." not supported for sort. " . print_r(func_get_args(), true));
 		}
 
 		$order = ($order == 0) ? count($this->orderby) : $order;

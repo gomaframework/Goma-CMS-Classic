@@ -104,42 +104,56 @@ class contentControllerTest extends GomaUnitTest
     }
 
     public function testTrackLinking() {
-        $upload1 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_480.png", "test.cms", null, false);
-        $upload2 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_750.jpg", "test.cms", null, false);
-        $page = new Page(array(
-            "data" => '<a href="'.$upload1->path.'" lala="pu">Blub 123 haha</a> <a href="'.$upload2->path.'" lala="pu">Blub 123 haha</a>'
-        ));
-        $page->writeToDB(false, true);
+        try {
+            $upload1 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_480.png", "test.cms", null, false);
+            $upload2 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_750.jpg", "test.cms", null, false);
+            $page = new Page(array(
+                "data" => '<a href="' . $upload1->path . '" lala="pu">Blub 123 haha</a> <a href="' . $upload2->path . '" lala="pu">Blub 123 haha</a>'
+            ));
+            $page->writeToDB(false, true);
 
-        Director::$requestController = new ContentController();
-        Director::$requestController->setModelInst($page);
+            ContentController::outputHook($page->data, $this->getRequestWithContentControllerForPage($page));
 
-        ContentController::outputHook($page->data);
-
-        $this->assertEqual($page->UploadTracking()->count(), 2);
-        $this->assertEqual($page->UploadTracking()->first()->id, $upload1->id);
-        $this->assertEqual($page->UploadTracking()->last()->id, $upload2->id);
-
-        $page->remove(true);
+            $this->assertEqual($page->UploadTracking()->count(), 2);
+            $this->assertEqual($page->UploadTracking()->first()->id, $upload1->id);
+            $this->assertEqual($page->UploadTracking()->last()->id, $upload2->id);
+        } finally {
+            if($page) {
+                $page->remove(true);
+            }
+        }
     }
 
     public function testTrackImage() {
-        $upload1 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_480.png", "test.cms", null, false);
-        $upload2 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_750.jpg", "test.cms", null, false);
-        $page = new Page(array(
-            "data" => '<img src="'.$upload1->path.'" lala="pu" /> <img src="'.$upload2->path.'" lala="pu" />'
-        ));
-        $page->writeToDB(false, true);
+        try {
+            $upload1 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_480.png", "test.cms", null, false);
+            $upload2 = Uploads::addFile("img.jpg", "system/tests/resources/img_1000_750.jpg", "test.cms", null, false);
+            $page = new Page(array(
+                "data" => '<img src="' . $upload1->path . '" lala="pu" /> <img src="' . $upload2->path . '" lala="pu" />'
+            ));
+            $page->writeToDB(false, true);
 
-        Director::$requestController = new ContentController();
-        Director::$requestController->setModelInst($page);
+            ContentController::outputHook($page->data, $this->getRequestWithContentControllerForPage($page));
 
-        ContentController::outputHook($page->data);
+            $this->assertEqual($page->UploadTracking()->count(), 2);
+            $this->assertEqual($page->UploadTracking()->first()->id, $upload1->id);
+            $this->assertEqual($page->UploadTracking()->last()->id, $upload2->id);
+        } finally {
+            if($page) {
+                $page->remove(true);
+            }
+        }
+    }
 
-        $this->assertEqual($page->UploadTracking()->count(), 2);
-        $this->assertEqual($page->UploadTracking()->first()->id, $upload1->id);
-        $this->assertEqual($page->UploadTracking()->last()->id, $upload2->id);
+    protected function getRequestWithContentControllerForPage($page) {
+        $controller = new ContentController();
+        $reflectionProperty = new ReflectionProperty(RequestHandler::class, "subController");
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($controller, false);
 
-        $page->remove(true);
+        $controller->Init($request = new Request("GET", "test"));
+        $controller->setModelInst($page);
+
+        return $request;
     }
 }
