@@ -879,32 +879,61 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @example $list->sort(array('Name', 'ASC'));
 	 */
 	public function sort() {
-		$args = func_get_args();
-		if(count($args) == 0 || $args[0] === null || $args[0] === array()){
-			$this->sort = null;
-			$this->clearCache();
+        $sort = call_user_func_array(array(static::class, "parseSort"), func_get_args());
+
+        if(isset($sort)) {
+            foreach ($sort as $column => $type) {
+                if (!$this->canSortBy($column)) {
+                    throw new InvalidArgumentException("can not sort by $column");
+                }
+            }
+        }
+
+        if($this->sort == $sort) {
 			return $this;
 		}
-		if(count($args) == 1 && is_array($args[0]) && isset($args[0][0])) {
-			$args = $args[0];
-		}
-		if(count($args)>2){
-			throw new InvalidArgumentException('Sort takes zero, one or two arguments');
-		}
 
-		$columns = $types = array();
-		if(is_string($args[0])) {
+		$this->sort = $sort;
+		$this->clearCache();
+
+		return $this;
+	}
+
+    /**
+     * @return array|null
+     */
+    protected static function parseSort() {
+        $args = func_get_args();
+
+        if(count($args) == 0 || $args[0] === null || $args[0] === array()){
+            return null;
+        }
+
+        if(count($args) == 1 && is_array($args[0]) && isset($args[0][0])) {
+            $args = $args[0];
+        }
+
+        if(count($args)>2){
+            throw new InvalidArgumentException('Sort takes zero, one or two arguments');
+        }
+
+        $columns = array();
+        if(is_string($args[0])) {
             if(strpos($args[0], ",") !== false) {
                 $columns = array_map("trim", explode(",", $args[0]));
             } else {
                 $columns = array($args[0]);
             }
-		} else if(is_array($args[0])) {
-			$columns = array_keys($args[0]);
-		}
+        } else if(is_array($args[0])) {
+            $columns = array_keys($args[0]);
+        }
 
         $sort = array();
         foreach($columns as $column) {
+            if(is_int($column)) {
+                $column = $args[0][$column];
+            }
+
             if(substr(strtolower($column), -4) == "desc") {
                 $sort[substr($column, 0, -4)] = "desc";
             } else if(substr(strtolower($column), -3) == "asc") {
@@ -916,21 +945,8 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
             }
         }
 
-        foreach($sort as $column => $type) {
-			if (!$this->canSortBy($column)) {
-				throw new InvalidArgumentException("can not sort by $column");
-			}
-		}
-
-		if($this->sort == $sort) {
-			return $this;
-		}
-
-		$this->sort = $sort;
-		$this->clearCache();
-
-		return $this;
-	}
+        return $sort;
+    }
 
 	/**
 	 * checks if we can sort by a specified field
@@ -976,8 +992,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @param int $length
 	 * @return array
 	 */
-	protected function getRecordsByRange($start, $length)
-	{
+	protected function getRecordsByRange($start, $length) {
 		if($start < 0) {
 			if ($start + $length <= 0) {
 				return array();

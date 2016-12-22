@@ -402,7 +402,7 @@ class LeftAndMain extends AdminItem {
 		$data = $this->createOptions();
 		$arr = new DataSet();
 		foreach($data as $class => $title) {
-			$arr->push(array("value" => $class, "title" => $title, "icon" => ClassInfo::getClassIcon($class)));
+			$arr->push(array("value" => str_replace("\\", "-", $class), "title" => $title, "icon" => ClassInfo::getClassIcon($class)));
 		}
 		return $arr;
 	}

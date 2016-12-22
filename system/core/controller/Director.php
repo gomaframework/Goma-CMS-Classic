@@ -16,18 +16,6 @@ class Director extends gObject {
     public static $rules = array();
 
     /**
-     * Controllers used in this Request
-     */
-    public static $controller = array();
-
-    /**
-     * the current active controller
-     *
-     * @var RequestHandler|Controller
-     */
-    public static $requestController;
-
-    /**
      * sorted rules.
      *
      * @var array
@@ -72,9 +60,11 @@ class Director extends gObject {
      * serves the output given
      *
      * @param $output
-     * @param $request
+     * @param Request $request
+     * @param bool $serve
+     * @return GomaResponse|GomaResponseBody|string if serve is false else void
      */
-    public static function serve($output, $request = null) {
+    public static function serve($output, $request = null, $serve = true) {
         if(PROFILE)
             Profiler::unmark("render");
 
@@ -83,15 +73,11 @@ class Director extends gObject {
 
         Core::callHook("serve", $output);
 
-        if(isset(self::$requestController)) {
-            if(self::$requestController->getRequest() == null) {
-                self::$requestController->setRequest($request);
-            }
-
+        if($request->getRequestController()) {
             /** @var GomaResponse|GomaResponseBody|string $output */
             if(!is_a($output, GomaResponse::class) || $output->shouldServe()) {
                 $output = self::setStringToResponse($output,
-                    self::$requestController->serve(
+                    $request->getRequestController()->serve(
                         self::getStringFromResponse($output),
                         self::getBodyObjectFromResponse($output)
                     )
@@ -101,7 +87,11 @@ class Director extends gObject {
         if(PROFILE)
             Profiler::unmark("serve");
 
-        Core::callHook("onBeforeServe", $output);
+        if(!$serve) {
+            return $output;
+        }
+
+        Core::callHook("onBeforeServe", $output, $request);
 
         if(!is_a($output, "GomaResponse")) {
             $output = new GomaResponse(HTTPResponse::gomaResponse()->getHeader(), $output);
@@ -205,7 +195,7 @@ class Director extends gObject {
      */
     public static function createRequestWithData($url, $server, $get, $post, $files, $headers) {
         if(!isset($server["SERVER_NAME"], $server["SERVER_PORT"])) {
-            throw new InvalidArgumentException("Server name and port are quired.");
+            throw new InvalidArgumentException("Server name and port are required.");
         }
 
         // we will merge $_POST with $_FILES, but before we validate $_FILES
@@ -277,18 +267,11 @@ class Director extends gObject {
             }
 
             $inst = new $nextController;
-            self::$requestController = $inst;
-            self::$controller = array($inst);
-
             /** @var RequestHandler $inst */
-            $data = $inst->handleRequest($ruleMatcher->getCurrentRequest());
-            if(!$serve) {
-                return $data;
-            }
+            $data = $inst->handleRequest($request = $ruleMatcher->getCurrentRequest());
 
             if($data !== false && $data !== null) {
-                self::serve($data, $request);
-                return;
+                return self::serve($data, $request, $serve);
             }
         }
 

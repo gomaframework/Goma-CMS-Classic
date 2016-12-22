@@ -134,14 +134,14 @@ class BackupModel extends DataObject {
 		return self::syncFolder(true);
 	}
 
-    /**
-     * removes the file after remove
-     *
-     * @name onAfterRemove
-     * @access public
-     * @return void
-     */
-	public function onBeforeRemove() {
+	/**
+	 * removes the file after remove
+	 *
+	 * @param $manipulation
+	 */
+	public function onBeforeRemove(&$manipulation) {
+		parent::onBeforeRemove($manipulation);
+
 		if(file_exists(self::BACKUP_PATH . "/" . $this->name)) {
 			@unlink(self::BACKUP_PATH . "/" . $this->name);
 		}
@@ -160,9 +160,7 @@ class BackupModel extends DataObject {
 
     /**
      * gets the type
-     *
-     * @name getType
-     * @access public
+	 *
      * @return string
      */
 	public function getType() {
@@ -171,9 +169,7 @@ class BackupModel extends DataObject {
 
     /**
      * gets created date
-     *
-     * @name getCreate_Date
-     * @access public
+	 *
      * @return string
      */
 	public function getCreate_Date() {

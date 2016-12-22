@@ -88,6 +88,7 @@ class HasOneDropdown extends SingleSelectDropDown
 			}
 
 			$this->options = DataObject::get($this->_object, $this->where);
+			$this->options->setVersion($this->useStateData ? DataObject::VERSION_STATE : DataObject::VERSION_PUBLISHED);
 		} else if(is_a($this->options, "DataObjectSet") || is_a($this->options, "DataSet")) {
 			$this->_object = $this->options->DataClass();
 		} else {
@@ -98,7 +99,6 @@ class HasOneDropdown extends SingleSelectDropDown
 	/**
 	 * generates the values displayed in the field, if not dropped down.
 	 *
-	 * @access protected
 	 * @return array values
 	 */
 	protected function getInput()

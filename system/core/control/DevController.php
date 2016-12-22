@@ -75,9 +75,11 @@ class Dev extends RequestHandler {
 
 	/**
 	 * serves data
-	 *
+	 * @param string $content
+	 * @param GomaResponseBody $body
+	 * @return string
 	 */
-	public function serve($content) {
+	public function serve($content, $body) {
 		$viewabledata = new ViewAccessableData();
 		$viewabledata->content = $content;
 		$viewabledata->title = self::$title;

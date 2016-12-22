@@ -528,6 +528,24 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
     }
 
     /**
+     * @throws DataObjectSetCommitException
+     */
+    public function testSortByManyManyWithManyManyData()
+    {
+        /** @var ManyManyTestObjectOne $firstOne */
+        $firstOne = DataObject::get_one("ManyManyTestObjectOne");
+
+        $this->assertNotNull($firstOne->twos()->sort("extra", "DESC")->first());
+
+        $this->assertEqual($firstOne->twos()->count(), count($this->twos));
+        $ids = $firstOne->twosids;
+
+        $firstOne->twosids = array($ids[0], $ids[1]);
+
+        $this->assertNotNull($firstOne->twos()->sort("extra", "DESC")->first());
+    }
+
+    /**
      * tests if ManyMany Fields casting is casted also at reading a value.
      */
     public function testCastingOnReadManyMany() {

@@ -52,8 +52,10 @@ class MySQLWriterImplementation implements iDataBaseWriter {
         // fire events!
         $this->model()->onBeforeWriteData($this);
         $this->model()->callExtending("onBeforeWriteData");
-        $this->model()->onBeforeManipulate($manipulation, $b = "write");
-        $this->model()->callExtending("onBeforeManipulate", $manipulation, $b = "write");
+
+        $b = "write";
+        $this->model()->onBeforeManipulate($manipulation, $b);
+        $this->model()->callExtending("onBeforeManipulate", $manipulation, $b);
         $this->writer->callExtending("onBeforeWriteData", $manipulation);
 
         // fire manipulation to DataBase
@@ -321,8 +323,9 @@ class MySQLWriterImplementation implements iDataBaseWriter {
             }
         }
 
-        $this->model()->onBeforeManipulate($manipulation, $b = "write_state");
-        $this->model()->callExtending("onBeforeManipulate", $manipulation, $b = "write_state");
+        $b = "write_state";
+        $this->model()->onBeforeManipulate($manipulation, $b);
+        $this->model()->callExtending("onBeforeManipulate", $manipulation, $b);
 
         if(!SQL::manipulate($manipulation)) {
             throw new SQLException("Could not insert into state table.");

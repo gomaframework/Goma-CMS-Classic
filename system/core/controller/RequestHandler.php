@@ -119,11 +119,8 @@ class RequestHandler extends gObject {
 
 		if(!isset($this->originalNamespace)) $this->originalNamespace = $this->namespace;
 
-		if (!isset($this -> subController) || !$this -> subController) {
-			Director::$requestController = $this;
-			Director::$controller[] = $this;
-		}
-		$this->requestHandlerKey = count(Director::$controller);
+        $this->requestHandlerKey = count($this->request->getController());
+        $this->request->addController($this, !$this->subController);
 	}
 
 	/**
@@ -143,6 +140,8 @@ class RequestHandler extends gObject {
 			$this->subController = $subController;
 			$this->Init($request);
 
+            $preservedRequest = clone $this->request;
+
 			// check for extensions
 			$content = null;
 
@@ -157,6 +156,8 @@ class RequestHandler extends gObject {
 
 			$class = $this->classname;
 			while ($class && !ClassInfo::isAbstract($class)) {
+                $this->request->setController($preservedRequest->getController(), $preservedRequest->getRequestController());
+
 				$handlers = gObject::instance($class)->url_handlers;
 				foreach ($handlers as $pattern => $action) {
 					$data = $this->matchRuleWithResult($pattern, $action, $request);
@@ -167,7 +168,9 @@ class RequestHandler extends gObject {
 
 				$class = get_parent_class($class);
 			}
-			return $this->handleAction("index");
+
+            $this->request->setController($preservedRequest->getController(), $preservedRequest->getRequestController());
+            return $this->handleAction("index");
 		} catch(Exception $e) {
 			if($subController) {
 				throw $e;
@@ -206,9 +209,7 @@ class RequestHandler extends gObject {
 				$action = "index";
 			}
 
-			$data = $this -> handleAction($action);
-			array_pop(Director::$controller);
-			return $data;
+			return $this -> handleAction($action);
 		}
 
 		return null;
@@ -424,7 +425,8 @@ class RequestHandler extends gObject {
 	 * gets parent controller of this
 	 */
 	public function parentController() {
-		return Director::$controller[$this -> requestHandlerKey - 1];
+		return $this->request && $this->requestHandlerKey > 0 ?
+            $this->request->getController()[$this->requestHandlerKey - 1] : null;
 	}
 
 	/**
@@ -471,6 +473,10 @@ class RequestHandler extends gObject {
         if($this->currentActionHandled != "index") {
             return $this->namespace;
         }
+
+		if($this->parentController() && $this->parentController()->namespace) {
+			return $this->namespace;
+		}
 
         if($this->namespace) {
             return substr($this->namespace, 0, strrpos($this->namespace, "/"));

@@ -188,7 +188,7 @@ class DateField extends FormField
 	 */
 	public function JS()
 	{
-		return '$(\'#'.$this->ID().'\').daterangepicker('.json_encode($this->getDatePickerOptions()).');';
+		return 'var leave_check = form.getLeaveCheck(); $(\'#'.$this->ID().'\').daterangepicker('.json_encode($this->getDatePickerOptions()).'); form.setLeaveCheck(leave_check);';
 	}
 
 	/**
