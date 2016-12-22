@@ -76,7 +76,13 @@ class SoftwareUpgradeManager {
 				throw new SoftwareUpgradeWriteManagerError("Could not write file " . $folder . "/version.php. Please set file-permissions to 0777.");
 			}
 
-			include ($folder . "/upgrade/" . $v . ".php");
+			try {
+				include($folder . "/upgrade/" . $v . ".php");
+			} catch(Exception $e) {
+				log_exception($e);
+			} catch(Throwable $e) {
+				log_exception($e);
+			}
 		}
 	}
 
