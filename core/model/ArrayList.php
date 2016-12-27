@@ -67,8 +67,10 @@ class ArrayList extends ViewAccessableData implements Countable {
 
 	/**
 	 * returns an array of this
+	 * @param array $additional_fields
+	 * @return array
 	 */
-	public function &ToArray() {
+	public function &ToArray($additional_fields = array()) {
 		return $this->items;
 	}
 
