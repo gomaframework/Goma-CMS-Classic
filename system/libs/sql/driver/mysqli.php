@@ -58,13 +58,21 @@ class mysqliDriver implements SQLDriver
     public function connect($dbuser, $dbdb, $dbpass, $dbhost)
     {
         $this->_db = new MySQLi($dbhost, $dbuser, $dbpass, $dbdb);
-        if (!mysqli_connect_errno()) {
-            self::setCharsetUTF8();
-            $this->query("SET sql_mode = '';");
-            return true;
-        } else {
-            throw new DBConnectError();
+        if (mysqli_connect_errno()) {
+            if ($test = new MySQLi($dbhost, $dbuser, $dbpass)) {
+                logging("Create DataBase " . $dbdb);
+                if (!$test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_general_ci")) {
+                    throw new DBConnectError();
+                }
+            } else {
+                throw new DBConnectError();
+            }
         }
+
+        self::setCharsetUTF8();
+        $this->query("SET sql_mode = '';");
+
+        return true;
     }
 
     /**
@@ -80,6 +88,7 @@ class mysqliDriver implements SQLDriver
             if ($test = new MySQLi($dbhost, $dbuser, $dbpass)) {
                 logging("Create DataBase " . $dbdb);
                 if ($test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_general_ci")) {
+                    $test->close();
                     return true;
                 } else {
                     logging($test->error);
