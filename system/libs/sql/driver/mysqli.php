@@ -52,8 +52,7 @@ class mysqliDriver implements SQLDriver
     }
 
     /**
-     * @access public
-     * @use: connect to db
+     * tries to connect to db. in case of not existing database, tries to create it.
      **/
     public function connect($dbuser, $dbdb, $dbpass, $dbhost)
     {
@@ -61,12 +60,13 @@ class mysqliDriver implements SQLDriver
         if (mysqli_connect_errno()) {
             if ($test = new MySQLi($dbhost, $dbuser, $dbpass)) {
                 logging("Create DataBase " . $dbdb);
-                if (!$test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_general_ci")) {
-                    throw new DBConnectError();
+                if ($test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_general_ci")) {
+                    $test->close();
+                    return $this->connect($dbuser, $dbdb, $dbpass, $dbhost);
                 }
-            } else {
-                throw new DBConnectError();
             }
+
+            throw new DBConnectError();
         }
 
         self::setCharsetUTF8();
