@@ -61,36 +61,56 @@ class Member extends gObject {
 		DefaultPermission::checkDefaults();
 
 		if($auth = AuthenticationService::getAuthRecord(GlobalSessionManager::globalSession()->getId())) {
-			$user = $auth->user;
-
-			if($user) {
-				if ($user["timezone"]) {
-					Core::setCMSVar("TIMEZONE", $user["timezone"]);
-					date_default_timezone_set(Core::getCMSVar("TIMEZONE"));
-				}
-
-				self::$id = $user->id;
-				self::$nickname = $user->nickname;
-
-				self::$groups = DefaultPermission::forceGroups($user);
-
-				self::$groupType = self::$groups->first()->type;
-
-				// every group has at least the type 1, 0 is just for guests
-				if (self::$groupType == 0) {
-					self::$groupType = 1;
-					self::$groups->first()->type = 1;
-					self::$groups->first()->write(false, true, 2, false, false);
-				}
-
-				self::$loggedIn = $user;
-				if (PROFILE) Profiler::unmark("member::Init");
-
+			if(self::InitUser($auth->user)) {
+				if(PROFILE) Profiler::unmark("member::Init");
 				return true;
 			}
 		}
 
+        self::InitUser(null);
+
 		if(PROFILE) Profiler::unmark("member::Init");
+		return false;
+	}
+
+    /**
+     * @param User|null $user
+     * @return bool
+     */
+	public static function InitUser($user) {
+		if($user) {
+            if(!$user->id) {
+                throw new InvalidArgumentException();
+            }
+
+			if ($user["timezone"]) {
+				Core::setCMSVar("TIMEZONE", $user["timezone"]);
+				date_default_timezone_set(Core::getCMSVar("TIMEZONE"));
+			}
+
+			self::$id = $user->id;
+			self::$nickname = $user->nickname;
+
+			self::$groups = DefaultPermission::forceGroups($user);
+
+			self::$groupType = self::$groups->first()->type;
+
+			// every group has at least the type 1, 0 is just for guests
+			if (self::$groupType == 0) {
+				self::$groupType = 1;
+				self::$groups->first()->type = 1;
+				self::$groups->first()->write(false, true, 2, false, false);
+			}
+
+			self::$loggedIn = $user;
+
+			return true;
+		} else {
+            self::$loggedIn = self::$id = self::$nickname = null;
+            self::$groupType = 0;
+            self::$groups = array();
+		}
+
 		return false;
 	}
 

@@ -11,6 +11,8 @@
  */
 class DateField extends FormField
 {
+	protected $format = DATE_FORMAT_DATE;
+
 	/**
 	 * generates this field.
 	 *
@@ -69,7 +71,7 @@ class DateField extends FormField
 	{
 		$model = parent::getModel();
 		if(RegexpUtil::isNumber($model)) {
-			return date(DATE_FORMAT_DATE, $model);
+			return date($this->format, $model);
 		}
 
 		return $model;
@@ -148,15 +150,15 @@ class DateField extends FormField
 			'Y' => 'YYYY',
 			'y' => 'YY',
 			// Time
-			'a' => '',
+			'a' => 'a',
 			'A' => '',
 			'B' => '',
-			'g' => '',
-			'G' => '',
-			'h' => '',
-			'H' => '',
-			'i' => '',
-			's' => '',
+			'g' => 'h',
+			'G' => 'H',
+			'h' => 'hh',
+			'H' => 'HH',
+			'i' => 'mm',
+			's' => 'ss',
 			'u' => ''
 		);
 		$jqueryui_format = "";
@@ -198,7 +200,6 @@ class DateField extends FormField
 		/** @var string[] $calendar */
 		require (ROOT . LANGUAGE_DIRECTORY . Core::$lang . "/calendar.php");
 
-
 		return array(
 			"singleDatePicker" => true,
 			"showDropdowns"	=> true,
@@ -208,7 +209,7 @@ class DateField extends FormField
 			"maxDate"	=> isset($this->between[1]) ? date("d/m/Y", $this->between[1]) : null,
 			"applyClass"=> "btn-success button green",
 			"locale"	=> array(
-				"format"		=> self::dateformat_PHP_to_DatePicker(DATE_FORMAT_DATE),
+				"format"		=> self::dateformat_PHP_to_DatePicker($this->format),
 				"seperator"		=> " - ",
 				"applyLabel"	=> lang("save"),
 				"cancelLabel"	=> lang("cancel"),
@@ -241,5 +242,23 @@ class DateField extends FormField
 				"firstDay"	=> 1
 			)
 		);
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getFormat()
+	{
+		return $this->format;
+	}
+
+	/**
+	 * @param string $format
+	 * @return $this
+	 */
+	public function setFormat($format)
+	{
+		$this->format = $format;
+		return $this;
 	}
 }
