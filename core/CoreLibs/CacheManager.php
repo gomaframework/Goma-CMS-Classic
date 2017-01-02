@@ -110,6 +110,8 @@ class CacheManager {
 
     /**
      * removes a file from cache.
+     * @param string $file
+     * @return bool
      */
     public function rm($file) {
         if(file_exists($this->cacheDirectory . $file)) {

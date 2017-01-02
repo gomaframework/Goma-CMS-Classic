@@ -100,6 +100,10 @@ class Controller extends RequestHandler
      * @return static
      */
     public static function InitWithModel($model) {
+        if(isset($this)) {
+            throw new InvalidArgumentException();
+        }
+
         $controller = new static();
         $controller->setModelInst($model);
 
@@ -111,6 +115,7 @@ class Controller extends RequestHandler
      * - determining and loading model
      * - checking template
      * @param Request $request
+     * @return $this
      */
     public function Init($request = null)
     {
@@ -139,6 +144,8 @@ class Controller extends RequestHandler
         if (StaticsManager::hasStatic($this->classname, "less_vars")) {
             Resources::$lessVars = StaticsManager::getStatic($this->classname, "less_vars");
         }
+
+        return $this;
     }
 
     /**
@@ -471,7 +478,7 @@ class Controller extends RequestHandler
     /**
      * edit-function
      *
-     * @return string
+     * @return GomaFormResponse|string
      */
     public function edit()
     {

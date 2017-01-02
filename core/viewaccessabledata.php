@@ -702,9 +702,7 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
      * @return bool|string
      */
 	public function ServerGet($offset, $loweroffset) {
-
 		if(substr($loweroffset, 0, 8) == "_server_") {
-
 			$key = substr($loweroffset, 8);
 			if($key == "redirect") {
 				return getredirect();

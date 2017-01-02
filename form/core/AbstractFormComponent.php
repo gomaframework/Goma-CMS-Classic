@@ -454,4 +454,17 @@ abstract class AbstractFormComponent extends RequestHandler {
     {
         return $this->parent;
     }
+
+    /**
+     * @param \gObject $sender
+     * @return string
+     */
+    public function getRedirect($sender)
+    {
+        if($this->form() && isset($this->form()->controller)) {
+            return $this->form()->controller->getRedirect($sender);
+        }
+
+        return parent::getRedirect($sender);
+    }
 }

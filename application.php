@@ -86,7 +86,8 @@ define("PHP_MAIOR_VERSION", strtok(PHP_VERSION, "."));
  * root
  */
 define('ROOT', realpath(dirname(__FILE__) . "/../") . "/");
-define("FRAMEWORK_ROOT", ROOT . "system/");
+define("FRAMEWORK_DIRECTORY", "system");
+define("FRAMEWORK_ROOT", ROOT . FRAMEWORK_DIRECTORY . "/");
 
 /**
  * current date

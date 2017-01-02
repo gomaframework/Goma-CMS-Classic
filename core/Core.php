@@ -216,10 +216,12 @@ class Core extends gObject {
 		self::$cacheManagerApplication = new CacheManager(ROOT . APPLICATION . "/temp");
 		self::$cacheManagerFramework = new CacheManager(ROOT . "system/temp");
 	}
-	
+
 	/**
 	 * delete-cache.
-	*/
+	 * @param bool $force
+	 * @throws SQLException
+	 */
 	public static function deleteCache($force = false) {
 
 		if(PROFILE) Profiler::mark("delete_cache");
@@ -228,7 +230,7 @@ class Core extends gObject {
 			logging('Deleting FULL Cache');
 
 			self::$cacheManagerApplication->deleteCache(0, true);
-			self::$cacheManagerFramework->deleteCache(600, true);
+			self::$cacheManagerFramework->deleteCache(7200, true);
 
             g_SoftwareType::cleanUpUpdates();
 		} else if(self::$cacheManagerApplication->shouldDeleteCache()) {

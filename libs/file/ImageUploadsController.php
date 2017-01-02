@@ -75,8 +75,6 @@ class ImageUploadsController extends UploadsController {
 	/**
 	 * sends the image to the browser
 	 *
-	 * @name index
-	 * @access public
 	 * @return false
 	 */
 	public function index() {
@@ -95,8 +93,18 @@ class ImageUploadsController extends UploadsController {
 			$filenameTwice = strtolower($image->filename . "/" . $image->filename);
 			if(strtolower(substr(URL, 0 - strlen($filenameTwice))) == $filenameTwice) {
 				FileSystem::requireDir($cacheDir);
-				$image->toFile(ROOT . URL);
+				if(FileSystem::$useSymlinks && $this->requireHtAccessForSymlinks()) {
+					FileSystem::chmod($this->modelInst()->realfile, FileSystem::getMode());
+					if(!symlink($this->modelInst()->realfile, ROOT . URL)) {
+						log_error("Could not create symlink " . ROOT . URL);
+						$image->toFile(ROOT . URL);
+					}
+				} else {
+					$image->toFile(ROOT . URL);
+				}
 			}
+			
+			FileSystem::chmod(ROOT . URL, FileSystem::getMode());
 
 			// output
 			$image->output();
@@ -105,6 +113,14 @@ class ImageUploadsController extends UploadsController {
 		}
 
 		return false;
+	}
+
+	protected function requireHtAccessForSymlinks() {
+		if(!file_exists(ROOT . "/Uploads/.htaccess")) {
+			return FileSystem::write(ROOT . "/Uploads/.htaccess", "Options +FollowSymLinks\nOptions -SymLinksIfOwnerMatch\n\n");
+		}
+		
+		return true;
 	}
 
 	/**

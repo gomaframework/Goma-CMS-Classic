@@ -69,12 +69,12 @@ class userAdmin extends adminItem {
 			"image" => '$image.setSize(50, 50)'
 		));
 		$config->removeComponent($config->getComponentByType("TableFieldToolbarHeader"));
-		$config->addComponent(new TableFieldActionLink(	$this->namespace . '/toggleLock/$id' . URLEND . '?redirect=' . urlencode(getredirect()), 
+		$config->addComponent(new TableFieldActionLink(	$this->namespace . '/toggleLock/$id' . URLEND . '?redirect=' . urlencode($this->getRedirect($this)),
 														'<i class="fa fa-lock"></i>',
 														lang("lock"), 
 														array($this, "checkForUnlock"),
 			array("button button-clear yellow")));
-		$config->addComponent(new TableFieldActionLink(	$this->namespace . '/toggleLock/$id' . URLEND . '?redirect=' . urlencode(getredirect()), 
+		$config->addComponent(new TableFieldActionLink(	$this->namespace . '/toggleLock/$id' . URLEND . '?redirect=' . urlencode($this->getRedirect($this)),
 														'<i class="fa fa-unlock"></i>',
 														lang("unlock"), 
 														array($this, "checkForLock"),

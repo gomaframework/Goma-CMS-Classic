@@ -56,9 +56,13 @@ class Dev extends RequestHandler {
 
 	/**
 	 * shows dev-site or not
+	 * @param $request
+	 * @param bool $subController
+	 * @return false|null|string
+	 * @throws Exception
+	 * @throws PermissionException
 	 */
 	public function handleRequest($request, $subController = false) {
-
 		define("DEV_CONTROLLER", true);
 
 		HTTPResponse::unsetCacheable();
@@ -112,7 +116,6 @@ class Dev extends RequestHandler {
      * @return string
      */
 	public function index() {
-
 		// make 503
 		makeProjectUnavailable();
 
@@ -121,7 +124,7 @@ class Dev extends RequestHandler {
 
 		// check if dev-without-perms, so redirect directly
 		if(GlobalSessionManager::globalSession()->hasKey(self::SESSION_DEV_WITHOUT_PERM)) {
-			$url = ROOT_PATH . BASE_SCRIPT . "dev/rebuildcaches" . URLEND . "?redirect=" . urlencode(getredirect(true));
+			$url = ROOT_PATH . BASE_SCRIPT . "dev/rebuildcaches" . URLEND . "?redirect=" . urlencode($this->getRedirect($this));
 			header("Location: " . $url);
 			echo "<script>location.href = '" . $url . "';</script><br /> Redirecting to: <a href='" . $url . "'>'.$url.'</a>";
 			Core::callHook("onBeforeShutDown");
@@ -149,7 +152,7 @@ class Dev extends RequestHandler {
 
 		// redirect if needed
 		if(GlobalSessionManager::globalSession()->hasKey(self::SESSION_DEV_WITHOUT_PERM)) {
-			$url = ROOT_PATH . BASE_SCRIPT . "dev/builddev" . URLEND . "?redirect=" . urlencode(getredirect(true));
+			$url = ROOT_PATH . BASE_SCRIPT . "dev/builddev" . URLEND . "?redirect=" . urlencode($this->getRedirect($this));
 			header("Location: " . $url);
 			echo "<script>location.href = '" . $url . "';</script><br /> Redirecting to: <a href='" . $url . "'>'.$url.'</a>";
 			Core::callHook("onBeforeShutDown");

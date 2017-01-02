@@ -167,15 +167,24 @@ class StaticsManager {
         self::$save_vars[$class][] = $variableName;
     }
 
-    public static function setSaveVars() {
-
+    /**
+     * @param string $class
+     * @throws ReflectionException
+     * @internal
+     */
+    public static function setSaveVarsForClass($class) {
+        $class = ClassManifest::resolveClassName($class);
+        foreach(self::$save_vars[$class] as $variableName) {
+            if (isset(ClassInfo::$class_info[$class][$variableName])) {
+                self::setStatic($class, $variableName, ClassInfo::$class_info[$class][$variableName], true);
+            }
+        }
     }
 
     /**
      * gets for a specific class the save_vars
-     *@name getSaveVars
-     *@param string - class-name
-     *@return array
+     * @param $class
+     * @return array
      */
     public static function getSaveVars($class)
     {

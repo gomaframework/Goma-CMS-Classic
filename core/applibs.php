@@ -162,17 +162,15 @@ function session_store_exists($key) {
  */
 function getRedirect($parentDir = false, $controller = null) {
 	// AJAX Request
-	if(Core::is_ajax() && isset($_SERVER["HTTP_X_REFERER"]) && isURLFromServer($_SERVER["HTTP_X_REFERER"])) {
+	if(Core::is_ajax() && isset($_SERVER["HTTP_X_REFERER"]) && isURLFromServer($_SERVER["HTTP_X_REFERER"], $_SERVER["SERVER_NAME"])) {
 		return htmlentities($_SERVER["HTTP_X_REFERER"], ENT_COMPAT, "UTF-8", false);
 	}
 
 	if($parentDir) {
-		if(isset($_GET["redirect"]) && isURLFromServer($_GET["redirect"])) {
+		if(isset($_GET["redirect"]) && isURLFromServer($_GET["redirect"], $_SERVER["SERVER_NAME"])) {
 			return htmlentities($_GET["redirect"], ENT_COMPAT, "UTF-8", false);
 		} else if(isset($controller)) {
 			return htmlentities(ROOT_PATH . BASE_SCRIPT . $controller->originalNamespace, ENT_COMPAT, "UTF-8", false);
-		} else if(isset(Director::$requestController)) {
-			return htmlentities(ROOT_PATH . BASE_SCRIPT . Director::$requestController->originalNamespace, ENT_COMPAT, "UTF-8", false);
 		} else {
 			// TODO What is with redirect from other sites with other URLEND?
 			if(URLEND == "/") {
@@ -183,12 +181,10 @@ function getRedirect($parentDir = false, $controller = null) {
 			}
 		}
 	} else {
-		if(isset($_GET["redirect"]) && isURLFromServer($_GET["redirect"])) {
+		if(isset($_GET["redirect"]) && isURLFromServer($_GET["redirect"], $_SERVER["SERVER_NAME"])) {
 			return htmlentities($_GET["redirect"], ENT_COMPAT, "UTF-8", false);
 		} else if(isset($controller)) {
 			return htmlentities(ROOT_PATH . BASE_SCRIPT . $controller->originalNamespace, ENT_COMPAT, "UTF-8", false);
-		} else if(isset(Director::$requestController)) {
-			return htmlentities(ROOT_PATH . BASE_SCRIPT . Director::$requestController->originalNamespace, ENT_COMPAT, "UTF-8", false);
 		} else {
 			return isset($_SERVER["REQUEST_URI"]) ? htmlentities($_SERVER["REQUEST_URI"], ENT_COMPAT, "UTF-8", false) : null;
 		}

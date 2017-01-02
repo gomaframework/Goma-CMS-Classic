@@ -44,6 +44,62 @@ class GomaFormResponseTest extends GomaUnitTest {
         );
         $this->assertEqual($gomaFormResponse->render(), print_r($mock->response, true));
     }
+
+    /**
+     * checks if IsfullPage is false for strings.
+     */
+    public function testIsStringNotFullPage() {
+        $mock = new FormMock();
+        $mock->response = "lalala";
+        $mock->request = new Request("get", "test");
+
+        $response = new GomaFormResponse(null, $mock);
+        $this->assertFalse($response->isFullPage());
+    }
+
+    /**
+     * checks if IsfullPage is false for strings.
+     */
+    public function testIsArrayNotFullPage() {
+        $mock = new FormMock();
+        $mock->response = array("lalala");
+        $mock->request = new Request("get", "test");
+
+        $response = new GomaFormResponse(null, $mock);
+        $this->assertFalse($response->isFullPage());
+    }
+
+    /**
+     * checks if IsfullPage is false for strings.
+     */
+    public function testIsResponseFullPageCalled() {
+        $mock = new FormMock();
+
+        $body = new \GomaResponseBody();
+        $body->setIsFullPage(false);
+        $mock->response = new \GomaResponse(null, $body);
+
+        $mock->request = new Request("get", "test");
+
+        $response = new GomaFormResponse(null, $mock);
+        $this->assertFalse($response->isFullPage());
+    }
+
+    /**
+     * checks if IsfullPage is false for strings.
+     */
+    public function testIsResponseFullPageCalledTrue() {
+        $mock = new FormMock();
+
+        $body = new \GomaResponseBody();
+        $body->setIsFullPage(true);
+        $mock->response = new \GomaResponse(null, $body);
+
+        $mock->request = new Request("get", "test");
+
+        $response = new GomaFormResponse(null, $mock);
+        $this->assertTrue($response->isFullPage());
+    }
 }
 
 class FormMock {

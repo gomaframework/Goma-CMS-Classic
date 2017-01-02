@@ -19,6 +19,9 @@ abstract class AbstractControllerTest extends GomaUnitTest {
      */
     abstract protected function getUrlsForFirstResponder();
 
+    /**
+     *
+     */
     public function testForFirstResponder() {
         $urls = $this->getUrlsForFirstResponder();
         foreach($urls as $url) {

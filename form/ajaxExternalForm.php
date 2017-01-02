@@ -60,7 +60,7 @@ class AjaxExternalForm extends FormField {
 			$this->getModel(),
 			"&nbsp;&nbsp;&nbsp;&nbsp;",
 			new HTMLNode("a", array(
-				"href" => $this->externalURL() . "/render/?redirect=" . urlencode(getredirect()),
+				"href" => $this->externalURL() . "/render/?redirect=" . urlencode($this->getRedirect($this)),
 				"title" => convert::raw2text($this->title),
 				"rel" => "dropdownDialog",
 				"class" => "edit hideClose noAutoHide"
