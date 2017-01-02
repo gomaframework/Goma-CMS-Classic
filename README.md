@@ -23,12 +23,12 @@ Team
 ----
 
 ### Development
-* @Daniel.Gruber
-* @Fabian.Parzefall
-* @Julian.Frielinghaus
+* [Daniel Gruber](https://repo.goma-cms.org/users/daniel.gruber)
+* [Fabian Parzefall](https://repo.goma-cms.org/users/fabian.parzefall)
+* [Julian Frielinghaus](https://repo.goma-cms.org/users/julian.frielinghaus)
 
 #### Quality & User-Experience
-* @Patrick.Lemke
+* [Patrick Lemke](https://repo.goma-cms.org/users/patrick.lemke)
 
 Important External Libraries
 ------------------
