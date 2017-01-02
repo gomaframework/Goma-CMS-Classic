@@ -30,10 +30,6 @@ class EditProfileController extends AbstractCategoryController {
      */
     public function index()
     {
-        $data = $this->edit();
-        if(is_object($data)) {
-            return $data;
-        }
-        return '<h1>'.lang("edit_profile").'</h1>' . $data;
+        return $this->edit();
     }
 }

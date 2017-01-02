@@ -81,7 +81,7 @@ class ManageUploadController extends FrontedController {
         foreach($breads as $bread) {
             Core::addBreadcrumb($bread[0], $bread[1]);
         }
-        Core::addBreadcrumb($this->modelInst()->filename, URL);
+        Core::addBreadcrumb($this->modelInst()->filename, $this->request->url);
     }
 
     /**

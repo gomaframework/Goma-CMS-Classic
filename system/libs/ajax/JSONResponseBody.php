@@ -23,7 +23,7 @@ class JSONResponseBody extends GomaResponseBody
     {
         parent::__construct($body);
 
-        $this->isFullPage = false;
+        $this->isFullPage = true;
     }
 
     /**

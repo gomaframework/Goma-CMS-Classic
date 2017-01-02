@@ -50,7 +50,7 @@ class ImageUploadsController extends UploadsController {
 			return false;
 		}
 
-		if(!file_exists(ROOT . self::calculatePermitFile(URL)) && !file_exists(ROOT . URL . ".permit")) {
+		if(!file_exists(ROOT . self::calculatePermitFile($this->request->url)) && !file_exists(ROOT . $this->request->url . ".permit")) {
 			return false;
 		}
 
@@ -83,7 +83,7 @@ class ImageUploadsController extends UploadsController {
 		}
 
 		if(self::checkFilename($this->modelInst()->filename)) {
-			$cacheDir = substr(ROOT . URL,0,strrpos(ROOT . URL, "/"));
+			$cacheDir = substr(ROOT . $this->request->url,0,strrpos(ROOT . $this->request->url, "/"));
 
 			// generate
 			$image = new RootImage($this->modelInst()->realfile);
@@ -91,20 +91,20 @@ class ImageUploadsController extends UploadsController {
 
 			// write to cache
 			$filenameTwice = strtolower($image->filename . "/" . $image->filename);
-			if(strtolower(substr(URL, 0 - strlen($filenameTwice))) == $filenameTwice) {
+			if(strtolower(substr($this->request->url, 0 - strlen($filenameTwice))) == $filenameTwice) {
 				FileSystem::requireDir($cacheDir);
 				if(FileSystem::$useSymlinks && $this->requireHtAccessForSymlinks()) {
 					FileSystem::chmod($this->modelInst()->realfile, FileSystem::getMode());
-					if(!symlink($this->modelInst()->realfile, ROOT . URL)) {
-						log_error("Could not create symlink " . ROOT . URL);
-						$image->toFile(ROOT . URL);
+					if(!symlink($this->modelInst()->realfile, ROOT . $this->request->url)) {
+						log_error("Could not create symlink " . ROOT . $this->request->url);
+						$image->toFile(ROOT . $this->request->url);
 					}
 				} else {
-					$image->toFile(ROOT . URL);
+					$image->toFile(ROOT . $this->request->url);
 				}
 			}
 			
-			FileSystem::chmod(ROOT . URL, FileSystem::getMode());
+			FileSystem::chmod(ROOT . $this->request->url, FileSystem::getMode());
 
 			// output
 			$image->output();
@@ -138,7 +138,7 @@ class ImageUploadsController extends UploadsController {
 	 * @internal param $resizeImage
 	 */
 	public function resizeImage($width, $height, $thumbLeft = 50, $thumbTop = 50, $thumbWidth = 100, $thumbHeight = 100, $realized = false, $output = true) {
-		$cacheDir = substr(ROOT . URL,0,strrpos(ROOT . URL, "/"));
+		$cacheDir = substr(ROOT . $this->request->url,0,strrpos(ROOT . $this->request->url, "/"));
 
 		// create
 		$image = new RootImage($this->modelInst()->realfile);
@@ -160,7 +160,7 @@ class ImageUploadsController extends UploadsController {
 		try {
 			// write to cache
 			FileSystem::requireDir($cacheDir);
-			$img->toFile(ROOT . URL);
+			$img->toFile(ROOT . $this->request->url);
 		} catch(Exception $e) {
 			log_exception($e);
 		}
@@ -248,8 +248,8 @@ class ImageUploadsController extends UploadsController {
 
 		// write to cache
 		try {
-			FileSystem::requireDir(substr(ROOT . URL,0,strrpos(ROOT . URL, "/")));
-			$img->toFile(ROOT . URL);
+			FileSystem::requireDir(substr(ROOT . $this->request->url, 0, strrpos(ROOT . $this->request->url, "/")));
+			$img->toFile(ROOT . $this->request->url);
 		} catch(Exception $e) {
 			log_exception($e);
 		}

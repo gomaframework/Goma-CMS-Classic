@@ -50,7 +50,7 @@ abstract class AbstractCategoryController extends \Controller {
      */
     public function __output($content)
     {
-        if(\Director::isResponseFullPage($content)) {
+        if(!\Director::isResponseFullPage($content)) {
             $view = new \ViewAccessableData();
             $view->customise(array(
                 "categories"    => $this->getCategorySet(),
