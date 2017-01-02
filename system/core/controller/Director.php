@@ -142,7 +142,7 @@ class Director extends gObject {
             return $response->isFullPage();
         }
 
-        return true;
+        return false;
     }
 
     /**
