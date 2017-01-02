@@ -816,7 +816,10 @@ class Resources extends gObject {
 
 	/**
 	 * bacause the background-image-locations arent't right anymore, we have to correct them
-	 *
+	 * @param string $css
+	 * @param string $file
+	 * @param string $base
+	 * @return mixed|new|string
 	 */
 	public static function parseCSS($css, $file, $base) {
 		$path = substr($file, 0, strrpos($file, '/'));
@@ -826,7 +829,7 @@ class Resources extends gObject {
 
 		preg_match_all('/url\(((\'|"|\s?)(.*)(\"|\'|\s?))\)/Usi', $css, $matches);
 		foreach($matches[3] as $key => $url) {
-			$css = str_replace($matches[0][$key], 'url("' . $base . $path . "/" .$url . '")', $css);
+			$css = str_replace($matches[0][$key], 'url("' . $base . $path . "/" . $url . '")', $css);
 		}
 
 		try {

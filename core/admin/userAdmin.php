@@ -189,13 +189,23 @@ class userAdmin extends adminItem {
 	 */
 	public function edit()
 	{
-		/** @var DataObject $model */
-		if($model = $this->getSingleModel()) {
-			Core::setTitle($model->title);
+		/** @var DataObject $user */
+		if($user = $this->getSingleModel()) {
+			Core::setTitle($user->title);
 
 			$editController = new \Goma\Security\Controller\EditProfileController();
-			$editController->setModelInst($model);
-			return $editController->handleRequest($this->request, true);
+			$editController->setModelInst($user);
+			$response = $editController->handleRequest($this->request, true);
+
+			if(!Director::isResponseFullPage($response)) {
+				$user->customise(array(
+					"content"   => $response,
+					"namespace" => $this->namespace
+				));
+				return \Director::setStringToResponse($response, $user->renderWith("admin/user-header.html", $this->inExpansion));
+			}
+
+			return $response;
 		}
 	}
 }
