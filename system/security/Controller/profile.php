@@ -119,7 +119,7 @@ class ProfileController extends FrontedController {
 			AuthenticationService::sharedInstance()->doLogout();
 			// if a user goes to login and is logged in, we redirect him home
 		} else if(member::login()) {
-			return GomaResponse::redirect(getRedirect(true));
+			return GomaResponse::redirect($this->getRedirect($this));
 		}
 
 		// if no login and pwd and username isset, we login
@@ -154,6 +154,6 @@ class ProfileController extends FrontedController {
 			AuthenticationService::sharedInstance()->doLogout();
 		}
 
-		return GomaResponse::redirect(getRedirect(true));
+		return GomaResponse::redirect($this->getRedirect($this));
 	}
 }

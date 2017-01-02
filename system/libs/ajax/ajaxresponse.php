@@ -177,4 +177,9 @@ class AjaxResponse extends GomaResponse
     {
         return $this->render();
     }
+
+    public function isFullPage()
+    {
+        return true;
+    }
 }

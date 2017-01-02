@@ -70,7 +70,7 @@ class ExternalForm extends FormField {
 			$this->value,
 			"&nbsp;&nbsp;&nbsp;&nbsp;",
 			new HTMLNode("a", array(
-				"href" => $this->externalURL() . "/render/?redirect=" . urlencode(getredirect()),
+				"href" => $this->externalURL() . "/render/?redirect=" . urlencode($this->getRedirect($this)),
 				"title" => convert::raw2text($this->extTitle)
 			), ($this->title != $this->extTitle) ? $this->extTitle : lang("edit"))
 		));

@@ -53,6 +53,7 @@ abstract class ControllerExtension extends Controller implements ExtensionModel 
 
     /**
      * gets the owner of class
+     *
      * @return RequestHandler
      */
     public function getOwner()

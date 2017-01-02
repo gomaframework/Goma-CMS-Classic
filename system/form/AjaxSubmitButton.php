@@ -67,7 +67,7 @@ class AjaxSubmitButton extends FormAction {
     public function js()
     {
         // appendix to the url
-        $append = '?redirect=' . urlencode(getRedirect());
+        $append = '?redirect=' . urlencode($this->getRedirect($this));
         foreach ($this->form()->getRequest()->get_params as $key => $val) {
             $append .= '&' . urlencode($key) . '=' . urlencode($val);
         }

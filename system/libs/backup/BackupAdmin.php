@@ -85,7 +85,7 @@ class BackupAdmin extends TableView
     */
     public function Init($request = null) {
         Resources::$lessVars = "tint-blue.less";
-        parent::Init($request);
+        return parent::Init($request);
     }
 
     /**

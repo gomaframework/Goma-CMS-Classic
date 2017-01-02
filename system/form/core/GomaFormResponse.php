@@ -415,7 +415,8 @@ class GomaFormResponse extends GomaResponse {
      */
     public function isFullPage()
     {
-        return $this->isStringResponse();
+    
+        return !$this->isStringResponse() && Director::isResponseFullPage($this->renderedForm);
     }
 
     /**

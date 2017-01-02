@@ -107,6 +107,7 @@ class RequestHandler extends gObject {
 	 * It generates the current URL-namespace ($this->namespace) and registers the Controller as an activeController in Core as Core::$activeController
 	 *
 	 * @param   Request $request The Request Object
+	 * @return $this
 	 */
 	public function Init($request = null) {
 		if (!isset($request) && !isset($this->request)) {
@@ -121,6 +122,8 @@ class RequestHandler extends gObject {
 
         $this->requestHandlerKey = count($this->request->getController());
         $this->request->addController($this, !$this->subController);
+
+		return $this;
 	}
 
 	/**
@@ -470,7 +473,7 @@ class RequestHandler extends gObject {
             }
         }
 
-        if($this->currentActionHandled != "index") {
+        if($this->currentActionHandled != "index" || (is_object($sender) && $sender != $this)) {
             return $this->namespace;
         }
 

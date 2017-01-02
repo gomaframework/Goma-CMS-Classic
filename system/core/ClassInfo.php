@@ -738,6 +738,8 @@ class ClassInfo extends gObject {
 				return;
 			}
 
+			StaticsManager::setSaveVarsForClass(FileSystem::class);
+
 			// run hooks
 			if(self::$ClassInfoHooks) {
 				foreach(self::$ClassInfoHooks as $hook) {

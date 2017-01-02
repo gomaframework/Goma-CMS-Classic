@@ -73,7 +73,7 @@ class Director extends gObject {
 
         Core::callHook("serve", $output);
 
-        if($request->getRequestController()) {
+        if($request && $request->getRequestController()) {
             /** @var GomaResponse|GomaResponseBody|string $output */
             if(!is_a($output, GomaResponse::class) || $output->shouldServe()) {
                 $output = self::setStringToResponse($output,

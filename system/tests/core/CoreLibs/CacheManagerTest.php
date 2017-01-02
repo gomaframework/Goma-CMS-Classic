@@ -86,7 +86,7 @@ class CacheManagerTests extends GomaUnitTest {
 
         $this->unitShouldDelete("data.test1234567890test12.goma", time() - 120, 1, false);
 
-        $this->unitShouldDelete("data.test1234567890test12.goma", time() - 3700, 1, true);
+        $this->unitShouldDelete("data.test1234567890test12.goma", time() - 7300, 1, true);
         $this->unitShouldDelete("data.test1234567890test12.goma", time() - 7500, 6000, true);
 
         $this->unitShouldDelete("deletecache", time() - 3700, 0, false);

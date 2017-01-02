@@ -16,14 +16,18 @@ define('IMAGE_ROOT', ROOT . '/images/');
 define('UPLOADS_ROOT', ROOT . '/uploads/');
 define('HTACCESS_FILE', ROOT . '.htaccess');
 
+StaticsManager::AddSaveVar(FileSystem::class, "useSymlinks");
+
 class FileSystem extends gObject {
 	/**
 	 * this is the last file which causes an error
-	 *
-	 * @name errFile
-	 * @access public
 	*/
 	protected static $errFile;
+
+	/**
+	 * @var bool
+	 */
+	public static $useSymlinks = false;
 
 	/**
 	 * safe-mode.
@@ -454,18 +458,43 @@ class FileSystem extends gObject {
 	public static function sendFile($file, $filename = null, $request = null) {
 		if(!file_exists($file))
 			return false;
-		
-		$hash = randomString(20);
-		FileSystem::write(FRAMEWORK_ROOT . "temp/download." . $hash . ".goma", serialize(array("file" => realpath($file), "filename" => $filename)));
 
 		if(isset($request) && $request->canReplyJSON()) {
 			header("content-type: application/json");
-			echo json_encode(array("file" => ROOT_PATH . "system/libs/file/Sender/FileSender.php?downloadID=" . $hash));
+			echo json_encode(array("file" => self::getSendFileLink($file, $filename)));
 			exit;
 		} else {
-			HTTPResponse::redirect(ROOT_PATH . "system/libs/file/Sender/FileSender.php?downloadID=" . $hash);
+			HTTPResponse::redirect(self::getSendFileLink($file, $filename));
 			exit;
 		}
+	}
+
+	/**
+	 * @param string $file
+	 * @param string|null $filename
+	 * @return string
+	 */
+	public static function getSendFileLink($file, $filename = null) {
+		$hash = randomString(20);
+		if(self::$useSymlinks && function_exists("symlink")) {
+			if(!file_exists(FRAMEWORK_ROOT . "temp/.htaccess")) {
+				FileSystem::write(FRAMEWORK_ROOT . "temp/.htaccess", "Options +FollowSymLinks\nOptions -SymLinksIfOwnerMatch\n\n");
+			}
+
+			$dir = FRAMEWORK_DIRECTORY . "/temp/download/" . $hash;
+			FileSystem::requireDir(ROOT . $dir);
+			self::chmod(ROOT . $file, self::getMode());
+			if(symlink(ROOT . $file, ROOT . $dir . "/" . $filename)) {
+				self::chmod(ROOT . $dir . "/" . $filename, self::getMode());
+				return ROOT_PATH . $dir . "/" . $filename;
+			} else {
+				log_error("Could not create symlink " . ROOT . $dir . "/" . $filename);
+			}
+		}
+
+		FileSystem::write(FRAMEWORK_ROOT . "temp/download." . $hash . ".goma", serialize(array("file" => realpath($file), "filename" => $filename)));
+
+		return  ROOT_PATH . "system/libs/file/Sender/FileSender.php?downloadID=" . $hash;
 	}
 
     /**
