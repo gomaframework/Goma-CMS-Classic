@@ -7,31 +7,28 @@ At the moment we're developing version 2.0 of Goma, so please be patient. It's d
 
 ### Installation of Goma
 
-Please follow the git_readme.txt if you want to clone the project to your server directly.
-Otherwise just get a source package and extract it in your servers document root.
-Then point your browser to the url, you gave it.
-The first time you start Goma CMS, an installer will appear to guide you through the
-necessary steps of installation.
-If not, please check if the webserver has the rights to read, write and execute Goma.
-The installer will also provide information how to install Goma on your system or inform you about problems.
+Please follow the [Installation guide](https://confluence.goma-cms.org/display/GOMA/Installation+Guide) on our confluence space.
 
+### Troubleshooting
 Notice for RedHat-related OS:
 
 Goma needs the package php-xml from the OS Repos (e.g. Fedora or Mandriva Main).
 
 For IIS, you need the module [URL Rewrite](http://www.iis.net/downloads/microsoft/url-rewrite), otherwise Goma won't work.
 
+More Troubleshooting is also on our [Confluence Troubleshooting-Page](https://confluence.goma-cms.org/display/GOMA/Troubleshooting)
+
 
 Team
 ----
 
 ### Development
-* @[DanielGruber](https://github.com/danielgruber) - Daniel Gruber
-* @[MatorKaleen](https://github.com/MatorKaleen) - Fabian Parzefall
-* @[hansau22](https://github.com/hansau22) - Julian Frielinghaus
+* @Daniel.Gruber
+* @Fabian.Parzefall
+* @Julian.Frielinghaus
 
 #### Quality & User-Experience
-* PatrickLemke - Patrick Lemke
+* @Patrick.Lemke
 
 Important External Libraries
 ------------------
