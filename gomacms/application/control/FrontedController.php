@@ -113,10 +113,39 @@ class FrontedController extends Controller
             "addcontent" => $this->addcontent(),
             "view"       => $this->view(),
             "frontedbar" => new DataSet($this->frontedBar()),
-            "content"    => $content
+            "content"    => $content,
+
+            "appendedContent"   => $this->getAppendedContent(),
+            "prependedContent"  => $this->getPrependedContent()
         ));
 
         return $model;
+    }
+
+    /**
+     * gets prepended content
+     *
+     * @return string
+     */
+    public function getPrependedContent() {
+        $object = new HTMLNode('div', array(
+            "class" => "prependedContent"
+        ));
+        $this->callExtending("prependContent", $object);
+        return $object->html();
+    }
+
+    /**
+     * gets appended content
+     *
+     * @return string
+     */
+    public function getAppendedContent() {
+        $object = new HTMLNode('div', array(
+            "class" => "appendedContent"
+        ));
+        $this->callExtending("appendContent", $object);
+        return $object->html();
     }
 }
 

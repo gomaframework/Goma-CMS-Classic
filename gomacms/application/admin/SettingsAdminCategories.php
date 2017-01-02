@@ -51,14 +51,15 @@ class SettingsAdminCategories extends AbstractCategoryController {
 
     /**
      * @param null $request
+     * @return $this
      */
-    public function Init($request = null) {
+    public function Init($request = null)
+    {
         parent::Init($request);
 
-        $this->model_inst = DataObject::get(Newsettings::class, array("id" => 1))->first();
-        if($this->model_inst == null) {
-            $this->model_inst = new Newsettings();
-        }
+        $this->model_inst = DataObject::get("newsettings", array("id" => 1))->first();
+
+        return $this;
     }
 
     /**

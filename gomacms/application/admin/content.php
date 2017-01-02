@@ -117,6 +117,7 @@ class contentAdmin extends LeftAndMain {
      * init JavaScript-Files
      *
      * @param Request $request
+     * @return $this
      */
     public function Init($request = null)
     {

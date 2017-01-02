@@ -26,12 +26,21 @@ class HomePageController extends SiteController
             /** @var Page $redirect */
             $redirect = DataObject::get_one("pages", array("id" => $this->getRequest()->get_params["r"]));
             if ($redirect) {
-                $query = preg_replace('/\&?r\=' . preg_quote($this->getRequest()->get_params["r"], "/") . '/', '', $this->getRequest()->queryString());
+                $query = preg_replace('/\&?r\=' . preg_quote($this->getRequest()->get_params["r"], "/") . '/', '', $_SERVER["QUERY_STRING"]);
                 return GomaResponse::redirect($redirect->getURL() . "?" . $query);
             }
         }
 
+        /** @var Page $data */
         if ($data = DataObject::get_one("pages", array("parentid" => 0))) {
+            // fix request
+            if(!$this->request->getUrlParts()) {
+                $this->request->setUrlParts(array(
+                    $data->path
+                ));
+                $this->request->shift(1);
+            }
+
             return ControllerResolver::instanceForModel($data)->handleRequest($this->request);
         } else {
             return false;

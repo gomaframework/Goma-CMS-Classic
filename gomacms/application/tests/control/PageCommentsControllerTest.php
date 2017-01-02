@@ -21,4 +21,17 @@ class PageCommentsControllerTest extends AbstractControllerTest {
 
         );
     }
+
+    public function testPageCommentsLoaded() {
+        $request = new Request("get", "test");
+        $page = new Page();
+        $page->title = "My Page";
+        $page->showcomments = true;
+
+        $contentController = new ContentController();
+        $contentController->setModelInst($page);
+        $response = Director::serve($contentController->handleRequest($request), $request, false);
+
+        $this->assertTrue(strpos($response, lang("co_add_comment")) !== false);
+    }
 }

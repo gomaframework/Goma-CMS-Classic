@@ -11,16 +11,6 @@
  */
 class ContentTPLExtension extends Extension {
     /**
-     * prepended content
-     */
-    public static $prependedContent = array();
-
-    /**
-     * appended content
-     */
-    public static $appendedContent = array();
-
-    /**
      * active mainbar cache
      * @var Page[]
      */
@@ -39,43 +29,12 @@ class ContentTPLExtension extends Extension {
         "mainbar",
         "active_mainbar_title",
         "mainbarByID",
-        "prendedContent",
-        "appendedContent",
         "active_mainbar_url",
         "pageByID",
         "pageByPath",
         "active_mainbar",
         "active_page"
     );
-
-    /**
-     * appends content
-     *
-     * @name appendContent
-     * @param string|object|array - content
-     * @access public
-     */
-    public static function appendContent($content) {
-        if(is_array($content)) {
-            self::$appendedContent = array_merge(self::$appendedContent, $content);
-        } else {
-            self::$appendedContent[] = $content;
-        }
-    }
-
-    /**
-     * prepends content
-     *
-     * @name prependContent
-     * @param string|object|array - content
-     */
-    public static function prependContent($content) {
-        if(is_array($content)) {
-            self::$prependedContent = array_merge(self::$prependedContent, $content);
-        } else {
-            self::$prependedContent[] = $content;
-        }
-    }
 
     /**
      * returns if a mainbar should exist on this level.
@@ -207,23 +166,6 @@ class ContentTPLExtension extends Extension {
     {
         return $this->active_mainbar(2);
     }
-
-    /**
-     * returns the prepended content
-     */
-    public static function prependedContent() {
-        $div = new HTMLNode('div', array(), self::$prependedContent);
-
-        return $div->html();
-    }
-
-    /**
-     * returns the appended content
-     */
-    public static function appendedContent() {
-        $div = new HTMLNode('div', array(), self::$appendedContent);
-
-        return $div->html();
-    }
 }
+
 gObject::extend("tplCaller", "ContentTPLExtension");

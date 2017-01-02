@@ -184,11 +184,6 @@ class ContentController extends FrontedController
             return;
         }
 
-        if ($action == "index") {
-            ContentTPLExtension::AppendContent($this->modelInst()->appendedContent);
-            ContentTPLExtension::PrependContent($this->modelInst()->prependedContent);
-        }
-
         if ($this->modelInst()->parentid == 0 && $this->modelInst()->sort == 0) {
             defined("HOMEPAGE") OR define("HOMEPAGE", true);
             Core::setTitle($this->modelInst()->windowtitle);

@@ -149,13 +149,16 @@ class BoxesController extends FrontedController {
                 "canWrite" => $canWrite
             ))->renderWith("boxes/boxes.html");
         } else {
+            global $__errorCount;
+            $oldErrorCount = $__errorCount;
+
             $output = $this->modelInst()->customise(array(
                 "pageid" => $pid,
                 "boxlimit" => (int)$count,
                 "canWrite" => $canWrite
             ))->renderWith("boxes/boxes.html");
 
-            if ($this->checkCachable()) {
+            if ($this->checkCachable() && $oldErrorCount == $__errorCount) {
                 $cacher->write($output, 86400);
             }
 

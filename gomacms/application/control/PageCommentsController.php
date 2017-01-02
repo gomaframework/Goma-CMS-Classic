@@ -8,10 +8,10 @@ defined("IN_GOMA") OR die();
  *
  * @author Goma-Team
  * @copyright 2016 Goma-Team
+ * @license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
  *
  * @version 1.0
  */
-
 class PageCommentsController extends FrontedController {
     public $allowed_actions = array("edit", "delete");
 
@@ -27,7 +27,9 @@ class PageCommentsController extends FrontedController {
     public function ajaxsave($data, $response, $form)
     {
         $model = $this->save($data);
-        $response->prepend(".comments", $model->renderWith("comments/onecomment.html"));
+        $response->prepend(".comments", $model->customise(array(
+        "namespace" => $this->parentController()->namespace
+        ))->renderWith("comments/onecomment.html"));
         $response->exec('$(".comments").find(".comment:first").css("display", "none").slideDown("fast");');
         $response->exec("$('#" . $form->fields["text"]->id() . "').val(''); $('#" . $form->fields["text"]->id() . "').change();");
 
@@ -73,5 +75,31 @@ class PageCommentsControllerExtension extends ControllerExtension {
 
         return "";
     }
+
+    /**
+     * append content to sites if needed
+     * @param HTMLNode $object
+     */
+    public function appendContent(&$object)
+    {
+        if ($this->getOwner()->modelInst()->showcomments) {
+            /** @var HasMany_DataObjectSet $comments */
+            $comments = $this->getOwner()->modelInst()->comments();
+
+            /** @var GomaFormResponse $form */
+            $form = gObject::instance("PageCommentsController")->Init($this->request)->setModelInst($comments)->form("add");
+            if(Director::isResponseFullPage($form)) {
+                Director::serve($form, $this->getOwner()->getRequest());
+                exit;
+            }
+
+            $object->append($comments->customise(array(
+                "page"  => $this->getOwner()->modelInst(),
+                "form" => $form,
+                "namespace" => $this->getOwner()->namespace
+            ))->renderWith("comments/comments.html"));
+        }
+    }
 }
-gObject::extend("contentController", "PageCommentsControllerExtension");
+
+gObject::extend(contentController::class, PageCommentsControllerExtension::class);

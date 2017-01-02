@@ -24,16 +24,6 @@ class RatingDataObjectExtension extends DataObjectExtension
     );
 
     /**
-     * appends rating
-     * @param HTMLNode $content
-     */
-    public function appendContent(&$content)
-    {
-        if ($this->getOwner()->rating)
-            $content->prepend(Rating::draw("page_" . $this->getOwner()->id));
-    }
-
-    /**
      * renders the field in the form
      * @param Form $form
      */

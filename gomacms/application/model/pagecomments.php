@@ -28,7 +28,7 @@ class PageComments extends DataObject {
     /**
      * indexes for faster look-ups
      */
-    static $index = array("name" => true, "created" => true);
+    static $index = array("name" => true);
 
     /**
      * rights
@@ -129,30 +129,6 @@ class PageCommentsDataObjectExtension extends DataObjectExtension {
     public function getForm(&$form)
     {
         $form->meta->add(new Checkbox("showcomments", lang("co_comments")));
-    }
-
-    /**
-     * append content to sites if needed
-     * @param HTMLNode $object
-     */
-    public function appendContent(&$object)
-    {
-        if ($this->getOwner()->showcomments) {
-            /** @var HasMany_DataObjectSet $comments */
-            $comments = $this->getOwner()->comments();
-
-            /** @var GomaFormResponse $form */
-            $form = gObject::instance("PageCommentsController")->setModelInst($comments)->form("add");
-            if(!$form->isStringResponse()) {
-                Director::serve($form);
-                exit;
-            }
-
-            $object->append($comments->customise(array(
-                "page"  => $this->getOwner(),
-                "form" => $form
-            ))->renderWith("comments/comments.html"));
-        }
     }
 }
 

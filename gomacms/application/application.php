@@ -27,7 +27,7 @@ if(isset($_SESSION["welcome_screen"]) || (!file_exists(APP_FOLDER . "application
 		$_POST
 	);
 	$welcomeController = new welcomeController();
-	Director::serve($welcomeController->handleRequest($request), $request);
+	Director::serve($welcomeController->handleRequest($request));
 	return;
 }
 

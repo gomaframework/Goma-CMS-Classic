@@ -157,9 +157,6 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
 
     /**
      * makes the url
-     *
-     *@name geturl
-     *@return string
      */
     public function getURL()
     {
@@ -173,10 +170,7 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
 
 
     /**
-     * makes the org url without nothing for homepage
-     *
-     *@name getorgurl
-     *@return string
+     * makes the org url without fix for homepage
      */
     public function getOrgURL()
     {
@@ -211,36 +205,6 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
             $this->setParentId(0);
             $this->parent = null;
         }
-    }
-
-    /**
-     * gets prepended content
-     *
-     * @name getPrependedContent
-     * @access public
-     * @return string
-     */
-    public function getPrependedContent() {
-        $object = new HTMLNode('div', array(
-            "class" => "prependedContent"
-        ));
-        $this->callExtending("prependContent", $object);
-        return $object->html();
-    }
-
-    /**
-     * gets appended content
-     *
-     * @name getAppendedContent
-     * @access public
-     * @return string
-     */
-    public function getAppendedContent() {
-        $object = new HTMLNode('div', array(
-            "class" => "appendedContent"
-        ));
-        $this->callExtending("appendContent", $object);
-        return $object->html();
     }
 
     /**

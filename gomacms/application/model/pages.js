@@ -42,10 +42,11 @@ function pages_pushPreviewURL(publish, state, usePublish, title) {
 }
 
 function pages_unbindPreviewURL() {
-	$("#visit_webpage").unbind("click");
-	$("#visit_webpage").attr("href", ROOT_PATH);
-	$("#visit_webpage").removeClass("preview");
-	$("#visit_webpage .flex").html(lang("preview_website"));
+	var visitWebpage = $("#visit_webpage");
+	visitWebpage.unbind("click");
+	visitWebpage.attr("href", ROOT_PATH);
+	visitWebpage.removeClass("preview");
+	visitWebpage.find(".flex").html(lang("preview_website"));
 }
 
 $(function(){
@@ -53,6 +54,7 @@ $(function(){
 })
 
 function show_preview(publish, state, usePublish) {
+	var interval;
 	$("body").append('<div id="preview"></div>');
 	$('html,body').animate({scrollTop: 0, scrollLeft: 0}, 300);
 	$("body").css({
@@ -159,7 +161,7 @@ function show_preview(publish, state, usePublish) {
 			}
 			
 		}, 500);
-	}
+	};
 	
 	return false;
 }
