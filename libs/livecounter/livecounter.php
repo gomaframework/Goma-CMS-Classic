@@ -186,7 +186,7 @@ class livecounter extends DataObject
 		if(	!isset(self::$userCounted) && 
 			!isset($_COOKIE["goma_sessid"]) && 
 			!isset($_COOKIE["goma_lifeid"]) && 
-			DataObject::count("livecounter_live", array("ip" => md5($_SERVER["REMOTE_ADDR"]), "browser" => $user_identifier, "last_modified" => array(">", NOW - 60 * 60 * 1))) > 10) {
+			DataObject::count("livecounter_live", array("ip" => md5($_SERVER["REMOTE_ADDR"]), "browser" => $user_identifier, "last_modified" => array(">", time() - 60 * 60 * 1))) > 10) {
 
 
 			// this could be a ddos-attack or hacking-attack, we should notify the system administrator
@@ -240,7 +240,7 @@ class livecounter extends DataObject
 		*/
 		if(isset(self::$userCounted)) {
 			$data = DataObject::get_one("livecounter_live", array("phpsessid" => $user_identifier, "last_modified" => self::$userCounted));
-			if($data && date("d", $data->created) == date("d", NOW)) {
+			if($data && date("d", $data->created) == date("d", time())) {
 				DataObject::update("livecounter_live", array("hitcount" => $data->hitcount + 1), array("id" => $data->versionid));
 
 				return true;
@@ -252,7 +252,7 @@ class livecounter extends DataObject
 			}
 		}
 
-		// now we are in normal not high-performance-optimized mode.
+		// time() we are in normal not high-performance-optimized mode.
 		$timeout = TIME - SESSION_TIMEOUT;
 		
 		// check if a cookie exists, that means that the user was here in the last 16 hours.
@@ -266,7 +266,7 @@ class livecounter extends DataObject
 				
 				
 				// check if we are on the same day or not.
-				if($data && date("d", $data->created) == date("d", NOW)) {
+				if($data && date("d", $data->created) == date("d", time())) {
 					$data->phpsessid = $user_identifier;
 					$data->hitcount++;
 					$data->writeToDB(false, true);
@@ -290,7 +290,7 @@ class livecounter extends DataObject
 		 * check for current sessid
 		*/
 		$data = DataObject::get_one("livecounter_live", array("phpsessid" => $user_identifier, "last_modified" => array(">", $timeout)));
-		if($data && date("d", $data->created) == date("d", NOW)) {
+		if($data && date("d", $data->created) == date("d", time())) {
 			DataObject::update("livecounter_live", array("user" => self::userId(), "hitcount" => $data->hitcount + 1), array("id" => $data->versionid));
 		} else {
 			if($data) {
@@ -420,7 +420,7 @@ class livecounter extends DataObject
 			$page = 1;
 			
 		$interval = $days * 24 * 60 * 60;
-		$day = mktime(0, 0, 0, date("n", NOW), date("j", NOW), date("Y", NOW));
+		$day = mktime(0, 0, 0, date("n", time()), date("j", time()), date("Y", time()));
 		
 		$page--;
 		$day = $day - ($interval * $page * $showcount);
@@ -468,8 +468,8 @@ class livecounter extends DataObject
 		$page--;
 		
 		// get last month
-		$month = date("n", NOW);
-		$year = date("Y", NOW);
+		$month = date("n", time());
+		$year = date("Y", time());
 		
 		for($i = 0; $i < $page * $showcount; $i++) {
 			if($month == 1) {
@@ -481,8 +481,8 @@ class livecounter extends DataObject
 		}
 		
 		$start = mktime(0, 0, 0, $month, 1, $year); // get 1st of last month 00:00:00
-		$endm = date("n", NOW);
-		$endy = date("Y", NOW);
+		$endm = date("n", time());
+		$endy = date("Y", time());
 		if($endm == 12) {
 			$endm = 1;
 			$endy++;
@@ -620,7 +620,7 @@ class livecounter extends DataObject
 
 		$start = microtime(true);
 
-		$migrateTimeout = NOW - 60 * 60;
+		$migrateTimeout = time() - 60 * 60;
 
 		// migrate data from live table back to normal table
 		$select = new SelectQuery("statistics_live", array("statistics_live.last_modified", "statistics_live.longtermid", "statistics_live.hitcount", "statistics_live.phpsessid"), array());
@@ -639,7 +639,7 @@ class livecounter extends DataObject
 		$timeAfterCopy = $e - $start;
 		logging("migration: copy done after " .  $timeAfterCopy . " seconds.");
 
-		$deleteTimeout = NOW - SESSION_TIMEOUT;
+		$deleteTimeout = time() - SESSION_TIMEOUT;
 		// remove old
 		$sqlDeleteData = "DELETE FROM ".DB_PREFIX ."statistics_live WHERE last_modified < ".$deleteTimeout;
 		$sqlDeleteStateData = "DELETE t FROM ".DB_PREFIX ."statistics_live_state t WHERE NOT EXISTS ( SELECT * FROM ".DB_PREFIX ."statistics_live l WHERE l.recordid = t.id)";

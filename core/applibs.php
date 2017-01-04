@@ -300,14 +300,10 @@ function writeSystemConfig($data = array()) {
 	$sql_driver = "mysqli";
 	$dev = false;
 	$urlend = "/";
-	$profile_detail = false;
 	$logFolder = "log_" . randomString(5);
 	$privateKey = randomString(15);
-	$browsercache = true;
 	$defaultLang = defined("DEFAULT_LANG") ? DEFAULT_LANG : "de";
 	$slowQuery = 50;
-	$SSLpublicKey = null;
-	$SSLprivateKey = null;
 
 	if(file_exists(ROOT . "_config.php"))
 		include (ROOT . "_config.php");
@@ -334,36 +330,6 @@ function writeSystemConfig($data = array()) {
 }
 
 /**
- * Returns the SSL public key of the installation.
- *
- * @return string SSL public key
- */
-function getSSLPublicKey() {
-	if(!file_exists(ROOT . "_config.php")) {
-		writeSystemConfig();
-	}
-
-	include (ROOT . "_config.php");
-
-	return $SSLpublicKey;
-}
-
-/**
- * Returns the SSL private key of the installation.
- *
- * @return string SSL private key
- */
-function getSSLPrivateKey() {
-	if(!file_exists(ROOT . "_config.php")) {
-		writeSystemConfig();
-	}
-
-	include (ROOT . "_config.php");
-
-	return $SSLprivateKey;
-}
-
-/**
  * Writes the config of a project.
  *
  * @see writeSystemConfig() to write the system config.
@@ -371,7 +337,7 @@ function getSSLPrivateKey() {
  * @param array[] $data An array with configuration variables.
  * @param string $project Name of the project, default is CURRENT_PROJECT.
  *
- * @return void
+ * @throws ProjectConfigWriteException
  */
 function writeProjectConfig($data = array(), $project = CURRENT_PROJECT) {
 	$config = $project . "/config.php";
@@ -1113,6 +1079,21 @@ function loadApplication($directory) {
 	}
 }
 
+function getRootPath($file = __FILE__, $docRoot = null) {
+	if(isset($docRoot) || !isCommandLineInterface()) {
+		$root_path = str_replace("\\", "/", substr($file, 0, 0 - strlen(FRAMEWORK_DIRECTORY . "/core/applibs.php")));
+		$root_path = substr($root_path, strlen(isset($docRoot) ? $docRoot : realpath($_SERVER["DOCUMENT_ROOT"])));
+
+        if(substr($root_path, 0, 1) != "/") {
+            $root_path = "/" . $root_path;
+        }
+
+		return $root_path;
+	}
+
+	return str_replace("\\", "/", substr(__FILE__, 0, strlen(FRAMEWORK_DIRECTORY . "/core/applibs.php")));
+}
+
 /**
  * parses the URL, so that we have a clean url
  */
@@ -1120,8 +1101,7 @@ function parseUrl() {
 	defined("BASE_SCRIPT") OR define("BASE_SCRIPT", "");
 
 	if(!isCommandLineInterface()) {
-		$root_path = substr(ROOT, strlen(realpath($_SERVER["DOCUMENT_ROOT"])));
-		define('ROOT_PATH', $root_path);
+		define('ROOT_PATH', getRootPath());
 
 		// generate BASE_URI
 		$http = (isset($_SERVER["HTTPS"])) && $_SERVER["HTTPS"] != "off" ? "https" : "http";

@@ -26,36 +26,36 @@ class ModelWriterTests extends GomaUnitTest implements TestAble
     public function testChanged() {
         $this->assertTrue($this->unitTestChanged(array(
             "test" => 1,
-            "last_modified" => NOW - 10,
-            "created"       => NOW - 20,
+            "last_modified" => time() - 10,
+            "created"       => time() - 20,
             "autorid"       => 2,
             "editorid"      => 3
         ), array(
             "test" => 1,
             "last_modified" => NOW,
-            "created"       => NOW - 20,
+            "created"       => time() - 20,
             "autorid"       => 2,
             "editorid"      => 3
         )));
 
         $this->assertFalse($this->unitTestChanged(array(
             "test" => 1,
-            "last_modified" => NOW - 10,
-            "created"       => NOW - 20,
+            "last_modified" => time() - 10,
+            "created"       => time() - 20,
             "autorid"       => 2,
             "editorid"      => 3
         ), array(
             "test" => "1",
-            "last_modified" => NOW - 10,
-            "created"       => NOW - 20,
+            "last_modified" => time() - 10,
+            "created"       => time() - 20,
             "autorid"       => 2,
             "editorid"      => "3"
         )));
 
         $this->assertFalse($this->unitTestChanged(array(
             "test" => 1,
-            "last_modified" => NOW - 10,
-            "created"       => NOW - 20,
+            "last_modified" => time() - 10,
+            "created"       => time() - 20,
             "autorid"       => 2,
             "editorid"      => 3
         ), array(
@@ -64,8 +64,8 @@ class ModelWriterTests extends GomaUnitTest implements TestAble
 
         $this->assertTrue($this->unitTestChanged(array(
             "test" => 1,
-            "last_modified" => NOW - 10,
-            "created"       => NOW - 20,
+            "last_modified" => time() - 10,
+            "created"       => time() - 20,
             "autorid"       => 2,
             "editorid"      => 3
         ), array(
@@ -74,8 +74,8 @@ class ModelWriterTests extends GomaUnitTest implements TestAble
 
         $this->assertTrue($this->unitTestChanged(array(
             "test" => 1,
-            "last_modified" => NOW - 10,
-            "created"       => NOW - 20,
+            "last_modified" => time() - 10,
+            "created"       => time() - 20,
             "autorid"       => 2,
             "editorid"      => 3
         ), array(
