@@ -355,10 +355,6 @@ class FileUploadSet extends FormField
      * @throws Exception
      */
     protected function handleSingleUpload($name, $size, $tmp_name, $error) {
-        if (GOMA_FREE_SPACE - $size < 10 * 1024 * 1024) {
-            throw new Exception(lang("error_disk_space"));
-        }
-
         if($error == UPLOAD_ERR_INI_SIZE || $error == UPLOAD_ERR_FORM_SIZE || ($this->max_filesize != -1 && $size > $this->max_filesize)) {
             throw new Exception(lang('files.filesize_failure', "The file is too big."));
         }

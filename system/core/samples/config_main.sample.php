@@ -20,17 +20,6 @@ $dev = {dev};
 $urlend = {urlend};
 
 /*
- * defines if the report of includes/profile.php/ is more detailed or not
-*/
-
-$profile_detail = {profile_detail};
-
-/*
- * you should activate this method to allow the browser store the sites in the cache and if the user presses the back-button, the browser load the data from the cache
-*/
-$browsercache = {browsercache};
-
-/*
  * defines log-folder
 */
 $logFolder = {logFolder};
@@ -39,16 +28,6 @@ $logFolder = {logFolder};
  * defines private key of this application
 */
 $privateKey = {privateKey};
-
-/*
- * defines SSL-private-key of this application
-*/
-$SSLprivateKey = {SSLprivateKey};
-
-/*
- * defines SSL-public-key of this application
-*/
-$SSLpublicKey = {SSLpublicKey};
 
 /*
  * default lang

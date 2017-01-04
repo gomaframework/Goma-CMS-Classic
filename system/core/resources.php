@@ -460,7 +460,6 @@ class Resources extends gObject {
 
 		$file = self::getFileName(CACHE_DIRECTORY . "css_".$name."_".md5($lessStr)."_".md5(implode("_", $combine_css["files"]))."_".$combine_css["mtime"]."_".preg_replace('/[^a-zA-Z0-9_]/', '_', self::VERSION).$debugStr.".css");
 
-
 		if (is_file($file)) {
 			$css_files[] = $file;
 		} else {
@@ -470,7 +469,6 @@ class Resources extends gObject {
  *@license to see license of the files, go to the specified path for the file
 */\n\n";
 			foreach($combine_css["files"] as $cssfile) {
-
 				$less = isset($combine_css["less"][$cssfile]) ? $combine_css["less"][$cssfile] : self::$lessVars;
 				$cachefile = ROOT . CACHE_DIRECTORY  . ".cache.".md5($less)."." . md5($cssfile) . $debugStr . ".css";
 				if (self::file_exists($cachefile) && filemtime($cachefile) > filemtime(ROOT . $cssfile)) {
@@ -478,6 +476,7 @@ class Resources extends gObject {
 				} else {
 					$data = "/* file ". $cssfile ." with $less */\n\n";
 
+					$cssfile = str_replace("\\", "/", $cssfile);
 					$data .= trim(self::parseCSS(file_get_contents($less) . "\n\n" . file_get_contents(ROOT . $cssfile), $cssfile, ROOT_PATH)) . "\n\n";
 					$css .= $data;
 					FileSystem::Write($cachefile, $data);
@@ -832,12 +831,8 @@ class Resources extends gObject {
 			$css = str_replace($matches[0][$key], 'url("' . $base . $path . "/" . $url . '")', $css);
 		}
 
-		try {
-			$less = new lessc;
-			$css = $less->compile($css);
-		} catch(Exception $e) {
-			log_exception($e);
-		}
+        $less = new lessc;
+        $css = $less->compile($css);
 
 		if(self::$debug)
 			return $css;

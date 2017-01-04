@@ -73,11 +73,6 @@ if (!class_exists("DOMDocument")) {
 define("DEFAULT_TIMEZONE", "Europe/Berlin");
 
 /**
- * the language-directory
- */
-define('LANGUAGE_DIRECTORY', 'system/lang/');
-
-/**
  * you shouldn't edit anything below this if you don't know, what you do
  */
 
@@ -88,17 +83,13 @@ define("PHP_MAIOR_VERSION", strtok(PHP_VERSION, "."));
 define('ROOT', realpath(dirname(__FILE__) . "/../") . "/");
 define("FRAMEWORK_DIRECTORY", "system");
 define("FRAMEWORK_ROOT", ROOT . FRAMEWORK_DIRECTORY . "/");
-
-/**
- * current date
- */
-define('DATE', time());
+define('LANGUAGE_DIRECTORY', FRAMEWORK_DIRECTORY . '/lang/');
 
 /**
  * TIME
  */
-define('TIME', DATE);
-define("NOW", DATE);
+define('TIME', time());
+define("NOW", time());
 
 /**
  * status-constants for config.php
@@ -111,15 +102,9 @@ define('STATUS_DISABLED', 0);
 define("GOMA_VERSION", "2.0RC6");
 define("BUILD_VERSION", "124");
 
-// fix for debug_backtrace
-defined("DEBUG_BACKTRACE_PROVIDE_OBJECT") OR define("DEBUG_BACKTRACE_PROVIDE_OBJECT", true);
-
 chdir(ROOT);
 
-define("GOMA_FREE_SPACE", 100000000000);
-
 // require data
-
 if (PROFILE)
 	Profiler::mark("core_requires");
 
@@ -173,10 +158,8 @@ if (file_exists(ROOT . '_config.php')) {
 	}
 
 	define("URLEND", $urlend);
-	define("PROFILE_DETAIL", $profile_detail);
 
 	defined("DEV_MODE") OR define("DEV_MODE", $dev || isPHPUnit() || isDevModeCLI());
-	define("BROWSERCACHE", $browsercache);
 
 	define('SQL_DRIVER', $sql_driver);
 	define("SLOW_QUERY", isset($slowQuery) ? $slowQuery : 50);
@@ -194,17 +177,13 @@ if (file_exists(ROOT . '_config.php')) {
 		ClassManifest::addUnitTest();
 	}
 
-	// get a temporary root_path
-	$root_path = str_replace("\\", "/", substr(__FILE__, 0, -22));
-	$root_path = substr($root_path, strlen(realpath($_SERVER["DOCUMENT_ROOT"])));
-
 	/*
 	 * get the current application
 	 */
 	/** @var array $apps */
 	if ($apps) {
 		foreach ($apps as $data) {
-			$subUrl = $root_path . "selectDomain/" . $data["directory"] . "/";
+			$subUrl = getRootPath() . "selectDomain/" . $data["directory"] . "/";
 			if(isCommandLineInterface()) {
 				if(isset($args["p"]) && $args["p"] == $data["directory"]) {
 					$application = $data["directory"];
@@ -215,6 +194,7 @@ if (file_exists(ROOT . '_config.php')) {
 					define("BASE_SCRIPT", "selectDomain/" . $data["directory"] . "/");
 					break;
 				}
+
 				if (isset($data['domain'])) {
 					if (preg_match('/' . str_replace($data['domain'], '/', '\\/') . '$/i', $_SERVER['SERVER_NAME'])) {
 						$application = $data["directory"];
@@ -236,18 +216,16 @@ if (file_exists(ROOT . '_config.php')) {
 	$application = "mysite";
 
 	define("URLEND", "/");
-	define("PROFILE_DETAIL", false);
 
-	define("DEV_MODE", false);
-	define("BROWSERCACHE", true);
+    defined("DEV_MODE") OR define("DEV_MODE", false);
 
 	define('SQL_DRIVER', "mysqli");
 
 	define("LOG_FOLDER", "log");
-	define("DEFAULT_LANG", "de");
+	define("DEFAULT_LANG", "en-us");
 }
 
-define("SYSTEM_TPL_PATH", "system/templates");
+define("SYSTEM_TPL_PATH", FRAMEWORK_DIRECTORY . "/templates");
 
 // set timezone for security
 date_default_timezone_set(DEFAULT_TIMEZONE);

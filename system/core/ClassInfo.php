@@ -532,13 +532,6 @@ class ClassInfo extends gObject {
 
 			Core::deletecache(true);
 
-			// check for disk-quote
-			if(GOMA_FREE_SPACE / 1024 / 1024 < 20) {
-				header("HTTP/1.1 500 Server Error");
-				echo (file_get_contents(ROOT . "system/templates/framework/disc_quota_exceeded.html"));
-				exit(10);
-			}
-
 			// register shutdown hook
 			register_shutdown_function(array("ClassInfo", "finalizeClassInfo"));
 

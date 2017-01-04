@@ -180,16 +180,16 @@ class SoftwareTypeTest extends GomaUnitTest {
 
 		$gfs->close();
 
-		touch($pfile, NOW);
-		touch($file, NOW - 1);
+		touch($pfile, time());
+		touch($file, time() - 1);
 
 		clearstatcache();
 
 		$this->assertEqual(g_SoftwareType::getFromPlistOrGFS($pfile, $file, "test.plist", true), $data);
 		$this->assertTrue(file_exists($pfile));
 
-		touch($pfile, NOW);
-		touch($file, NOW);
+		touch($pfile, time());
+		touch($file, time());
 
 		clearstatcache();
 
