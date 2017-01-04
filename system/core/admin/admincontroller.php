@@ -107,7 +107,7 @@ class adminController extends Controller
         if (!Permission::check("ADMIN"))
             return $this->modelInst()->renderWith("admin/index_not_permitted.html");
 
-        $class = str_replace("-", "\\", $this->request->getParam("item")) . "admin";
+          $class = str_replace("-", "\\", $this->request->getParam("item")) . "admin";
 
         if (ClassInfo::exists($class)) {
             /** @var RequestHandler $controller */
