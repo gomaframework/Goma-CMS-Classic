@@ -270,8 +270,6 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 				$status,
 				$this->doObject("timezone")->formfield(lang("timezone")),
 				new LangSelect("custom_lang", lang("lang")),
-				// password management in external window
-				new ExternalForm("passwort", lang("password", "password"), lang("edit_password", "change password"), '**********', array($this, "pwdform")),
 				new ImageUploadField("avatar", lang("pic", "image")),
 				new TextArea("signatur", lang("signatur", "signature"), null, "100px")
 			), lang("general"))
@@ -291,37 +289,6 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 
 		$form->addAction(new CancelButton("cancel", lang("cancel")));
 		$form->addAction(new FormAction("submit", lang("save"), "publish", array("green")));
-	}
-
-	/**
-	 * form for password-edit
-	 *
-	 * @param string $id
-	 * @return Form
-	 */
-	public function pwdform($id = null)
-	{
-		if(!isset($id)) {
-			$id = $this->id;
-		}
-
-		$pwdform = new Form($this->controller(), "editpwd", array(
-			new HiddenField("id", $id),
-			new PasswordField("password",lang("NEW_PASSWORD")),
-			new PasswordField("repeat", lang("REPEAT"))
-		));
-
-		// check if user needs to give old password or permissions are enough to not adding old one.
-		if(Permission::check("USERS_MANAGE") && $id != member::$id) {
-			$pwdform->addValidator(new FormValidator(array("User", "validateNewAndRepeatPwd")), "pwdvalidator");
-		} else {
-			$pwdform->add(new PasswordField("oldpwd", lang("OLD_PASSWORD")), 0);
-			$pwdform->addValidator(new FormValidator(array($this, "validatepwd")), "pwdvalidator");
-		}
-
-		$pwdform->addAction(new FormAction("submit", lang("save", "save"), "pwdsave"));
-
-		return $pwdform;
 	}
 
 	/**
@@ -422,55 +389,6 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 	 */
 	public function getPassword() {
 		return "";
-	}
-
-	/**
-	 * validates new and old passwords and returns error string when error happened.
-	 * @param FormValidator $obj
-	 * @throws DataNotFoundException
-	 * @throws FormInvalidDataException
-	 */
-	public function validatepwd($obj) {
-		if(isset($obj->getForm()->result["oldpwd"]))
-		{
-			$data = DataObject::get_one("user", array("id" => $obj->getForm()->result["id"]));
-			if($data) {
-				// export data
-				$data = $data->ToArray();
-				$pwd = $data["password"];
-
-				// check old password
-				if(Hash::checkHashMatches($obj->getForm()->result["oldpwd"], $pwd))
-				{
-					self::validateNewAndRepeatPwd($obj);
-				} else {
-					throw new FormInvalidDataException("password", "password_wrong");
-				}
-			} else {
-				throw new DataNotFoundException("error");
-			}
-		} else
-		{
-			throw new FormInvalidDataException("password", "password_wrong");
-		}
-	}
-
-	/**
-	 * validates new password and repeat matches.
-	 *
-	 * @param FormValidator $obj
-	 * @throws FormInvalidDataException
-	 */
-	public static function validateNewAndRepeatPwd($obj) {
-		if(isset($obj->getForm()->result["password"], $obj->getForm()->result["repeat"]) && $obj->getForm()->result["password"] != "")
-		{
-			if($obj->getForm()->result["password"] != $obj->getForm()->result["repeat"])
-			{
-				throw new FormInvalidDataException("password", "passwords_not_match");
-			}
-		} else {
-			throw new FormInvalidDataException("password", "password_cannot_be_empty");
-		}
 	}
 
 	/**

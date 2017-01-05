@@ -221,7 +221,7 @@ class ModelWriter extends gObject {
     protected function updateStatusFields() {
 
         if($this->moveAutorAndCreatedFromOld || !isset($this->data["created"])) {
-            $this->data["created"] = $this->getObjectToUpdate() ? $this->getObjectToUpdate()->created : NOW;
+            $this->data["created"] = $this->getObjectToUpdate() ? $this->getObjectToUpdate()->created : time();
         }
 
         if($this->moveAutorAndCreatedFromOld || !isset($this->data["autorid"])) {
@@ -229,7 +229,7 @@ class ModelWriter extends gObject {
         }
 
         if($this->updateLastModified || !isset($this->data["last_modified"])) {
-            $this->data["last_modified"] = NOW;
+            $this->data["last_modified"] = time();
             $this->data["editorid"] = member::$id;
         }
 

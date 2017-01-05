@@ -32,7 +32,7 @@ class ModelWriterTests extends GomaUnitTest implements TestAble
             "editorid"      => 3
         ), array(
             "test" => 1,
-            "last_modified" => NOW,
+            "last_modified" => time(),
             "created"       => time() - 20,
             "autorid"       => 2,
             "editorid"      => 3

@@ -102,7 +102,7 @@ class lost_passwordExtension extends ControllerExtension {
             new PasswordField("password",lang("NEW_PASSWORD")),
             new PasswordField("repeat", lang("REPEAT"))
         ));
-        $pwdform->addValidator(new FormValidator(array("User", "validateNewAndRepeatPwd")), "pwdvalidator");
+        $pwdform->addValidator(new FormValidator(array(\Goma\Security\Controller\EditProfileController::class, "validateNewAndRepeatPwd")), "pwdvalidator");
         $pwdform->addAction(new FormAction("update", lang("save", "save"), "pwdsave"));
 
         return $pwdform;

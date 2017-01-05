@@ -88,14 +88,14 @@ class UserTests extends GomaUnitTest
      */
     public function testPasswordValidation() {
         $k = randomString(10);
-        $this->unitValidatePwd($k, $k, true);
-        $this->unitValidatePwd("", "", "password_cannot_be_empty");
-        $this->unitValidatePwd("", $k, "password_cannot_be_empty");
-        $this->unitValidatePwd($k, "", "passwords_not_match");
-        $this->unitValidatePwd($k, $k . " ", "passwords_not_match");
+        $this->unitValidatePwd($k, $k, true, null);
+        $this->unitValidatePwd("", "", "password_cannot_be_empty", "password");
+        $this->unitValidatePwd("", $k, "password_cannot_be_empty", "password");
+        $this->unitValidatePwd($k, "", "passwords_not_match", "repeat");
+        $this->unitValidatePwd($k, $k . " ", "passwords_not_match", "repeat");
     }
 
-    public function unitValidatePwd($new, $repeat, $expected) {
+    public function unitValidatePwd($new, $repeat, $expected, $field) {
         $obj = new FormValidatorMock();
         $obj->form  = new StdClass();
         $obj->form->result = array(
@@ -105,16 +105,16 @@ class UserTests extends GomaUnitTest
 
 
         if($expected === true) {
-            $this->assertNull(User::validateNewAndRepeatPwd($obj));
+            $this->assertNull(\Goma\Security\Controller\EditProfileController::validateNewAndRepeatPwd($obj));
         } else {
             /** @var FormInvalidDataException $e */
             try {
-                User::validateNewAndRepeatPwd($obj);
+                \Goma\Security\Controller\EditProfileController::validateNewAndRepeatPwd($obj);
                 $this->assertFalse(true);
             } catch(Exception $e) {
                 $this->assertIsA($e, "FormInvalidDataException");
                 $this->assertEqual($e->getMessage(), $expected);
-                $this->assertEqual($e->getField(), "password");
+                $this->assertEqual($e->getField(), $field);
             }
         }
     }

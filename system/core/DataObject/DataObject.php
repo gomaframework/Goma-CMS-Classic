@@ -2606,7 +2606,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
 
             $deleteids = array();
 
-            $last_modified = NOW-(180*24*60*60);
+            $last_modified = time()-(180*24*60*60);
 
             // now generate ids to delete
             $sql = "SELECT id FROM ".DB_PREFIX . $this->baseTable." WHERE (id NOT IN('".implode("','", $ids)."') OR recordid NOT IN ('".implode("','", $recordids)."')) AND (last_modified < ".$last_modified.")";
