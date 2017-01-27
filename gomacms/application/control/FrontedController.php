@@ -83,7 +83,7 @@ class FrontedController extends Controller
      */
     public function serve($content, $body)
     {
-        if ((Core::is_ajax() && isset($_GET["dropdownDialog"])) || !$body->isFullPage()) {
+        if ((Core::is_ajax() && isset($_GET["dropdownDialog"])) || Director::isResponseFullPage($body)) {
             return $content;
         }
 

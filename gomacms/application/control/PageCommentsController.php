@@ -77,7 +77,7 @@ class PageCommentsControllerExtension extends ControllerExtension {
     }
 
     /**
-     * append content to s ites if needed
+     * append content to sites if needed
      * @param HTMLNode $object
      */
     public function appendContent(&$object)

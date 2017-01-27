@@ -32,6 +32,6 @@ class PageCommentsControllerTest extends AbstractControllerTest {
         $contentController->setModelInst($page);
         $response = Director::serve($contentController->handleRequest($request), $request, false);
 
-        $this->assertTrue(strpos($response, lang("co_add_comment")) !== false);
+        $this->assertTrue(strpos($response, lang("co_add_comment")) !== false, "Asserting true for response " . $response);
     }
 }

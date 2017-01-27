@@ -117,7 +117,6 @@ class contentAdmin extends LeftAndMain {
      * init JavaScript-Files
      *
      * @param Request $request
-     * @return $this
      */
     public function Init($request = null)
     {
@@ -284,11 +283,9 @@ class contentAdmin extends LeftAndMain {
         $controller->selectModel($model, true);
         $form = new Form($controller, "add_page");
 
-        if (isset($this->request->get_params["parentid"]) && $this->request->get_params["parentid"]) {
+        if (isset($this->request->get_params["parentid"]) && $this->request->get_params["parentid"] != 0) {
             $model->parenttype = "subpage";
             $model->parentid = $this->request->get_params["parentid"];
-        } else {
-            $model->parenttype = "root";
         }
 
         $form->setModel($model);
@@ -341,7 +338,6 @@ class contentAdmin extends LeftAndMain {
 
         // default submission
         $form->setSubmission("submit_form_generateUniquePath");
-        $form->addValidator(new DataValidator($model), "datavalidator");
 
         $form->addAction(new AjaxSubmitButton("save_draft", lang("next_step", "next step"), "AjaxSaveGenerate", null, array("green")));
 
