@@ -19,5 +19,5 @@ Director::addRules(array(
 
 Director::addRules(array(
 	'' => 'HomePageController',
-	'$path!//$Action/$id/$otherid' => 'SiteController'
+	'$path!//$Action/$id/$otherid' => SiteController::class
 ), 1);

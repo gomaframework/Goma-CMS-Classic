@@ -372,7 +372,7 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
         $perm = $this->createPermissionObject($name, $default, $type, $currentCanBeAll);
 
         // add permission and write if ID is not 0
-        $this->addPermission($perm, $name, $this->id != 0, false);
+        $this->addPermission($perm, $name);
 
         return $perm;
     }
@@ -381,21 +381,11 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
      * adds permission to given name of permission and writes current object.
      * it always writes permission as new one.
      *
-     * @param 	Permission perm
-     * @param 	string name
-     * @param 	boolean write
-     * @param 	boolean save new history entry
+     * @param 	Permission $permission
+     * @param 	string $fieldName
      */
-    public function addPermission($perm, $name, $write = false, $history = true) {
-        if($this->id != 0) {
-            $perm->write(true, true, 2, false, false);
-        }
-
-        $this->$name = $perm;
-
-        if($write) {
-            $this->writeToDB(false, true, $this->isOrgPublished() ? 2 : 1, false, $history);
-        }
+    public function addPermission($permission, $fieldName) {
+        $this->$fieldName = $permission;
     }
 
     /**
@@ -648,11 +638,10 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
 
         $allowed_parents = $this->parentResolver()->getAllowedParents();
 
-        $form->addValidator(new requiredFields(array('path','title', 'parenttype')), "default_required_fields"); // valiadte it!
+        $form->addValidator(new requiredFields(array('path','title', 'parenttype')), "default_required_fields");
 
         $form->useStateData = true;
         $this->queryVersion = "state";
-
 
         // version-state-status
         if($this->id != 0 && isset($this->data["stateid"]) && $this->data["stateid"] !== null) {
@@ -664,12 +653,6 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
                 Resources::addJS("$(function(){ if(typeof pages_pushPreviewURL != 'undefined') pages_pushPreviewURL(false, '".BASE_URI . BASE_SCRIPT."?r=".$this->id . "&".$this->baseClass."_state', false); });");
             }
         }
-
-        $form->add($links = new HTMLField('links', $this->customise(array(
-            "icon" => ClassInfo::getClassIcon($this->classname),
-            "classtitle" => convert::raw2text(ClassInfo::getClassTitle($this->classname))
-        ))->renderWith("admin/content_header.html")));
-        $links->container->addClass("hidden");
 
         $form->add(new TabSet('tabs', array(
                 new Tab('content', array(

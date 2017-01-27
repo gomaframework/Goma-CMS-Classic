@@ -11,8 +11,6 @@ if(window.top != window) {
 	top.location.href = location.href;
 }
 
-//preloadLang(["view_site", "view_page"]);
-
 function pages_pushPreviewURL(publish, state, usePublish, title) {
 	if(publish !== false) {
 		$("#visit_webpage").attr("href", publish);	
@@ -51,7 +49,7 @@ function pages_unbindPreviewURL() {
 
 $(function(){
 	goma.ui.bindUnloadEvent(goma.ui.getMainContent(), pages_unbindPreviewURL);
-})
+});
 
 function show_preview(publish, state, usePublish) {
 	var interval;

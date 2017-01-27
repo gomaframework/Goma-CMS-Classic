@@ -117,6 +117,7 @@ class contentAdmin extends LeftAndMain {
      * init JavaScript-Files
      *
      * @param Request $request
+     * @return $this
      */
     public function Init($request = null)
     {
@@ -246,7 +247,7 @@ class contentAdmin extends LeftAndMain {
         } else {
             Resources::addJS('$(function(){$(".leftbar_toggle, .leftandmaintable tr > .left").addClass("active");$(".leftbar_toggle, .leftandmaintable tr > .left").removeClass("not_active");$(".leftbar_toggle").addClass("index");});');
 
-            return $model->renderWith("admin/leftandmain_add.html");
+            return $model->renderWith("admin/leftandmain/leftandmain_add.html");
         }
     }
 
@@ -295,9 +296,10 @@ class contentAdmin extends LeftAndMain {
         $headBarView = new ViewAccessableData(array(
             "classname"  => $model->classname,
             "classtitle" => ClassInfo::getClassTitle($model->classname),
-            "classicon"  => ClassInfo::getClassIcon($model->classname)
+            "classicon"  => ClassInfo::getClassIcon($model->classname),
+            "icon"       => ClassInfo::getClassIcon($model->classname)
         ));
-        $form->add(new HTMLField('headbar', $headBarView->renderWith("admin/content-headbar.html")));
+        $form->add(new HTMLField('headbar', $headBarView->renderWith("admin/leftandmain/edit_with_header.html")));
 
         $this->getAddFormFields($form, $model);
 

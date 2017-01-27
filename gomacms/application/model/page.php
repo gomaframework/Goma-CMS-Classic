@@ -130,7 +130,7 @@ class pageController extends contentController
 		
 		return array(
 			array(
-				"url" 			=> BASE_SCRIPT . "admin/content/record/" . $this->modelInst()->id . "/edit",
+				"url" 			=> BASE_SCRIPT . "admin/content/record/" . $this->modelInst()->id . URLEND,
 				"title"			=> lang("edit_this_page", "edit this page"),
 				"attr_title"	=> $this->modelInst()->title
 			)

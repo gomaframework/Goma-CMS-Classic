@@ -44,7 +44,11 @@ class PagesTest extends GomaUnitTest implements TestAble {
         $page = new Page();
         $perm = new Permission();
 
-        $page->addPermission($perm, "read_permission", false);
+        $page->addPermission($perm, "read_permission");
+
+        $this->assertEqual($perm->id, 0);
+        $this->assertEqual($page->id, 0);
+        $this->assertEqual($page->read_permission, $perm);
 
         $this->assertEqual($perm->id, 0);
         $this->assertEqual($page->id, 0);

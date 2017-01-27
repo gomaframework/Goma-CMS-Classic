@@ -50,6 +50,25 @@ class ContentController extends FrontedController
 
     static $enableBacktracking = true;
 
+    static $less_vars = "default.less";
+
+    /**
+     * @var PageService
+     */
+    protected $pageService;
+
+    /**
+     * siteController constructor.
+     * @param KeyChain $keychain
+     * @param PageService $pageService
+     */
+    public function  __construct($keychain = null, $pageService = null)
+    {
+        parent::__construct($keychain);
+
+        $this->pageService = isset($pageService) ? $pageService : new PageService();
+    }
+
     /**
      * register meta-tags
      */
@@ -96,7 +115,10 @@ class ContentController extends FrontedController
         if ($action != "") {
             $path = $action;
             if (preg_match('/^[a-zA-Z0-9_\-\/]+$/Usi', $path)) {
-                $this->subPage = DataObject::get_one("pages", array("path" => array("LIKE", $path), "parentid" => $this->modelInst()->id));
+                $this->subPage = $this->pageService->getPageWithState(
+                    array("path" => array("LIKE", $path), "parentid" => $this->modelInst()->id),
+                    isset($this->getRequest()->get_params["pages_state"])
+                );
                 if ($this->subPage != null) {
                     return true;
                 }
@@ -180,7 +202,7 @@ class ContentController extends FrontedController
         array_push(self::$activeNodes, $this->modelInst()->id);
 
         if ($content === null && $action != "" && $this->subPage != null) {
-            $content = ControllerResolver::instanceForModel($this->subPage)->handleRequest($this->request);
+            $content = ControllerResolver::instanceForModel($this->subPage)->handleRequest($this->request, $this->isSubController());
             return;
         }
 

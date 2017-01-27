@@ -23,8 +23,10 @@ class HomePageController extends SiteController
         defined("HOMEPAGE") OR define("HOMEPAGE", true);
 
         if (isset($this->getRequest()->get_params["r"])) {
-            /** @var Page $redirect */
-            $redirect = DataObject::get_one("pages", array("id" => $this->getRequest()->get_params["r"]));
+            $redirect = $this->pageService->getPageWithState(
+                array("id" => $this->getRequest()->get_params["r"]),
+                isset($this->request->get_params["pages_state"])
+            );
             if ($redirect) {
                 $query = preg_replace('/\&?r\=' . preg_quote($this->getRequest()->get_params["r"], "/") . '/', '', $_SERVER["QUERY_STRING"]);
                 return GomaResponse::redirect($redirect->getURL() . "?" . $query);
@@ -32,7 +34,10 @@ class HomePageController extends SiteController
         }
 
         /** @var Page $data */
-        if ($data = DataObject::get_one("pages", array("parentid" => 0))) {
+        if ($data = $this->pageService->getPageWithState(
+            array("parentid" => 0),
+            isset($this->request->get_params["pages_state"])
+        )) {
             // fix request
             if(!$this->request->getUrlParts()) {
                 $this->request->setUrlParts(array(
@@ -41,7 +46,7 @@ class HomePageController extends SiteController
                 $this->request->shift(1);
             }
 
-            return ControllerResolver::instanceForModel($data)->handleRequest($this->request);
+            return ControllerResolver::instanceForModel($data)->handleRequest($this->request, $this->isSubController());
         } else {
             return false;
         }
