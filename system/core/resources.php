@@ -831,8 +831,12 @@ class Resources extends gObject {
 			$css = str_replace($matches[0][$key], 'url("' . $base . $path . "/" . $url . '")', $css);
 		}
 
-        $less = new lessc;
-        $css = $less->compile($css);
+		try {
+			$less = new lessc;
+			$css = $less->compile($css);
+		} catch(Exception $e) {
+			log_exception($e);
+		}
 
 		if(self::$debug)
 			return $css;

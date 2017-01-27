@@ -142,4 +142,17 @@ class DateTimeSQLField extends DBField {
 	public function form() {
 
 	}
+
+	/**
+	 * @internal
+	 * @param DataObject $class
+	 * @param string $fieldName
+	 * @param array $args
+	 * @param string $fieldType
+	 */
+	public static function argumentClassInfo($class, $fieldName, $args, $fieldType) {
+		if(!isset(ClassInfo::$class_info[$class->classname]["defaults"][$fieldName])) {
+			ClassInfo::$class_info[$class->classname]["defaults"][$fieldName] = 0;
+		}
+	}
 }

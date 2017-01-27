@@ -76,6 +76,12 @@ class ArrayLibTest extends GomaUnitTest {
 		)));
 	}
 
+	public function testIsAssocWithJustOne() {
+		$this->assertTrue(ArrayLib::isAssocArray(array(
+			"name" => "name"
+		)));
+	}
+
 	public function testChangeKey() {
 		$this->assertEqual(array("test" => 123, "blub" => 234, "blah" => 234),
 			ArrayLib::change_key(array("test" => 123, "blub1" => 234, "blah" => 234), "blub1", "blub"));

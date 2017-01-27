@@ -1,4 +1,10 @@
-<?php defined("IN_GOMA") OR die();
+<?php
+namespace Goma\Test\Model;
+use GomaUnitTest;
+use HasMany_DataObjectSet;
+use TestAble;
+
+defined("IN_GOMA") OR die();
 /**
  * Integration-Tests for DataObject-HasMany-HasOne-Implementation.
  *

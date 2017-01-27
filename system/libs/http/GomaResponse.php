@@ -231,7 +231,7 @@ class GomaResponse extends gObject {
         $request->setBody(
             GomaResponseBody::create(
                 '<script type="text/javascript">location.href = "'.addSlashes($url).'";</script><br /> Redirecting to: <a href="'.addSlashes($url).'">'.convert::raw2text($url).'</a>'
-            )->setParseHTML(false)
+            )->setParseHTML(false)->setIsFullPage(true)
         );
         $request->setShouldServe(false);
 
@@ -335,13 +335,6 @@ class GomaResponse extends gObject {
         if($this->status == 301 || $this->status == 302) {
             $isPermanent = $this->status == 301;
             Core::callHook("beforeRedirect", $this->header["location"], $isPermanent, $this);
-
-            try {
-                if(class_exists("addcontent", false)) {
-                    // TODO: Fix this hack.
-                    addcontent::add(addcontent::get());
-                }
-            } catch(Exception $e) {}
         }
 
         $content = $this->render();

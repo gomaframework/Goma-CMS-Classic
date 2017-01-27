@@ -28,7 +28,7 @@ abstract class AbstractGetterExtension extends Extension {
             try {
                 return call_user_func_array(array($instance, $localMethod), $args);
             } catch(InvalidArgumentException $e) {
-                throw new LogicException($error, 0, $e);
+                throw new LogicException($error . ": " . $e->getMessage(), 0, $e);
             }
         }), true);
     }

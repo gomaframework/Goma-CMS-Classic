@@ -50,7 +50,7 @@ class RadioButton extends FormField
     public function options()
     {
         $this->callExtending("onBeforeOptions");
-        return $this->options;
+        return $this->getOptions();
     }
 
     /**
@@ -117,7 +117,7 @@ class RadioButton extends FormField
 
         $node = new HTMLNode("div", array("class" => "inputHolder"));
 
-        foreach ($this->options as $value => $title) {
+        foreach ($this->options() as $value => $title) {
             $node->append($this->renderOption(
                 $this->PostName(),
                 $value,

@@ -37,6 +37,22 @@ class Textarea extends FormField
      * @param $name
      * @param $title
      * @param $maxLength
+     * @param string $height css
+     * @param null $value
+     * @param null $parent
+     * @return Textarea
+     */
+    public static function createWithMaxLengthAndHeight($name, $title, $maxLength, $height, $value = null, $parent = null) {
+        /** @var Textarea $field */
+        $field = parent::createWithMaxLength($name, $title, $maxLength, $value, $parent);
+        $field->height = $height;
+        return $field;
+    }
+
+    /**
+     * @param $name
+     * @param $title
+     * @param $maxLength
      * @param null $value
      * @param null $parent
      * @return Textarea

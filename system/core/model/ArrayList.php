@@ -239,6 +239,7 @@ class ArrayList extends ViewAccessableData implements Countable {
 	 */
 	public function getRange($start, $length) {
 		$list = new ArrayList();
+		$start = max($start, 0);
 		for($i = $start; $i < count($this->items) && $i < $start + $length; $i++) {
 			if(isset($i))
 				$list->push($this->items[$i]);

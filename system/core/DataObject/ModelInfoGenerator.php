@@ -51,12 +51,12 @@ class ModelInfoGenerator {
      * @return array
      */
     public static function generateDBFields($class, $parents = false) {
-
         $fields = self::generate_combined_array($class, "db", "DBFields", $parents);
 
         $fields = array_merge(self::getHasOneArrayWithValue($class, "int(10)"), $fields);
+        $hasMany = self::generateHas_many($class, false);
 
-        if (!empty($fields) && gObject::method_exists($class, "DefaultSQLFields")) {
+        if ((!empty($fields) || !empty($hasMany)) && gObject::method_exists($class, "DefaultSQLFields")) {
             $fields = array_merge(call_user_func_array(array($class, "DefaultSQLFields"), array($class)), $fields);
         }
 
@@ -78,7 +78,7 @@ class ModelInfoGenerator {
         foreach($fields as $name => $type) {
             // hack to not break current Goma-CMS Build
             if((
-                    in_array($name, array("long", "order", "select", "where", "group")) ||
+                    in_array($name, array("long", "order", "select", "where", "group", "bool")) ||
                     in_array($name, ViewAccessableData::$notViewableMethods) ||
                     !preg_match('/^[a-zA-Z_][a-zA-Z_0-9]+$/', $name)
                 )
@@ -97,10 +97,7 @@ class ModelInfoGenerator {
      * @return array
      */
     public static function generateDefaults($class, $parents = true) {
-
-        $defaults = self::generate_combined_array($class, "default", "defaults", $parents);
-
-        return $defaults;
+        return self::generate_combined_array($class, "default", "defaults", $parents);
     }
 
     /**
@@ -111,10 +108,7 @@ class ModelInfoGenerator {
      * @return array
      */
     public static function generateCasting($class, $parents = true) {
-
-        $casting = self::generate_combined_array($class, "casting", "casting", $parents);
-
-        return $casting;
+        return self::generate_combined_array($class, "casting", "casting", $parents);
     }
 
     /**

@@ -449,8 +449,8 @@ class tpl extends gObject
 		$value = new DataSet(array($value));
 	}
 	if(is_array($value) || (is_object($value) && $value instanceof Traversable))
-		foreach($value as $data_loop) {
-			$data->customise(array("\\5" => $data_loop));
+		foreach($value as $key => $data_loop) {
+			$data->customise(array("\\5" => $data_loop, "\\5_index" => $key));
 			if(is_object($data_loop)) 
 				$caller->callers[strtolower("\\5")] = new tplCaller($data_loop); 
 			else  
@@ -470,8 +470,8 @@ class tpl extends gObject
 		$value = new DataSet(array($value));
 	}
 	if(is_array($value) || (is_object($value) && $value instanceof Traversable))
-		foreach($value as $data_loop) {
-			$data->customise(array("\\3" => $data_loop));
+		foreach($value as $key => $data_loop) {
+			$data->customise(array("\\3" => $data_loop, "\\3_index" => $key));
 			if(is_object($data_loop)) 
 				$caller->callers[strtolower("\\3")] = new tplCaller($data_loop); 
 			else  
@@ -492,8 +492,8 @@ class tpl extends gObject
 		$value = new DataSet(array($value));
 	}
 	if(is_array($value) || (is_object($value) && $value instanceof Traversable))
-		foreach($value as $data_loop) {
-			$data->customise(array("\\2" => $data_loop));
+		foreach($value as $key => $data_loop) {
+			$data->customise(array("\\2" => $data_loop, "\\2_index" => $key));
 			if(is_object($data_loop)) 
 				$caller->callers[strtolower("\\2")] = new tplCaller($data_loop); 
 			else  

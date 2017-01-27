@@ -142,6 +142,15 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
                 throw new InvalidArgumentException("No Inverse relationship for Relationship for {$this->relationShipName} found in class {$this->targetClass}. Base-Class " . $this->owner, ExceptionManager::RELATIONSHIP_INVERSE_REQUIRED);
             }
         }
+
+        if($this->cascade == DataObject::CASCADE_UNIQUE_LIKE) {
+            throw new InvalidArgumentException("CASCADE_UNIQUE_LIKE is an option not a value for cascade.");
+        }
+
+        if($this->cascade == DataObject::CASCADE_TYPE_UNIQUE &&
+            (!StaticsManager::hasStatic($this->targetClass, "unique_fields") || !is_array(StaticsManager::getStatic($this->targetClass, "unique_fields")))) {
+            throw new InvalidArgumentException("When using UNIQUE-Cascade, Target-Class must define unique_fields.");
+        }
     }
 
     /**
@@ -345,7 +354,8 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
     {
         $info = array(
             "table"                            => $this->tableName,
-            DataObject::RELATION_TARGET        => $this->targetClass
+            DataObject::RELATION_TARGET        => $this->targetClass,
+            DataObject::CASCADE_TYPE           => $this->cascade
         );
 
         if($this->extraFields) {
@@ -362,6 +372,10 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
 
         if($this->inverse) {
             $info[DataObject::RELATION_INVERSE] = $this->inverse;
+        }
+
+        if($this->uniqueLike) {
+            $info[DataObject::CASCADE_UNIQUE_LIKE] = $this->uniqueLike;
         }
 
         return $info;
@@ -456,9 +470,7 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
      * @return ModelManyManyRelationShipInfo
      */
     protected static function generateRelationShipInfo($class, $name, $value, $belonging) {
-        $relationShip = new ModelManyManyRelationShipInfo($class, $name, $value, !$belonging);
-
-        return $relationShip;
+        return new ModelManyManyRelationShipInfo($class, $name, $value, !$belonging);
     }
 
     /**

@@ -30,6 +30,11 @@ class MultiFormFormField extends ClusterFormField {
     protected $allowAddOfKind = false;
 
     /**
+     * @var bool|string
+     */
+    protected $disallowAddOfKind = false;
+
+    /**
      * @var string
      */
     protected $template = "form/MultiFormFormField.html";
@@ -272,8 +277,24 @@ class MultiFormFormField extends ClusterFormField {
      */
     protected function getAddableClasses() {
         return $this->getAllowAddOfKindClass() ?
-            array_merge(array($this->getAllowAddOfKindClass()), ClassInfo::getChildren($this->getAllowAddOfKindClass())) :
+            $this->filterAllowed(
+                array_merge(array($this->getAllowAddOfKindClass()), ClassInfo::getChildren($this->getAllowAddOfKindClass()))
+            ) :
             array();
+    }
+
+    /**
+     * @param array $allowed
+     * @return array
+     */
+    protected function filterAllowed($allowed) {
+        if($this->disallowAddOfKind) {
+            return array_filter($allowed, function($allow) {
+                return !ClassManifest::isOfType($allow, $this->disallowAddOfKind);
+            });
+        }
+
+        return $allowed;
     }
 
     /**
@@ -316,6 +337,24 @@ class MultiFormFormField extends ClusterFormField {
     public function setAllowAddOfKind($allowAddOfKind)
     {
         $this->allowAddOfKind = $allowAddOfKind;
+        return $this;
+    }
+
+    /**
+     * @return bool|string
+     */
+    public function getDisallowAddOfKind()
+    {
+        return $this->disallowAddOfKind;
+    }
+
+    /**
+     * @param bool|string $disallowAddOfKind
+     * @return $this
+     */
+    public function setDisallowAddOfKind($disallowAddOfKind)
+    {
+        $this->disallowAddOfKind = $disallowAddOfKind;
         return $this;
     }
 

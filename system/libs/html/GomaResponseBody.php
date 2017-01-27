@@ -32,7 +32,7 @@ class GomaResponseBody extends gObject {
     /**
      * @var bool
      */
-    protected $isFullPage = true;
+    protected $isFullPage = false;
 
     /**
      * @param null $body

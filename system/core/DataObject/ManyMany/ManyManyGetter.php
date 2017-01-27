@@ -141,10 +141,13 @@ class ManyManyGetter extends AbstractGetterExtension implements ArgumentsQuery {
         if(!$instance || !is_a($instance, "ManyMany_DataObjectSet")) {
             $instance = new ManyMany_DataObjectSet($relationShip->getTargetClass());
             $instance->setRelationENV($relationShip, $this->getOwner());
+            if($this->getOwner()->queryVersion === false) {
+                $instance->setVersionMode(DataObject::VERSION_MODE_CURRENT_VERSION);
+            }
 
             $this->getOwner()->setField($name, $instance);
 
-            if ($this->getOwner()->queryVersion == DataObject::VERSION_STATE) {
+            if ($this->getOwner()->queryVersion == DataObject::VERSION_STATE && !$this->getOwner()->isPublished()) {
                 $instance->setVersion(DataObject::VERSION_STATE);
             } else {
                 $instance->setVersion(DataObject::VERSION_PUBLISHED);

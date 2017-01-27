@@ -82,9 +82,27 @@ class DirectorTest extends \GomaUnitTest {
                 "serve" => ServingController::class
             )));
 
-            $request = new \Request("post", "serve/blub/test");
+            $request = new \Request("post", "serve/test/blub");
             $response = \Director::directRequest($request, false);
             $this->assertEqual("Test: SubSub", $response);
+        } finally {
+            $this->setSortedRules($sortedRules);
+        }
+    }
+
+    public function testServeViaIndex() {
+        $sortedRules = $this->getSortedRules();
+        try {
+            $this->setSortedRules(array(array(
+                                            "blub" => TestControllerForRequestController::class,
+                                            "sub" => TestSubControllerForRequestController::class,
+                                            "subsub" => TestSubControllerWithSubForRequestController::class,
+                                            "serve" => ServingController::class
+                                        )));
+
+            $request = new \Request("post", "serve/blub/test");
+            $response = \Director::directRequest($request, false);
+            $this->assertEqual("Test: Sub", $response);
         } finally {
             $this->setSortedRules($sortedRules);
         }

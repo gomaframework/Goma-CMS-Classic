@@ -85,8 +85,13 @@ class Controller extends RequestHandler
     protected $keychain;
 
     /**
+     * @var array
+     */
+    protected $singleModelCache = array();
+
+    /**
      * Controller constructor.
-     * @param KeyChain|null $keychain
+     * @param KeyChain $keychain
      */
     public function __construct($keychain = null)
     {
@@ -182,6 +187,7 @@ class Controller extends RequestHandler
 
         $this->model_inst = $model;
         $this->model = ($name !== false) ? $name : $model->DataClass();
+        $this->singleModelCache = array();
 
         return $this;
     }
@@ -197,6 +203,7 @@ class Controller extends RequestHandler
         if (is_object($model) && is_a($model, "ViewAccessableData")) {
             $this->model_inst = $model;
             $this->model = $model->DataClass();
+            $this->singleModelCache = array();
             return $this->model_inst;
         }
 
@@ -359,7 +366,7 @@ class Controller extends RequestHandler
             $this->callExtending("decorateRecord", $model);
             $this->decorateRecord($data);
             if ($data->first() != null) {
-                return $this->getWithModel($data->first())->handleRequest($this->request);
+                return $this->getWithModel($data->first())->handleRequest($this->request, $this->isSubController());
             } else {
                 return $this->index();
             }
@@ -381,7 +388,7 @@ class Controller extends RequestHandler
             $this->callExtending("decorateRecord", $model);
             $this->decorateRecord($data);
             if ($data) {
-                return $this->getWithModel($data)->handleRequest($this->request);
+                return $this->getWithModel($data)->handleRequest($this->request, $this->isSubController());
             } else {
                 return $this->index();
             }
@@ -542,7 +549,15 @@ class Controller extends RequestHandler
      */
     protected function getSingleModel() {
         if(is_a($this->modelInst(), IDataSet::class)) {
-            return $this->getParam("id") ? $this->modelInst()->find("id", $this->getParam("id")) : null;
+            if($this->getParam("id")) {
+                if(!isset($this->singleModelCache[$this->getParam("id")])) {
+                    $this->singleModelCache[$this->getParam("id")] = $this->modelInst()->find("id", $this->getParam("id"));
+                }
+
+                return $this->singleModelCache[$this->getParam("id")];
+            }
+
+            return null;
         } else {
             return $this->modelInst();
         }
@@ -940,7 +955,7 @@ class Controller extends RequestHandler
         $data->addRenderFunction(
             function($responseString, $data){
                 /** @var GomaFormResponse $data */
-                if($data->shouldServe()) {
+                if(!$data->isFullPage()) {
                     return $this->showWithDialog($responseString, lang("confirm", "Confirm..."));
                 }
             });
@@ -1030,7 +1045,7 @@ class Controller extends RequestHandler
         $data->addRenderFunction(
             function($responseString, $data){
                 /** @var GomaFormResponse $data */
-                if($data->shouldServe()) {
+                if(!$data->isFullPage()) {
                     return $this->showWithDialog($responseString, lang("prompt", "Insert Text..."));
                 }
             });

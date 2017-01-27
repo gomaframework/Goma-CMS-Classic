@@ -19,9 +19,12 @@ installer/log_*****/*
 temp/*
 installer/log/*
 installer/temp/*
-system/version.php
+/version.php
 !system/_config.php
 *.sublime-workspace
 
 .idea
 .idea/*
+
+version.php
+

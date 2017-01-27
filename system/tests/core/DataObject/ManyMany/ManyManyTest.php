@@ -389,6 +389,7 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
             "two" => array(10, 11)
         ))->count());
 
+        // publish
         $stateOne->writeToDB(false, true, 2);
         $this->assertEqual(1, DataObject::get(ManyManyTestObjectTwo::class, array(
             "two" => array(10, 11)
@@ -397,6 +398,99 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
             "two" => array(12, 11)
         ))->count());
 
+        $this->assertEqual(2, $stateOne->twos()->count());
+
+        // cleanup
+        foreach ($stateOne->twos() as $two) {
+            $two->remove(true);
+        }
+
+        $this->assertEqual(0, DataObject::get(ManyManyTestObjectTwo::class, array(
+            "two" => array(10, 11)
+        ))->count());
+
+        $stateOne->remove(true);
+        $this->assertNull(DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
+            "one" => 10
+        ))->first());
+    }
+
+    /**
+     * tests state-reverts.
+     * it tests when also already published records are available, which has a new state-version
+     *
+     * 1. Create One TestObjectOne and two testObjectTwo.
+     * 2. Assign both of the twos to the one.
+     * 3. edit the first two and publish it
+     * 4. edit the first two and make a draft
+     * 5. assert correct records are available for one
+     * 6. checks if record in published version has right data.
+     * 7. publishes manymany-relationship
+     * 8. checks if everything got right
+     * 9. removes one and checks if remove was successful
+     *
+     * @throws MySQLException
+     */
+    public function testRevertStateToPublishWithPublished()
+    {
+        $newOne = new ManyManyTestObjectOne(array(
+            "one" => 10
+        ));
+        $newOne->twos()->add(new ManyManyTestObjectTwo(array(
+            "two" => 10
+        )));
+        $newOne->twos()->add(new ManyManyTestObjectTwo(array(
+            "two" => 11
+        )));
+        $newOne->writeToDB(true, true, 2);
+
+        $this->assertEqual(array(10, 11), $newOne->twos()->fieldToArray("two"));
+        $first = $newOne->twos()->first();
+        $first->two = 12;
+        $newOne->twos()->updateFields(
+            $first
+        );
+        $newOne->writeToDB(false, true, 1);
+
+        $this->assertEqual($newOne, $newOne->twos()->getOwnRecord());
+        $this->assertEqual(12, $newOne->twos()->first()->two);
+        $this->assertEqual(2, $newOne->twos()->count());
+
+        $this->assertEqual(1, DataObject::count(ManyManyTestObjectTwo::class, array(
+            "two" => 10
+        )));
+        $this->assertEqual(array(12, 11), $newOne->twos()->fieldToArray("two"));
+
+        // check for state
+        $stateOne = DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
+            "one" => 10
+        ))->first();
+        $this->assertEqual(array(12, 11), $stateOne->twos()->fieldToArray("two"));
+
+        // revert
+        /** @var ManyManyTestObjectOne $stateOne */
+        $publishedOne = DataObject::get(ManyManyTestObjectOne::class, array(
+            "one" => 10
+        ))->first();
+        $this->assertEqual(array(10, 11), $publishedOne->twos()->fieldToArray("two"));
+
+        $publishedOne->writeToDB(false, true, 2);
+
+        // check for revert
+        $this->assertEqual(2, DataObject::get(ManyManyTestObjectTwo::class, array(
+            "two" => array(10, 11)
+        ))->count());
+        $this->assertEqual(1, DataObject::get(ManyManyTestObjectTwo::class, array(
+            "two" => array(12, 11)
+        ))->count());
+
+        // check for state
+        $stateOne = DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
+            "one" => 10
+        ))->first();
+        $this->assertEqual(array(10, 11), $stateOne->twos()->fieldToArray("two"));
+
+        // cleanup
         $this->assertEqual(2, $stateOne->twos()->count());
         foreach ($stateOne->twos() as $two) {
             $two->remove(true);

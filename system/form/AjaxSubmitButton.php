@@ -124,32 +124,11 @@ class AjaxSubmitButton extends FormAction {
                 $errors = array($e);
             }
 
-            /** @var Exception $error */
-            foreach ($errors as $error) {
-                if (is_a($error, "FormMultiFieldInvalidDataException")) {
-                    /** @var FormMultiFieldInvalidDataException $error */
-                    foreach ($error->getFieldsMessages() as $field => $message) {
-                        if ($message) {
-                            $response->addError(lang($message, $message));
-                        }
-
-                        $response->addErrorField($field);
-                    }
-                } else if (is_a($error, "FormInvalidDataException")) {
-                    /** @var FormInvalidDataException $error */
-                    if ($error->getMessage()) {
-                        $response->addError(lang($error->getMessage(), $error->getMessage()));
-                    }
-
-                    $response->addErrorField($error->getField());
-                } else {
-                    log_exception($e);
-
-                    if ($error->getMessage()) {
-                        $prev = $error->getPrevious() ? " " . $error->getPrevious()->getMessage() : "";
-                        $response->addError(lang($error->getMessage(), $error->getMessage()) . $prev);
-                    }
-                }
+            /** @var Form $form */
+            if(($form = $this->form()) && is_a($form, Form::class)) {
+                $response= $form->addErrorsToJSONResponse($response, $errors);
+            } else {
+                throw new LogicException();
             }
 
             return $response;

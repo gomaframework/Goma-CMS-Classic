@@ -143,6 +143,37 @@ class ControllerTest extends GomaUnitTest {
         $this->assertInstanceOf(TestSubControllerForRequestController::class, $request->getRequestController());
     }
 
+	/**
+	 * tests controllerIsNextToRootOfType
+	 */
+	public function testcontrollerIsNextToRootOfTypeTrue() {
+		$controller = new TestSubClassController();
+		$controller2 = new TestSubControllerWithSubForRequestController();
+
+		$request = new Request("get", "lala");
+		$controller->Init($request);
+		$controller2->Init($request);
+
+		$this->assertTrue($controller->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class));
+		$this->assertFalse($controller2->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class));
+	}
+
+	/**
+	 * tests controllerIsNextToRootOfType
+	 */
+	public function testcontrollerIsNextToRootOfTypeFalse() {
+		$controller = new TestSubClassController();
+		$controller2 = new TestSubControllerWithSubForRequestController();
+
+		$request = new Request("get", "lala");
+		$controller2->Init($request);
+		$controller->Init($request);
+
+		$this->assertTrue($controller->controllerIsNextToRootOfType(TestSubClassController::class));
+		$this->assertFalse($controller->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class));
+		$this->assertTrue($controller2->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class));
+	}
+
     /**
      * tests if Allowed Actions work
      * tests if RequestController is set correctly when going through hierarchy and trying a second controller.
@@ -160,6 +191,17 @@ class ControllerTest extends GomaUnitTest {
         $this->assertEqual(2, count($request->getController()));
         $this->assertInstanceOf(TestSubControllerForRequestController::class, $request->getRequestController());
     }
+
+	public function testRequestForIndexClean() {
+		$request = new Request(
+			"GET",
+			"test"
+		);
+
+		$controller = new TestSubControllerForRequestController();
+		$this->assertEqual("Sub", $controller->handleRequest($request));
+		$this->assertEqual("test", $request->remaining());
+	}
 }
 
 class TestControllerForRequestController extends \RequestHandler {
@@ -168,7 +210,7 @@ class TestControllerForRequestController extends \RequestHandler {
     );
     public function index() {
         $controller = new TestSubControllerForRequestController();
-        return $controller->handleRequest($this->request);
+        return $controller->handleRequest($this->request, $this->isSubController());
     }
 
     public function lala() {
@@ -194,4 +236,8 @@ class TestSubControllerWithSubForRequestController extends \RequestHandler {
     {
         return "SubSub";
     }
+}
+
+class TestSubClassController extends TestSubControllerWithSubForRequestController {
+
 }

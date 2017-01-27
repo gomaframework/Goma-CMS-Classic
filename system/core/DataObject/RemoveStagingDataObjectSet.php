@@ -106,6 +106,7 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
      * @param bool $forceWrite
      * @param int $snap_priority
      * @param IModelRepository $repository
+     * @param array $options
      * @param array $exceptions
      * @param array $errorRecords
      */

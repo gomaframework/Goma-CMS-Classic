@@ -4,9 +4,10 @@ class decimalSQLField extends intSQLField
 {
     /**
      * generatesa a numeric field
-     *@name formfield
-     *@access public
-     *@param string - title
+     * @name formfield
+     * @access public
+     * @param string - title
+     * @return FormField|NumberField|TextArea
      */
     public function formfield($title = null)
     {

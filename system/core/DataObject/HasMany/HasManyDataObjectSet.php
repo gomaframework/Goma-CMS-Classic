@@ -30,12 +30,18 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
     protected $relationShipField;
 
     /**
+     * @var DataObject
+     */
+    protected $ownRecord;
+
+    /**
      * sets the relation-props
      *
      * @param ModelHasManyRelationShipInfo $relationShipInfo
      * @param int $value
+     * @param DataObject $ownRecord
      */
-    public function setRelationENV($relationShipInfo, $value) {
+    public function setRelationENV($relationShipInfo, $value, $ownRecord) {
         if(!isset($relationShipInfo)) {
             throw new InvalidArgumentException("First argument of setRelationENV needs to be type of ModelHasManyRelationShipInfo. Null given.");
         }
@@ -43,9 +49,10 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
         $this->relationShipInfo = $relationShipInfo;
         $this->relationShipValue = $value;
         $this->relationShipField = $relationShipInfo->getInverse() . "id";
+        $this->ownRecord = $ownRecord;
 
         if($this->getFetchMode() != self::FETCH_MODE_CREATE_NEW && $this->first() && $this->first()->{$this->relationShipField} != $this->relationShipValue) {
-            throw new InvalidArgumentException("You cannot move HasManyRelationship to another object. Please copy data by yourself.");
+            throw new InvalidArgumentException("You cannot move HasManyRelationship to another object. Please copy data with value '".$value."' by yourself for: " . $relationShipInfo->getRelationShipName());
         }
 
         foreach($this->staging as $record) {
@@ -104,8 +111,19 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
         }
 
         if(($id = $this->getRelationID()) !== null) {
+            /** @var DataObject $ownRecord */
+            $ownRecord = new $this->ownRecord->classname(
+                array_merge(
+                    $this->ownRecord->ToArray(),
+                    array(
+                        "id" => $this->getRelationID()
+                    )
+                )
+            );
+
             foreach($this->staging as $record) {
                 $record->{$this->relationShipField} = $this->getRelationID();
+                $record->setField($this->relationShipInfo->getInverse(), clone $ownRecord);
             }
         }
 
@@ -122,6 +140,7 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
 
         if(($id = $this->getRelationID()) !== null) {
             $record->{$this->relationShipField} = $id;
+            $record->setField($this->relationShipInfo()->getInverse(), $this->ownRecord);
         }
 
         return $record;
@@ -136,9 +155,25 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
     {
         if(($id = $this->getRelationID()) !== null) {
             $record->{$this->relationShipField} = $id;
+            $record->setField($this->relationShipInfo()->getInverse(), $this->ownRecord);
         }
 
         return parent::push($record, $write);
+    }
+
+    /**
+     * @param DataObject $item
+     * @return object
+     */
+    public function getConverted($item)
+    {
+        $record = parent::getConverted($item);
+        if(is_a($record, ViewAccessableData::class) && $this->ownRecord) {
+            if(!is_a($record->fieldGet($this->relationShipInfo()->getInverse()), $this->ownRecord->classname)) {
+                $record->setField($this->relationShipInfo()->getInverse(), $this->ownRecord);
+            }
+        }
+        return $record;
     }
 
     /**
@@ -151,6 +186,8 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
             return $this->relationShipValue == 0 ? -1 : $this->relationShipValue;
         } else if(isset($this->filter[$this->relationShipField]) && (is_string($this->filter[$this->relationShipField]) || is_int($this->filter[$this->relationShipField]))) {
             return $this->filter[$this->relationShipField];
+        } else {
+            return $this->ownRecord ? $this->ownRecord->id : null;
         }
     }
 
@@ -169,6 +206,7 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
                 $item->remove($forceWrite);
             } else {
                 $item->{$this->relationShipField} = 0;
+                $item->setField($this->relationShipInfo()->getInverse(), null);
                 $item->writeToDBInRepo($repository, false, $forceWrite, $snap_priority);
             }
         }

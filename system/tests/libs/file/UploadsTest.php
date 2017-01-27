@@ -269,7 +269,7 @@ class UploadsTest extends GomaUnitTest {
 	}
 
 	public function testBacktrack() {
-		if($file = Uploads::addFile("blub.jpg", $this->testfile, "testCollection", false)) {
+		if($file = Uploads::addFile("blub.jpg", $this->testfile, "testCollection", null, false)) {
 
 			$this->assertIsA($file->getLinkingModels()->getDbDataSource(), UploadsBackTrackDataSource::class);
 			$this->assertEqual($file->getLinkingModels()->count(), 0);

@@ -1,0 +1,41 @@
+.version-header {
+  border: 1px solid @system-tint;
+  padding: .5em;
+
+  > .back {
+    float: left;
+    padding: .5em;
+  }
+  > .restore {
+    float: right;
+    padding: .5em;
+  }
+  h2 {
+    text-align: center;
+    font-size: 1.25em;
+  }
+}
+.versions-data {
+  padding: 0 1em;
+  .versions.dataTable {
+    td {
+      padding: .5em;
+      border-bottom: 1px solid #eee;
+    }
+  }
+}
+
+.version-marker {
+  border: 1px solid @system-green;
+  color: @system-green;
+  border-radius: .25em;
+  padding: .25em .5em;
+  font-size: .75em;
+  text-transform: uppercase;
+  font-weight: bold;
+  display: inline-block;
+}
+.version-marker.state {
+  border-color: @system-red;
+  color: @system-red;
+}

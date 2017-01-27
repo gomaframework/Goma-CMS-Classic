@@ -91,15 +91,151 @@ class DataObjectTests extends GomaUnitTest
         $this->assertInstanceOf(IDataObjectSetModelSource::class, DataObject::getModelDataSource("User"));
         $this->assertInstanceOf(IDataObjectSetDataSource::class, DataObject::getDbDataSource("User"));
     }
+
+    public function testBooleanInit() {
+        $model = new MockWriteEntityWithFields();
+        $this->assertFalse($model->_bool);
+    }
+
+    public function testBooleanWriteAndGetFalse() {
+        try {
+            $model = new MockWriteEntityWithFields();
+            $model->writeToDB(false, true);
+
+            $gottenModel = DataObject::get_one(MockWriteEntityWithFields::class, array("id" => $model->id));
+            $this->assertFalse($gottenModel->_bool);
+            $this->assertIdentical(false, $gottenModel->_bool);
+        } finally {
+            if($model) {
+                $model->remove(true);
+            }
+        }
+    }
+
+    public function testBooleanWriteAndGetTrue() {
+        try {
+            $model = new MockWriteEntityWithFields();
+            $model->_bool = true;
+            $model->writeToDB(false, true);
+
+            $gottenModel = DataObject::get_one(MockWriteEntityWithFields::class, array("id" => $model->id));
+            $this->assertTrue($gottenModel->_bool);
+            $this->assertIdentical(true, $gottenModel->_bool);
+        } finally {
+            if($model) {
+                $model->remove(true);
+            }
+        }
+    }
+
+    public function testCreateTimestamps() {
+        $model = new MockWriteEntityWithFields();
+        $this->assertEqual(time(), $model->created);
+        $this->assertEqual(time(), $model->last_modified);
+    }
+
+
+    public function testCreateIDs() {
+        $model = new MockWriteEntityWithFields();
+        $this->assertIdentical(0, $model->id);
+        $this->assertIdentical(0, $model->versionid);
+    }
+
+    public function testRightVersionsProp() {
+        $classesUsingVersioned = array();
+        foreach(ClassInfo::getChildren(DataObject::class) as $child) {
+            if(!ClassInfo::isAbstract($child)) {
+                $inst = new $child;
+                if(property_exists($inst, "versioned") && $inst->versioned === true) {
+                    $classesUsingVersioned[] = $child;
+                }
+            }
+        }
+
+        $this->assertEqual(array(), $classesUsingVersioned);
+    }
+
+    /**
+     * @throws MySQLException
+     */
+    public function testSetVersionTypePublishOnWrite() {
+        try {
+            $entity = new MockWriteEntityWithFieldsVersioned();
+            $entity->test = 2;
+            $entity->writeToDB(false, true, 2);
+
+            $this->assertEqual($entity->queryVersion, DataObject::VERSION_PUBLISHED);
+        } finally {
+            if($entity) {
+                $entity->remove(true);
+            }
+        }
+    }
+
+    /**
+     * @throws MySQLException
+     */
+    public function testSetVersionTypeStateOnWrite() {
+        try {
+            $entity = new MockWriteEntityWithFieldsVersioned();
+            $entity->test = 2;
+            $entity->writeToDB(false, true, 1);
+
+            $this->assertEqual($entity->queryVersion, DataObject::VERSION_STATE);
+        } finally {
+            if($entity) {
+                $entity->remove(true);
+            }
+        }
+    }
+
+    /**
+     * @throws MySQLException
+     */
+    public function testSetVersionTypeStatePublishOnWrite() {
+        try {
+            $entity = new MockWriteEntityWithFieldsVersioned();
+            $entity->test = 2;
+            $entity->writeToDB(false, true, 2);
+
+            $this->assertEqual($entity->queryVersion, DataObject::VERSION_PUBLISHED);
+
+            $entity->writeToDB(false, true, 1);
+
+            $this->assertEqual($entity->queryVersion, DataObject::VERSION_STATE);
+        } finally {
+            if($entity) {
+                $entity->remove(true);
+            }
+        }
+    }
 }
 
 class MockWriteEntity extends DataObject {}
 
 class MockWriteExtendedEntity extends MockWriteEntity {}
 
+/**
+ * Class MockWriteEntityWithFields
+ * @property bool _bool
+ */
 class MockWriteEntityWithFields extends DataObject {
     static $db = array(
-        "test" => "int(10)"
+        "test" => "int(10)",
+        "_bool" => "boolean"
+    );
+    static $search_fields = false;
+}
+
+/**
+ * Class MockWriteEntityWithFields
+ * @property bool _bool
+ */
+class MockWriteEntityWithFieldsVersioned extends DataObject {
+    static $versions = true;
+    static $db = array(
+        "test" => "int(10)",
+        "_bool" => "boolean"
     );
     static $search_fields = false;
 }

@@ -46,7 +46,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
     /**
      * update extra fields stage.
      */
-    protected $updateExtraFieldsStage;
+    protected $updateFieldsStage;
 
     /**
      * ManyMany_DataObjectSet constructor.
@@ -61,7 +61,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
     {
         parent::__construct($class, $filter, $sort, $join, $search, $version);
 
-        $this->updateExtraFieldsStage = new ArrayList();
+        $this->updateFieldsStage = new ArrayList();
     }
 
     /**
@@ -69,15 +69,16 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
      *
      * @param ModelManyManyRelationShipInfo $relationShip
      * @param DataObject $ownRecord
+     * @param string|null $dataSourceVersion
      */
-    public function setRelationENV($relationShip, $ownRecord) {
+    public function setRelationENV($relationShip, $ownRecord, $dataSourceVersion = null) {
         if(!is_a($relationShip, "ModelManyManyRelationShipInfo")) {
             throw new InvalidArgumentException("Relationship-Info must be type of ModelManyManyRelationShipInfo");
         }
 
         $this->relationShip = $relationShip;
         $this->ownRecord = $ownRecord;
-        $this->dataSourceVersion = $relationShip->getSourceVersion();
+        $this->dataSourceVersion = isset($dataSourceVersion) ? $dataSourceVersion : $relationShip->getSourceVersion();
     }
 
     /**
@@ -188,9 +189,9 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
     /**
      * @return mixed
      */
-    public function getUpdateExtraFieldsStage()
+    public function getUpdateFieldsStage()
     {
-        return $this->updateExtraFieldsStage;
+        return $this->updateFieldsStage;
     }
 
     /**
@@ -247,7 +248,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                 $arr[$id][$this->relationShip->getOwnerSortField()] = $row[$this->relationShip->getOwnerSortField()];
                 $arr[$id][$this->relationShip->getTargetSortField()] = $row[$this->relationShip->getTargetSortField()];
 
-                if ($updateObject = $this->updateExtraFieldsStage->find("id", $row["recordid"])) {
+                if ($updateObject = $this->updateFieldsStage->find("id", $row["recordid"])) {
                     $updateRecord = $updateObject->toArray();
                 }
 
@@ -385,7 +386,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             $name = $this->relationShip->getRelationShipName();
             $sorts = ArrayLib::map_key("strtolower", StaticsManager::getStatic($this->getOwnRecord()->DataClass(), "many_many_sort"));
             if(isset($sorts[$name]) && $sorts[$name]) {
-                return call_user_func_array(array(static::class, "parseSort"), $sorts[$name]);
+                return call_user_func_array(array(static::class, "parseSort"), array($sorts[$name]));
             } else {
                 return array(
                     $this->relationShip->getTableName() . ".".$this->relationShip->getOwnerSortField() => "ASC",
@@ -426,13 +427,18 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
      * updates extra fields for record.
      *
      * @param DataObject $record
+     * @param bool $onlyChangedMany
      */
-    public function updateExtraFields($record) {
-        if($toRemove = $this->updateExtraFieldsStage->find("versionid", $record->versionid)) {
-            $this->updateExtraFieldsStage->remove($toRemove);
+    public function updateFields($record, $onlyChangedMany = false) {
+        if($record->hasChanged() && $onlyChangedMany) {
+            $record->__onlymanyChanged = true;
         }
 
-        $this->updateExtraFieldsStage->add($record);
+        if($toRemove = $this->updateFieldsStage->find("versionid", $record->versionid)) {
+            $this->updateFieldsStage->remove($toRemove);
+        }
+
+        $this->updateFieldsStage->add($record);
     }
 
     /**
@@ -440,8 +446,8 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
      * @param DataObject $record
      */
     public function removeFromUpdateExtraFields($record) {
-        if($toRemove = $this->updateExtraFieldsStage->find("versionid", $record->versionid)) {
-            $this->updateExtraFieldsStage->remove($toRemove);
+        if($toRemove = $this->updateFieldsStage->find("versionid", $record->versionid)) {
+            $this->updateFieldsStage->remove($toRemove);
         }
     }
 
@@ -467,7 +473,8 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                 "Call writeToDB on record, this will also trigger writing Relationship.");
         }
 
-        $copyOfAddStage = $this->staging->ToArray();
+        $updated = array();
+        $copyOfAddStage = $this->prepareStageForWriting($updated);
 
         parent::writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, $exceptions, $errorRecords);
 
@@ -484,7 +491,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                 )
             );
         } else {
-            if($this->ownRecord->versionid != $this->ownRecord->publishedid || isset($options["oldid"]) || $this->manyManyData || $this->updateExtraFieldsStage->count() > 0) {
+            if($this->ownRecord->versionid != $this->ownRecord->publishedid || isset($options["oldid"]) || $this->manyManyData || $this->updateFieldsStage->count() > 0) {
                 $relationData = $this->getRelationshipDataFromDB(isset($options["oldid"]) ? $options["oldid"] : null);
 
                 $manipulation[self::MANIPULATION_DELETE_EXISTING] = array(
@@ -507,15 +514,16 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                     }
 
                     foreach ($relationData as $id => $record) {
+                        $updatedRecord = isset($updated[$id]) ? $updated[$id] : null;
                         if($this->relationShip->isBidirectional()) {
                             if(!isset($manipulation[self::MANIPULATION_INSERT_NEW]["fields"][$id . "_" . $this->ownRecord->versionid])) {
                                 $manipulation[self::MANIPULATION_INSERT_NEW]["fields"][$id . "_" . $this->ownRecord->versionid] =
-                                    $this->getBiDirRecordFromRelationData($id, $sort, $record);
+                                    $this->getBiDirRecordFromRelationData($id, $sort, $record, $updatedRecord);
                             }
                         }
 
                         $manipulation[self::MANIPULATION_INSERT_NEW]["fields"][$this->ownRecord->versionid . "_" . $id] =
-                            $this->getRecordFromRelationData($id, $sort, $record);
+                            $this->getRecordFromRelationData($id, $sort, $record, $updatedRecord);
 
                         $addedRecords[$id] = false;
                         $sort++;
@@ -597,19 +605,22 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
      * @param int $id
      * @param int $sort
      * @param array $record
+     * @param null|DataObject $updatedRecord
      * @return array
      */
-    protected function getRecordFromRelationData($id, $sort, $record) {
+    protected function getRecordFromRelationData($id, $sort, $record, $updatedRecord = null) {
+        $record = $this->mergeRecordWithUpdate($record, $updatedRecord);
+
         $newRecord = array(
             $this->relationShip->getOwnerField()        => $this->ownRecord->versionid,
-            $this->relationShip->getTargetField()       => $id,
+            $this->relationShip->getTargetField()       => isset($updatedRecord) ? $updatedRecord->versionid : $id,
             $this->relationShip->getTargetSortField()   => isset($record[$this->relationShip->getTargetSortField()]) ?
                 $record[$this->relationShip->getTargetSortField()] : 0,
             $this->relationShip->getOwnerSortField()    => $sort
         );
 
         /** @var DataObject $changedRecord */
-        if(($changedRecord = $this->updateExtraFieldsStage->find("versionid", $id)) && $changedRecord->hasChanged()) {
+        if(($changedRecord = $this->updateFieldsStage->find("versionid", $id)) && $changedRecord->hasChanged()) {
             foreach($this->relationShip->getExtraFields() as $field => $type) {
                 $newRecord[$field] = isset($changedRecord->{$field}) ? $changedRecord->{$field} : "";
             }
@@ -627,17 +638,37 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
      * @param int $id
      * @param int $sort
      * @param array $record
+     * @param DataObject $updatedRecord
      * @return array
      */
-    protected function getBiDirRecordFromRelationData($id, $sort, $record) {
+    protected function getBiDirRecordFromRelationData($id, $sort, $record, $updatedRecord = null) {
+        $record = $this->mergeRecordWithUpdate($record, $updatedRecord);
+
         $ownerSort = isset($record[$this->relationShip->getTargetSortField()]) ?
             $record[$this->relationShip->getTargetSortField()] : 0;
         $record[$this->relationShip->getTargetSortField()] = $sort;
 
-        $newRecord = $this->getRecordFromRelationData($id, $ownerSort, $record);
+        $newRecord = $this->getRecordFromRelationData($id, $ownerSort, $record, $updatedRecord);
         $newRecord[$this->relationShip->getTargetField()] = $this->ownRecord->versionid;
-        $newRecord[$this->relationShip->getOwnerField()] = $id;
+        $newRecord[$this->relationShip->getOwnerField()] = isset($updatedRecord) ? $updatedRecord->versionid : $id;
         return $newRecord;
+    }
+
+    /**
+     * @param array $record
+     * @param DataObject $updated
+     * @return array
+     */
+    private function mergeRecordWithUpdate($record, $updated) {
+        if(isset($updated)) {
+            foreach($record as $k => $v) {
+                if($updated->isField($k)) {
+                    $record[$k] = $updated->fieldGet($k);
+                }
+            }
+        }
+
+        return $record;
     }
 
     /**
@@ -840,5 +871,84 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
         $this->items =& $this->staging->ToArray();
 
         return $this;
+    }
+
+    /**
+     * handles unique relationships.
+     * @param array $updated
+     * @return array
+     */
+    protected function prepareStageForWriting(&$updated) {
+        $staging = $this->staging->ToArray();
+        if($this->getRelationShip()->getCascade() == DataObject::CASCADE_TYPE_UNIQUE) {
+            $oldData = array_merge($this->staging->ToArray(), $this->updateFieldsStage->ToArray());
+            $dataToWrite = $dataForRelationship = array();
+            foreach($oldData as $currentRecord) {
+                $targetClass = $this->getRelationShip()->getTargetClass();
+                $fields = ArrayLib::map_key("strtolower", StaticsManager::getStatic($targetClass, "unique_fields"));
+                $info = array();
+                foreach($fields as $field) {
+                    $info[$field] = $currentRecord->$field;
+                }
+
+                // find object
+                $record = DataObject::get_versioned($targetClass, $this->queryVersion(),
+                    $this->getFilterForUnique($this->getRelationShip(), $info))->first();
+                if(!isset($record)) {
+                    $record = $this->getRecordForUnique($this->getRelationShip(), $currentRecord, $info);
+                    $dataToWrite[] = $record;
+                }
+
+                if($this->staging->find("versionid", $currentRecord->versionid)) {
+                    $dataForRelationship[] = $record;
+                } else {
+                    $updated[$currentRecord->versionid] = $currentRecord;
+                }
+            }
+
+            $this->staging = new ArrayList($dataToWrite);
+
+            return $dataForRelationship;
+        } else {
+            foreach($this->updateFieldsStage as $record) {
+                $updated[$record->versionid] = $record;
+
+                if($record->hasChanged() && !$record->__onlymanyChanged) {
+                    $this->staging->add($record);
+                }
+            }
+        }
+
+        return $staging;
+    }
+
+    /**
+     * @param ModelManyManyRelationShipInfo $info
+     * @param array $data
+     * @return array
+     */
+    protected function getFilterForUnique($info, $data) {
+        if($info->isUniqueLike()) {
+            foreach($data as $key => $value) {
+                $data[$key] = array("LIKE", trim($value));
+            }
+        }
+
+        return $data;
+    }
+    /**
+     * @param ModelManyManyRelationShipInfo $info
+     * @param DataObject $record
+     * @param array $data
+     * @return DataObject
+     */
+    protected function getRecordForUnique($info, $record, $data) {
+        if($info->isUniqueLike()) {
+            foreach($data as $k => $v) {
+                $record->{$k} = trim($v);
+            }
+        }
+
+        return $record;
     }
 }

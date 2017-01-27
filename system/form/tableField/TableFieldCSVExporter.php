@@ -31,6 +31,10 @@ class TableFieldCSVExporter implements TableField_HTMLProvider, TableField_URLHa
      */
     public function __construct($additionalFields = array())
     {
+        if(!ArrayLib::isAssocArray($additionalFields)) {
+            throw new InvalidArgumentException();
+        }
+
         $this->additionalColumns = $additionalFields;
     }
 
@@ -85,6 +89,7 @@ class TableFieldCSVExporter implements TableField_HTMLProvider, TableField_URLHa
     /**
      * @param TableField $tableField
      * @param Request $request
+     * @return bool
      */
     public function exportCSV($tableField, $request) {
         $csv = new CSV("");

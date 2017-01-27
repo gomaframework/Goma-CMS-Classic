@@ -119,11 +119,16 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
                     return null;
                 }
 
+                // if same
+                if($this->getOwner()->fieldGet($name . "id") == $this->getOwner()->id) {
+                    return $this->getOwner();
+                }
+
                 $response = DataObject::get($relationShip->getTargetClass(), array(
                     "id" => $this->getOwner()->fieldGet($name . "id")
                 ));
 
-                if ($this->getOwner()->queryVersion == DataObject::VERSION_STATE) {
+                if ($this->getOwner()->queryVersion == DataObject::VERSION_STATE && !$this->getOwner()->isPublished()) {
                     $response->setVersion(DataObject::VERSION_STATE);
                 }
 
@@ -319,6 +324,7 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
     }
 
     /**
+     * @param string $name
      * @param string $value
      */
     public function setHasOneId($name, $value) {

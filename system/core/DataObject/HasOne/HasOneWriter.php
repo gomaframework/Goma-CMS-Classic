@@ -37,7 +37,7 @@ class HasOneWriter extends Extension {
                         // find object
                         $record = DataObject::get_one($has_one[$key]->getTargetClass(), $this->getFilterForUnique($has_one[$key], $info));
                         if(!isset($record)) {
-                            $record = $this->getRecordForUnique($has_one[$key], $info);
+                            $record = $this->getRecordForUnique($has_one[$key], $data[$key], $info);
                             $this->writeObject($record);
                         }
 
@@ -45,8 +45,12 @@ class HasOneWriter extends Extension {
                         unset($data[$key]);
                     } else {
                         if($this->shouldUpdateData($has_one[$key])) {
-                            if($record->wasChanged() || $record->id == 0) {
-                                $this->writeObject($record);
+                            if($record != $owner->getModel()) { // check if it is a relationship to itself.
+                                if ($record->wasChanged() || $record->id == 0) {
+                                    $this->writeObject($record);
+                                }
+                            } else if($record->id == 0) {
+                                continue;
                             }
                         }
 
@@ -62,6 +66,43 @@ class HasOneWriter extends Extension {
         }
 
         $owner->setData($data);
+    }
+
+    /**
+     * @param array $data
+     */
+    public function afterInsertBaseClassAndGetVersionId(&$data, &$manipulation) {
+        /** @var ModelWriter $owner */
+        $owner = $this->getOwner();
+
+        if ($has_one = $owner->getModel()->hasOne()) {
+            foreach($has_one as $key => $value) {
+                if (isset($data[$key]) && is_object($data[$key]) && is_a($data[$key], "DataObject")) {
+                    /** @var DataObject $record */
+                    $record = $data[$key];
+
+                    if($record == $owner->getModel()) {
+                        $data[$key . "id"] = $owner->getModel()->id;
+                        $owner->getModel()->{$key . "id"} = $owner->getModel()->id;
+                        unset($data[$key]);
+
+                        // update base-table if field is in base-table
+                        if(isset(ClassInfo::$database[$owner->getModel()->baseTable][$key . "id"])) {
+                            $manipulation["update_hasone_" . $key . "_" . $owner->getModel()->baseTable] = array(
+                                "table_name"=> $owner->getModel()->baseTable,
+                                "id"        => $owner->getModel()->versionid,
+                                "command"   => "update",
+                                "fields"    => array(
+                                    $key . "id" => $owner->getModel()->id
+                                )
+                            );
+                        }
+                    } else {
+                        throw new LogicException("There should not be any has-one-object at this point except for same object cases.");
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -81,18 +122,18 @@ class HasOneWriter extends Extension {
 
     /**
      * @param ModelHasOneRelationshipInfo $info
+     * @param DataObject $record
      * @param array $data
+     * @return DataObject
      */
-    protected function getRecordForUnique($info, $data) {
-        $target = $info->getTargetClass();
-
+    protected function getRecordForUnique($info, $record, $data) {
         if($info->isUniqueLike()) {
             foreach($data as $k => $v) {
-                $data[$k] = trim($v);
+                $record->{$k} = trim($v);
             }
         }
 
-        return new $target($data);
+        return $record;
     }
 
     /**

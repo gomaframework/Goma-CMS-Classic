@@ -131,9 +131,7 @@ var LaM_type_timeout;
 						scroll = treewrapper.scrollTop();
 					// find optimal scroll by position of active element
 					if(treewrapper.find(".marked").length == 1) {
-
 						var pos = treewrapper.find(".marked:first").offset().top + treewrapper.find(".marked:first > span.tree-wrapper").outerHeight() - treewrapper.offset().top + scroll;
-
 
 						if(treewrapper.scrollTop() > pos) {
 							treewrapper.scrollTop(pos);

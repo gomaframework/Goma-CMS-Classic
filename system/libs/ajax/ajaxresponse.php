@@ -32,7 +32,7 @@ class AjaxResponse extends GomaResponse
     {
         parent::__construct($header, $body);
 
-        $this->body->setIsFullPage(false);
+        $this->body->setIsFullPage(true);
     }
 
     public function setDefaultHeader()
