@@ -627,22 +627,6 @@ class tplCaller extends gObject
         return Core::$title;
     }
 
-
-    /**
-     * returns addcontent
-     * @param bool $flush
-     * @return string
-     */
-    public function addcontent($flush = false)
-    {
-        $c = addcontent::get();
-        if ($flush) {
-            addcontent::flush();
-        }
-
-        return $c;
-    }
-
     /**
      * API for resizing images
      * @param string $file

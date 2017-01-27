@@ -295,15 +295,14 @@ class DBField extends gObject implements IDataBaseField
      * @return array|null
      */
     public static function parseCasting($casting) {
+        if(is_array($casting)) {
+            return $casting;
+        }
 
         if(isset(self::$castingCache[$casting]))
             return self::$castingCache[$casting];
 
         if(PROFILE) Profiler::mark("DBField::parseCasting");
-
-        if(is_array($casting)) {
-            return $casting;
-        }
 
         $method = self::parseCastingString($casting, $name, $args);
 
@@ -483,5 +482,26 @@ class DBField extends gObject implements IDataBaseField
     public function forDBQuery()
     {
         return "'".convert::raw2sql($this->value)."'";
+    }
+
+    /**
+     * @internal
+     * @param DataObject $class
+     * @param string $fieldName
+     * @param array $args
+     * @param string $fieldType
+     */
+    public static function argumentClassInfo($class, $fieldName, $args, $fieldType) {
+
+    }
+
+    /**
+     * @param string $fieldName
+     * @param mixed $default
+     * @param array $args
+     * @return null|string|mixed new default
+     */
+    public static function getSQLDefault($fieldName, $default, $args) {
+        return $default;
     }
 }

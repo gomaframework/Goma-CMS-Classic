@@ -30,21 +30,21 @@ class HasManyWriter extends Extension {
                         /** @var HasMany_DataObjectSet $hasManyObject */
                         $hasManyObject = $data[$name];
 
-                        $hasManyObject->setRelationENV($has_many[$name], $owner->getModel()->id);
+                        $hasManyObject->setRelationENV($has_many[$name], $owner->getModel()->id, $owner->getModel());
                         $hasManyObject->commitStaging(false, true, $owner->getWriteType());
-                    }
-
-                    if (isset($data[$name]) && !isset($data[$name . "ids"]) && is_array($data[$name])) {
-                        $data[$name . "ids"] = $data[$name];
-                    }
-
-                    if (isset($data[$name . "ids"]) && $this->validateIDsData($data[$name . "ids"])) {
-                        if(in_array(0, $data[$name . "ids"])) {
-                            throw new InvalidArgumentException("HasMany-Relationship must contain only already written records.");
+                    } else {
+                        if (isset($data[$name]) && !isset($data[$name . "ids"]) && is_array($data[$name])) {
+                            $data[$name . "ids"] = $data[$name];
                         }
 
-                        $this->removeFromRelationShip($class->getTargetClass(), $has_many[$name]->getInverse() . "id", $owner->getModel()->id, $data[$name . "ids"], $has_many[$name]->shouldRemoveData());
-                        $this->updateRelationship($data[$name . "ids"], $has_many[$name]);
+                        if (isset($data[$name . "ids"]) && $this->validateIDsData($data[$name . "ids"])) {
+                            if (in_array(0, $data[$name . "ids"])) {
+                                throw new InvalidArgumentException("HasMany-Relationship must contain only already written records.");
+                            }
+
+                            $this->removeFromRelationShip($class->getTargetClass(), $has_many[$name]->getInverse() . "id", $owner->getModel()->id, $data[$name . "ids"], $has_many[$name]->shouldRemoveData());
+                            $this->updateRelationship($data[$name . "ids"], $has_many[$name]);
+                        }
                     }
                 }
             }

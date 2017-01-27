@@ -52,8 +52,8 @@
 }
 .pageLinkHolder .cancelButton {
 	position: absolute;
-	right: 0;
-	top: 6px;
+	right: 3px;
+	top: 23px;
 	height: 17px !important;
 	width: 17px !important;
 	background: url(images/cancel.png) no-repeat !important;

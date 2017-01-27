@@ -62,11 +62,12 @@ class HasManyGetter extends AbstractGetterExtension {
         $hasManyObject = $owner->fieldGet($name);
         if(!$hasManyObject || !is_a($hasManyObject, "HasMany_DataObjectSet")) {
             $hasManyObject = new HasMany_DataObjectSet($has_many[$name]->getTargetClass());
-            $hasManyObject->setRelationENV($has_many[$name], $this->getOwner()->id ? $this->getOwner()->id : 0);
+            $hasManyObject->setFetchMode($this->getOwner()->id ? DataObjectSet::FETCH_MODE_EDIT : DataObjectSet::FETCH_MODE_CREATE_NEW);
+            $hasManyObject->setRelationENV($has_many[$name], $this->getOwner()->id ? $this->getOwner()->id : 0, $this->getOwner());
 
             $owner->setField($name, $hasManyObject);
 
-            if ($owner->queryVersion == DataObject::VERSION_STATE) {
+            if ($owner->queryVersion == DataObject::VERSION_STATE  && !$this->getOwner()->isPublished()) {
                 $hasManyObject->setVersion(DataObject::VERSION_STATE);
             }
         }

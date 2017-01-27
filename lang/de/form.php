@@ -19,7 +19,7 @@ $form_lang = array(
 	"dropdown_nothing_select"	=> "Nichts ausgew&auml;hlt",
 	"click_to_select"			=> "Zum auswählen klicken",
 	"number_not_valid"			=> "Bitte geben Sie eine Zahl ein.",
-	"bad_pagetype"				=> "Bitte geben Sie einen korrekten Seitentype ein,",
+	"bad_pagetype"				=> "Bitte geben Sie einen korrekten Seitentype ein.",
 	"not_saved_yet"				=> "Ihre Legitimierung für diese Aktion ist ausgelaufen. Bitte wiederholen Sie die Aktion.",
 
 	"tablefield.reset"			=> "Zurücksetzen",

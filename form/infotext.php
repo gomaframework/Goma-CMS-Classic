@@ -12,7 +12,7 @@
 class InfoTextField extends Extension {
 	/**
 	 * created field with info-field.
-	 * @param FormField $field
+	 * @param AbstractFormComponent $field
 	 * @param string $info
 	 * @return FormField
 	 */
@@ -32,4 +32,4 @@ class InfoTextField extends Extension {
 	}
 }
 
-gObject::extend("FormField", "InfoTextField");
+gObject::extend(AbstractFormComponent::class, InfoTextField::class);

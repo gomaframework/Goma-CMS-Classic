@@ -18,20 +18,6 @@ class ModelHasOneRelationshipInfo extends ModelRelationShipInfo {
     protected static $modelInfoGeneratorFunction = "generateHas_one";
 
     /**
-     * @var bool
-     */
-    protected $uniqueLike = false;
-
-    public function __construct($ownerClass, $name, $options)
-    {
-        parent::__construct($ownerClass, $name, $options);
-
-        if(isset($options["uniqueLike"])) {
-            $this->uniqueLike = $options["uniqueLike"];
-        }
-    }
-
-    /**
      * forces inverse.
      */
     protected function validateAndForceInverse() {
@@ -50,18 +36,14 @@ class ModelHasOneRelationshipInfo extends ModelRelationShipInfo {
             }
         }
 
+        if($this->cascade == DataObject::CASCADE_UNIQUE_LIKE) {
+            throw new InvalidArgumentException("CASCADE_UNIQUE_LIKE is an option not a value for cascade.");
+        }
+
         if($this->cascade == DataObject::CASCADE_TYPE_UNIQUE &&
             (!StaticsManager::hasStatic($this->targetClass, "unique_fields") || !is_array(StaticsManager::getStatic($this->targetClass, "unique_fields")))) {
             throw new InvalidArgumentException("When using UNIQUE-Cascade, Target-Class must define unique_fields.");
         }
-    }
-
-    /**
-     * @return boolean
-     */
-    public function isUniqueLike()
-    {
-        return $this->uniqueLike;
     }
 
     /**
@@ -70,11 +52,23 @@ class ModelHasOneRelationshipInfo extends ModelRelationShipInfo {
      * @return array
      */
     public function toClassInfo() {
-        return array(
+        $info = array(
             DataObject::RELATION_TARGET => $this->targetClass,
-            DataObject::RELATION_INVERSE => $this->inverse,
-            DataObject::FETCH_TYPE => $this->fetchType,
-            DataObject::CASCADE_TYPE => $this->cascade
+            DataObject::RELATION_INVERSE => $this->inverse
         );
+
+        if($this->cascade != DataObject::CASCADE_TYPE_UPDATE) {
+            $info[DataObject::CASCADE_TYPE] = $this->cascade;
+        }
+
+        if($this->fetchType != DataObject::FETCH_TYPE_LAZY) {
+            $info[DataObject::FETCH_TYPE] = $this->fetchType;
+        }
+
+        if($this->uniqueLike) {
+            $info[DataObject::CASCADE_UNIQUE_LIKE] = true;
+        }
+
+        return $info;
     }
 }

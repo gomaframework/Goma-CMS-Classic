@@ -27,7 +27,7 @@ class adminItem extends AdminController implements PermProvider {
 	*/
 	public $allowed_actions = array
 	(
-		"cms_edit", "cms_add", "cms_del"
+		"cms_add"
 	);
 	
 	/**
@@ -251,17 +251,6 @@ class adminItem extends AdminController implements PermProvider {
 			return false;
 		}
 	}
-	
-	/**
-	 * rewrite delete, edit and add
-	*/
-	public function cms_del() {
-		return $this->delete();
-	}
-	public function cms_edit() {
-		return $this->edit();
-	}
-
 
 	/**
 	 * add-form
@@ -364,7 +353,7 @@ class adminItem extends AdminController implements PermProvider {
 			$this->decorateRecord($data);
 			$this->decorateModel($data);
 			if ($data->first() != null) {
-				return $this->getWithModel($data->first())->handleRequest($this->request);
+				return $this->getWithModel($data->first())->handleRequest($this->request, $this->isSubController());
 			} else {
 				if(is_a($this->modelInst(), "DataObjectSet")) {
 					$clonedData = clone $data;
@@ -373,7 +362,7 @@ class adminItem extends AdminController implements PermProvider {
 					$this->decorateModel($clonedData);
 
 					if($clonedData->Count() > 0) {
-						return $this->selectModel($clonedData->first())->handleRequest($this->request);
+						return $this->selectModel($clonedData->first())->handleRequest($this->request, $this->isSubController());
 					}
 				}
 

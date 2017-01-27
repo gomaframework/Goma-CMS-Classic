@@ -148,14 +148,16 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * clears cache.
 	 */
 	protected function clearCache() {
-		if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
-			throw new LogicException("Clear cache is only possible when using FETCH_MODE_EDIT.");
-		}
-
-		$this->items = null;
 		$this->count = null;
 		$this->firstCache = null;
 		$this->lastCache = null;
+
+		if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
+            $this->unsetItemsProp();
+			$this->forceData();
+		} else {
+            $this->items = null;
+        }
 	}
 
 	/**
@@ -334,7 +336,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @param array $additional_fields unused here
 	 * @return array
 	 */
-	public function ToArray($additional_fields = array())
+	public function &ToArray($additional_fields = array())
 	{
 		$this->forceData();
 		return $this->items;
@@ -486,9 +488,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 	/**
 	 * count
-	 *
-	 * @name Count
-	 * @access public
+     *
 	 * @return int
 	 */
 	public function countWholeSet() {
@@ -652,6 +652,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 			$this->unsetItemsProp();
 			if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
 				$this->items = &$this->getStagingWithFilterAndSort()->ToArray();
+                $this->count = count($this->items);
 			} else {
 				if($this->page !== null && $this->getPageCount() < $this->page) {
 					$this->page = $this->getPageCount();
@@ -813,6 +814,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @return $this
 	 */
 	public function removeJoin($key) {
+        if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
+            throw new InvalidArgumentException("Join does not support newly created DataObjectSets.");
+        }
+
 		unset($this->join[$key]);
 		$this->clearCache();
 		return $this;
@@ -825,7 +830,11 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 */
 	public function join($join) {
 		if(isset($join)) {
-			$this->join = (array) $join;
+            if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
+                throw new InvalidArgumentException("Join does not support newly created DataObjectSets.");
+            }
+
+            $this->join = (array) $join;
 			$this->clearCache();
 		}
 		return $this;
@@ -839,6 +848,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 * @return $this
 	 */
 	public function activatePagination($page = null, $perPage = null) {
+        if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
+            throw new InvalidArgumentException("Pagination does not support newly created DataObjectSets.");
+        }
+
 		$this->clearCache();
 		if(isset($perPage) && $perPage > 0)
 			$this->perPage = $perPage;
@@ -894,7 +907,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 		}
 
 		$this->sort = $sort;
-		$this->clearCache();
+
+		if($this->fetchMode == self::FETCH_MODE_EDIT) {
+			$this->clearCache();
+		}
 
 		return $this;
 	}
@@ -1008,17 +1024,54 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 
 		$result = $this->getResultFromCache($start, $length);
 		if ($result === null) {
-			$result = $this->dbDataSource()->getRecords($this->version, $this->getFilterForQuery(), $this->getSortForQuery(), array($start, $length), $this->getJoinForQuery(), $this->search);
-		}
+			$result = $this->dbDataSource()->getRecords($this->version, $this->getFilterForQuery(),
+				$this->getSortForQuery(), array($start, $length), $this->getJoinForQuery(), $this->search);
 
-		if (count($result) < $length) {
-			$missing = $length - count($result);
+            // merge with staging
+            $stageCount = $this->getStagingWithFilterAndSort()->count();
+            if($stageCount > 0) {
+                if($start > $this->countWholeSet() - $stageCount) {
+                    $start -= ($this->countWholeSet() - $stageCount);
+                }
 
-			return array_merge($result, $this->getStagingWithFilterAndSort()->getRange(0, $missing)->ToArray());
+                $result = $this->mergeWithStaging($result, $length, $start, $start != 0 && isset($result[0]) ? $result[0] : null);
+            }
 		}
 
 		return $result;
 	}
+
+    /**
+     * @param array $result
+     * @param int $length
+     * @param int $startIndex
+     * @param null $startElement
+     * @return array|ArrayList
+     */
+    protected function mergeWithStaging($result, $length, $startIndex = 0, $startElement = null) {
+        if($result) {
+            $merged = new ArrayList(
+                array_merge(
+                    $result, $this->getStagingWithFilterAndSort()->ToArray()
+                ));
+            $merged = $merged->sort($this->sort);
+        } else {
+            $merged = $this->getStagingWithFilterAndSort();
+        }
+
+        if($length < 0) {
+            return $merged->getRange($merged->count() - $length, abs($length));
+        }
+
+        if(isset($startElement)) {
+            $startIndex = 0;
+            while($merged[$startIndex] != $startElement) {
+                $startIndex++;
+            }
+        }
+
+        return $merged->getRange($startIndex, $length ? $length : $merged->count())->ToArray();
+    }
 
 	/**
 	 * @param int $start
@@ -1050,13 +1103,18 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 		return null;
 	}
 
-	/**
-	 * search
-	 *
-	 * @return $this
-	 */
+    /**
+     * search
+     *
+     * @param $search
+     * @return $this
+     */
 	public function search($search) {
 		if(isset($search)) {
+            if($this->fetchMode == self::FETCH_MODE_CREATE_NEW) {
+                throw new InvalidArgumentException("Search does not support newly created DataObjectSets.");
+            }
+
 			$this->search = $search;
 			$this->clearCache();
 		}
@@ -1235,7 +1293,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
             DataObject::VERSION_STATE : DataObject::VERSION_PUBLISHED;
 
         if(count($exceptions) > 0) {
-			throw new DataObjectSetCommitException($exceptions, $errorRecords, count($errorRecords) . " could not be written.");
+			throw new DataObjectSetCommitException($exceptions, $errorRecords, count($errorRecords) . " record(s) of type ".get_class($errorRecords[0])." could not be written.");
 		}
 
 		$this->dbDataSource()->clearCache();
@@ -1494,8 +1552,6 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 		// default submission
 		$form->setSubmission(isset($submission) ? $submission : "submit_form");
 
-		$form->addValidator(new DataValidator($model), "datavalidator");
-
 		$form->add(new HiddenField("class_name", $model->DataClass()));
 
 		foreach($this->defaults as $key => $value) {
@@ -1562,7 +1618,8 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 */
 	protected function modelSource() {
 		if(!isset($this->modelSource)) {
-			throw new InvalidArgumentException("This DataObjectSet has no bound ModelSource. It can't be used for creating new Models or converting arrays.");
+			throw new InvalidArgumentException("This DataObjectSet has no bound ModelSource. " .
+                "It can't be used for creating new Models or converting arrays.");
 		}
 
 		return $this->modelSource;

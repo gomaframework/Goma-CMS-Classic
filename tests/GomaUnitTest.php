@@ -16,6 +16,7 @@
  * @method void assertGreaterThanOrEqual($expected, $actual, $message = null)
  * @method void assertInstanceOf($class, $object, $message = null)
  * @method void assertNotInstanceOf($class, $object, $message = null)
+ * @method void assertNotNull($object, $message = null)
  */
 abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAble {
 	/**

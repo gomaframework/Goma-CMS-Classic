@@ -7,18 +7,14 @@ class Varchar extends DBField
 {
     /**
      * strips all tags of the value
-     *@name striptags
-     *@access public
      */
     public function strtiptags()
     {
-        return striptags($this->value);
+        return strip_tags($this->value);
     }
 
     /**
      * makes a substring of this value
-     *@name substr
-     *@access public
      */
     public function substr($start, $length = null)
     {
@@ -32,8 +28,6 @@ class Varchar extends DBField
     }
     /**
      * this returns the length of the string
-     *@name length
-     *@access public
      */
     public function length()
     {
@@ -42,9 +36,6 @@ class Varchar extends DBField
 
     /**
      * generates a special dynamic form-field
-     *@name formfield
-     *@access public
-     *@param string - title
      */
     public function formfield($title = null)
     {
@@ -60,8 +51,6 @@ class Varchar extends DBField
 
     /**
      * renders text as BBcode
-     *@name bbcode
-     *@access public
      */
     public function bbcode()
     {
@@ -71,8 +60,6 @@ class Varchar extends DBField
 
     /**
      * converts this with date
-     * @name date
-     * @access public
      * @return string
      */
     public function date($format = DATE_FORMAT)
@@ -83,7 +70,6 @@ class Varchar extends DBField
     /**
      * for template
      *
-     * @name forTemplate
      * @return string
      */
     public function forTemplate() {

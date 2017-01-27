@@ -1,0 +1,20 @@
+<% INCLUDE_CSS "versions.less" %>
+
+
+<div class="version-header">
+    <a href="$namespace" class="back"><i class="fa fa-angle-left fa-2x"></i> <% lang("versions") %></a>
+    <a href="$namespace/restore/$version.versionid" class="restore">
+        <i class="fa fa-undo" aria-hidden="true"></i> <% lang("restore") %>
+    </a>
+    <h2>
+        <% lang("version") %> $number
+        <% IF $model.publishedid == $version.versionid %>
+        <span class="published version-marker"><% lang("published") %></span>
+        <% ELSE IF $model.stateid == $version.versionid %>
+        <span class="state version-marker"><% lang("draft") %></span>
+        <% END %>
+    </h2>
+    <div class="clear"></div>
+</div>
+
+$content

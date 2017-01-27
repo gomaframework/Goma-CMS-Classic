@@ -187,15 +187,13 @@ class tableField extends FormField {
 			$callback = $this->customDataFields[$fieldName];
 			return $callback($record);
 		}
-		
-		// Default implementation
-		if(gObject::method_exists($record, $fieldName)) {
-			return $record->$fieldName();
-		} else if(is_object($record)) {
+
+		if(is_a($record, ViewAccessableData::class)) {
+			/** @var ViewAccessableData $record */
 			return $record->getTemplateVar($fieldName);
-		} else {
-			throw new LogicException("Record must be Object of Type ViewAccessableData.");
 		}
+
+		return ArrayList::getItemProp($record, $fieldName);
 	}
 
     /**

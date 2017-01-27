@@ -1,6 +1,6 @@
 <?php defined("IN_GOMA") OR die();
 /**
- * Unit-Tests for DataObject-Field-Implementation.
+ * Unit-Tests for HasOneGetter-Implementation.
  *
  * @package		Goma\Test
  *

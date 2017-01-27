@@ -1,4 +1,22 @@
-<?php defined("IN_GOMA") OR die();
+<?php
+namespace Goma\Test\Model;
+use ArrayList;
+use Controller;
+use DataObject;
+use DataObjectSet;
+use DataSet;
+use Exception;
+use GomaUnitTest;
+use HasMany_DataObjectSet;
+use IDataObjectSetDataSource;
+use IDataObjectSetModelSource;
+use ManyMany_DataObjectSet;
+use MySQLException;
+use ReflectionMethod;
+use User;
+use ViewAccessableData;
+
+defined("IN_GOMA") OR die();
 
 /**
  * Unit-Tests for ManyManyRelationShipInfo-Class.
@@ -15,20 +33,66 @@ class DataObjectSetTests extends GomaUnitTest
     /**
      * name
      */
-    public $name = "DataObjectSet";
+    public $name = DataObjectSet::class;
 
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $daniel;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $kathi;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $patrick;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $janine;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $nik;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $julian;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $fabian;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $franz;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $lisa;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $julia;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $jenny;
 
+    /**
+     * @var DumpDBElementPerson[]
+     */
     protected $allPersons;
 
     public function setUp()
@@ -59,7 +123,7 @@ class DataObjectSetTests extends GomaUnitTest
      * relationship env.
      */
     public function testCount() {
-        $data = DataObject::get("user");
+        $data = DataObject::get(User::class);
         $count = $data->count();
 
         $data->add(new User());
@@ -75,27 +139,27 @@ class DataObjectSetTests extends GomaUnitTest
     public function testAssignFields() {
         $this->unittestAssignFields(MockDataObjectForDataObjectSet::class);
         $this->unittestAssignFields(new MockDataObjectForDataObjectSet());
-        $this->unittestAssignFields(new MockIDataObjectSetDataSource("User"));
+        $this->unittestAssignFields(new MockIDataObjectSetDataSource(User::class));
 
         $mockInExp = new MockDataObjectForDataObjectSet();
         $mockInExp->inExpansion = "blah";
         $this->unittestAssignFields($mockInExp, "blah");
         $set = new DataObjectSet();
-        $set->setDbDataSource(new MockIDataObjectSetDataSource("User", "tja"));
+        $set->setDbDataSource(new MockIDataObjectSetDataSource(User::class, "tja"));
         $this->assertEqual($set->inExpansion, "tja");
 
-        $this->unittestAssignFields(new MockIDataObjectSetDataSource("User", "blub"), "blub");
+        $this->unittestAssignFields(new MockIDataObjectSetDataSource(User::class, "blub"), "blub");
 
         $set = $this->unittestAssignFields(array($source = new MockIDataObjectSetDataSource(), $model = new MockIModelSource()));
 
         $this->assertEqual($set->getDbDataSource(), $source);
         $this->assertEqual($set->getModelSource(), $model);
 
-        $set = $this->unittestAssignFields("DumpDBElementPerson");
-        $this->assertIsA($set->getDbDataSource(), "MockIDataObjectSetDataSource");
-        $this->assertIsA($set->getModelSource(), "MockIModelSource");
+        $set = $this->unittestAssignFields(DumpDBElementPerson::class);
+        $this->assertIsA($set->getDbDataSource(), MockIDataObjectSetDataSource::class);
+        $this->assertIsA($set->getModelSource(), MockIModelSource::class);
 
-        $emptySet = new DataObjectSet($modelSource = new MockIModelSource("DataObject"));
+        $emptySet = new DataObjectSet($modelSource = new MockIModelSource(DataObject::class));
         $this->assertNull($emptySet->getDbDataSource());
         $this->assertEqual($emptySet->getModelSource(), $modelSource);
     }
@@ -132,7 +196,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function setDataTest() {
-        $object = new HasMany_DataObjectSet("user");
+        $object = new HasMany_DataObjectSet(User::class);
         $object->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
         $this->assertEqual($object->count(), 0);
         $this->assertEqual($object->first(), null);
@@ -145,14 +209,14 @@ class DataObjectSetTests extends GomaUnitTest
             $object->first();
         }, "InvalidArgumentException");
 
-        $object = new HasMany_DataObjectSet("user");
+        $object = new HasMany_DataObjectSet(User::class);
         $object->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
         $this->assertNull($object->first());
     }
 
     public function testcreateFromCode()
     {
-        $set = new DataObjectSet("user");
+        $set = new DataObjectSet(User::class);
         $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
         $set->add($user1 = new User());
         $set->add($user2 = new User());
@@ -162,7 +226,7 @@ class DataObjectSetTests extends GomaUnitTest
 
     public function testcreateFromCodeDuplicate()
     {
-        $set = new DataObjectSet("user");
+        $set = new DataObjectSet(User::class);
         $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
         $set->add($user1 = new User());
         $set->add($user2 = new User());
@@ -179,13 +243,13 @@ class DataObjectSetTests extends GomaUnitTest
      * @throws MySQLException
      */
     public function testSearchCreatedTestUserAtBuild() {
-        $data = DataObject::get("user");
+        $data = DataObject::get(User::class);
         $clone = clone $data;
 
         $count = $data->count();
 
         $data->search("admin");
-        $this->assertIsA($data->first(), "DataObject");
+        $this->assertIsA($data->first(), DataObject::class);
         $this->assertEqual($clone->count(), $count);
     }
 
@@ -200,7 +264,7 @@ class DataObjectSetTests extends GomaUnitTest
                 "password" => "test"
             ));
             $user->writeToDB(true, true);
-            $data = DataObject::get("user");
+            $data = DataObject::get(User::class);
             $clone = clone $data;
 
             $count = $data->count();
@@ -208,7 +272,7 @@ class DataObjectSetTests extends GomaUnitTest
 
             $data->search("______test");
             $this->assertNotEqual($count, $data->count());
-            $this->assertIsA($data->first(), "DataObject");
+            $this->assertIsA($data->first(), DataObject::class);
             $this->assertEqual($clone->count(), $count);
 
             $this->assertEqual($clone->first(), $first);
@@ -218,7 +282,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testFirstLast() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -262,7 +326,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testPagination() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -309,7 +373,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testEmptyPagination() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -324,7 +388,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testStaging() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -358,7 +422,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testStagingMulti() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -386,7 +450,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testCustomised() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -415,7 +479,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testRanges() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
 
         /** @var MockIDataObjectSetDataSource $source */
         $source = $set->getDbDataSource();
@@ -490,7 +554,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function unittestObjectPersistence($records) {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -498,7 +562,7 @@ class DataObjectSetTests extends GomaUnitTest
 
         $source->records = $records;
 
-        $cacheMethod = new ReflectionMethod("DataObjectSet", "clearCache");
+        $cacheMethod = new ReflectionMethod(DataObjectSet::class, "clearCache");
         $cacheMethod->setAccessible(true);
 
         $this->assertTrue($set[0] === $set->first());
@@ -567,7 +631,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function findTest() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -590,7 +654,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function findTestNew() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -622,7 +686,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testAdd() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
 
         $set->commitStaging();
@@ -640,7 +704,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testCommitStaging() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
 
         $set->commitStaging();
@@ -653,12 +717,12 @@ class DataObjectSetTests extends GomaUnitTest
             $set->commitStaging();
             $this->assertEqual(true, false);
         } catch(Exception $e) {
-            $this->assertEqual($e->getMessage(), "1 could not be written.");
+            $this->assertEqual($e->getMessage(), "1 record(s) of type ".DumpDBElementPerson::class." could not be written.");
         }
     }
 
     public function testStagingFilter() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
 
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
@@ -743,6 +807,78 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual(count($this->allPersons), $i);
     }
 
+    /**
+     * tests if loop with one only have one element.
+     */
+    public function testLoopOneElement() {
+        $set = new DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $set->add($this->patrick);
+
+        $i = 0;
+        foreach($set as $item) {
+            $this->assertEqual($this->patrick->name, $item->name);
+            $i++;
+        }
+        $this->assertEqual(1, $i);
+    }
+
+    /**
+     * tests if loop with one only have one element if first has been called.
+     */
+    public function testLoopOneElementAfterFirst() {
+        $set = new DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $set->add($this->patrick);
+
+        $this->assertEqual($this->patrick, $set->first());
+        $i = 0;
+        foreach($set as $item) {
+            $this->assertEqual($this->patrick->name, $item->name);
+            $i++;
+        }
+        $this->assertEqual(1, $i);
+    }
+
+    /**
+     * tests if loop with one only have one element if first has been called.
+     */
+    public function testLoopOneElementAfterFirstEdit() {
+        $set = new DataObjectSet(DumpDBElementPerson::class);
+        $set->add($this->patrick);
+
+        $this->assertEqual($this->patrick, $set->first());
+        $i = 0;
+        foreach($set as $item) {
+            $this->assertEqual($this->patrick->name, $item->name);
+            $i++;
+        }
+        $this->assertEqual(1, $i);
+    }
+
+    /**
+     * tests if loop with n elements have n elements if first has been called.
+     * Edit-Mode!
+     */
+    public function testLoopMultiElementAfterFirstEdit() {
+        $set = new DataObjectSet(DumpDBElementPerson::class);
+
+        $a = 5;
+        for($i = 0; $i < $a; $i++) {
+            $set->add($this->allPersons[$i]);
+        }
+
+        $this->assertEqual($this->allPersons[0], $set->first());
+        $i = 0;
+        foreach($set as $item) {
+            $this->assertEqual($this->allPersons[$i]->name, $item->name);
+            $i++;
+        }
+        $this->assertEqual($a, $i);
+    }
+
     public function testRemoveInLoop() {
         $set = new DataObjectSet();
         $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
@@ -771,6 +907,9 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual(count($this->allPersons) - 1, count($set->ToArray()));
     }
 
+    /**
+     * @testdox tests if filter through new created set works
+     */
     public function testfilterTroughNew() {
         $set = new DataObjectSet();
         $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
@@ -783,15 +922,93 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($this->janine, $set->first());
         $this->assertEqual($this->patrick, $set->last());
 
-        $this->assertThrows(function() use($set) {
-            $set->addFilter(array(
-                "gender" => "M"
-            ));
-        }, "LogicException");
+        $set->addFilter(array(
+            "gender" => "M"
+        ));
+        $this->assertEqual(2, $set->count());
     }
 
+    /**
+     * @testdox tests if sorted pagination with mixed data works
+     */
+    public function testSortWithMixedDataObjectSet() {
+        $set = new DataObjectSet(DumpDBElementPerson::class);
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $this->assertEqual(4, $set->count());
+
+        $set->activatePagination(1, 4);
+        $this->assertEqual(4, $set->count());
+
+        $set->add($this->patrick);
+        $set->add($this->lisa);
+
+        $this->assertEqual(4, $set->count());
+        $set->sort("age", "asc");
+
+        $this->assertEqual($this->patrick, $set->first());
+
+        $set->activatePagination(1, 6);
+        $start = $set->first()->age;
+        $this->assertEqual($this->patrick->age, $start);
+        foreach($set as $item) {
+            $this->assertTrue($item->age >= $start);
+            $start = $item->age;
+        }
+    }
+
+    /**
+     * @test tests if sorted pagination with mixed data works
+     */
+    public function testSortAndFilterWithMixedDataObjectSet() {
+        $set = new DataObjectSet(DumpDBElementPerson::class);
+        $set->setVersion(DataObject::VERSION_PUBLISHED);
+
+        /** @var MockIDataObjectSetDataSource $source */
+        $source = $set->getDbDataSource();
+
+        $source->records = array(
+            $this->julian,
+            $this->daniel,
+            $this->janine,
+            $this->kathi
+        );
+
+        $this->assertEqual(4, $set->count());
+
+        $set->activatePagination(1, 4);
+        $this->assertEqual(4, $set->count());
+
+        $set->add($this->patrick);
+        $set->add($this->lisa);
+        $set->add($this->franz);
+
+        $this->assertEqual(4, $set->count());
+        $set->filter(array("gender" => "M"));
+        $set->sort("age", "asc");
+
+        $this->assertEqual(4, $set->count());
+        $this->assertEqual(4, $set->countWholeSet());
+
+        $this->assertEqual($this->patrick, $set->first());
+        $this->assertEqual($this->franz, $set->last());
+    }
+
+    /**
+     * @test tests basic sort
+     */
     public function testSort() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -814,7 +1031,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testResetSort() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -845,7 +1062,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testSortWithArray() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -866,7 +1083,7 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($this->janine, $set->first());
         $this->assertEqual($this->kathi, $set->last());
 
-        $secondSet = new DataObjectSet("DumpDBElementPerson");
+        $secondSet = new DataObjectSet(DumpDBElementPerson::class);
         $secondSet->setVersion(DataObject::VERSION_PUBLISHED);
         $secondSet->sort("age");
 
@@ -878,7 +1095,7 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     public function testMultiSortWithArray() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -908,7 +1125,7 @@ class DataObjectSetTests extends GomaUnitTest
      * tests grouping.
      */
     public function testGroupBy() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -941,7 +1158,7 @@ class DataObjectSetTests extends GomaUnitTest
      * tests reset at grouping.
      */
     public function testGroupByReset() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setVersion(DataObject::VERSION_PUBLISHED);
 
         /** @var MockIDataObjectSetDataSource $source */
@@ -975,7 +1192,7 @@ class DataObjectSetTests extends GomaUnitTest
      * tests if getForm is called on the model.
      */
     public function testGetFormOnModel() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setModelSource($source = new MockIModelSource());
 
         $source->model = new MockFormModel();
@@ -995,7 +1212,7 @@ class DataObjectSetTests extends GomaUnitTest
      * tests if getEditForm is called on the model.
      */
     public function testGetEditFormOnModel() {
-        $set = new DataObjectSet("DumpDBElementPerson");
+        $set = new DataObjectSet(DumpDBElementPerson::class);
         $set->setModelSource($source = new MockIModelSource());
 
         $source->model = new MockFormModel();
@@ -1284,7 +1501,7 @@ class DumpDBElementPerson extends DataObject {
         $this->gender = $gender;
     }
 
-    public function ToArray($additional_fields = array())
+    public function &ToArray($additional_fields = array())
     {
         return array_merge(parent::ToArray($additional_fields), array(
             "name"      => $this->name,

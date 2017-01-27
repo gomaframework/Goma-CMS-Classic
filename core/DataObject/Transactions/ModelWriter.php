@@ -445,6 +445,8 @@ class ModelWriter extends gObject {
      * postflight events.
      */
     protected function callPostFlightEvents() {
+        $this->model->queryVersion = $this->writeType > 1 ? DataObject::VERSION_PUBLISHED : DataObject::VERSION_STATE;
+
         $this->callExtending("onAfterWrite");
         $this->model->onAfterWrite($this);
         $this->model->callExtending("onAfterWrite");

@@ -49,6 +49,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     const CASCADE_TYPE_REMOVE = "10";
     const CASCADE_TYPE_UNIQUE = "unique";
     const CASCADE_TYPE_ALL = "11";
+    const CASCADE_UNIQUE_LIKE = "uniqueLike";
 
     const MANY_MANY_VERSION_MODE = "versionMode";
     const VERSION_MODE_CURRENT_VERSION = "current";
@@ -325,6 +326,10 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     {
         if (PROFILE) Profiler::mark("DataObject::get_one");
 
+        if(is_int($filter)) {
+            $filter = array("id" => $filter);
+        }
+
         $output = self::get($dataClass, $filter, $sort, array(1), $joins)->first();
 
         if (PROFILE) Profiler::unmark("DataObject::get_one");
@@ -394,7 +399,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
             "class_name"	=> $this->classname,
             "last_modified"	=> time(),
             "created"		=> time(),
-            "autorid"		=> member::$id
+            "autorid"		=> member::$id,
+            "id"            => 0,
+            "versionid"     => 0
         ), (array) $this->defaults, ArrayLib::map_key("strtolower", (array) $record));
 
         $this->baseClass = $this->BaseClass();
@@ -978,13 +985,12 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
             }
             $this->onAfterRemove();
             $this->callExtending("onAfterRemove", $this);
+            $this->queryVersion = null;
             unset($this->data);
             return true;
         } else {
             return false;
         }
-
-
     }
 
     //!Current Data-State
@@ -1320,32 +1326,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     }
 
     /**
-     * gets versions of this ordered by time DESC
-     *
-     * @param null|array|int $limit
-     * @param array $where
-     * @param bool $orderasc
-     * @return array|DataObjectSet
-     */
-    public function versions($limit = null, $where = array(), $orderasc = false) {
-        $ordertype = ($orderasc === true) ? "ASC" : "DESC";
-        return DataObject::get_versioned($this->classname, false, array_merge((array) $where, array(
-            "recordid"	=> $this->recordid
-        )),  array($this->baseTable . ".id", $ordertype), $limit);
-    }
-
-    /**
-     * gets versions of this ordered by time ASC
-     *
-     * @param null|array|int $limit
-     * @param array $where
-     * @return array|DataObjectSet
-     */
-    public function versionsASC($limit = null, $where = array()) {
-        return $this->versions($limit, $where, true);
-    }
-
-    /**
      * gets the editor-user.
      *
      * @return User
@@ -1485,17 +1465,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
             }
         }
 
-        // TODO: Resolve
-        if ($version !== false && self::versioned($this->classname)) {
-            if (isset($_GET[$baseClass . "_version"]) && $this->memberCanViewVersions($version)) {
-                $version = $_GET[$baseClass . "_version"];
-            }
-
-            if (isset($_GET[$baseClass . "_state"]) && $this->memberCanViewVersions($version)) {
-                $version = DataObject::VERSION_STATE;
-            }
-        }
-
         // some specific fields
         $query->db_fields["autorid"] = $baseTable;
         $query->db_fields["editorid"] = $baseTable;
@@ -1632,31 +1601,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         if (PROFILE) Profiler::unmark("DataObject::buildSearchQuery");
 
         return $query;
-    }
-
-    /**
-     * returns whether user is permitted to use versions.
-     *
-     * @param string $version
-     * @return bool
-     */
-    public function memberCanViewVersions($version) {
-        if($version == true || $this->can("viewVersions")) {
-            return true;
-        }
-
-        if (member::login()) {
-            $perms = $this->providePerms();
-            foreach($perms as $key => $val) {
-                if (preg_match("/publish/i", $key) || preg_match("/edit/i", $key) || preg_match("/write/i", $key)) {
-                    if (Permission::check($key)) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -2123,7 +2067,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         }
 
         $field = strtolower(trim($field));
-        $fields = $this->DataBaseFields(true);
+        $fields = array_merge(array("versionid" => "int(10)"), $this->DataBaseFields(true));
         return isset($fields[$field]);
     }
 
@@ -2216,25 +2160,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         } else {
             DataObjectQuery::$datacache = array();
         }
-    }
-
-    /**
-     * to array if we need data for REST-API.
-     *
-     * It also embeds has-one-relations to this record.
-     */
-    public function ToRESTArray($additional_fields = array(), $includeHasOne = false) {
-        $data = parent::ToRestArray($additional_fields);
-
-        foreach($this->HasOne() as $name => $class) {
-            if($includeHasOne || isset($additional_fields[$name])) {
-                if ($this->$name && gObject::method_exists($this->$name, "ToRestArray")) {
-                    $data[$name] = $this->$name()->ToRestArray();
-                }
-            }
-        }
-
-        return $data;
     }
 
     //!API for Config
@@ -2387,7 +2312,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         }
 
         if ($this->Table()) {
-
             // get correct SQL-Types for Goma-Field-Types
             foreach($db_fields as $field => $type) {
                 if (isset($casting[strtolower($field)])) {
@@ -2400,15 +2324,28 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
                 }
             }
 
+            $defaults = $this->defaults;
+            // get correct SQL-Types for Goma-Field-Types
+            foreach($db_fields as $field => $type) {
+                if (isset($casting[strtolower($field)])) {
+                    if ($casting[strtolower($field)] = DBField::parseCasting($casting[strtolower($field)])) {
+                        $defaults[$field] = call_user_func_array(array($casting[strtolower($field)]["class"], "getSQLDefault"), array(
+                            $field,
+                            isset($defaults[$field]) ? $defaults[$field] : null,
+                            (isset($casting[strtolower($field)]["args"])) ? $casting[strtolower($field)]["args"] : array()
+                        ));
+                    }
+                }
+            }
+
             ClassInfo::$database[$this->table()] = $db_fields;
 
             // now require table
-            $log .= SQL::requireTable($this->table(), $db_fields, $indexes , $this->defaults, $prefix);
+            $log .= SQL::requireTable($this->table(), $db_fields, $indexes , $defaults, $prefix);
         }
 
         // versioned
         if ($this->Table() && $this->table() == $this->baseTable) {
-
             if (!SQL::getFieldsOfTable($this->baseTable . "_state")) {
                 $exists = false;
             } else {
@@ -2531,6 +2468,27 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
             );
         }
 
+        $db_fields = $this->DataBaseFields();
+        $casting = $this->casting();
+        // decorate class-info with type-specific info
+        foreach($db_fields as $field => $type) {
+            if(!in_array($field, array("id", "versionid", "created", "autorid", "class_name", "last_modified"))) {
+                if (isset($casting[strtolower($field)])) {
+                    if ($casting[strtolower($field)] = DBField::parseCasting($casting[strtolower($field)])) {
+                        call_user_func_array(
+                            array($casting[strtolower($field)]["class"], "argumentClassInfo"),
+                            array(
+                                $this,
+                                $field,
+                                (isset($casting[strtolower($field)]["args"])) ? $casting[strtolower($field)]["args"] : array(),
+                                $type
+                            )
+                        );
+                    }
+                }
+            }
+        }
+
         $this->callExtending("generateClassInfo");
     }
 
@@ -2590,53 +2548,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      */
     public function cleanUpDB($prefix = DB_PREFIX, &$log = null) {
         $this->callExtending("cleanUpDB", $prefix);
-
-        if (self::Versioned($this->classname) && $this->baseClass == $this->classname) {
-            $recordids = array();
-            $ids = array();
-            // first recordids
-            $sql = "SELECT * FROM ".DB_PREFIX.$this->baseTable."_state";
-            if ($result = SQL::Query($sql)) {
-                while($row = SQL::fetch_object($result)) {
-                    $recordids[$row->id] = $row->id;
-                    $ids[$row->publishedid] = $row->publishedid;
-                    $ids[$row->stateid] = $row->stateid;
-                }
-            }
-
-            $deleteids = array();
-
-            $last_modified = time()-(180*24*60*60);
-
-            // now generate ids to delete
-            $sql = "SELECT id FROM ".DB_PREFIX . $this->baseTable." WHERE (id NOT IN('".implode("','", $ids)."') OR recordid NOT IN ('".implode("','", $recordids)."')) AND (last_modified < ".$last_modified.")";
-            if ($result = SQL::Query($sql)) {
-                while($row = SQL::fetch_object($result)) {
-                    $deleteids[] = $row->id;
-                }
-            }
-
-            $log .= 'Checking for old versions of '.$this->classname."\n";
-            if (count($deleteids) > 10) {
-                // now delete
-
-                // first generate tables
-                $tables = array($this->baseTable);
-                foreach(ClassInfo::dataClasses($this->classname) as $class => $table) {
-                    if ($this->baseTable != $table && isset(ClassInfo::$database[$table])) {
-                        $tables[] = $table;
-                    }
-                }
-
-                foreach($tables as $table) {
-                    $sql = "DELETE FROM " . DB_PREFIX . $table . " WHERE id IN('".implode("','", $deleteids)."')";
-                    if (SQL::Query($sql))
-                        $log .= 'Delete old versions of '.$table."\n";
-                    else
-                        $log .= 'Failed to delete old versions of '.$table."\n";
-                }
-            }
-        }
 
         // clean up many-many-tables
         /** @var ModelManyManyRelationShipInfo $relationShip */

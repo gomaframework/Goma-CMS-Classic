@@ -27,7 +27,7 @@ class LangSelectTest extends GomaUnitTest implements TestAble {
 		$select->includeFirstOption = true;
 		$options = $select->options();
 
-		$this->assertEqual($options[""], lang("all"));
+		$this->assertEqual(lang("all"), $options[""]);
 
 		$select->includeFirstOption = array("blub", "huch");
 		$options = $select->options();

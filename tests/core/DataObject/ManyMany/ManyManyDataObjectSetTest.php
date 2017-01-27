@@ -1,4 +1,6 @@
-<?php defined("IN_GOMA") OR die();
+<?php use Goma\Test\Model\DumpDBElementPerson;
+
+defined("IN_GOMA") OR die();
 /**
  * Tests for DataObjectSet for ManyMany
  *
@@ -19,18 +21,65 @@ class ManyManyDataObjectSet extends GomaUnitTest implements TestAble {
      */
     public $name = "ManyManyDataObjectSet";
 
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $daniel;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $kathi;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $patrick;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $janine;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $nik;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $julian;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $fabian;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $franz;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $lisa;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $julia;
+
+    /**
+     * @var DumpDBElementPerson
+     */
     protected $jenny;
 
+    /**
+     * @var DumpDBElementPerson[]
+     */
     protected $allPersons;
 
     public function setUp()

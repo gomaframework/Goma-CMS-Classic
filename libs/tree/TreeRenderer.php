@@ -132,7 +132,7 @@ class TreeRenderer extends gObject {
 		
 		Resources::add("system/libs/thirdparty/jquery-contextmenu/src/jquery.contextMenu.css", "css", "tpl");
 		Resources::add("system/libs/thirdparty/jquery-contextmenu/src/jquery.contextMenu.js", "js", "tpl");
-		
+
 		if(is_array($this->tree)) {
 			$html = "\n";
 			$html .= $this->renderSubChildren($this->tree, $parentID);

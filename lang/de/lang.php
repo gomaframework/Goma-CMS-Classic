@@ -406,7 +406,7 @@ $lang = array(
 
 	"database"										=> "Datenbank",
 
-	"login_required"								=> "Sie müssen sich einloggen, um diese Seite zu sehen!",
+	"login_required"								=> "Sie müssen sich einloggen, um diese Seite zu sehen.",
 
 	/**
 	 * versions

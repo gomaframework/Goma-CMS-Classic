@@ -295,4 +295,29 @@ class MysqliTest extends GomaUnitTest {
         $mysqli = new MySQLiDriver();
         return $method->invoke($mysqli, $manipulation);
     }
+
+    public function testIsFieldInt() {
+        $mysqlIDriver = new mysqliDriver();
+        $method = new ReflectionMethod("MySQLiDriver", "isFieldInt");
+        $method->setAccessible(true);
+
+        $this->assertTrue($method->invoke($mysqlIDriver, "int(10)"));
+    }
+
+    public function testIsFieldINTCapital() {
+        $mysqlIDriver = new mysqliDriver();
+        $method = new ReflectionMethod("MySQLiDriver", "isFieldInt");
+        $method->setAccessible(true);
+
+        $this->assertTrue($method->invoke($mysqlIDriver, " INT(10)"));
+    }
+
+
+    public function testIsFieldINTVarchar() {
+        $mysqlIDriver = new mysqliDriver();
+        $method = new ReflectionMethod("MySQLiDriver", "isFieldInt");
+        $method->setAccessible(true);
+
+        $this->assertFalse($method->invoke($mysqlIDriver, " varchar(10)"));
+    }
 }

@@ -143,8 +143,6 @@ class RequestHandler extends gObject {
 			$this->subController = $subController;
 			$this->Init($request);
 
-            $preservedRequest = clone $this->request;
-
 			// check for extensions
 			$content = null;
 
@@ -154,15 +152,13 @@ class RequestHandler extends gObject {
 				return $content;
 			}
 
-			// search for action
-			$this->request = $request;
+			$preservedRequest = clone $this->request;
 
 			$class = $this->classname;
 			while ($class && !ClassInfo::isAbstract($class)) {
-                $this->request->setController($preservedRequest->getController(), $preservedRequest->getRequestController());
-
-				$handlers = gObject::instance($class)->url_handlers;
+                $handlers = gObject::instance($class)->url_handlers;
 				foreach ($handlers as $pattern => $action) {
+					$this->request->setState($preservedRequest);
 					$data = $this->matchRuleWithResult($pattern, $action, $request);
 					if ($data !== null && $data !== false) {
 						return $data;
@@ -172,7 +168,7 @@ class RequestHandler extends gObject {
 				$class = get_parent_class($class);
 			}
 
-            $this->request->setController($preservedRequest->getController(), $preservedRequest->getRequestController());
+			$this->request->setState($preservedRequest);
             return $this->handleAction("index");
 		} catch(Exception $e) {
 			if($subController) {
@@ -209,7 +205,7 @@ class RequestHandler extends gObject {
 			$action = str_replace('-', '_', $action);
 
 			if (!$this -> hasAction($action)) {
-				$action = "index";
+				return null;
 			}
 
 			return $this -> handleAction($action);
@@ -223,6 +219,7 @@ class RequestHandler extends gObject {
 	 *
 	 * @param   string $content
 	 * @param GomaResponseBody $body
+	 * @internal
 	 * @return  string
 	 */
 	public function serve($content, $body) {
@@ -433,6 +430,30 @@ class RequestHandler extends gObject {
 	}
 
 	/**
+	 * returns if this controller is the next controller to the root of this type.
+	 * @param string $type
+	 * @return bool
+	 */
+	public function controllerIsNextToRootOfType($type) {
+		if(!is_a($this, $type)) {
+			throw new InvalidArgumentException("You can only compare with types you are.");
+		}
+
+		if($this->request) {
+			foreach ($this->request->getController() as $controller) {
+				if (is_a($controller, $type)) {
+					return spl_object_hash($controller) == spl_object_hash($this);
+				}
+			}
+
+			throw new LogicException("Object not found in request-tree.");
+		}
+
+		// should be true if no request is set.
+		return true;
+	}
+
+	/**
 	 * @return Request|null
 	 */
 	public function getRequest()
@@ -458,7 +479,7 @@ class RequestHandler extends gObject {
 	}
 
 	/**
-	 * @param gObject $sender
+	 * @param gObject|string $sender
 	 * @return string
 	 */
 	public function getRedirect($sender)
@@ -474,11 +495,11 @@ class RequestHandler extends gObject {
         }
 
         if($this->currentActionHandled != "index" || (is_object($sender) && $sender != $this)) {
-            return $this->namespace;
+            return ROOT_PATH . $this->namespace;
         }
 
 		if($this->parentController() && $this->parentController()->namespace) {
-			return $this->namespace;
+			return ROOT_PATH . $this->parentController()->namespace;
 		}
 
         if($this->namespace) {

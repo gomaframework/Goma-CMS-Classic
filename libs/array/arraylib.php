@@ -158,7 +158,7 @@ class ArrayLib
      * @return bool
      */
     public static function isAssocArray($arr) {
-        return array_keys($arr) != array_keys(array_values($arr));
+        return array_keys($arr) !== array_keys(array_values($arr));
     }
 
     /**

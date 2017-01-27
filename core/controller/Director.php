@@ -82,6 +82,7 @@ class Director extends gObject {
                         self::getBodyObjectFromResponse($output)
                     )
                 );
+                self::setResponseFullPage($output, true);
             }
         }
         if(PROFILE)
@@ -107,6 +108,32 @@ class Director extends gObject {
         $output->output();
 
         Core::callHook("onBeforeShutdown");
+    }
+
+    /**
+     * @param string|GomaResponse|GomaResponseBody $response
+     * @param bool $boolean
+     * @return $this|GomaResponse|GomaResponseBody
+     */
+    public static function setResponseFullPage($response, $boolean) {
+        if(is_a($response, "GomaResponse")) {
+            /** @var GomaResponse $response */
+            $response->setBody(
+                $response->getBody()->setIsFullPage($boolean)
+            );
+            return $response;
+        }
+
+        if(is_a($response, "GomaResponseBody")) {
+            /** @var GomaResponseBody $response */
+            return $response->setIsFullPage($boolean);
+        }
+
+        if(is_string($response) && $boolean) {
+            return GomaResponseBody::create($response)->setIsFullPage($boolean);
+        }
+
+        return $response;
     }
 
     /**

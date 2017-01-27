@@ -727,7 +727,7 @@ class DropDown extends FormField {
 	 */
 	protected function redirectToFormOrRespond() {
 		if($this->getRequest()->is_ajax()) {
-			return GomaResponseBody::create($this->renderInputWidget())->setIsFullPage(false);
+			return GomaResponseBody::create($this->renderInputWidget())->setIsFullPage(true);
 		} else {
 			if($this->multiselect)
 				$this->getRequest()->post_params[$this->PostName()] = $this->key;

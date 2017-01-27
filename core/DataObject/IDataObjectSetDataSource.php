@@ -130,6 +130,7 @@ interface IFormForModelGenerator {
 
     /**
      * @param Form $form
+     * @internal
      */
     public function getActions(&$form);
 }

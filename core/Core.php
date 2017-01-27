@@ -48,13 +48,6 @@ class Core extends gObject {
 	public static $site_mode = STATUS_ACTIVE;
 
 	/**
-	 * the current active controller
-	 *
-	 *@var gObject
-	 */
-	public static $requestController;
-
-	/**
 	 * @var string
 	 */
 	public static $favicon;

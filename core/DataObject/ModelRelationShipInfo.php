@@ -52,6 +52,11 @@ abstract class ModelRelationShipInfo
     protected $owner;
 
     /**
+     * @var bool
+     */
+    protected $uniqueLike = false;
+
+    /**
      * @var string
      */
     protected static $modelInfoGeneratorFunction = "";
@@ -117,6 +122,10 @@ abstract class ModelRelationShipInfo
 
             if(isset($options[DataObject::FETCH_TYPE])) {
                 $this->fetchType = $options[DataObject::FETCH_TYPE];
+            }
+
+            if(isset($options[DataObject::CASCADE_UNIQUE_LIKE])) {
+                $this->uniqueLike = $options[DataObject::CASCADE_UNIQUE_LIKE];
             }
         }
 
@@ -186,6 +195,14 @@ abstract class ModelRelationShipInfo
      */
     public function shouldUpdateData() {
         return (substr($this->getCascade(), 1, 1) == 1);
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isUniqueLike()
+    {
+        return $this->uniqueLike;
     }
 
     /**

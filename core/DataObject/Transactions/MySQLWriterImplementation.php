@@ -36,9 +36,13 @@ class MySQLWriterImplementation implements iDataBaseWriter {
 
         $baseClass = $this->model()->baseClass();
 
+        // set new versionid and in addition, if not set, new id
         $this->model()->versionid = $this->insertBaseClassAndGetVersionId($data);
 
         $manipulation = array();
+
+        $this->model()->callExtending("afterInsertBaseClassAndGetVersionId", $data, $manipulation);
+        $this->writer->callExtending("afterInsertBaseClassAndGetVersionId", $data, $manipulation);
 
         // generate manipulation for each table.
         if ($dataClasses = ClassInfo::DataClasses($baseClass))

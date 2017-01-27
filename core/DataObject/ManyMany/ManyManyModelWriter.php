@@ -43,13 +43,13 @@ class ManyManyModelWriter extends Extension {
                 /** @var ManyMany_DataObjectSet $set */
                 if(isset($data[$name]) && is_a($data[$name], "ManyMany_DataObjectSet")) {
                     $set = $data[$name];
-                    $set->setRelationENV($relationShip, $this->getOwner()->getModel());
+                    $set->setRelationENV($relationShip, $this->getOwner()->getModel(), $set->getDataSourceVersion());
                     $set->commitStaging(false, true, $this->getOwner()->getWriteType(), $this->getOwner()->getRepository(), array(
                         "oldid" => $this->getOwner()->getOldId()
                     ));
                 } else {
                     $set = $this->getOwner()->getModel()->getManyMany($name);
-                    $set->setRelationENV($relationShip, $this->getOwner()->getModel());
+                    $set->setRelationENV($relationShip, $this->getOwner()->getModel(), $set->getDataSourceVersion());
                     $set->commitStaging(false, true, $this->getOwner()->getWriteType(), $this->getOwner()->getRepository(), array(
                         "oldid" => $this->getOwner()->getOldId()
                     ));

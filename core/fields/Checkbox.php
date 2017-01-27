@@ -1,11 +1,23 @@
-<?php
+<?php defined("IN_GOMA") OR die();
+
 /**
- * Created by PhpStorm.
- * User: D
- * Date: 17.04.15
- * Time: 11:04
+ * Basically a boolean type.
  */
 class CheckBoxSQLField extends DBField {
+    /**
+     * converts every type of value into bool.
+     */
+    public function __construct($name, $value, $args = array())
+    {
+        if(strtolower($value) == strtolower(lang("no")) || strtolower($value) == "no") {
+            $value = false;
+        }
+
+        $value = (bool) $value;
+
+        parent::__construct($name, $value, $args);
+    }
+
     /**
      * gets the field-type
      *
@@ -28,6 +40,45 @@ class CheckBoxSQLField extends DBField {
     public function formfield($title = null)
     {
         return new Checkbox($this->name, $title, $this->value);
+    }
+
+    /**
+     * default convert
+     */
+    public function forTemplate() {
+        if($this->value) {
+            return lang("yes");
+        } else {
+            return lang("no");
+        }
+    }
+
+    /**
+     * @internal
+     * @param DataObject $class
+     * @param string $fieldName
+     * @param array $args
+     * @param string $fieldType
+     */
+    public static function argumentClassInfo($class, $fieldName, $args, $fieldType) {
+        if(!isset(ClassInfo::$class_info[$class->classname]["defaults"][$fieldName])) {
+            ClassInfo::$class_info[$class->classname]["defaults"][$fieldName] = false;
+        }
+
+        $classname = $class->classname;
+        do {
+            if(!isset(ClassInfo::$class_info[$classname]["bs"])) {
+                ClassInfo::$class_info[$classname]["bs"] = array();
+            }
+
+            ClassInfo::$class_info[$classname]["bs"][] = $fieldName;
+            $classname = get_parent_class($classname);
+        } while(is_subclass_of($classname, DataObject::class));
+    }
+
+    public static function getSQLDefault($fieldName, $default, $args)
+    {
+        return $default ? "1" : "0";
     }
 }
 

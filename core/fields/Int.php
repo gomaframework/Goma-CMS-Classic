@@ -8,12 +8,31 @@ class intSQLField extends Varchar
 {
     /**
      * generatesa a numeric field
-     *@name formfield
-     *@access public
-     *@param string - title
+     *
+     * @param string $title
+     * @return FormField|NumberField|TextArea
      */
     public function formfield($title = null)
     {
         return new NumberField($this->name, $title);
+    }
+
+    /**
+     * @internal
+     * @param DataObject $class
+     * @param string $fieldName
+     * @param array $args
+     * @param string $fieldType
+     */
+    public static function argumentClassInfo($class, $fieldName, $args, $fieldType) {
+        if(!isset(ClassInfo::$class_info[$class->classname]["defaults"][$fieldName])) {
+            ClassInfo::$class_info[$class->classname]["defaults"][$fieldName] = 0;
+        }
+    }
+
+
+    public static function getSQLDefault($fieldName, $default, $args)
+    {
+        return $default != 0 ? $default : null;
     }
 }

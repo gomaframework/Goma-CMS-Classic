@@ -57,9 +57,11 @@ abstract class AbstractCategoryController extends \Controller {
                 "content"       => \Director::getStringFromResponse($content),
                 "namespace"     => $this->namespace,
                 "currentAction" => $this->currentAction,
-                "activeTitle"   => \Core::getTitle()
+                "activeTitle"   => $this->getExtendedCategories()[$this->currentAction]
             ));
-            return \Director::setStringToResponse($content, $view->renderWith("framework/categoryView.html", $this->inExpansion));
+            return parent::__output(
+                \Director::setStringToResponse($content, $view->renderWith("framework/categoryView.html", $this->inExpansion))
+            );
         }
 
         return parent::__output($content);

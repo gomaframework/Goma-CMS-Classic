@@ -637,4 +637,20 @@ class Request extends gObject {
     {
         return $this->requestController;
     }
+
+	/**
+	 * @param Request $request
+	 */
+	public function setState($request) {
+		$this->url = $request->url;
+		$this->url_parts = $request->url_parts;
+		$this->unshiftedButParsedParams = $request->unshiftedButParsedParams;
+		$this->shiftedPart = $request->shiftedPart;
+
+		$this->all_params = $request->all_params;
+		$this->params = $request->params;
+
+		$this->requestController = $request->requestController;
+		$this->controller = $request->controller;
+	}
 }

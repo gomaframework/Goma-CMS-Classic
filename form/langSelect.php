@@ -17,7 +17,7 @@ class langSelect extends Select
 	 *
 	 * if it is a string that is the option and title, if array then 0 is option 1 is title.
 	 */
-	public $includeFirstOption;
+	public $includeFirstOption = false;
 
 	/**
 	 * @param 	string - name
@@ -27,7 +27,7 @@ class langSelect extends Select
 	 */
 	public function __construct($name = null, $title = null, $selected = null, $form = null)
 	{
-		parent::__construct($name, $title, $this->options(), $selected, $form);
+		parent::__construct($name, $title, array(), $selected, $form);
 	}
 
 	/**
@@ -37,9 +37,9 @@ class langSelect extends Select
 	 * @access    public
 	 * @return array
 	 */
-	public function options()
+	public function getOptions()
 	{
-		$options = array();
+		$options = $this->options;
 
 		if($this->includeFirstOption) {
 			if(is_array($this->includeFirstOption)) {
@@ -55,7 +55,6 @@ class langSelect extends Select
 		foreach($data as $lang => $contents) {
 			$options[$lang] = $contents["title"];
 		}
-
 
 		return $options;
 	}

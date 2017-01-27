@@ -1,4 +1,6 @@
-<?php defined("IN_GOMA") OR die();
+<?php use Goma\Controller\Versions\VersionController;
+
+defined("IN_GOMA") OR die();
 
 /**
  * A simple two column admin-panel.
@@ -19,35 +21,28 @@ class LeftAndMain extends AdminItem {
     /**
 	 * the base template of the view
 	*/
-	public $baseTemplate = "admin/leftandmain.html";
+	public $baseTemplate = "admin/leftandmain/leftandmain.html";
 
 	/**
 	 * defines the url-handlers
 	*/
 	public $url_handlers = array(
 		"updateTree/\$search"			=> "updateTree",
-		"edit/\$id!/\$model"			=> "cms_edit",
-		"del/\$id!/\$model"				=> "cms_del",
 		"add/\$model"					=> "cms_add",
-		"versions"						=> "versions"
+        "versions"                      => "versions"
 	);
 
 	/**
 	 * defines the allowed actions
 	*/
 	public $allowed_actions = array(
-		"cms_edit", "cms_add", "cms_del", "updateTree", "savesort", "versions"
+		"cms_add", "updateTree", "savesort", "versions"
 	);
 
 	/**
 	 * this var defines the tree-class
 	*/
 	public $tree_class = "";
-
-	/**
-	 * marked node
-	*/
-	public $marked = 0;
 
 	/**
 	 * sort-field
@@ -103,7 +98,7 @@ class LeftAndMain extends AdminItem {
 			Resources::addData("var LaMsort = false;");
 		}
 
-		Resources::addData("var adminURI = '".$this->adminURI()."'; var marked_node = '".$this->marked."';");
+		Resources::addData("var adminURI = '".$this->adminURI()."';");
 
 		$data = $this->ModelInst();
 
@@ -154,7 +149,7 @@ class LeftAndMain extends AdminItem {
 	 * generates the tree-links.
 	*/
 	public function generateTreeLink($child, $bubbles) {
-		return new HTMLNode("a", array("href" => $this->originalNamespace . "/record/" . $child->recordid . "/edit" . URLEND, "class" => "node-area"), array(
+		return new HTMLNode("a", array("href" => $this->originalNamespace . "/record/" . $child->recordid . URLEND, "class" => "node-area"), array(
 			new HTMLNode("span", array("class" => "img-holder"), new HTMLNode("img", array("src" => $child->icon))),
 			new HTMLNode("span", array("class" => "text-holder"), $child->title),
 			$bubbles
@@ -223,10 +218,9 @@ class LeftAndMain extends AdminItem {
 	 * creates the Tree
 	 *
 	 * @param string $search
-	 * @param bool $marked
 	 * @return String
 	 */
-	public function createTree($search = "", $marked = null) {
+	public function createTree($search = "") {
 		$tree_class = $this->tree_class;
 		if($tree_class == "") {
 			throw new LogicException("Failed to load Tree-Class. Please define \$tree_class in ".$this->classname);
@@ -244,11 +238,14 @@ class LeftAndMain extends AdminItem {
 		}
 
 		// iterate through extensions to give them the ability to change the options.
-		$treeClassInstance = new $tree_class;
+        /** @var gObject $treeClassInstance */
+        $treeClassInstance = new $tree_class;
 		foreach($treeClassInstance->getextensions() as $ext)
 		{
 			if (ClassInfo::hasInterface($ext, "TreeArgumenter")) {
-				$options = $this->callArgumentTree($treeClassInstance->getinstance($ext), $options);
+                $treeClassInstance->workWithExtensionInstance($ext, function($instance) use(&$options) {
+                    $options = $this->callArgumentTree($instance, $options);
+                });
 			}
 		}
 		unset($treeClassInstance);
@@ -259,7 +256,6 @@ class LeftAndMain extends AdminItem {
 		$treeRenderer = new self::$render_class($tree, null, null, $this->originalNamespace, $this);
 		$treeRenderer->setLinkCallback(array($this, "generateTreeLink"));
 		$treeRenderer->setActionCallback(array($this, "generateContextMenu"));
-		$treeRenderer->mark($this->getParam("id"));
 
 		// check for logical opened tree-items.
 		if(isset($this->getRequest()->get_params["edit_id"])) {
@@ -274,7 +270,6 @@ class LeftAndMain extends AdminItem {
 	 * gets updated data of tree for searching or normal things
 	*/
 	public function updateTree() {
-		$this->marked = $this->getParam("marked");
 		$search = $this->getParam("search");
 
 		return GomaResponse::create()->setShouldServe(false)->setBody(
@@ -335,7 +330,6 @@ class LeftAndMain extends AdminItem {
                 foreach ($this->request->post_params["treenode"] as $key => $value) {
                     DataObject::update($this->tree_class, array($field => $key), array("recordid" => $value), "");
                 }
-                $this->marked = $this->getParam("id");
 
                 return GomaResponse::create()->setShouldServe(false)->setBody(
                     GomaResponseBody::create($this->createTree())->setParseHTML(false)
@@ -415,8 +409,6 @@ class LeftAndMain extends AdminItem {
 		if(is_a($record, "DataObjectSet")) {
 			if (!$record->getVersion()) $record->setVersion("state");
 		}
-
-		$this->marked = $record->class_name . "_" . $record->recordid;
 	}
 
 	/**
@@ -444,7 +436,7 @@ class LeftAndMain extends AdminItem {
 			Resources::addJS('$(function(){$(".leftbar_toggle, .leftandmaintable tr > .left").addClass("active");$(".leftbar_toggle, .leftandmaintable tr > .left").removeClass("not_active");$(".leftbar_toggle").addClass("index");});');
 
 			$model = new ViewAccessableData();
-			return $model->customise(array("adminuri" => $this->adminURI(), "types" => $this->types()))->renderWith("admin/leftandmain_add.html");
+			return $model->customise(array("adminuri" => $this->adminURI(), "types" => $this->types()))->renderWith("admin/leftandmain/leftandmain_add.html");
 		}
 
 		if(DataObject::Versioned($model->dataClass) && $model->canWrite($model)) {
@@ -460,11 +452,65 @@ class LeftAndMain extends AdminItem {
 	 * @return string
 	 */
 	public function index() {
+		if($this->getSingleModel()) {
+			return $this->edit();
+		}
+
 		Resources::addJS('$(function(){$(".leftbar_toggle, .leftandmaintable tr > .left").addClass("active");$(".leftbar_toggle, .leftandmaintable tr > .left").removeClass("not_active");$(".leftbar_toggle").addClass("index");});');
 
 		if(!$this->template)
 			return "";
 
 		return parent::index();
+	}
+
+	/**
+	 * @return null|mixed
+	 * @throws Exception
+	 */
+	public function versions()
+	{
+		/** @var Pages $model */
+		if($model = $this->getSingleModel()) {
+			$controller = new VersionController();
+			$controller->setModelInst($model);
+            $remaining = $this->request->remaining();
+            $response = $controller->handleRequest($this->request, true);
+			return $remaining ? $response : $this->putHeaderToResponse(
+                $response, $model->customise(array(
+                    "inVersionView" => true
+                )
+			));
+		}
+
+		return null;
+	}
+
+	/**
+	 * @return GomaFormResponse|string
+	 */
+	public function edit()
+	{
+		return $this->putHeaderToResponse(parent::edit(), $this->getSingleModel());
+	}
+
+	/**
+	 * @param GomaResponse $response
+	 * @param DataObject $model
+	 * @return GomaFormResponse|GomaResponse|GomaResponseBody|mixed|string
+	 */
+	protected function putHeaderToResponse($response, $model) {
+		if(Director::isResponseFullPage($response)) {
+			return $response;
+		}
+
+		return Director::setStringToResponse($response, $model->customise(array(
+			"content" 		=> Director::getStringFromResponse($response),
+			"icon"	  		=> ClassInfo::getClassIcon($model->class_name),
+			"classtitle"	=> ClassInfo::getClassTitle($model->class_name),
+			"isVersioned"	=> DataObject::Versioned($model->class_name),
+			"versionsLink"	=> $this->buildUrlForActionAndModel("versions", $model->id),
+			"namespace"		=> $this->namespace
+		))->renderWith("admin/leftandmain/edit_with_header.html"));
 	}
 }

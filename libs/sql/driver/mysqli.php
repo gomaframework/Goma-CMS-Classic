@@ -579,7 +579,13 @@ class mysqliDriver implements SQLDriver
                             strtolower($tableInfo[$name]["type"]) != "text" &&
                             strtolower($tableInfo[$name]["type"]) != "blob"
                         ) {
-                            $editsql .= " ALTER COLUMN " . $name . " SET DEFAULT \"" . addslashes($defaults[$name]) . "\",";
+                            if($this->isFieldInt($type)) {
+                                if($defaults[$name] != 0) {
+                                    $editsql .= " ALTER COLUMN " . $name . " SET DEFAULT " . ((int)$defaults[$name]) . ",";
+                                }
+                            } else {
+                                $editsql .= " ALTER COLUMN " . $name . " SET DEFAULT \"" . addslashes($defaults[$name]) . "\",";
+                            }
                         }
                     }
             }
@@ -725,6 +731,10 @@ class mysqliDriver implements SQLDriver
             throw new MySQLException();
     }
 
+    protected function isFieldInt($field) {
+        return strtolower(substr(trim($field), 0, 3)) == "int";
+    }
+
     /**
      * creates a table with given constraints.
      *
@@ -749,8 +759,15 @@ class mysqliDriver implements SQLDriver
                 $sql .= ",";
             }
             $sql .= ' ' . $name . ' ' . $value . ' ';
-            if (isset($defaults[$name]) && trim(strtolower($value)) != "text" && trim(strtolower($value)) != "blob") {
-                $sql .= " DEFAULT '" . addslashes($defaults[$name]) . "'";
+            if (isset($defaults[$name]) &&
+                trim(strtolower($value)) != "text" && trim(strtolower($value)) != "blob") {
+                if($this->isFieldInt($value)) {
+                    if($defaults[$name] != 0) {
+                        $sql .= " DEFAULT " . ((int)$defaults[$name]) . "";
+                    }
+                } else {
+                    $sql .= " DEFAULT '" . addslashes($defaults[$name]) . "'";
+                }
             } else {
                 $sql .= " NOT NULL";
             }
@@ -914,7 +931,7 @@ class mysqliDriver implements SQLDriver
 
                                 $manipulation[$class]["sql"] = $sql;
                             } else {
-                                throw new InvalidArgumentException("Table for Update does not exist. " . print_r($data, true));
+                                throw new InvalidArgumentException("Table for Update does not exist. The key is table_name. " . print_r($data, true));
                             }
                         }
                     } else {

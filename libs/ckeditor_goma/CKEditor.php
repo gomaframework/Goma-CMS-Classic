@@ -11,13 +11,16 @@
 */
 
 class GomaCKEditor extends GomaEditor {
+
+	const ADD_JS_HOOK = "ckeditorAddJS";
+
 	/**
 	 * supports HTML and BBCode.
 	*/
 	static $types = array(
 		"html"
 	);
-	
+
 	/**
 	 * representative title of this class.
 	*/
@@ -126,11 +129,11 @@ class GomaCKEditor extends GomaEditor {
 		$.getScript(\"system/libs/ckeditor_goma/pagelinks.js\"); window['__pagelinksloaded'] = true; }" : "";
 
 		return '
-window.CKEDITOR_BASEPATH = "'.BASE_URI.'system/libs/thirdparty/ckeditor4_5/";
-$.getScript("system/libs/thirdparty/ckeditor4_5/ckeditor.js").done(function(){
+window.CKEDITOR_BASEPATH = "'.BASE_URI.'system/libs/thirdparty/ckeditor4_6/";
+$.getScript("system/libs/thirdparty/ckeditor4_6/ckeditor.js").done(function(){
 	'.$pageLinksJS.'
 	$(function(){
-		CKEDITOR.basePath = "'.BASE_URI.'system/libs/thirdparty/ckeditor4_5/";
+		CKEDITOR.basePath = "'.BASE_URI.'system/libs/thirdparty/ckeditor4_6/";
 		// apple bug with contenteditable of iOS 4 and lower
 		// firefox 3 and above are supported, otherwise dont load up
 		if((!isIDevice() || isiOS5()) && (getFirefoxVersion() > 2 || getFirefoxVersion() == -1)) {

@@ -842,7 +842,8 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 	//!Attribute-Settings-API
 	/**
 	 * sets the offset
-	 *@name offsetSet
+	 * @name offsetSet
+	 * @return $this
 	 */
 	public function offsetSet($offset, $value) {
 
@@ -862,13 +863,16 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 		} else {
 			$this->setOffset($name, $value);
 		}
+
+		return $this;
 	}
 
 	/**
 	 * sets a value of a given field.
 	 *
-	 * @param 	string $var offset
-	 * @param 	mixed $value value
+	 * @param    string $var offset
+	 * @param    mixed $value value
+	 * @return $this|void
 	 */
 	public function setOffset($var, $value) {
 		if($var === null) {
@@ -889,7 +893,7 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 				// first unset, so the new value is last value of data stack
 				unset($this->data[$var]);
 				if(isset($this->data[$var]) && $this->data[$var] == $value) {
-					return;
+					return $this;
 				}
 
 				$this->data[$var] = $value;
@@ -899,17 +903,17 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 		}
 
 		$this->changed = true;
+		return $this;
 	}
 
     /**
      * gets default value for key.
      *
-     * @param string field
+     * @param string $field
      * @return string|null
      */
     protected function getDefaultValue($field) {
         $defaults = $this->defaults();
-
 
         if(isset($defaults[$field])) {
             return $defaults[$field];
@@ -1090,6 +1094,7 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 
 	/**
 	 * @param Form $form
+	 * @internal
 	 */
 	public function getActions(&$form)
 	{

@@ -240,7 +240,7 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 		$form->addValidator(new FormValidator(array($this, '_validateuser')), "validate_user");
 
 		$form->addAction(new CancelButton("cancel", lang("cancel")));
-		$form->addAction(new FormAction("submit", lang("save"), null, array("green")));
+		$form->addAction(new FormAction("submit", lang("register"), null, array("green")));
 	}
 
 	/**

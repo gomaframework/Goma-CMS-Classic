@@ -154,6 +154,7 @@ class GomaFormResponse extends GomaResponse {
     }
 
     /**
+     * @internal
      * @return bool
      */
     public function shouldServe()
@@ -170,6 +171,7 @@ class GomaFormResponse extends GomaResponse {
     }
 
     /**
+     * @internal
      * @param bool $shouldServe
      * @return $this
      */

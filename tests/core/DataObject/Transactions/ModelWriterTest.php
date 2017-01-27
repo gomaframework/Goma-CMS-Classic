@@ -259,8 +259,8 @@ class MockUpdatableGObject extends gObject {
         $this->onAfterWriteFired++;
     }
 
-    public function workWithExtensionInstance() {
-
+    public function workWithExtensionInstance($extensionClassName, $callback) {
+        
     }
 
     public function __call($key, $val) {

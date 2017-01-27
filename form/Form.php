@@ -477,7 +477,7 @@ class Form extends AbstractFormComponentWithChildren {
 	}
 
 	/**
-	 * @param array $errors
+	 * @param Exception[] $errors
 	 * @param bool $notSavedYet
 	 * @return FormAjaxResponse
 	 */
@@ -489,13 +489,28 @@ class Form extends AbstractFormComponentWithChildren {
 			array_unshift($errors, new Exception(lang("form_not_saved_yet", "The Data hasn't saved yet.")));
 		}
 
+		$response = $this->addErrorsToJSONResponse($response, $errors);
+
+		return $response;
+	}
+
+	/**
+	 * @param FormAjaxResponse $response
+	 * @param Exception[] $errors
+	 * @internal
+	 * @return FormAjaxResponse
+	 */
+	public function addErrorsToJSONResponse($response, $errors) {
+		$response = clone $response;
 		/** @var Exception $error */
 		foreach ($errors as $error) {
 			if (is_a($error, "FormMultiFieldInvalidDataException")) {
 				/** @var FormMultiFieldInvalidDataException $error */
 				foreach ($error->getFieldsMessages() as $field => $message) {
 					if ($message) {
-						$response->addError(lang($message, $message));
+						$response->addError(
+							str_replace('$title', $this->getTitleForFieldOrDefault($field), lang($message, $message))
+						);
 					}
 
 					$response->addErrorField($field);
@@ -503,19 +518,32 @@ class Form extends AbstractFormComponentWithChildren {
 			} else if (is_a($error, "FormInvalidDataException")) {
 				/** @var FormInvalidDataException $error */
 				if ($error->getMessage()) {
-					$response->addError(lang($error->getMessage(), $error->getMessage()));
+					$response->addError(
+						str_replace('$title', $this->getTitleForFieldOrDefault($error->getField()), lang($error->getMessage(), $error->getMessage()))
+					);
 				}
 
 				$response->addErrorField($error->getField());
 			} else {
+				log_exception($error);
+
 				if ($error->getMessage()) {
 					$prev = $error->getPrevious() ? " " . $error->getPrevious()->getMessage() : "";
 					$response->addError(lang($error->getMessage(), $error->getMessage()) . $prev);
 				}
 			}
 		}
-
 		return $response;
+	}
+
+	/**
+	 * @param string $field
+	 * @param null|string $default
+	 * @return string
+	 */
+	protected function getTitleForFieldOrDefault($field, $default = null) {
+		return $this->$field ? $this->$field->getTitle() :
+			(isset($default) ? $default : $field);
 	}
 
 	/**
@@ -533,7 +561,9 @@ class Form extends AbstractFormComponentWithChildren {
 				/** @var FormMultiFieldInvalidDataException $error */
 				foreach($error->getFieldsMessages() as $field => $message) {
 					$set[] = array(
-						"message" 	=> lang($message, $message),
+						"message" 	=> str_replace('$title', $this->getTitleForFieldOrDefault($field),
+                            lang($message, $message)
+                        ),
 						"field" 	=> $field,
 						"type"		=> "FormInvalidDataException"
 					);
@@ -541,7 +571,10 @@ class Form extends AbstractFormComponentWithChildren {
 			} else if(is_a($error, "FormInvalidDataException")) {
 				/** @var FormInvalidDataException $error */
 				$set[] = array(
-					"message" 	=> lang($error->getMessage(), $error->getMessage()),
+					"message" 	=>
+                        str_replace('$title', $this->getTitleForFieldOrDefault($error->getField()),
+                            lang($error->getMessage(), $error->getMessage())
+                        ),
 					"field" 	=> $error->getField(),
 					"type"		=> "FormInvalidDataException"
 				);
