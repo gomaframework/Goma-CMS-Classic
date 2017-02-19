@@ -171,9 +171,9 @@ class ImageUploads extends Uploads {
                 case 32:
                 case 64:
                     if ($retina) {
-                        return "images/icons/goma" . $size . "/image@2x.png";
+                        return "system/images/icons/goma" . $size . "/image@2x.png";
                     }
-                    return "images/icons/goma" . $size . "/image.png";
+                    return "system/images/icons/goma" . $size . "/image.png";
                     break;
             }
         }
@@ -183,7 +183,7 @@ class ImageUploads extends Uploads {
             return $icon;
         }
 
-        return "images/icons/goma/128x128/image.png";
+        return "system/images/icons/goma/128x128/image.png";
     }
 
     /**

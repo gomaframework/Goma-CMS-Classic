@@ -20,7 +20,7 @@ class redirector extends Page
 	/**
 	 * icon
 	 */
-	static $icon = "images/icons/fatcow16/page_link.png";
+	static $icon = "system/images/icons/fatcow16/page_link.png";
 
 	/**
 	 * generates the form

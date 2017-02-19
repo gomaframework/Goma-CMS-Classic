@@ -150,7 +150,7 @@ self.' . $this->key . ' = new ExistingBluebox("dialog_' . $this->key . '");' . $
 								<tr>
 									<td class="con_shadow bluebox_border" style="opacity: 0.7;width: 16px;background-repeat: repeat-y;"></td>
 									<td class="bluebox_inner" style="background-color: #ffffff;">
-										<div align="center" class="bluebox_loading"><img src="images/loading.gif" alt="loading..." /></div>
+										<div align="center" class="bluebox_loading"><img src="system/images/loading.gif" alt="loading..." /></div>
 										<div class="bluebox_data">
 											';
 

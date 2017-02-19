@@ -194,6 +194,8 @@ class HistoryController extends Controller {
 	public function compareVersion() {
 		$oldversion = DataObject::get_one($this->getParam("class"), array("versionid" => $this->getParam("id")));
 		$newversion = DataObject::get_one($this->getParam("class"), array("versionid" => $this->getParam("nid")));
+
+		$casting = $oldversion->casting();
 		
 		// get all fields for compare-view
 		$compareFields = $oldversion->getVersionedFields();
@@ -205,17 +207,23 @@ class HistoryController extends Controller {
 				if(isset($oldversion[$field]) && isset($newversion[$field])) {
 					$oldversiondata = $this->getDataFromVersion($field, $oldversion);
 					$newversiondata = $this->getDataFromVersion($field, $newversion);
-					
-					// first check if HTML or other format
-					if(!preg_match('/(\<img|\<a|\<div|\<p|\<span)/i', $oldversiondata) && !preg_match('/(\<img|\<a|\<div|\<p|\<span)/i', $newversiondata)) {
-						$oldversiondata = convert::raw2text($oldversiondata);
-						$newversiondata = convert::raw2text($newversiondata);
+
+					if ($casting[strtolower($field)] = DBField::parseCasting($casting[strtolower($field)])) {
+						$compareContent = call_user_func_array(
+							array($casting[strtolower($field)]["class"], "getDiffOfContents"),
+							array(
+								$field,
+								(isset($casting[strtolower($field)]["args"])) ? $casting[strtolower($field)]["args"] : array(),
+							  	$oldversiondata,
+							  	$newversiondata
+							)
+						);
+						$fieldset->push(array("title" => $title, "content" => $compareContent));
+					} else {
+						$fieldset->push(array("title" => $title, "content" =>
+							'<del>' . convert::raw2text($oldversiondata) . '</del>' .
+							'<ins>' . convert::raw2text($newversiondata) . '</ins>'));
 					}
-					
-					$object = new diff_match_patch;
-					$diff = $object->diff_compute($oldversiondata, $newversiondata, true);
-					$object->diff_cleanupEfficiency($diff);
-					$fieldset->push(array("title" => $title, "content" => trim($this->diffToHTML($diff))));
 				}
 			}
 			

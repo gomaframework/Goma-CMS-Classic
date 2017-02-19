@@ -70,7 +70,7 @@ class UserAuthentication extends DataObject implements HistoryData {
                     if ($record->oldversion()) {
                         $version = $record->oldversion();
                     }
-                    $icon = "images/icons/fatcow16/user_go.png";
+                    $icon = "system/images/icons/fatcow16/user_go.png";
                 } else {
                     return false;
                 }
@@ -78,7 +78,7 @@ class UserAuthentication extends DataObject implements HistoryData {
             default:
                 $lang = lang("h_user_login");
                 $version = $record->newversion();
-                $icon = "images/icons/fatcow16/user_go.png";
+                $icon = "system/images/icons/fatcow16/user_go.png";
                 break;
         }
 

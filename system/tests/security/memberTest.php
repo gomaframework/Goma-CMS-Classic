@@ -20,10 +20,24 @@ class MemberTest extends GomaUnitTest {
 	*/
 	public $name = "Member";
 
+
 	/**
-	 * tests exceptions.
-	*/
-	public function testExceptions() {
-		// TODO: implement a model-test-platform, so we can test models without DataBase.
+	 * @throws MySQLException
+	 */
+	public function testLogin() {
+		try {
+			$newUser = new \User();
+			$newUser->nickname = $newUser->email = "beta@goma-cms.org";
+			$newUser->password = "1234";
+			$newUser->writeToDB(false, true);
+
+			$loggedInUser = \AuthenticationService::sharedInstance()->checkLogin("beta@goma-cms.org", "1234");
+			$this->assertInstanceOf(\User::class, $loggedInUser);
+			$this->assertEqual($loggedInUser->id, $newUser->id);
+		} finally {
+			if($newUser) {
+				$newUser->remove(true);
+			}
+		}
 	}
 }

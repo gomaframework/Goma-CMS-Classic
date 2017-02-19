@@ -290,7 +290,7 @@ DropDown.prototype = {
 		var that = this;
 		var search = this.widget.find(" > .dropdown > .header > .search").val();
 
-		this.setContent("<div class=\"loading\" style=\"text-align: center;\"><img src=\"images/16x16/loading.gif\" alt=\"loading\" /> "+lang("loading", "loading...")+"</div>");
+		this.setContent("<div class=\"loading\" style=\"text-align: center;\"><img src=\"system/images/16x16/loading.gif\" alt=\"loading\" /> "+lang("loading", "loading...")+"</div>");
 		clearTimeout(this.timeout);
 
 		// we limit the request, so just send if in the last 200 milliseconds no edit in search was done
@@ -530,6 +530,6 @@ DropDown.prototype = {
 	 * sets field loading.
 	 */
 	setFieldLoading: function(){
-		this.setField("<img height=\"12\" width=\"12\" src=\"images/16x16/loading.gif\" alt=\"loading\" /> "+lang("loading", "loading..."), true);
+		this.setField("<img height=\"12\" width=\"12\" src=\"system/images/16x16/loading.gif\" alt=\"loading\" /> "+lang("loading", "loading..."), true);
 	}
 }

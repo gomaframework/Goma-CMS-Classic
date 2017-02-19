@@ -19,7 +19,7 @@ class Contact extends Page
     /**
      * the icon for this page
      */
-    static $icon = "images/icons/fatcow16/email.png";
+    static $icon = "system/images/icons/fatcow16/email.png";
 
     /**
      * we need an e-mail-adress

@@ -3,20 +3,41 @@
 <ul id="installitems" class="list-view">
 	<li class="item install">
 		<a href="install/install/">
-			<img src="images/icons/fatcow-icons/32x32/world_add.png" alt="<% lang('install.install_goma', 'Install Goma') %>" />
+			<img src="system/images/icons/fatcow-icons/32x32/world_add.png" alt="<% lang('install.install_goma', 'Install Goma') %>" />
 			<% lang("install.install_goma", "Install Goma") %>
 		</a>
 	</li>
 	<li class="item restore last">
 		<a href="install/restore/">
-			<img src="images/icons/fatcow-icons/32x32/site_backup_and_restore.png" alt="<% lang('install.restore_app', 'Restore a Page') %>" />
+			<img src="system/images/icons/fatcow-icons/32x32/site_backup_and_restore.png" alt="<% lang('install.restore_app', 'Restore a Page') %>" />
 			<% lang("install.restore_app", "Restore a Page") %>
 		</a>
 	</li>
-	<!--<div class="item browse">
-	<a href="install/browse/">
-	<img src="images/icons/fatcow-icons/32x32/plugin.png" alt="<% lang('install.browse_apps', 'Browse Goma-Apps') %>" />
-	<% lang("install.browse_apps", "Browse Goma-Apps") %>
-	</a>
-	</div>-->
+
+	<% IF $folders %>
+	<div id="apps">
+		<h2><% lang("install.existing") %></h2>
+		<% CONTROL folders() AS $folder %>
+		<div class="app">
+			<div class="icon">
+				<% IF $folder.icon %>
+				<img src="{$folder.icon}" alt="" width="64" />
+				<% END %>
+			</div>
+			<div class="button_right">
+				<a href="{BASE_SCRIPT}install/restoreFolder/$folder.directory.url(){URLEND}" class="button"><% lang("install.restore") %></a>
+			</div>
+			<div class="info">
+				<h1>{$_lang_install.existent_folder}: $folder.directory</h1>
+				<p>$folder.title ($folder.name)</p>
+				<p>{$_lang_version} $folder.version</p>
+				<% IF $folder.working %>
+				<p><img src="system/images/success.png" /> {$_lang_install.database_working}</p>
+				<% END %>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<% ENDCONTROL %>
+	</div>
+	<% END %>
 </ul>

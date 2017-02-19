@@ -1,19 +1,19 @@
 <h3>Creating new Database</h3>
 <div class="caches">
     <% IF $rebuilt_caches %>
-    <img src="images/success.png"  alt="Success" />
+    <img src="system/images/success.png"  alt="Success" />
     <% ELSE %>
-    <img src="images/16x16/loading.gif"  alt="Loading..." />
+    <img src="system/images/16x16/loading.gif"  alt="Loading..." />
     <% END %>
     <span>Rebuilding Caches...</span>
 </div>
 <div class="db">
     <% IF $rebuilt_caches %>
         <% IF $rebuilt_db %>
-            <img src="images/success.png"  alt="Success" /> Rebuilding Database...
+            <img src="system/images/success.png"  alt="Success" /> Rebuilding Database...
             $rebuilt_db
         <% ELSE %>
-            <img src="images/16x16/loading.gif"  alt="Loading..." /> Rebuilding Database...
+            <img src="system/images/16x16/loading.gif"  alt="Loading..." /> Rebuilding Database...
         <% END %>
     <% END %>
 </div>

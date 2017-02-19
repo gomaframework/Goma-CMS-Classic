@@ -47,7 +47,7 @@ class ControllerRedirectBackResponse extends GomaResponse {
      * @param bool $useJavaScript
      * @return static
      */
-    public static function create($hintUrl, $fromUrl = null, $useJavaScript = false) {
+    public static function create($hintUrl = null, $fromUrl = null, $useJavaScript = false) {
         return new static($hintUrl, $fromUrl, $useJavaScript);
     }
 
@@ -59,6 +59,11 @@ class ControllerRedirectBackResponse extends GomaResponse {
         foreach($this->params as $key => $value) {
             $url = Controller::addParamToUrl($url, $key, $value);
         }
+
+        try {
+            AddContent::add(AddContent::get());
+        } catch(Exception $e) {} catch(Throwable $e) {}
+
         if($this->useJavascript) {
             GomaResponse::create($this->header, $this->body)->redirectByJavaScript($url)->output();
         } else {
@@ -68,6 +73,8 @@ class ControllerRedirectBackResponse extends GomaResponse {
 
     /**
      * @param string $hintUrl
+     * @param null $fromUrl
+     * @param bool $useJavaScript
      */
     public function __construct($hintUrl, $fromUrl = null, $useJavaScript = false)
     {

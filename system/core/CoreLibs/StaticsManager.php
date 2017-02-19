@@ -48,15 +48,23 @@ class StaticsManager {
      */
     public static function getStatic($class, $var, $ignoreAccess = false)
     {
-        $class = ClassManifest::resolveClassName($class);
+        $className = ClassManifest::resolveClassName($class);
 
-        $reflectionClass = new ReflectionClass($class);
+        $reflectionClass = new ReflectionClass($className);
 
         if($reflectionClass->hasProperty($var)) {
             $property = $reflectionClass->getProperty($var);
 
             if ($ignoreAccess) {
                 $property->setAccessible(true);
+            }
+
+            if(!$property->isStatic()) {
+                if(!is_a($class, $className)) {
+                    throw new InvalidArgumentException();
+                }
+
+                return $property->getValue($class);
             }
 
             return $property->getValue();

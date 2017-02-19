@@ -25,14 +25,14 @@ var FileUploadSet = function(name, table, url) {
 	var $this = this;
 	
 	// bind delete actions and remove no-js-code
-	this.tbody.find("tr td.actions .delete").html('<img src="images/16x16/del.png" height="16" width="16" alt="del" title="'+lang("delete")+'" />');
+	this.tbody.find("tr td.actions .delete").html('<img src="system/images/16x16/del.png" height="16" width="16" alt="del" title="'+lang("delete")+'" />');
 	
 	// bindings
 	var bindDeleteEvent = function(node) {
 		$(node).click(function(){
 			var tr = $(this).parent().parent().parent();
 			var id = $(this).parent().parent().parent().attr("name");
-			$(this).attr("src", "images/16x16/loading.gif");
+			$(this).attr("src", "system/images/16x16/loading.gif");
 			$.ajax({
 				url: $this.url + "/remove/" + id,
 				type: "post"
@@ -225,7 +225,7 @@ var FileUploadSet = function(name, table, url) {
             var html = '<tr class="'+classname+'" id="'+id+'">' +
 				'<td class="icon"></td>' +
 				'<td class="filename" title="'+filename+'"><span class="filename">'+filename+'</span></div></td>' +
-				'<td class="actions"><div class="delete"><img src="images/16x16/del.png" height="16" width="16" alt="del" title="'+lang("delete")+'" /></div></td>' +
+				'<td class="actions"><div class="delete"><img src="system/images/16x16/del.png" height="16" width="16" alt="del" title="'+lang("delete")+'" /></div></td>' +
 			'</tr>';
 
             if(after !== undefined) {

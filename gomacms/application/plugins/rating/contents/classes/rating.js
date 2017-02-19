@@ -29,11 +29,11 @@ function highlightstars(element,title)
 		if(i < element + 1)
 		{
 			var id = "star_"+title+"_"+i;
-			$("#"+id).find("img").attr("src","images/star_yellow.png");
+			$("#"+id).find("img").attr("src","system/images/star_yellow.png");
 		} else
 		{
 			var id = "star_"+title+"_"+i;
-			$("#"+id).find("img").attr("src","images/star_grey.png");
+			$("#"+id).find("img").attr("src","system/images/star_grey.png");
 		}
 	}
 }

@@ -397,7 +397,7 @@ class MockDBRepository extends  IModelRepository {
      * @param iDataBaseWriter $dbWriter
      * @return ModelWriter
      */
-    public function buildWriter($record, $command, $silent, $overrideCreated, $writeType = self::WRITE_TYPE_PUBLISH, $dbWriter = null)
+    public function buildWriter($record, $command, $silent, $overrideCreated, $writeType = self::WRITE_TYPE_PUBLISH, $dbWriter = null, $forceWrite = false)
     {
         // TODO: Implement buildWriter() method.
     }

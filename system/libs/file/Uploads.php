@@ -574,19 +574,19 @@ class Uploads extends DataObject {
                 case 32:
                 case 64:
                     if ($retina)
-                        return "images/icons/goma" . $size . "/file@2x.png";
+                        return "system/images/icons/goma" . $size . "/file@2x.png";
                     else
-                        return "images/icons/goma" . $size . "/file.png";
+                        return "system/images/icons/goma" . $size . "/file.png";
                     break;
             }
 
-            return "images/icons/goma/128x128/file.png";
+            return "system/images/icons/goma/128x128/file.png";
         } else {
             if($size > 16 || $retina) {
-                return "images/icons/fatcow16/folder@2x.png";
+                return "system/images/icons/fatcow16/folder@2x.png";
             }
 
-            return "images/icons/fatcow16/folder.png";
+            return "system/images/icons/fatcow16/folder.png";
         }
     }
 

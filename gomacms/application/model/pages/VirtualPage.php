@@ -19,7 +19,7 @@ class VirtualPage extends Page {
 	/**
 	 * icon
 	*/
-	static $icon = "images/icons/goma/16x16/clone.png";
+	static $icon = "system/images/icons/goma/16x16/clone.png";
 	
 	/**
 	 * relations

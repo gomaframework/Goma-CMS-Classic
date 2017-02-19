@@ -69,7 +69,7 @@ function FileUpload(form, field, formelement, url, size, types) {
 		// events
 		uploadStarted: function() {
 			var that = this;
-			$this.infoZone.html('<div class="progressbar"><div class="progress"></div><span><img src="images/16x16/loading.gif" alt="Uploading.." /></span><div class="cancel"></div></div>');
+			$this.infoZone.html('<div class="progressbar"><div class="progress"></div><span><img src="system/images/16x16/loading.gif" alt="Uploading.." /></span><div class="cancel"></div></div>');
 			$this.infoZone.find(".cancel").click(function(){
 				that.abort();
 			});

@@ -20,7 +20,7 @@
 					$(function(){
 						gloader.loadAsync("notifications").done(function(){
 							var img = new Image;
-							img.src = "images/icons/fatcow16/bullet_error@2x.png";
+							img.src = "system/images/icons/fatcow16/bullet_error@2x.png";
 
 							$("#boxes_new_$pageid .box_new").resizable({
 								autoHide: true,
@@ -93,16 +93,16 @@
 						<div class="actions">
 							<% IF NOT $boxlimit OR $this.count() < $boxlimit %>
 								<a href="{BASE_SCRIPT}boxes_new/$pageid/add?insertafter={$box.sort}&redirect=$_SERVER_REDIRECT.URL()" title="{$_lang_new_box}" class="dropdownDialog">
-									<img src="images/16x16/add.png" alt="{$_lang_new_box}" />
+									<img src="system/images/16x16/add.png" alt="{$_lang_new_box}" />
 								</a>
 							<% END %>
 							
 							<a href="{BASE_SCRIPT}boxes_new/$pageid/edit/{$box.id}?redirect=$_SERVER_REDIRECT.URL()" title="{$_lang_edit_box}" class="dropdownDialog dropdownDialog-fixed noAutoHide">
-								<img src="images/16x16/edit.png" alt="{$_lang_edit_box}" />
+								<img src="system/images/16x16/edit.png" alt="{$_lang_edit_box}" />
 							</a>
 							
 							<a class="dropdownDialog" href="{BASE_SCRIPT}boxes_new/$pageid/delete/{$box.id}?redirect=$_SERVER_REDIRECT.URL()" title="{$_lang_del_box}">
-								<img src="images/16x16/del.png" alt="{$_lang_del_box}" />
+								<img src="system/images/16x16/del.png" alt="{$_lang_del_box}" />
 							</a>
 						</div>
 					<% END %>

@@ -33,7 +33,7 @@ class Captcha extends FormField {
 		$container = new HTMLNode("div");
 
 		$container->append(new HTMLNode('img', array(
-			"src" => "images/captcha/captcha.php",
+			"src" => "system/images/captcha/captcha.php",
 			"alt" => "captcha",
 			"id" => $this->ID() . "_captcha",
 			"onclick" => "$('#" . $this->ID() . "').focus();"
@@ -81,7 +81,7 @@ class Captcha extends FormField {
 	public function JS() {
 		return '$(function(){
 				$("#' . $this->form()->ID() . '").bind("ajaxresponded", function(){
-					$("#' . $this->ID() . '_captcha").attr("src","images/captcha/captcha.php?"+Math.random());
+					$("#' . $this->ID() . '_captcha").attr("src","system/images/captcha/captcha.php?"+Math.random());
 					$("#' . $this->ID() . '").val("");
 				});
 			});';

@@ -25,7 +25,7 @@ class Page extends pages
 	*/
 	public static $cname = '{$_lang_just_content_page}';
 	
-	static $icon = "images/icons/fatcow-icons/16x16/file.png";
+	static $icon = "system/images/icons/fatcow-icons/16x16/file.png";
 	
 	/**
 	 * don't use from parent-class
@@ -81,7 +81,7 @@ class WrapperPage extends Page {
 	/**
 	 * icon
 	*/
-	public static $icon = "images/icons/fatcow16/column_four.png";
+	public static $icon = "system/images/icons/fatcow16/column_four.png";
 	
 	/**
 	 * allowed children

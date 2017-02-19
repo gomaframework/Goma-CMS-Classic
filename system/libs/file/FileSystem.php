@@ -483,8 +483,8 @@ class FileSystem extends gObject {
 
 			$dir = FRAMEWORK_DIRECTORY . "/temp/download/" . $hash;
 			FileSystem::requireDir(ROOT . $dir);
-			self::chmod(ROOT . $file, self::getMode());
-			if(symlink(ROOT . $file, ROOT . $dir . "/" . $filename)) {
+			self::chmod(realpath($file), self::getMode());
+			if(symlink(realpath($file), ROOT . $dir . "/" . $filename)) {
 				self::chmod(ROOT . $dir . "/" . $filename, self::getMode());
 				return ROOT_PATH . $dir . "/" . $filename;
 			} else {

@@ -710,7 +710,7 @@ if (window.loader === undefined) {
 					_html = $this.html(),
 					$container = $this.parents(".record").attr("id");
 
-				$this.html("<img src=\"images/16x16/ajax-loader.gif\" alt=\"loading...\" />");
+				$this.html("<img src=\"system/images/16x16/ajax-loader.gif\" alt=\"loading...\" />");
 
 				$.ajax({
 					url: $this.attr("href"),

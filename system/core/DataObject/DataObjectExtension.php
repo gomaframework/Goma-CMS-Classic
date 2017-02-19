@@ -12,72 +12,81 @@ abstract class DataObjectExtension extends Extension
 {
 
     /**
+     * @param string $class
      * @return array
      */
-    public static function DBFields() {
+    public static function DBFields($class) {
         return isset(static::$db) ? static::$db : array();
     }
 
     /**
+     * @param string $class
      * @return array
      */
-    public static function has_one() {
+    public static function has_one($class) {
         return isset(static::$has_one) ? static::$has_one : array();
     }
 
     /**
+     * @param string $class
      * @return array
      */
-    public static function has_many() {
+    public static function has_many($class) {
         return isset(static::$has_many) ? static::$has_many : array();
     }
 
     /**
+     * @param string $class
      * @return array
      */
-    public static function many_many() {
+    public static function many_many($class) {
         return isset(static::$many_many) ? static::$many_many : array();
     }
 
     /**
+     * @param string $class
      * @return array
      */
-    public static function belongs_many_many() {
+    public static function belongs_many_many($class) {
         return isset(static::$belongs_many_many) ? static::$belongs_many_many : array();
     }
 
     /**
+     * @param string $class
      * @return array
      */
-    public static function defaults() {
+    public static function defaults($class) {
         return isset(static::$default) ? static::$default : array();
     }
 
     /**
+     * @param string $class
      * @return array
      */
-    public static function index() {
+    public static function index($class) {
         return isset(static::$index) ? static::$index : array();
     }
 
     /**
+     * @param string $class
      * @return array
      */
-    public static function many_many_extra_fields() {
+    public static function many_many_extra_fields($class) {
         return isset(static::$many_many_extra_fields) ? static::$many_many_extra_fields : array();
     }
 
     /**
+     * @param string $class
      * @return array
      */
-    public static function search_fields() {
+    public static function search_fields($class) {
         return isset(static::$search_fields) ? static::$search_fields : array();
     }
 
     /**
      * it does check if owner is a kind of DataObject.
      *
-     * @param object
+     * @param gObject $object
      * @return $this
      */
     public function setOwner($object)

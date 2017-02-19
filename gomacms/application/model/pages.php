@@ -146,7 +146,7 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
     /**
      * icon
      */
-    static $icon = "images/icons/goma16/file.png";
+    static $icon = "system/images/icons/goma16/file.png";
 
     /**
      * parent-resolver for this class.
@@ -1143,39 +1143,39 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
             case "update":
                 if($record->writeType == IModelRepository::WRITE_TYPE_PUBLISH) {
                     $lang = lang("gomacms.h_pages_updatepublish", '$user updated and published the page <a href="$pageUrl">$page</a>');
-                    $icon = "images/icons/fatcow16/page_white_get.png";
+                    $icon = "system/images/icons/fatcow16/page_white_get.png";
                     $compared = true;
                 } else {
                     $lang = lang("gomacms.h_pages_update", '$user updated the page <a href="$pageUrl">$page</a>');
-                    $icon = "images/icons/fatcow16/page_white_edit.png";
+                    $icon = "system/images/icons/fatcow16/page_white_edit.png";
                     $compared = true;
                 }
                 break;
             case IModelRepository::COMMAND_TYPE_INSERT:
             case "insert":
                 $lang = lang("gomacms.h_pages_create", '$user created the page <a href="$pageUrl">$page</a>');
-                $icon = "images/icons/fatcow16/page_white_add.png";
+                $icon = "system/images/icons/fatcow16/page_white_add.png";
                 break;
             case IModelRepository::COMMAND_TYPE_PUBLISH:
             case "publish":
                 $lang = lang("gomacms.h_pages_publish", '$user published the page <a href="$pageUrl">$page</a>');
-                $icon = "images/icons/fatcow16/page_white_get.png";
+                $icon = "system/images/icons/fatcow16/page_white_get.png";
                 $compared = true;
                 break;
             case IModelRepository::COMMAND_TYPE_DELETE:
             case "remove":
                 $lang = lang("gomacms.h_pages_remove", '$user removed the page <a href="$pageUrl">$page</a>');
-                $icon = "images/icons/fatcow16/page_white_delete.png";
+                $icon = "system/images/icons/fatcow16/page_white_delete.png";
                 $record->setField("newversion", $record->oldversionid);
                 break;
             case IModelRepository::COMMAND_TYPE_UNPUBLISH:
             case "unpublish":
                 $lang = lang("gomacms.h_pages_unpublish", '$user unpublished the page <a href="$pageUrl">$page</a>');
-                $icon = "images/icons/fatcow16/page_white_edit.png";
+                $icon = "system/images/icons/fatcow16/page_white_edit.png";
                 break;
             default:
                 $lang = "unknown event " . $record->action;
-                $icon = "images/icons/fatcow16/page_white_edit.png";
+                $icon = "system/images/icons/fatcow16/page_white_edit.png";
                 break;
         }
 
@@ -1197,7 +1197,7 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
      * @return array
      */
     public static function NotifySettings() {
-        return array("title" => lang("content"), "icon" => "images/icons/other/content.png");
+        return array("title" => lang("content"), "icon" => "system/images/icons/other/content.png");
     }
 
     /**

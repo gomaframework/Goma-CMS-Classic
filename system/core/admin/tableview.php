@@ -32,8 +32,8 @@ class TableView extends AdminItem
      * actions
      */
     public $actions = array(
-        "edit"   => '<img src="images/icons/fatcow-icons//16x16/edit.png" alt="{$_lang_edit}" title="{$_lang_edit}" />',
-        "delete" => '<img src="images/icons/fatcow-icons/16x16/delete.png" alt="{$_lang_delete}" title="{$_lang_delete}" />',
+        "edit"   => '<img src="system/images/icons/fatcow-icons//16x16/edit.png" alt="{$_lang_edit}" title="{$_lang_edit}" />',
+        "delete" => '<img src="system/images/icons/fatcow-icons/16x16/delete.png" alt="{$_lang_delete}" title="{$_lang_delete}" />',
         "add"    => array("{\$_lang_add_data}")
     );
 

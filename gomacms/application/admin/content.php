@@ -220,7 +220,7 @@ class contentAdmin extends LeftAndMain {
     {
         if (!$child->model || $child->model->can("write")) {
             return array_merge(array(array(
-                                         "icon"     => "images/icons/goma16/page_new.png",
+                                         "icon"     => "system/images/icons/goma16/page_new.png",
                                          "label"    => lang("SUBPAGE_CREATE"),
                                          "ajaxhref" => $this->originalNamespace . "/add" . URLEND . "?parentid=" . $child->recordid
                                      ),
@@ -280,9 +280,7 @@ class contentAdmin extends LeftAndMain {
      */
     protected function getFormForAdd($model)
     {
-        $controller = clone $this;
-        $controller->selectModel($model, true);
-        $form = new Form($controller, "add_page");
+        $form = new Form($this, "add_page");
 
         if (isset($this->request->get_params["parentid"]) && $this->request->get_params["parentid"] != 0) {
             $model->parenttype = "subpage";

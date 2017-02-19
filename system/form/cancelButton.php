@@ -82,14 +82,15 @@ class CancelButton extends FormAction
             return GomaResponse::redirect($this->redirect);
         }
 
-        return GomaResponse::redirect($this->form()->getController()->getRedirect());
+        return GomaResponse::redirect($this->form()->getController()->getRedirect($this));
 
     }
 
     /**
+     * @param gObject $sender
      * @return null|string
      */
-    public function getRedirect()
+    public function getRedirect($sender)
     {
         return $this->redirect;
     }

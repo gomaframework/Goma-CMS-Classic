@@ -136,7 +136,7 @@ class HTMLParser extends gObject
 
         preg_match_all('/<img([^>]*)\ssrc="([^">]+)"([^>]*)>/Usi', $html, $images);
         foreach ($images[2] as $key => $href) {
-            if (strtolower(substr($href, 0, 17)) == "images/resampled/") {
+            if (strtolower(substr($href, 0, 17)) == "system/images/resampled/") {
                 $href = BASE_SCRIPT . $href;
             }
 

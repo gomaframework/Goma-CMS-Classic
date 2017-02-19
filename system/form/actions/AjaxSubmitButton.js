@@ -16,7 +16,7 @@ var initAjaxSubmitbutton = function(id, divId, formObject, field, url, appendix)
         }
 
         button.css("display", "none");
-        container.append("<img src=\"images/16x16/loading.gif\" alt=\"loading...\" class=\"loading\" />");
+        container.append("<img src=\"system/images/16x16/loading.gif\" alt=\"loading...\" class=\"loading\" />");
         $("body").css("cursor", "wait");
 
         goma.ui.updateFlexBoxes();

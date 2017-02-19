@@ -18,7 +18,7 @@ function tree_bind(tree) {
 		var link = hitarea.find("a");
 		
 		if(link.length == 1 && link.attr("href") != "" && li.find("ul").length == 0) {
-			li.append("<ul class='loading'><li class=\"load\"><span class=\"tree_wrapper node-area\"><img src=\"images/16x16/loading.gif\" alt=\"\" /> Loading...</span></li></ul>");
+			li.append("<ul class='loading'><li class=\"load\"><span class=\"tree_wrapper node-area\"><img src=\"system/images/16x16/loading.gif\" alt=\"\" /> Loading...</span></li></ul>");
 			
 			li.removeClass("collapsed").addClass("expanded");
 			hitarea.removeClass("collapsed").addClass("expanded");

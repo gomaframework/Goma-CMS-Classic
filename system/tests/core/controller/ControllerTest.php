@@ -26,85 +26,59 @@ class ControllerTest extends GomaUnitTest {
 	*/
 	public $name = "Controller";
 
-	public function testModelSaveManagementWithArray() {
-		$view = new ViewAccessableData(array("test" => 3));
+	/**
+	 *
+	 */
+	public function testGuessModelInst() {
+		$controller = new UserController();
 
-		$this->assertEqual($view->test, 3);
-
-		$c = new Controller();
-
-		$model = $c->getSafableModel(array("test" => 1, "blah" => 2, "blub" => "test"), $view);
-
-		$this->assertEqual($view->test, 3);
-		$this->assertEqual($model->test, 1);
-		$this->assertEqual($model->blah, 2);
-		$this->assertEqual($model->blub, "test");
-	}
-
-	public function testModelSaveManagementWithObject() {
-		$view = new ViewAccessableData(array("test" => 3));
-		$data = new ViewAccessableData(array("test" => 1, "blah" => 2, "blub" => "test"));
-
-		$this->assertEqual($view->test, 3);
-
-		$c = new Controller();
-
-		$model = $c->getSafableModel($data, $view);
-
-		$this->assertEqual($view->test, 3);
-		$this->assertEqual($model->test, 1);
-		$this->assertEqual($data->test, 1);
-		$this->assertEqual($model->blah, 2);
-		$this->assertEqual($model->blub, "test");
+		$this->assertIsA($controller->modelInst(), "DataObjectSet");
+		$this->assertEqual($controller->modelInst()->DataClass(), "user");
+		$this->assertNull($this->unitTestGetSingleModel($controller));
 	}
 
 	/**
 	 *
 	 */
-	public function testModelInst() {
-		$controller = new Controller();
-		$controller->model = "user";
+	public function testGetSingleModelFromRequest() {
+		$controller = new UserController();
+
+		$controller->setRequest($request = new Request("get", "test"));
+		$user =  DataObject::get_one("user");
+		$request->params["id"] = $user->id;
+		$this->assertIsA($this->unitTestGetSingleModel($controller), "user");
+		$this->assertEqual($this->unitTestGetSingleModel($controller), $user);;
 
 		$this->assertIsA($controller->modelInst(), "DataObjectSet");
 		$this->assertEqual($controller->modelInst()->DataClass(), "user");
-		$this->assertNull($this->unitTestGetSingleModel($controller));
+	}
+
+	/**
+	 * checks if we can change the "single model"
+	 */
+	public function testSwitchGetSingleModel() {
+		$controller = new UserController();
 
 		$controller->setRequest($request = new Request("get", "test"));
-		$request->params["id"] = DataObject::get_one("user")->id;
+		$user =  DataObject::get_one("user");
+		$request->params["id"] = $user->id;
 		$this->assertIsA($this->unitTestGetSingleModel($controller), "user");
-		$this->assertEqual($this->unitTestGetSingleModel($controller), DataObject::get_one("user"));
 
-		$this->assertIsA($controller->modelInst("admin"), "admin");
-		$this->assertEqual($controller->modelInst()->DataClass(), "admin");
-
-		$controller->model = "admin";
-		$controller->model_inst = null;
+		$controller->setModelInst(new \admin());
 
 		$this->assertIsA($this->unitTestGetSingleModel($controller), "admin");
-		$this->assertIsA($controller->modelInst("admin"), "admin");
+		$this->assertIsA($controller->modelInst(), "admin");
 		$this->assertEqual($controller->modelInst()->DataClass(), "admin");
 	}
 
+	/**
+	 * @param $controller
+	 * @return mixed
+	 */
 	public function unitTestGetSingleModel($controller) {
 		$reflectionMethod = new ReflectionMethod("controller", "getSingleModel");
 		$reflectionMethod->setAccessible(true);
 		return $reflectionMethod->invoke($controller);
-	}
-
-	public function testGetSafableModel() {
-		$controller = new Controller();
-        $controller->setModelInst($user = new User(array(
-            "id" => 2
-        )));
-
-        $this->assertEqual($controller->getSafableModel(array())->id, 0);
-        $this->assertIsA($controller->getSafableModel(array()), User::class);
-
-        $this->assertEqual($user, $controller->getSafableModel(array(), $user));
-
-        $this->assertEqual($controller->getSafableModel(array(
-            "test" => 123
-        ))->test, 123);
 	}
 
     /**
@@ -192,6 +166,10 @@ class ControllerTest extends GomaUnitTest {
         $this->assertInstanceOf(TestSubControllerForRequestController::class, $request->getRequestController());
     }
 
+	/**
+	 * tests request for clean index
+	 * @throws \Exception
+	 */
 	public function testRequestForIndexClean() {
 		$request = new Request(
 			"GET",
@@ -201,6 +179,18 @@ class ControllerTest extends GomaUnitTest {
 		$controller = new TestSubControllerForRequestController();
 		$this->assertEqual("Sub", $controller->handleRequest($request));
 		$this->assertEqual("test", $request->remaining());
+	}
+
+	/**
+	 * tests basic function from that method
+	 */
+	public function testgetActionCompleteText() {
+		$controller = new Controller();
+		$reflectionMethod = new ReflectionMethod(Controller::class, "getActionCompleteText");
+		$reflectionMethod->setAccessible(true);
+		$this->assertEqual(lang("successful_published", "The entry was successfully published."),
+			$reflectionMethod->invoke($controller, "publish_success")
+		);
 	}
 }
 
@@ -241,3 +231,8 @@ class TestSubControllerWithSubForRequestController extends \RequestHandler {
 class TestSubClassController extends TestSubControllerWithSubForRequestController {
 
 }
+
+class UserController extends Controller {
+
+}
+

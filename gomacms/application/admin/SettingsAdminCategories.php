@@ -38,11 +38,8 @@ class SettingsAdminCategories extends AbstractCategoryController {
         );
 
         foreach(\ClassInfo::getChildren(NewSettings::class) as $child) {
-            if(\StaticsManager::getStatic($child, "tab", true)) {
-                $categories[str_replace("\\", "_", $child)] = parse_lang(\StaticsManager::getStatic($child, "tab", true));
-            } else {
-                $instance = new $child();
-                $categories[str_replace("\\", "_", $child)] = parse_lang($instance->tab);
+            if($tab = \StaticsManager::getStatic(new $child, "tab", true)) {
+                $categories[str_replace("\\", "_", $child)] = parse_lang($tab);
             }
         }
 

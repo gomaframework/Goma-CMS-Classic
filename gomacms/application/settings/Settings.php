@@ -145,7 +145,7 @@ class Newsettings extends DataObject implements HistoryData {
 	public static function generateHistoryData($record) {
 		
 		$lang = lang("h_settings", '$user updated the <a href="$url">settings</a>.');
-		$icon = "images/icons/fatcow16/setting_tools.png";
+		$icon = "system/images/icons/fatcow16/setting_tools.png";
 		$lang = str_replace('$url', "admin/settings" . URLEND, $lang);
 		
 		return array("icon" => $icon, "text" => $lang, "relevant" => true);

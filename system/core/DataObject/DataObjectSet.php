@@ -687,7 +687,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 				}
 				$this->items = array_values($this->getRecordsByRange($limit[0], $limit[1]));
 				if(isset($this->firstCache)) array_unshift($this->items, $this->firstCache);
-				if(isset($this->lastCache)) $this->items[count($this->items) - $offsetInsertLast] = $this->lastCache;
+				if(isset($this->lastCache) &&
+					$this->lastCache !== $this->firstCache) {
+					$this->items[count($this->items) - $offsetInsertLast] = $this->lastCache;
+				}
 
 				if ($this->page === null) {
 					$this->count = count($this->items);
@@ -1030,15 +1033,16 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
             // merge with staging
             $stageCount = $this->getStagingWithFilterAndSort()->count();
             if($stageCount > 0) {
-                if($start > $this->countWholeSet() - $stageCount) {
-                    $start -= ($this->countWholeSet() - $stageCount);
+                $mergeStart = $start;
+                if($mergeStart > $this->countWholeSet() - $stageCount) {
+                    $mergeStart -= ($this->countWholeSet() - $stageCount);
                 }
 
-                $result = $this->mergeWithStaging($result, $length, $start, $start != 0 && isset($result[0]) ? $result[0] : null);
+                $result = $this->mergeWithStaging($result, $length, $mergeStart, $mergeStart != 0 && isset($result[0]) ? $result[0] : null);
             }
 		}
 
-		return $result;
+		return (array) $result;
 	}
 
     /**
@@ -1046,7 +1050,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
      * @param int $length
      * @param int $startIndex
      * @param null $startElement
-     * @return array|ArrayList
+     * @return array
      */
     protected function mergeWithStaging($result, $length, $startIndex = 0, $startElement = null) {
         if($result) {
@@ -1060,7 +1064,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
         }
 
         if($length < 0) {
-            return $merged->getRange($merged->count() - $length, abs($length));
+            return $merged->getRange($merged->count() - $length, abs($length))->ToArray();
         }
 
         if(isset($startElement)) {

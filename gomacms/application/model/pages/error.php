@@ -11,7 +11,7 @@ class errorPage extends Page
 		/**
 		 * the icon for this page
 		*/
-		static $icon = "images/icons/fatcow16/page_error.png";
+		static $icon = "system/images/icons/fatcow16/page_error.png";
 		
 		/**
 		 * the title of this page shown in the select

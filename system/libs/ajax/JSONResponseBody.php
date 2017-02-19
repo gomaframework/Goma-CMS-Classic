@@ -68,6 +68,10 @@ class JSONResponseBody extends GomaResponseBody
      */
     public function __toString()
     {
+        if(is_a($this->body, "IRestResponse")) {
+            return json_encode($this->body->ToRestArray());
+        }
+
         return json_encode($this->body);
     }
 }
