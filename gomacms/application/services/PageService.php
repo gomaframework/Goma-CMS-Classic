@@ -11,7 +11,7 @@ defined("IN_GOMA") OR die();
  *
  * @version 1.0
  */
-class PageService {
+class PageService extends \Goma\Service\DefaultControllerService {
     /**
      * get by filter versioned + fallback.
      * @param array $filter
