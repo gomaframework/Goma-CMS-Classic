@@ -362,3 +362,23 @@ fieldset > .form_field > .info_field {
 .clusterformfield > legend {
   padding: 1em .875em 0;
 }
+
+.date-field {
+  .clear-wrapper {
+    display: inline-block;
+    position: relative;
+    height: .875em;
+
+    .clear-date {
+      position: absolute;
+      right: .5em;
+      margin: -1em;
+      padding: 1em;
+      display: block;
+
+      &.disabled {
+        display: none;
+      }
+    }
+  }
+}

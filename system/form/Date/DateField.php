@@ -11,7 +11,15 @@
  */
 class DateField extends FormField
 {
+	/**
+	 * @var string
+	 */
 	protected $format = DATE_FORMAT_DATE;
+
+	/**
+	 * @var bool
+	 */
+	protected $showClear = true;
 
 	/**
 	 * generates this field.
@@ -117,7 +125,17 @@ class DateField extends FormField
 
 		$info->addJSFile("system/libs/thirdparty/moment/moment.min.js");
 		$info->addJSFile("system/libs/thirdparty/jquery-daterangepicker/daterangepicker.js");
+		$info->addJSFile("system/form/Date/DateField.js");
+		$info->addCSSFile("font-awsome/font-awesome.css");
 		$info->addCSSFile("system/libs/thirdparty/jquery-daterangepicker/daterangepicker.css");
+
+		$info->getRenderedField()->addClass("date-field");
+		if($this->showClear) {
+			$info->getRenderedField()->append(
+				'<div class="clear-wrapper">
+					<a class="clear-date" href="#"><i class="fa fa-times" aria-hidden="true"></i></a>
+				</div>');
+		}
 	}
 
 	/**
@@ -190,7 +208,7 @@ class DateField extends FormField
 	 */
 	public function JS()
 	{
-		return 'var leave_check = form.getLeaveCheck(); $(\'#'.$this->ID().'\').daterangepicker('.json_encode($this->getDatePickerOptions()).'); form.setLeaveCheck(leave_check);';
+		return 'new gDateField(field, '.json_encode($this->getDatePickerOptions()).', form);';
 	}
 
 	/**
@@ -201,6 +219,7 @@ class DateField extends FormField
 		require (ROOT . LANGUAGE_DIRECTORY . Core::$lang . "/calendar.php");
 
 		return array(
+			"autoUpdateInput"  => false,
 			"singleDatePicker" => true,
 			"showDropdowns"	=> true,
 			"showWeekNumbers"	=> true,
@@ -259,6 +278,24 @@ class DateField extends FormField
 	public function setFormat($format)
 	{
 		$this->format = $format;
+		return $this;
+	}
+
+	/**
+	 * @return boolean
+	 */
+	public function isShowClear()
+	{
+		return $this->showClear;
+	}
+
+	/**
+	 * @param boolean $showClear
+	 * @return $this
+	 */
+	public function setShowClear($showClear)
+	{
+		$this->showClear = $showClear;
 		return $this;
 	}
 }

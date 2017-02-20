@@ -112,7 +112,7 @@ class Tabs extends gObject {
             exit;
         }
         
-        Resources::add("tabs.css");
+        Resources::add("tabs.less");
         gloader::load("gtabs");
         
         krsort($this->tabs);

@@ -3,6 +3,9 @@ namespace Goma\Test\Controller\ControllerTestENV;
 
 use Controller;
 use DataObject;
+use DataObjectSet;
+use Goma\Test\Model\DumpDBElementPerson;
+use Goma\Test\Model\MockIDataObjectSetDataSource;
 use GomaUnitTest;
 use ReflectionMethod;
 use Request;
@@ -25,6 +28,24 @@ class ControllerTest extends GomaUnitTest {
 	 * name
 	*/
 	public $name = "Controller";
+
+	/**
+	 * @var DumpDBElementPerson
+	 */
+	protected $simone;
+
+	/**
+	 * @var DumpDBElementPerson
+	 */
+	protected $daniel;
+
+	public function setUp() {
+		$this->simone = new DumpDBElementPerson("Simone", 21, "W");
+		$this->simone->id = 1;
+
+		$this->daniel = new DumpDBElementPerson("Daniel", 21, "M");
+		$this->daniel->id = 2;
+	}
 
 	/**
 	 *
@@ -191,6 +212,38 @@ class ControllerTest extends GomaUnitTest {
 		$this->assertEqual(lang("successful_published", "The entry was successfully published."),
 			$reflectionMethod->invoke($controller, "publish_success")
 		);
+	}
+
+	public function testRecordCount() {
+		$set = new DataObjectSet(DumpDBElementPerson::class);
+		$set->setVersion(DataObject::VERSION_PUBLISHED);
+
+		/** @var MockIDataObjectSetDataSource $source */
+		$source = $set->getDbDataSource();
+
+		$source->records = array(
+			$this->daniel,
+			$this->simone
+		);
+
+		TestIndexCountController::$indexCount = 0;
+
+		$controller = new TestIndexCountController();
+		$controller->setModelInst($set);
+
+		$request = new Request("get", "record/1");
+		$this->assertEqual("lala", $controller->handleRequest($request));
+		$this->assertEqual(1, TestIndexCountController::$indexCount);
+	}
+}
+
+class TestIndexCountController extends Controller {
+	static $indexCount = 0;
+
+	public function index()
+	{
+		self::$indexCount++;
+		return "lala";
 	}
 }
 

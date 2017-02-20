@@ -1,0 +1,62 @@
+/**
+  *@package goma framework
+  *@link http://goma-cms.org
+  *@license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
+  *@author Goma-Team
+  * last modified: 06.10.2013
+*/
+
+
+.tabs > ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	border-bottom: 1px solid darken(@system-bg, 15%);
+}
+.tabs > ul li {
+	float: left;
+}
+.tabs > ul li.clear {
+	clear: left;
+}
+.tabs > ul li a, .tabs > ul li .tab {
+	display: block;
+	padding: .75em 1em;
+	color: @system-tint;
+	font-weight: normal;
+	margin: 0 0 -1px;
+	background: transparent;
+	-webkit-appearance: none;
+	border: 0;
+}
+.tabs > ul li a {
+
+}
+.tabs > ul li a:hover, .tabs > ul li .tab:hover {
+	background: darken(@system-bg, 10%);
+}
+.tabs > ul li input.active, .tabs > ul li a.active, .tabs > ul li button.active {
+	color: @system-color;
+	font-weight: bold;
+	background: darken(@system-bg, 15%);
+}
+.tabs > ul li button.active, .tabs > ul li input.active {
+	background: darken(@system-bg, 15%);
+}
+.tabs > ul > li > a.active {
+
+}
+
+.tabs > div, .tabs > .tab-wrapper > div {
+	display: none;
+}
+.tabs > .active, .tabs > .tab-wrapper > .active {
+	display: block;
+}
+.tabs > .tab-wrapper {
+	display: block;
+}
+.tabs > .active, .tabs > .tab-wrapper > .active {
+	position: static;
+	clear: left;
+}

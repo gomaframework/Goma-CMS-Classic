@@ -74,7 +74,7 @@ class ImageUploadField extends FileUpload
 		$info->addJSFile("system/libs/thirdparty/jcrop/jquery.Jcrop.js");
 		$info->addJSFile("system/form/imageUpload.js");
 		$info->addJSFile("system/libs/tabs/tabs.js");
-		$info->addCSSFile("system/templates/css/tabs.css");
+		$info->addCSSFile("system/templates/css/tabs.less");
 		$info->addCSSFile("system/libs/thirdparty/jcrop/jquery.Jcrop.css");
 
 		$info->getRenderedField()->append(
