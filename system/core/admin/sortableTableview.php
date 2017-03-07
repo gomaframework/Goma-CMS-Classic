@@ -113,7 +113,7 @@ class SortableTableView extends TableView
 
         Resources::addData("var adminURI = " . var_export($this->namespace, true) . ";");
 
-        return $this->model_inst->customise(
+        return $this->modelInst()->customise(
             array_merge(
                 array(
                     "datafields" => $fields,

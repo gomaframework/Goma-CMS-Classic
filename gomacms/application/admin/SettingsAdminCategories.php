@@ -54,7 +54,9 @@ class SettingsAdminCategories extends AbstractCategoryController {
     {
         parent::Init($request);
 
-        $this->model_inst = DataObject::get("newsettings", array("id" => 1))->first();
+        $this->setModelInst(
+            DataObject::get("newsettings", array("id" => 1))->first()
+        );
 
         return $this;
     }
@@ -94,11 +96,11 @@ class SettingsAdminCategories extends AbstractCategoryController {
                 new \CancelButton("cancel", lang("cancel")),
                 new \FormAction("save", lang("save"), "submit_form", array("green"))
             )))->setModel(
-                $this->model_inst
+                $this->modelInst()
             );
 
             /** @var Newsettings $instance */
-            $instance = new $probClass($this->model_inst->ToArray());
+            $instance = new $probClass($this->modelInst()->ToArray());
             $instance->getFormFromDB($form);
 
             return $form->render();
@@ -120,7 +122,7 @@ class SettingsAdminCategories extends AbstractCategoryController {
             new \CancelButton("cancel", lang("cancel")),
             new \FormAction("save", lang("save"), "submit_form", array("green"))
         )))->setModel(
-            $this->model_inst
+            $this->modelInst()
         )->render();
     }
 
@@ -129,7 +131,7 @@ class SettingsAdminCategories extends AbstractCategoryController {
      */
     public function general()
     {
-        return parent::Form(null, $this->model_inst, array(), true, "submit_form");
+        return parent::Form(null, $this->modelInst(), array(), true, "submit_form");
     }
 
     /**

@@ -160,7 +160,7 @@ class contentAdmin extends LeftAndMain {
             return $this->confirmByForm(
                 lang("revert_changes_confirm", "Do you really want to revert changes and go back to the last published version?"),
                 function() {
-                    if($publishedData = DataObject::get_one($this->modelInst()->classname, array("id" => $this->model_inst->id))) {
+                    if($publishedData = DataObject::get_one($this->modelInst()->classname, array("id" => $this->modelInst()->id))) {
                         $publishedData->writeToDB(false, true, 2, true);
                         if ($this->request->is_ajax()) {
                             $response = new AjaxResponse();
