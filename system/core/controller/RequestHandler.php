@@ -432,16 +432,17 @@ class RequestHandler extends gObject {
 	/**
 	 * returns if this controller is the next controller to the root of this type.
 	 * @param string $type
+	 * @param bool $ignoreSubController
 	 * @return bool
 	 */
-	public function controllerIsNextToRootOfType($type) {
+	public function controllerIsNextToRootOfType($type, $ignoreSubController = false) {
 		if(!is_a($this, $type)) {
 			throw new InvalidArgumentException("You can only compare with types you are.");
 		}
 
 		if($this->request) {
 			foreach ($this->request->getController() as $controller) {
-				if (is_a($controller, $type)) {
+				if (is_a($controller, $type) && (!$ignoreSubController || !$controller->isSubController())) {
 					return spl_object_hash($controller) == spl_object_hash($this);
 				}
 			}

@@ -7,6 +7,7 @@ use DataObjectSet;
 use Goma\Test\Model\DumpDBElementPerson;
 use Goma\Test\Model\MockIDataObjectSetDataSource;
 use GomaUnitTest;
+use LogicException;
 use ReflectionMethod;
 use Request;
 use User;
@@ -151,6 +152,40 @@ class ControllerTest extends GomaUnitTest {
 
 		$this->assertTrue($controller->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class));
 		$this->assertFalse($controller2->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class));
+	}
+
+	/**
+	 * tests controllerIsNextToRootOfType
+	 */
+	public function testcontrollerIsNextToRootOfTypeTrueSubControllerThrows() {
+		$controller = new TestSubClassController();
+		$controller2 = new TestSubControllerWithSubForRequestController();
+
+		$request = new Request("get", "lala");
+		$controller->Init($request);
+		$controller2->Init($request);
+
+		$this->assertThrows(function() use($controller) {
+			$controller->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class, true);
+		}, LogicException::class);
+		$this->assertThrows(function() use($controller2) {
+			$controller2->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class, true);
+		}, LogicException::class);
+	}
+
+	/**
+	 * tests controllerIsNextToRootOfType
+	 */
+	public function testcontrollerIsNextToRootOfTypeTrueSubController() {
+		$controller = new TestSubClassController();
+		$controller2 = new TestSubControllerWithSubForRequestController();
+
+		$request = new Request("get", "lala");
+		$controller->handleRequest($request);
+		$controller2->handleRequest($request);
+
+		$this->assertTrue($controller->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class, true));
+		$this->assertFalse($controller2->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class, true));
 	}
 
 	/**

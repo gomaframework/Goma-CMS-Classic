@@ -126,7 +126,6 @@ abstract class AbstractFormComponent extends RequestHandler {
 
         $this->parent =& $form;
         $this->parent->registerField($this->name, $this);
-        $this->useStateData = $this->parent->useStateData;
 
         return $this;
     }

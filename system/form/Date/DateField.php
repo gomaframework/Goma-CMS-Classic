@@ -125,9 +125,9 @@ class DateField extends FormField
 
 		$info->addJSFile("system/libs/thirdparty/moment/moment.min.js");
 		$info->addJSFile("system/libs/thirdparty/jquery-daterangepicker/daterangepicker.js");
+		$info->addCSSFile("system/libs/thirdparty/jquery-daterangepicker/daterangepicker.css");
 		$info->addJSFile("system/form/Date/DateField.js");
 		$info->addCSSFile("font-awsome/font-awesome.css");
-		$info->addCSSFile("system/libs/thirdparty/jquery-daterangepicker/daterangepicker.css");
 
 		$info->getRenderedField()->addClass("date-field");
 		if($this->showClear) {
