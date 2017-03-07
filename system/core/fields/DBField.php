@@ -504,4 +504,24 @@ class DBField extends gObject implements IDataBaseField
     public static function getSQLDefault($fieldName, $default, $args) {
         return $default;
     }
+
+    /**
+     * @param mixed $old
+     * @param mixed $new
+     * @return string
+     */
+    public static function getDiffOfContents($name, $args, $old, $new) {
+        $class = static::class;
+        /** @var DBField $newCasted */
+        $newCasted =  new $class($name, $new, $args);
+        if($old != $new) {
+            /** @var DBField $oldCasted */
+            $oldCasted = new $class($name, $old, $args);
+            return
+                '<del>' . $oldCasted->forTemplate() . '</del>' .
+                '<ins>' . $newCasted->forTemplate() . '</ins>';
+        } else {
+            return $newCasted->forTemplate();
+        }
+    }
 }

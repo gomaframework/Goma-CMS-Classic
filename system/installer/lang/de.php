@@ -37,5 +37,6 @@ $lang = array(
 	"frameworkVerErr"	=> "Sie benötigen eine höhere Goma-Basissystem-Version, um diese Applikation zu installieren!",
 	"version"			=> "Version",
 	"existent_folder"	=> "Existenter Ordner",
-	"database_working" 	=> "Datenbank funktioniert"
+	"database_working" 	=> "Datenbank funktioniert",
+	"existing"			=> "Existente Installation"
 );

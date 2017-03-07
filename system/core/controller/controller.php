@@ -27,32 +27,6 @@ class Controller extends RequestHandler
     protected static $live_counter = false;
 
     /**
-     * how much data is on one page?
-     */
-    public $perPage = null;
-
-    /**
-     * defines whether to use pages or not
-     *
-     * @var bool
-     */
-    public $pages = false;
-
-    /**
-     * defines which model is used for this controller
-     *
-     * @var bool|string
-     */
-    public $model = null;
-
-    /**
-     * instance of the model
-     *
-     * @var ViewAccessableData
-     */
-    public $model_inst = false;
-
-    /**
      * allowed actions
      */
     public $allowed_actions = array(
@@ -85,19 +59,21 @@ class Controller extends RequestHandler
     protected $keychain;
 
     /**
-     * @var array
+     * @var \Goma\Service\DefaultControllerService
      */
-    protected $singleModelCache = array();
+    protected $service;
 
     /**
      * Controller constructor.
+     * @param \Goma\Service\DefaultControllerService $service
      * @param KeyChain $keychain
      */
-    public function __construct($keychain = null)
+    public function __construct($service = null, $keychain = null)
     {
         parent::__construct();
 
         $this->keychain = $keychain;
+        $this->initService($service);
     }
 
     /**
@@ -154,6 +130,39 @@ class Controller extends RequestHandler
     }
 
     /**
+     * @param \Goma\Service\DefaultControllerService $service
+     * @return \Goma\Service\DefaultControllerService|null
+     */
+    public function initService($service = null) {
+        if(isset($service)) {
+            if(!is_a($service, \Goma\Service\DefaultControllerService::class)) {
+                throw new InvalidArgumentException();
+            }
+
+            $this->service = $service;
+        }
+
+        return $this->service;
+    }
+
+    /**
+     * @param ViewAccessableData|null $model
+     * @return \Goma\Service\DefaultControllerService
+     */
+    protected function defaultService($model = null) {
+        return new \Goma\Service\DefaultControllerService(
+            $this->guessModel($model)
+        );
+    }
+
+    /**
+     * @return \Goma\Service\DefaultControllerService
+     */
+    public function service() {
+        return isset($this->service) ? $this->service : $this->initService($this->defaultService());
+    }
+
+    /**
      * if this method returns a title automatic title and breadcrumb will be set
      */
     public function PageTitle()
@@ -162,109 +171,108 @@ class Controller extends RequestHandler
     }
 
     /**
-     * returns an array of the wiki-article and youtube-video for this controller
-     *
-     * @name helpArticle
-     * @access public
-     * @return array
-     */
-    public function helpArticle()
-    {
-        return array();
-    }
-
-    /**
      * sets the model.
      * @param ViewAccessableData $model
-     * @param bool $name
      * @return $this
      */
-    public function setModelInst($model, $name = false)
+    public function setModelInst($model)
     {
-        if(!is_a($model, "ViewAccessableData")) {
-            throw new InvalidArgumentException("Argument must be type of ViewAccessableData.");
+        if(!$this->service) {
+            $this->service = $this->defaultService($model);
         }
 
-        $this->model_inst = $model;
-        $this->model = ($name !== false) ? $name : $model->DataClass();
-        $this->singleModelCache = array();
-
+        $this->service()->setModel($model);
         return $this;
     }
 
     /**
      * returns the model-object
      *
-     * @param ViewAccessableData|string|null $model
      * @return ViewAccessableData|IDataSet
      */
-    public function modelInst($model = null)
+    public function modelInst()
     {
-        if (is_object($model) && is_a($model, "ViewAccessableData")) {
-            $this->model_inst = $model;
-            $this->model = $model->DataClass();
-            $this->singleModelCache = array();
-            return $this->model_inst;
+        return $this->service()->getModel();
+    }
+
+    /**
+     * @return DataObject|ViewAccessableData
+     */
+    protected function getSingleModel() {
+        return $this->service()->getSingleModel($this->getParam("id"));
+    }
+
+    /**
+     * @param ViewAccessableData|null $model
+     * @return IDataSet|ViewAccessableData
+     */
+    protected function guessModel($model = null) {
+        if(isset($model) && is_a($model, ViewAccessableData::class)) {
+            return $model;
         }
 
-        if(!$this->createDefaultSetFromModel($model)) {
-            if(!is_object($this->model_inst)) {
-                $this->createDefaultSetFromModel($this->model) ||
-                $this->createDefaultSetFromModel(substr($this->classname, 0, -10)) ||
-                $this->createDefaultSetFromModel(substr($this->classname, 0, -11));
-            } else {
-                $this->model = $this->model_inst->DataClass();
+        if($model = StaticsManager::getStatic($this, "model", true)) {
+            if ($modelObject = $this->createDefaultSetFromModel($model)) {
+                return $modelObject;
             }
         }
 
-        return (is_object($this->model_inst)) ? $this->model_inst : new ViewAccessAbleData();
+        if($modelObject = $this->createDefaultSetFromModel(substr($this->classname, 0, -10))) {
+            return $modelObject;
+        }
+
+        if($modelObject = $this->createDefaultSetFromModel(substr($this->classname, 0, -11))) {
+            return $modelObject;
+        }
+
+        $cleanFilename = substr($this->classname, strrpos($this->classname, "\\"));
+        if($modelObject = $this->createDefaultSetFromModel(substr($cleanFilename, 0, -10))) {
+            return $modelObject;
+        }
+
+        if($modelObject = $this->createDefaultSetFromModel(substr($cleanFilename, 0, -11))) {
+            return $modelObject;
+        }
+
+        return new ViewAccessableData();
     }
 
     /**
      * @param string $model
-     * @return bool
+     * @return ViewAccessableData|IDataSet
      */
-    public function createDefaultSetFromModel($model) {
+    protected function createDefaultSetFromModel($model) {
         if(isset($model) && ClassInfo::exists($model)) {
             if(ClassInfo::hasInterface($model, "IDataObjectSetDataSource")) {
-                $this->model_inst = DataObject::get($model);
-                $this->model = $model;
-                return true;
+                return DataObject::get($model);
             } else if(is_subclass_of($model, "ViewAccessableData")) {
-                $this->model_inst = gObject::instance($model);
-                $this->model = $model;
-                return true;
+                return gObject::instance($model);
             }
         }
-        return false;
+
+        return null;
     }
 
     /**
      * returns the controller-model
      *
-     * @param string|null $model
      * @return null|string
      */
-    public function model($model = null)
+    public function model()
     {
-        if (isset($model) && ClassInfo::exists($model)) {
-            $this->model = $model;
-            return $model;
-        }
+        return $this->service()->getModel()->DataClass();
+    }
 
-        if (!isset($this->model)) {
-            if (!is_object($this->model_inst)) {
-                if (ClassInfo::exists($model = substr($this->classname, 0, -10))) {
-                    $this->model = $model;
-                } else if (ClassInfo::exists($model = substr($this->classname, 0, -11))) {
-                    $this->model = $model;
-                }
-            } else {
-                $this->model = $this->model_inst->DataClass();
-            }
-        }
+    /**
+     * gets this class with new model inst.
+     * @param ViewAccessableData $model
+     * @return Controller
+     */
+    public function getWithModel($model) {
+        $class = clone $this;
+        $class->service()->setModel($model);
 
-        return $this->model;
+        return $class;
     }
 
     /**
@@ -278,13 +286,7 @@ class Controller extends RequestHandler
     public function handleRequest($request, $subController = false)
     {
         try {
-            $data = $this->__output(parent::handleRequest($request, $subController));
-
-            if ($this->helpArticle()) {
-                Resources::addData("goma.help.initWithParams(" . json_encode($this->helpArticle()) . ");");
-            }
-
-            return $data;
+            return $this->__output(parent::handleRequest($request, $subController));
         } catch(Exception $e) {
             if($subController) throw $e;
 
@@ -341,38 +343,17 @@ class Controller extends RequestHandler
     }
 
     /**
-     * gets this class with new model inst.
-     * @param ViewAccessableData $model
-     * @return Controller
-     */
-    public function getWithModel($model) {
-        $class = clone $this;
-        $class->model_inst = $model;
-        $class->model = $model->DataClass();
-
-        return $class;
-    }
-
-    /**
      * handles a request with a given record in it's controller
      *
      * @return string|false
      */
     public function record()
     {
-        if (is_a($this->modelInst(), IDataSet::class)) {
-            $data = clone $this->modelInst();
-            $data->addFilter(array("id" => $this->getParam("id")));
-            $this->callExtending("decorateRecord", $model);
-            $this->decorateRecord($data);
-            if ($data->first() != null) {
-                return $this->getWithModel($data->first())->handleRequest($this->request, $this->isSubController());
-            } else {
-                return $this->index();
-            }
-        } else {
-            return $this->index();
+        if($record = $this->service()->getSingleModel($this->getParam("id"))) {
+            return $this->getWithModel($record)->handleRequest($this->request, $this->isSubController());
         }
+
+        return $this->index();
     }
 
     /**
@@ -382,26 +363,16 @@ class Controller extends RequestHandler
      */
     public function version()
     {
-        if (is_a($this->modelInst(), IDataSet::class)) {
-            $data = clone $this->modelInst();
-            $data->addFilter(array("versionid" => $this->getParam("id")));
-            $this->callExtending("decorateRecord", $model);
-            $this->decorateRecord($data);
-            if ($data) {
-                return $this->getWithModel($data)->handleRequest($this->request, $this->isSubController());
-            } else {
-                return $this->index();
-            }
-        } else {
-            return $this->index();
+        if($record = $this->service()->getSingleVersion($this->getParam("id"))) {
+            $this->getWithModel($record)->handleRequest($this->request, $this->isSubController());
         }
+
+        return $this->index();
     }
 
     /**
      * hook in this function to decorate a created record of record()-method
-     *
-     * @name decorateRecord
-     * @access public
+     * @param ViewAccessableData|IDataSet $record
      */
     public function decorateRecord(&$record)
     {
@@ -451,9 +422,10 @@ class Controller extends RequestHandler
             throw new LogicException("No Method generateForm for Model " . get_class($model));
         }
 
-        // add the right controller
         /** @var DataObject $model */
+        $name = !isset($name) ? $model->classname . "_" . $model->id . "_" . $model->versionid : $name;
         $form = $model->generateForm($name, $edit, $disabled, isset($this->request) ? $this->request : null, $this);
+        $form->add(new HiddenField("class_name", $model->classname));
         $form->setSubmission($submission);
 
         foreach($fields as $field) {
@@ -509,7 +481,7 @@ class Controller extends RequestHandler
      * @return bool
      */
     protected function showWithoutRight() {
-        return StaticsManager::getStatic($this->classname, "showWithoutRight") || $this->modelInst()->showWithoutRight;
+        return StaticsManager::getStatic($this->classname, "showWithoutRight", true) || StaticsManager::getStatic($this->modelInst(), "showWithoutRight", true);
     }
 
     /**
@@ -529,7 +501,7 @@ class Controller extends RequestHandler
 
             return $this->confirmByForm(lang("delete_confirm", "Do you really want to delete this record?"), function() use($model) {
                 $preservedModel = clone $model;
-                $model->remove();
+                $this->service()->remove($model);
                 if ($this->getRequest()->isJSResponse() || isset($this->getRequest()->get_params["dropdownDialog"])) {
                     $response = new AjaxResponse();
                     $data = $this->hideDeletedObject($response, $preservedModel);
@@ -539,27 +511,6 @@ class Controller extends RequestHandler
                     return $this->actionComplete("delete_success", $preservedModel);
                 }
             }, null, null, $description);
-        }
-    }
-
-    /**
-     * finds single model if set or by id.
-     *
-     * @return DataObject|ViewAccessableData|null
-     */
-    protected function getSingleModel() {
-        if(is_a($this->modelInst(), IDataSet::class)) {
-            if($this->getParam("id")) {
-                if(!isset($this->singleModelCache[$this->getParam("id")])) {
-                    $this->singleModelCache[$this->getParam("id")] = $this->modelInst()->find("id", $this->getParam("id"));
-                }
-
-                return $this->singleModelCache[$this->getParam("id")];
-            }
-
-            return null;
-        } else {
-            return $this->modelInst();
         }
     }
 
@@ -640,22 +591,18 @@ class Controller extends RequestHandler
      * @param string $action
      * @return string
      * @throws Exception
+     * @deprecated
      */
     public function safe($data, $form = null, $controller = null, $overrideCreated = false, $priority = 1, $action = 'save_success')
     {
-        $givenModel = isset($form) ? $form->getModel() : null;
-        if(isset($givenModel) && is_a($givenModel, DataObject::class)) {
-            unset($data["id"], $data["versionid"]);
-            /** @var DataObject $givenModel */
-            $model = $this->saveModel($givenModel, $data, $priority, false, false, $overrideCreated);
-        } else {
-            $model = $this->save($data, $priority, false, false, $overrideCreated, $givenModel);
-        }
+        /** @var DataObject $givenModel */
+        $givenModel = isset($form) ? $form->getModel() : $this->modelInst();
+        $model = $this->saveModel($givenModel, $data, $priority, false, false, $overrideCreated);
 
-        if ($model !== false) {
+        if ($model) {
             return $this->actionComplete($action, $model);
         } else {
-            throw new Exception('Could not save data');
+            throw new LogicException('saveModel should either throw an exception or give a model.');
         }
     }
 
@@ -668,147 +615,15 @@ class Controller extends RequestHandler
      * @param    array $data
      * @param Form $form
      * @param gObject $controller
-     * @param bool $overrideCreated
      * @return string
      * @throws Exception
      */
-    public function submit_form($data, $form = null, $controller = null, $overrideCreated = false)
+    public function submit_form($data, $form = null, $controller = null)
     {
-        return $this->safe($data, $form, $controller, $overrideCreated);
+        return $this->actionComplete("save_success", $this->service()->save($form->getModel(), $data));
     }
 
-    /**
-     * global save method for the database.
-     *
-     * it saves data to the database. you can define which priority should be selected and if permissions are relevant.
-     *
-     * @param    array $data data
-     * @param    integer $priority Defines what type of save it is: 0 = autosave, 1 = save, 2 = publish
-     * @param    boolean $forceInsert forces the database to insert a new record of this data and neglect permissions
-     * @param    boolean $forceWrite forces the database to write without involving permissions
-     * @param bool $overrideCreated
-     * @param null|DataObject $givenModel
-     * @return bool|DataObject
-     * @deprecated
-     */
-    public function save($data, $priority = 1, $forceInsert = false, $forceWrite = false, $overrideCreated = false, $givenModel = null)
-    {
-        if (PROFILE) Profiler::mark("Controller::save");
-
-        $this->callExtending("onBeforeSave", $data, $priority);
-
-        /** @var DataObject $model */
-        $model = $this->getSafableModel($data, $givenModel);
-
-        $this->storeModel($model, $priority, $forceInsert, $forceWrite, $overrideCreated);
-
-        if (!isset($givenModel)) {
-            $this->model_inst = $model;
-            $model->controller = clone $this;
-        }
-
-        if (PROFILE) Profiler::unmark("Controller::save");
-
-        return $model;
-    }
-
-    /**
-     * @param DataObject $model
-     * @param array $data
-     * @param int $priority
-     * @param bool $forceInsert
-     * @param bool $forceWrite
-     * @param bool $overrideCreated
-     * @return DataObject
-     */
-    public function saveModel($model, $data, $priority = 1, $forceInsert = false, $forceWrite = false, $overrideCreated = false) {
-        if (PROFILE) Profiler::mark("Controller::save");
-
-        $this->callExtending("onBeforeSave", $data, $priority);
-
-        if(!isset($model)) {
-            $model = $this->getModelToWrite();
-        }
-
-        foreach ($data as $key => $value) {
-            if(in_array(strtolower($key), array("id", "versionid"))) {
-                throw new InvalidArgumentException("Controller::saveModel does not use id and versionid.");
-            }
-
-            $model->$key = $value;
-        }
-
-        $this->storeModel($model, $priority, $forceInsert, $forceWrite, $overrideCreated);
-
-        if (PROFILE) Profiler::unmark("Controller::save");
-
-        return $model;
-    }
-
-    /**
-     * @param DataObject $model
-     * @param int $priority
-     * @param bool $forceInsert
-     * @param bool $forceWrite
-     * @param bool $overrideCreated
-     */
-    protected function storeModel($model, $priority, $forceInsert, $forceWrite, $overrideCreated) {
-        $model->writeToDB($forceInsert, $forceWrite, $priority, false, true, false, $overrideCreated);
-
-        $this->onAfterSave($model, $priority, $forceInsert, $forceWrite, $overrideCreated);
-        $this->callExtending("onAfterSave", $model, $priority, $forceInsert, $forceWrite, $overrideCreated);
-    }
-
-    /**
-     * @param DataObject $model
-     * @param int $priority
-     * @param bool $forceInsert
-     * @param bool $forceWrite
-     * @param bool $overrideCreated
-     */
-    protected function onAfterSave($model, $priority, $forceInsert, $forceWrite, $overrideCreated) {
-
-    }
-
-    /**
-     * @return ViewAccessableData
-     */
-    protected function getModelToWrite() {
-        if(is_a($this->modelInst(), IDataSet::class)) {
-            return $this->modelInst()->createNew();
-        }
-
-        return $this->modelInst();
-    }
-
-    /**
-     * returns a model which is writable with given data and optional given model.
-     * if no model was given, an instance of the controlled model is generated.
-     *
-     * @param    array|gObject $data Data or Object of Data
-     * @param    ViewAccessableData $givenModel
-     * @return ViewAccessableData
-     */
-    public function getSafableModel($data, $givenModel = null)
-    {
-        $model = isset($givenModel) ? clone $givenModel : $this->modelInst()->_clone();
-
-        if(isset($data["class_name"])) {
-            if(!ClassManifest::classesRelated($data["class_name"], $model)) {
-                $model = gObject::instance($data["class_name"]);
-            }
-        }
-
-        if (is_object($data) && is_subclass_of($data, "ViewaccessableData")) {
-            $data = $data->ToArray();
-        }
-
-        foreach ($data as $key => $value) {
-            $model->$key = $value;
-        }
-
-        return $model;
-    }
+    #endregion
 
     /**
      * saves data to database and marks the record published.
@@ -820,13 +635,42 @@ class Controller extends RequestHandler
      * @param    array $data
      * @param Form $form
      * @param null $controller
-     * @param bool $overrideCreated
      * @return string
      * @throws Exception
      */
-    public function publish($data, $form = null, $controller = null, $overrideCreated = false)
+    public function publish($data, $form = null, $controller = null)
     {
-        return $this->safe($data, $form, $controller, $overrideCreated, 2, 'publish_success');
+        return $this->actionComplete("publish_success",
+            $this->service()->save($form->getModel(), $data)
+        );
+    }
+
+    /**
+     * @param string $action
+     * @param ViewAccessableData|null $record
+     * @return ControllerRedirectBackResponse|string
+     */
+    protected function getActionCompleteText($action, $record) {
+        if(isset($record)) {
+            if(lang($action . "_" . $record->classname, "-") !== "-") {
+                return lang($action . "_" . $record->classname, null);
+            }
+
+            if(isset($record->baseClass) && lang($action . "_" . $record->baseClass, "-") !== "-") {
+                return lang($action . "_" . $record->baseClass, null);
+            }
+        }
+
+        switch ($action) {
+            case "publish_success":
+                return lang("successful_published", "The entry was successfully published.");
+            case "save_success":
+                return lang("successful_saved", "The data was successfully saved.");
+            case "delete_success":
+                return lang("successful_deleted");
+        }
+
+        return lang("success", "Success: ") . ": " . $this->classname . "/" . $action;
     }
 
     /**
@@ -835,26 +679,16 @@ class Controller extends RequestHandler
      * it is called when actions of this controller are completed and the user should be notified. For example if the user saves data and it was successfully saved, this method is called with the param save_success. It is also called if an error occurs.
      *
      * @param    string $action the action called
-     * @param    gObject $record optional: record if available
-     * @access    public
+     * @param    ViewAccessableData|null $record
      * @return string
      */
     public function actionComplete($action, $record = null)
     {
-        switch ($action) {
-            case "publish_success":
-                AddContent::addSuccess(lang("successful_published", "The entry was successfully published."));
-                return $this->redirectback();
-            case "save_success":
-                AddContent::addSuccess(lang("successful_saved", "The data was successfully saved."));
-                return $this->redirectback();
-            case "less_rights":
-                return '<div class="error">' . lang("less_rights", "You are not allowed to visit this page or perform this action.") . '</div>';
-            case "delete_success":
-                return $this->redirectback();
+        if($text = $this->getActionCompleteText($action, $record)) {
+            AddContent::addSuccess($text);
         }
 
-        throw new InvalidArgumentException("Action $action not supported by actionComplete.");
+        return $this->redirectback();
     }
 
     /**
@@ -990,7 +824,7 @@ class Controller extends RequestHandler
      * @param string $defaultValue
      * @param null|bool $redirectOnCancel
      * @param null|bool $usePwdField
-     * @return RequestForm
+     * @return mixed
      * @deprecated
      */
     public function prompt($messsage, $validators = array(), $defaultValue = null, $redirectOnCancel = null, $usePwdField = null)
@@ -1080,53 +914,43 @@ class Controller extends RequestHandler
     }
 
     /**
-     * keychain
-     */
-
-    /**
-     * adds a password to the keychain
-     *
-     * @deprecated
-     * @param string $password
-     * @param null $cookie
-     * @param null $cookielt
-     */
-    public static function keyChainAdd($password, $cookie = null, $cookielt = null)
-    {
-        Core::Deprecate(2.0, "keychain()->add");
-        Keychain::sharedInstance()->add($password);
-    }
-
-    /**
-     * checks if a password is in keychain
-     *
-     * @deprecated
-     * @param string $password
-     * @return bool
-     */
-    public static function KeyChainCheck($password)
-    {
-        Core::Deprecate(2.0, "keychain()->check");
-        return Keychain::sharedInstance()->check($password);
-    }
-
-    /**
-     * removes a password from keychain
-     *
-     * @deprecated
-     * @param string $password
-     */
-    public static function keyChainRemove($password)
-    {
-        Core::Deprecate(2.0, "keychain()->remove");
-        Keychain::sharedInstance()->remove($password);
-    }
-
-    /**
      * @return Keychain
      */
     public function keychain() {
         return isset($this->keychain) ? $this->keychain : Keychain::sharedInstance();
+    }
+
+
+    /**
+     * global save method for the database.
+     *
+     * it saves data to the database. you can define which priority should be selected and if permissions are relevant.
+     *
+     * @param    array $data data
+     * @param    integer $priority Defines what type of save it is: 0 = autosave, 1 = save, 2 = publish
+     * @param    boolean $forceInsert forces the database to insert a new record of this data and neglect permissions
+     * @param    boolean $forceWrite forces the database to write without involving permissions
+     * @param bool $overrideCreated
+     * @param null|DataObject $givenModel
+     * @return bool|DataObject
+     * @deprecated
+     */
+    public function save($data, $priority = 1, $forceInsert = false, $forceWrite = false, $overrideCreated = false, $givenModel = null)
+    {
+        return $this->service()->saveData($data, $priority, $forceInsert, $forceWrite, $overrideCreated, $givenModel);
+    }
+
+    /**
+     * @param DataObject $model
+     * @param array $data
+     * @param int $priority
+     * @param bool $forceInsert
+     * @param bool $forceWrite
+     * @param bool $overrideCreated
+     * @return DataObject
+     */
+    public function saveModel($model, $data, $priority = 1, $forceInsert = false, $forceWrite = false, $overrideCreated = false) {
+        return $this->service()->saveModel($model, $data, $priority, $forceInsert, $forceWrite, $overrideCreated);
     }
 
     /**

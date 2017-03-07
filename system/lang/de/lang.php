@@ -234,7 +234,6 @@ $lang = array(
 	"deleted"										=> "Gelöscht",
 	"successful_published"							=> "Der Eintrag wurden erfolgreich gespeichert und veröffentlicht!",
 	"published"										=> "Veröffentlicht",
-	'edit_settings'									=> "Einstellungen bearbeiten",
 	'sites_edit'									=> "Seiten verwalten und anlegen",
 	'admin_smilies'									=> "Smilies verwalten",
 	'admin_boxes'									=> "Inhalt der Boxen verwalten",

@@ -117,18 +117,18 @@ class Rating extends DataObject
             $star = $i + 1;
             if ($canWrite) {
                 if ($i < $count)
-                    $output .= '<a id="star_' . $this->name . '_' . $star . '" class="star_yellow star" href="rate/' . $this->name . '/' . $star . '" rel="ajaxfy" title="' . $star . '""><img src="images/star_yellow.png" alt="' . $star . '" /></a>';
+                    $output .= '<a id="star_' . $this->name . '_' . $star . '" class="star_yellow star" href="rate/' . $this->name . '/' . $star . '" rel="ajaxfy" title="' . $star . '""><img src="system/images/star_yellow.png" alt="' . $star . '" /></a>';
                 else if ($i == $count && $half)
-                    $output .= '<a id="star_' . $this->name . '_' . $star . '" class="star_half star" href="rate/' . $this->name . '/' . $star . '" rel="ajaxfy" title="' . $star . '""><img src="images/star_half.png" alt="' . $star . '" /></a>';
+                    $output .= '<a id="star_' . $this->name . '_' . $star . '" class="star_half star" href="rate/' . $this->name . '/' . $star . '" rel="ajaxfy" title="' . $star . '""><img src="system/images/star_half.png" alt="' . $star . '" /></a>';
                 else
-                    $output .= '<a id="star_' . $this->name . '_' . $star . '" class="star_grey star" href="rate/' . $this->name . '/' . $star . '" rel="ajaxfy" title="' . $star . '""><img src="images/star_grey.png" alt="' . $star . '" /></a>';
+                    $output .= '<a id="star_' . $this->name . '_' . $star . '" class="star_grey star" href="rate/' . $this->name . '/' . $star . '" rel="ajaxfy" title="' . $star . '""><img src="system/images/star_grey.png" alt="' . $star . '" /></a>';
             } else {
                 if ($i < $count)
-                    $output .= '<img src="images/star_yellow.png" alt="' . $star . '" />';
+                    $output .= '<img src="system/images/star_yellow.png" alt="' . $star . '" />';
                 else if ($i == $count && $half)
-                    $output .= '<img src="images/star_half.png" alt="' . $star . '" />';
+                    $output .= '<img src="system/images/star_half.png" alt="' . $star . '" />';
                 else
-                    $output .= '<img src="images/star_grey.png" alt="' . $star . '" />';
+                    $output .= '<img src="system/images/star_grey.png" alt="' . $star . '" />';
 
             }
         }

@@ -1,6 +1,7 @@
 # System files
 .DS_Store
 Thumbs.db
+*.iml
 
 system/libs/thirdparty/phpqrcode/cache
 system/libs/thirdparty/phpqrcode/cache/*

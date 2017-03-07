@@ -178,7 +178,9 @@ class DropDown extends FormField {
 			return null;
 		}
 
-		return parent::getModel();
+		$model = parent::getModel();
+		$this->model = $model;
+		return $model;
 	}
 
 	/**
@@ -627,10 +629,9 @@ class DropDown extends FormField {
 
 		$arr = $data["data"];
 
-		//print_r($this);
 		$value = ($this->multiselect) ? array_values($this->dataset) : array($this->getKeyFromKey($this->getModel()));
 
-		if(empty($value) || $value[0] === null) {
+		if(count($value) == 0 || $value[0] === null) {
 			$value = array();
 		} else {
 			$value = array_flip($value);

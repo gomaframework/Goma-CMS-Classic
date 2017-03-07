@@ -61,4 +61,24 @@ class DefaultPermissionTest extends GomaUnitTest {
             )
         ))->count());
     }
+
+    /**
+     * @throws MySQLException
+     */
+    public function testforceGroupsTest() {
+        try {
+            $newUser = new \User();
+            $newUser->nickname = $newUser->email = "beta@soredi-touch-systems.com";
+            $newUser->password = "1234";
+            $newUser->writeToDB(false, true);
+
+            DefaultPermission::forceGroups($newUser);
+
+            $this->assertGreaterThanOrEqual(1, $newUser->groups()->count());
+        } finally {
+            if($newUser) {
+                $newUser->remove(true);
+            }
+        }
+    }
 }

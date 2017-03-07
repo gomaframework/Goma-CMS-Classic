@@ -285,7 +285,7 @@ class GomaFormResponse extends GomaResponse {
      * @param string $value
      * @return $this
      */
-    public function setHeader($name, $value) {
+    public function setHeader($name, $value = "") {
         if(is_a($this->renderedForm, "GomaResponse")) {
             $this->renderedForm->setHeader($name, $value);
         } else {

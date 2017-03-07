@@ -105,7 +105,7 @@ class FrontedController extends Controller
      * @return ViewAccessableData
      */
     protected function getServeModel($content) {
-        $model = is_object($this->model_inst) ? $this->model_inst : new ViewAccessableData();
+        $model = is_object($this->modelInst()) ? $this->modelInst() : new ViewAccessableData();
 
         $model->customise(array(
             "title"      => $this->Title(),

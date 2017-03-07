@@ -1108,47 +1108,30 @@ body .updateInfo .changelog_scroll {
 #history {
   display: none;
 }
+body {
+  .tabs > ul li {
 
-/* tabs */
-.tabs > ul li {
-  margin-left: 0;
-  margin-right: 0;
-}
+  }
 
-.tabs > ul li a, .tabs > ul li .tab {
-  background: transparent !important;
-  border: 0;
-  color: @color-action;
+  .tabs > ul li a, .tabs > ul li .tab {
+    border-bottom: 2px solid transparent;
+  }
 
-  margin-left: 0;
-  margin-right: 0;
+  .tabs > ul li a:hover, .tabs > ul li .tab:hover, .tabs > ul li button:hover {
+    border-bottom: 2px solid @system-action;
+    background: transparent;
+  }
 
-  padding-top: 0.63em;
-  padding-bottom: 0.59em;
-  margin-top: -0.063em !important;
-  margin-bottom: -0.063em;
-  border-bottom: 2px solid transparent;
-}
+  .tabs > ul li .active {
+    color: @system-highlight;
+    font-weight: normal;
+    background: transparent;
+    border-bottom: 2px solid @system-highlight;
+  }
 
-.tabs > ul li a:hover, .tabs > ul li input.tab:hover, .tabs > ul li button.tab:hover {
-  color: @color-action !important;
-  padding-bottom: 0.6em;
-  border-bottom: 2px solid @color-action;
-}
-
-.tabs > ul li input.active, .tabs > ul li a.active, .tabs > ul li button.active {
-  color: @color-highlight !important;
-  border: 0;
-  border-bottom: 2px solid @color-highlight !important;
-  padding-bottom: .6em;
-}
-
-.tabs > ul li a.active:hover, .tabs > ul li input.active:hover, .tabs > ul li button.active:hover {
-  color: @color-highlight !important;
-}
-
-.tabs > ul li button.active {
-  padding-bottom: .63em;
+  .tabs > ul li a.active:hover, .tabs > ul li input.active:hover, .tabs > ul li button.active:hover {
+    border-bottom: 2px solid @system-highlight;
+  }
 }
 
 ul.list-view {

@@ -17,7 +17,7 @@
 			var older = o;
 			var olderText = older.html();
 			var id = o.attr("id").replace("_link", "");
-			older.html('<img src="images/16x16/loading.gif" alt="loading" />');
+			older.html('<img src="system/images/16x16/loading.gif" alt="loading" />');
 
 			// load data from server
 			$.ajax({

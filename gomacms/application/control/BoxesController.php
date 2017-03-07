@@ -133,7 +133,7 @@ class BoxesController extends FrontedController {
     {
         if (isset($pid)) {
             $data = DataObject::get("boxes", array("seiteid" => $pid));
-            $this->model_inst = $data;
+            $this->setModelInst($data);
         }
 
         $this->callExtending("beforeRenderBoxes", $pid);

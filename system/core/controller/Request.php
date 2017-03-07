@@ -99,6 +99,7 @@ class Request extends gObject {
 
 	/**
 	 * php-input.
+	 * @var string
 	 */
 	protected $phpInputFile;
 
@@ -652,5 +653,16 @@ class Request extends gObject {
 
 		$this->requestController = $request->requestController;
 		$this->controller = $request->controller;
+	}
+
+	/**
+	 * @internal
+	 * @param string $phpInputFile
+	 * @return $this
+	 */
+	public function setPhpInputFile($phpInputFile)
+	{
+		$this->phpInputFile = $phpInputFile;
+		return $this;
 	}
 }

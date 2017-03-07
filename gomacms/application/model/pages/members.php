@@ -13,7 +13,7 @@ class members extends Page
 		/**
 		 * icon for this page
 		*/
-		static $icon = "images/icons/fatcow16/group.png";
+		static $icon = "system/images/icons/fatcow16/group.png";
 		
 		/**
 		 *@name name

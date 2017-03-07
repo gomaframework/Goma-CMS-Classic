@@ -112,7 +112,7 @@ class Tabs extends gObject {
             exit;
         }
         
-        Resources::add("tabs.css");
+        Resources::add("tabs.less");
         gloader::load("gtabs");
         
         krsort($this->tabs);
@@ -168,7 +168,7 @@ class Tabs extends gObject {
                     } else {
                         // in case the ajax-tab is not selected, we just draw the menu
                         $this->tabNavi->append(new HTMLNode("li", array(), new HTMLNode("a", array("class" => "ajax tab", "name" => $id, "href" => URL . URLEND . "?" . $this->name . "=" . $id, "id" => $id . "_tab"), $data["title"])));
-                        $this->tabContainer->append(new HTMLNode("div", array("id" => $id), '<div style="text-align: center;"><img src="images/loading.gif" alt="loading..." /></div>'));
+                        $this->tabContainer->append(new HTMLNode("div", array("id" => $id), '<div style="text-align: center;"><img src="system/images/loading.gif" alt="loading..." /></div>'));
                     }
                 }
             }

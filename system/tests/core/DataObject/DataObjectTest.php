@@ -106,7 +106,7 @@ class DataObjectTests extends GomaUnitTest
             $this->assertFalse($gottenModel->_bool);
             $this->assertIdentical(false, $gottenModel->_bool);
         } finally {
-            if($model) {
+            if(isset($model)) {
                 $model->remove(true);
             }
         }
@@ -122,7 +122,7 @@ class DataObjectTests extends GomaUnitTest
             $this->assertTrue($gottenModel->_bool);
             $this->assertIdentical(true, $gottenModel->_bool);
         } finally {
-            if($model) {
+            if(isset($model)) {
                 $model->remove(true);
             }
         }
@@ -166,7 +166,7 @@ class DataObjectTests extends GomaUnitTest
 
             $this->assertEqual($entity->queryVersion, DataObject::VERSION_PUBLISHED);
         } finally {
-            if($entity) {
+            if(isset($entity)) {
                 $entity->remove(true);
             }
         }
@@ -183,7 +183,7 @@ class DataObjectTests extends GomaUnitTest
 
             $this->assertEqual($entity->queryVersion, DataObject::VERSION_STATE);
         } finally {
-            if($entity) {
+            if(isset($entity)) {
                 $entity->remove(true);
             }
         }
@@ -204,7 +204,7 @@ class DataObjectTests extends GomaUnitTest
 
             $this->assertEqual($entity->queryVersion, DataObject::VERSION_STATE);
         } finally {
-            if($entity) {
+            if(isset($entity)) {
                 $entity->remove(true);
             }
         }
@@ -340,7 +340,7 @@ class fakeRepo extends  IModelRepository {
      * @param iDataBaseWriter $dbWriter
      * @return ModelWriter
      */
-    public function buildWriter($record, $command, $silent, $overrideCreated, $writeType = self::WRITE_TYPE_PUBLISH, $dbWriter = null)
+    public function buildWriter($record, $command, $silent, $overrideCreated, $writeType = self::WRITE_TYPE_PUBLISH, $dbWriter = null, $forceWrite = false)
     {
         // TODO: Implement buildWriter() method.
         $this->lastMethod = "buildWriter";

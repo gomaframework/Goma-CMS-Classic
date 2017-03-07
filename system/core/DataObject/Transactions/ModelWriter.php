@@ -68,6 +68,11 @@ class ModelWriter extends gObject {
     private $repository;
 
     /**
+     * @var bool
+     */
+    protected $forceWrite;
+
+    /**
      * creates write.
      *
      * @param DataObject $model new version
@@ -75,8 +80,9 @@ class ModelWriter extends gObject {
      * @param DataObject|null $objectToUpdate old version
      * @param IModelRepository $repository
      * @param iDataBaseWriter $writer
+     * @param bool $forceWrite
      */
-    public function __construct($model, $commandType, $objectToUpdate, $repository, $writer = null) {
+    public function __construct($model, $commandType, $objectToUpdate, $repository, $writer = null, $forceWrite = false) {
         parent::__construct();
 
         $this->model = $model;
@@ -87,6 +93,7 @@ class ModelWriter extends gObject {
         $this->databaseWriter = isset($writer) ? clone $writer : new MySQLWriterImplementation();
         $this->databaseWriter->setWriter($this);
         $this->databaseWriter->validate();
+        $this->forceWrite = $forceWrite;
     }
 
     /**
@@ -150,7 +157,9 @@ class ModelWriter extends gObject {
      */
     public function setWriteType($writeType)
     {
-        $this->writeType = $writeType;
+        if(isset($writeType)) {
+            $this->writeType = $writeType;
+        }
         return $this;
     }
 
@@ -499,5 +508,13 @@ class ModelWriter extends gObject {
     public function isPublish()
     {
         return $this->getWriteType() == IModelRepository::WRITE_TYPE_PUBLISH;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isForceWrite()
+    {
+        return $this->forceWrite;
     }
 }

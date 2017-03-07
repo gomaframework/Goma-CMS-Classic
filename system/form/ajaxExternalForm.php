@@ -66,8 +66,8 @@ class AjaxExternalForm extends FormField {
 				"class" => "edit hideClose noAutoHide"
 			), new HTMLNode("img", array(
 				"alt" => lang("edit"),
-				"src" => "images/icons/fatcow16/edit.png",
-				"data-retina" => "images/icons/fatcow16/edit@2x.png"
+				"src" => "system/images/icons/fatcow16/edit.png",
+				"data-retina" => "system/images/icons/fatcow16/edit@2x.png"
 			)))
 		));
 

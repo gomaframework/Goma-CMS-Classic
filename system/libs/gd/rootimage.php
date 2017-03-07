@@ -113,7 +113,7 @@ class ROOTImage extends GD
         if (file_exists(ROOT . $file)) {
             return ROOT_PATH . $file;
         } else {
-            return BASE_SCRIPT . "images/resampled/" . round($width) . "/" . round($height) . "/" . $this->org_pic;
+            return BASE_SCRIPT . "system/images/resampled/" . round($width) . "/" . round($height) . "/" . $this->org_pic;
         }
     }
 }

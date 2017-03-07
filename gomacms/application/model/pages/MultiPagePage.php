@@ -18,7 +18,7 @@ class MultiPagePage extends Page {
 
     static $cname = '{$_lang_gomacms.multipage}';
 
-    static $icon = "images/icons/goma16/page_copy.png";
+    static $icon = "system/images/icons/goma16/page_copy.png";
 
     static $db = array(
         "allowUrlSwitching" => "Switch"

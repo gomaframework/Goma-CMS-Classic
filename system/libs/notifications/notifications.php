@@ -40,7 +40,7 @@ class Notification extends gObject {
 		
 		if(!isset($title, $icon)) {
 			$title = lang("notification", "notification");
-			$icon = "images/icons/modernui/dark/48x48/appbar.notification.multiple.png";
+			$icon = "system/images/icons/modernui/dark/48x48/appbar.notification.multiple.png";
 		}
 		
 		if($type == "notification") {

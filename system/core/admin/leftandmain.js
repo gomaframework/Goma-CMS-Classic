@@ -243,7 +243,7 @@ var LaM_type_timeout;
 			$this.find("input[type=text]").blur();
 		}
 
-		$this.parents(".classtree").find(".treewrapper").html("&nbsp;<img src=\"images/16x16/ajax-loader.gif\" alt=\"\" /> Loading...");
+		$this.parents(".classtree").find(".treewrapper").html("&nbsp;<img src=\"system/images/16x16/ajax-loader.gif\" alt=\"\" /> Loading...");
 		var treewrapper = $this.parents(".classtree").find(".treewrapper");
 		// if no search
 		if(value == "") {

@@ -103,9 +103,7 @@ class GomaResponse extends gObject {
         parent::__construct();
 
         $this->setDefaultHeader();
-        foreach((array) $header as $name => $value) {
-            $this->setHeader($name, $value);
-        }
+        $this->setHeader((array) $header);
         $this->setBody($body);
     }
 
@@ -123,15 +121,28 @@ class GomaResponse extends gObject {
     /**
      * sets a header.
      *
-     * @param string $name
+     * @param array|string $name
      * @param string $value
      * @return $this
      */
-    public function setHeader($name, $value) {
+    public function setHeader($name, $value = "") {
+        if(is_array($name)) {
+            foreach($name as $key => $header) {
+                $this->setHeader($key, $header);
+            }
+            return $this;
+        } else if(!$value) {
+            return $this->removeHeader($name);
+        }
+
         $this->header[strtolower($name)] = $value;
         return $this;
     }
 
+    /**
+     * @param string $name
+     * @return $this
+     */
     public function removeHeader($name) {
         unset($this->header[strtolower($name)]);
         return $this;

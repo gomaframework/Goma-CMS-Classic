@@ -1,11 +1,4 @@
 <?php
-/**
- * @package        Goma\Security\Users
- *
- * @author        Goma-Team
- * @license        GNU Lesser General Public License, version 3; see "LICENSE.txt"
- */
-
 defined('IN_GOMA') OR die();
 
 /**
@@ -112,8 +105,7 @@ class RegisterExtension extends ControllerExtension
 			$user = new User();
 
 			$this->callExtending("extendNewUserForRegistration", $user);
-
-			return $this->getOwner()->getWithModel($user)->form(false, false, array(), false, "doregister");
+			return $this->getOwner()->form(null, $user, array(), null, "doregister");
 		}
 	}
 
@@ -229,11 +221,12 @@ class RegisterExtension extends ControllerExtension
 	 * we don't use register, because of constructor
 	 *
 	 * @param $data
+	 * @param Form $form
 	 * @return string
 	 * @throws Exception
 	 * @throws MySQLException
 	 */
-	public function doregister($data)
+	public function doregister($data, $form)
 	{
 		/** @var ProfileController $owner */
 		$owner = $this->getOwner();
@@ -242,7 +235,7 @@ class RegisterExtension extends ControllerExtension
 			$data["code"] = randomString(10);
 
 			/** @var User $model */
-			if ($model = $owner->save($data, 2, true, true)) {
+			if ($model = $owner->service()->saveModel($form->getModel(), $data, 2, true, true)) {
 				try {
 					// send mail
 					$this->sendMail($model);
@@ -259,11 +252,11 @@ class RegisterExtension extends ControllerExtension
 			// send mail
 			$this->sendMailToAdmins($data);
 
-			if ($model =  $owner->save($data, 2, true, true)) {
+			if ($model =  $owner->saveModel($form->getModel(), $data, 2, true, true)) {
 				return $this->renderView($model, lang('register_wait_for_activation', "The account was sucessfully registered, but an administrator needs to activate it. You'll be notified by email."));
 			}
 		} else {
-			if ($model = $owner->save($data, 2, true, true)) {
+			if ($model = $owner->saveModel($form->getModel(), $data, 2, true, true)) {
 				return $this->renderView($model, lang('register_ok', "Ready to login! Thanks for using this Site!"));
 			}
 		}
@@ -289,7 +282,7 @@ class RegisterExtension extends ControllerExtension
 	}
 }
 
-gObject::extend("ProfileController", RegisterExtension::class);
+gObject::extend(ProfileController::class, RegisterExtension::class);
 StaticsManager::AddSaveVar(RegisterExtension::class, "enabled");
 StaticsManager::AddSaveVar(RegisterExtension::class, "validateMail");
 StaticsManager::AddSaveVar(RegisterExtension::class, "registerCode");

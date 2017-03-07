@@ -55,6 +55,11 @@ class LeftAndMain extends AdminItem {
 	static $render_class = "LeftAndMain_TreeRenderer";
 
 	/**
+	 * @var bool
+	 */
+	static $useStateData = true;
+
+	/**
 	 * gets the title of the root node
 	 *
 	 * @return string
@@ -76,6 +81,18 @@ class LeftAndMain extends AdminItem {
 			}
 		}
 		return $options;
+	}
+
+	/**
+	 * @param null|ViewAccessableData $model
+	 * @return \Goma\Service\DefaultControllerService
+	 */
+	protected function defaultService($model = null)
+	{
+		return static::$useStateData ?
+		new \Goma\Service\StateControllerService(
+			$this->guessModel($model)
+		) : parent::defaultService($model);
 	}
 
 	/**
@@ -168,12 +185,12 @@ class LeftAndMain extends AdminItem {
 
 			$data = array(
 				array(
-					"icon"		=> "images/16x16/edit.png",
+					"icon"		=> "system/images/16x16/edit.png",
 					"label" 	=> lang("edit"),
 					"onclick"	=> "LoadTreeItem(".$child->recordid.");"
 				),
 				array(
-					"icon"		=> "images/16x16/del.png",
+					"icon"		=> "system/images/16x16/del.png",
 					"label" 	=> lang("delete"),
 					"ajaxhref"	=> $this->originalNamespace . "/record/" . $child->recordid . "/delete" . URLEND
 				)
@@ -378,13 +395,12 @@ class LeftAndMain extends AdminItem {
 	 * @access public
 	 * @param object $model
 	 * @param array $add
-	 * @param gObject|null $controller
 	 * @return DataObject
 	 */
-	public function decorateModel($model, $add = array(), $controller = null) {
+	public function decorateModel($model, $add = array()) {
 		$add["types"] = $this->Types();
 
-		return parent::decorateModel($model, $add, $controller);
+		return parent::decorateModel($model, $add);
 	}
 
 	/**
@@ -399,16 +415,6 @@ class LeftAndMain extends AdminItem {
 			$arr->push(array("value" => str_replace("\\", "-", $class), "title" => $title, "icon" => ClassInfo::getClassIcon($class)));
 		}
 		return $arr;
-	}
-
-	/**
-	 * hook in this function to decorate a created record of record()-method
-	 * @param DataObjectSet|DataObject $record
-	 */
-	public function decorateRecord(&$record) {
-		if(is_a($record, "DataObjectSet")) {
-			if (!$record->getVersion()) $record->setVersion("state");
-		}
 	}
 
 	/**
@@ -443,7 +449,7 @@ class LeftAndMain extends AdminItem {
 			$model->queryVersion = "state";
 		}
 
-		return $this->selectModel($model)->form();
+		return $this->form(null, $model);
 	}
 
 	/**

@@ -52,7 +52,7 @@ class tplCaller extends gObject
      * @param gObject $dataobject
      * @param string $tpl
      */
-    public function __construct(gObject &$dataobject, $tpl = "")
+    public function __construct(gObject $dataobject, $tpl = "")
     {
         parent::__construct();
 
@@ -637,7 +637,7 @@ class tplCaller extends gObject
      */
     public function imageSetSize($file, $width, $height)
     {
-        $url = "images/resampled/" . $width . "/" . $height . "/" . $file;
+        $url = "system/images/resampled/" . $width . "/" . $height . "/" . $file;
         if (!file_exists($url)) {
             FileSystem::requireDir(dirname($url));
             FileSystem::Write($url . ".permit", "");
@@ -655,7 +655,7 @@ class tplCaller extends gObject
      */
     public function imageSetWidth($file, $width)
     {
-        $url = "images/resampled/" . $width . "/" . $file;
+        $url = "system/images/resampled/" . $width . "/" . $file;
 
         if (!file_exists($url)) {
             FileSystem::requireDir(dirname($url));
@@ -674,7 +674,7 @@ class tplCaller extends gObject
      */
     public function imageSetHeight($file, $height)
     {
-        $url = "images/resampled/x/" . $height . "/" . $file;
+        $url = "system/images/resampled/x/" . $height . "/" . $file;
 
         if (!file_exists($url)) {
             FileSystem::requireDir(dirname($url));

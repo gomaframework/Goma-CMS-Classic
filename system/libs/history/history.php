@@ -142,8 +142,6 @@ class History extends DataObject {
 	/**
 	 * returns a list of classes supporting HistoryView
 	 *
-	 * @name supportHistoryView
-	 * @access public
 	 * @return array
 	 */
 	public static function supportHistoryView() {
@@ -152,7 +150,7 @@ class History extends DataObject {
 
 		self::$supportHistoryView = array();
 		foreach(ClassInfo::getChildren("DataObject") as $child) {
-			if(StaticsManager::getStatic($child, "history") && ClassInfo::hasInterface($child, "HistoryData") && call_user_func_array(array($child, "canViewHistory"), array($child))) {
+			if(StaticsManager::getStatic($child, "history", true) && ClassInfo::hasInterface($child, "HistoryData")) {
 				self::$supportHistoryView[] = $child;
 			}
 		}

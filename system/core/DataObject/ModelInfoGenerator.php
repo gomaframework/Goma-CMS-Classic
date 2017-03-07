@@ -250,7 +250,7 @@ class ModelInfoGenerator {
 
         foreach(gObject::getExtensionsForClass($class, false) as $extension) {
             if(gObject::method_exists($extension, "many_many_extra_fields")) {
-                if($extensionFields = call_user_func_array(array($extension, "many_many_extra_fields"), array())) {
+                if($extensionFields = call_user_func_array(array($extension, "many_many_extra_fields"), array($class))) {
                     $extensionFields = ArrayLib::map_key("strtolower", $extensionFields);
                     if(isset($extensionFields[$name])) {
                         $fields = array_merge($fields, $extensionFields[$name]);

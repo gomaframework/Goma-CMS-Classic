@@ -149,7 +149,9 @@ class HasOneWriter extends Extension {
             $owner->getSilent(),
             $owner->getUpdateCreated(),
             $owner->getWriteType(),
-            $owner->getDatabaseWriter());
+            $owner->getDatabaseWriter(),
+            $owner->isForceWrite()
+        );
         $writer->write();
     }
     /**

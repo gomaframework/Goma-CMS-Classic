@@ -72,7 +72,7 @@ class FileUpload extends FormField {
 	/**
 	 * default-icon.
 	 */
-	protected $defaultIcon = "images/icons/goma/128x128/file.png";
+	protected $defaultIcon = "system/images/icons/goma/128x128/file.png";
 
 	/**
 	 * template.

@@ -873,7 +873,7 @@ class DataObjectSetTests extends GomaUnitTest
         $this->assertEqual($this->allPersons[0], $set->first());
         $i = 0;
         foreach($set as $item) {
-            $this->assertEqual($this->allPersons[$i]->name, $item->name);
+            $this->assertEqual($this->allPersons[$i]->name, $item->name, "Element $i is problematic.");
             $i++;
         }
         $this->assertEqual($a, $i);
@@ -1503,11 +1503,12 @@ class DumpDBElementPerson extends DataObject {
 
     public function &ToArray($additional_fields = array())
     {
-        return array_merge(parent::ToArray($additional_fields), array(
+        $data = array_merge(parent::ToArray($additional_fields), array(
             "name"      => $this->name,
             "age"       => $this->age,
             "gender"    => $this->gender
         ));
+        return $data;
     }
 
     public function writeToDBInRepo($repository, $forceInsert = false, $forceWrite = false, $writeType = 2, $history = true, $silent = false, $overrideCreated = false)

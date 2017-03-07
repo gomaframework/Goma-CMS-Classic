@@ -81,9 +81,10 @@ abstract class IModelRepository {
      * @param bool $overrideCreated
      * @param int $writeType
      * @param iDataBaseWriter $dbWriter
+     * @param bool $forceWrite
      * @return ModelWriter
      */
-    public abstract function buildWriter($record, $command, $silent, $overrideCreated, $writeType = self::WRITE_TYPE_PUBLISH, $dbWriter = null);
+    public abstract function buildWriter($record, $command, $silent, $overrideCreated, $writeType = self::WRITE_TYPE_PUBLISH, $dbWriter = null, $forceWrite = false);
 
     /**
      * @param DataObject $record

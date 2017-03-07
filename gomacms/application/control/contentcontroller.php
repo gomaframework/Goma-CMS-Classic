@@ -12,6 +12,8 @@
  * @author      Goma-Team
  *
  * @version     2.1.2
+ *
+ * @method PageService service()
  */
 class ContentController extends FrontedController
 {
@@ -53,20 +55,14 @@ class ContentController extends FrontedController
     static $less_vars = "default.less";
 
     /**
-     * @var PageService
+     * @param null|ViewAccessableData $model
+     * @return \Goma\Service\DefaultControllerService
      */
-    protected $pageService;
-
-    /**
-     * siteController constructor.
-     * @param KeyChain $keychain
-     * @param PageService $pageService
-     */
-    public function  __construct($keychain = null, $pageService = null)
+    protected function defaultService($model = null)
     {
-        parent::__construct($keychain);
-
-        $this->pageService = isset($pageService) ? $pageService : new PageService();
+        return new PageService(
+            $this->guessModel($model)
+        );
     }
 
     /**
@@ -115,7 +111,7 @@ class ContentController extends FrontedController
         if ($action != "") {
             $path = $action;
             if (preg_match('/^[a-zA-Z0-9_\-\/]+$/Usi', $path)) {
-                $this->subPage = $this->pageService->getPageWithState(
+                $this->subPage = $this->service()->getPageWithState(
                     array("path" => array("LIKE", $path), "parentid" => $this->modelInst()->id),
                     isset($this->getRequest()->get_params["pages_state"])
                 );

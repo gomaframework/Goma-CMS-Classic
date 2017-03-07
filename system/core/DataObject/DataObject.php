@@ -71,11 +71,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     static $history = true;
 
     /**
-     * show read-only edit if not enough rights
-     */
-    public $showWithoutRight = false;
-
-    /**
      * prefix for table_name
      */
     public $prefix = "";
@@ -485,8 +480,8 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * @param History $record
      * @return bool
      */
-    public static function canViewHistory($record = null) {
-        if (is_object($record)) {
+    public static function canViewHistory($record) {
+        if (is_a($record, History::class)) {
             if ($record->oldversion && $record->newversion) {
                 return ($record->oldversion->can(ModelPermissionManager::PERMISSION_TYPE_WRITE, $record->oldversion) && $record->newversion->can(ModelPermissionManager::PERMISSION_TYPE_WRITE, $record->newversion));
             } else if ($record->newversion) {
@@ -494,16 +489,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
             } else if ($record->record) {
                 return $record->record->can(ModelPermissionManager::PERMISSION_TYPE_WRITE, $record->record);
             }
-        }
-
-        if (is_object($record)) {
-            $classInstance = new $record->dbobject;
-        } else if (is_string($record)) {
-            $classInstance = new $record;
         } else {
-            throw new InvalidArgumentException("Invalid first argument for DataObject::canViewRecord object or class-name required");
+            throw new InvalidArgumentException("Invalid first argument for DataObject::canViewRecord. History required.");
         }
-        return $classInstance->can(ModelPermissionManager::PERMISSION_TYPE_WRITE);
     }
 
     /**
@@ -1157,28 +1145,13 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * @param    string|array|callback $submission
      * @return   Form
      */
-    public function generateForm($name = null, $edit = false, $disabled = false, $request = null, $controller = null, $submission = null) {
-
-        // if name is not set, we generate a name from this model
-        if (!isset($name)) {
-            $name = $this->classname . "_" . $this->versionid . "_" . $this->id;
-        }
-
+    public function generateForm($name, $edit = false, $disabled = false, $request = null, $controller = null, $submission = null) {
         $form = new Form($controller, $name, array(), array(), array(), $request, $this);
 
         // default submission
         $form->setSubmission(isset($submission) ? $submission : "submit_form");
 
         $form->setResult(clone $this);
-
-        // some default fields
-        if ($this->recordid) {
-            $form->add(new HiddenField("id", $this->recordid));
-            $form->add(new HiddenField("versionid", $this->versionid));
-            $form->add(new HiddenField("recordid", $this->recordid));
-        }
-
-        $form->add(new HiddenField("class_name", $this->classname));
 
         // render form
         if ($edit) {
@@ -2110,8 +2083,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * gets a object of this record with id and versionid set to 0.
      * it also adds hasmany-relations.
      *
-     * @name duplicate
-     * @access public
      * @return $this
      */
     public function duplicate() {
@@ -2449,7 +2420,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
 
         $this->callExtending("afterBuildDB", $prefix, $log);
 
-        $output = '<div style="padding-top: 6px;"><img src="images/success.png" height="16" alt="Success" /> Checking Database of '.$this->classname."</div><div style=\"padding-left: 21px;width: 550px;\">";
+        $output = '<div style="padding-top: 6px;"><img src="system/images/success.png" height="16" alt="Success" /> Checking Database of '.$this->classname."</div><div style=\"padding-left: 21px;width: 550px;\">";
         $output .= str_replace("\n", "<br />",$log);
         $output .= "</div>";
         return $output;

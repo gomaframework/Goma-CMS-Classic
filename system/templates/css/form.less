@@ -38,7 +38,7 @@ fieldset {
 .form_field > .select-wrapper {
   border: 0.063em solid #ccc;
   margin: 0.3em;
-  background: #eee url(../../../images/icons/modernui/halflight/48x48/appbar.chevron.down.png) no-repeat right center;
+  background: #eee url(../../images/icons/modernui/halflight/48x48/appbar.chevron.down.png) no-repeat right center;
 
   -moz-border-radius: 0.1875em;
   -webkit-border-radius: 0.1875em;
@@ -361,4 +361,24 @@ fieldset > .form_field > .info_field {
 }
 .clusterformfield > legend {
   padding: 1em .875em 0;
+}
+
+.date-field {
+  .clear-wrapper {
+    display: inline-block;
+    position: relative;
+    height: .875em;
+
+    .clear-date {
+      position: absolute;
+      right: .5em;
+      margin: -1em;
+      padding: 1em;
+      display: block;
+
+      &.disabled {
+        display: none;
+      }
+    }
+  }
 }

@@ -232,7 +232,7 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 		if(!GFS_Package_Creator::wasPacked($file, $request)) {
 			$gfs->setAutoCommit(false);
 			$gfs->add(FRAMEWORK_ROOT, "/data/system/", array("temp", LOG_FOLDER, "/installer/data", "version.php"));
-			$gfs->add(ROOT . "images/", "/data/images/", array("resampled"));
+			$gfs->add(ROOT . "system/images/", "/data/images/", array("resampled"));
 			$gfs->add(ROOT . "languages/", "/data/languages/");
 			$out = $gfs->commitReply(null, null, isCommandLineInterface() ? -1 : 2.0, isCommandLineInterface());
             if(is_a($out, GomaResponse::class)) {

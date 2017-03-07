@@ -55,7 +55,7 @@ class contentControllerTest extends GomaUnitTest
      */
     public function testPassword() {
         $request = new Request("get", "");
-        $controller = new ContentController($chain = new Keychain(false, null, null, "testKeychainContentController"));
+        $controller = new ContentController(null, $chain = new Keychain(false, null, null, "testKeychainContentController"));
         $controller->setModelInst($page = new Page(array("data" => "Hallo Welt")));
         $page->read_permission->password = "1234";
         $page->read_permission->type = "password";

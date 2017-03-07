@@ -49,7 +49,7 @@ class TabSet extends FieldSet
      */
     public function addRenderData($info, $notifyField = true)
     {
-        $info->addCSSFile("tabs.css");
+        $info->addCSSFile("tabs.less");
         $info->addJSFile("system/libs/tabs/tabs.js");
 
         foreach($info->getChildren() as $child) {

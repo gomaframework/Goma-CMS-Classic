@@ -3,7 +3,11 @@ namespace Goma\Test\Controller\ControllerTestENV;
 
 use Controller;
 use DataObject;
+use DataObjectSet;
+use Goma\Test\Model\DumpDBElementPerson;
+use Goma\Test\Model\MockIDataObjectSetDataSource;
 use GomaUnitTest;
+use LogicException;
 use ReflectionMethod;
 use Request;
 use User;
@@ -26,85 +30,77 @@ class ControllerTest extends GomaUnitTest {
 	*/
 	public $name = "Controller";
 
-	public function testModelSaveManagementWithArray() {
-		$view = new ViewAccessableData(array("test" => 3));
+	/**
+	 * @var DumpDBElementPerson
+	 */
+	protected $simone;
 
-		$this->assertEqual($view->test, 3);
+	/**
+	 * @var DumpDBElementPerson
+	 */
+	protected $daniel;
 
-		$c = new Controller();
+	public function setUp() {
+		$this->simone = new DumpDBElementPerson("Simone", 21, "W");
+		$this->simone->id = 1;
 
-		$model = $c->getSafableModel(array("test" => 1, "blah" => 2, "blub" => "test"), $view);
-
-		$this->assertEqual($view->test, 3);
-		$this->assertEqual($model->test, 1);
-		$this->assertEqual($model->blah, 2);
-		$this->assertEqual($model->blub, "test");
-	}
-
-	public function testModelSaveManagementWithObject() {
-		$view = new ViewAccessableData(array("test" => 3));
-		$data = new ViewAccessableData(array("test" => 1, "blah" => 2, "blub" => "test"));
-
-		$this->assertEqual($view->test, 3);
-
-		$c = new Controller();
-
-		$model = $c->getSafableModel($data, $view);
-
-		$this->assertEqual($view->test, 3);
-		$this->assertEqual($model->test, 1);
-		$this->assertEqual($data->test, 1);
-		$this->assertEqual($model->blah, 2);
-		$this->assertEqual($model->blub, "test");
+		$this->daniel = new DumpDBElementPerson("Daniel", 21, "M");
+		$this->daniel->id = 2;
 	}
 
 	/**
 	 *
 	 */
-	public function testModelInst() {
-		$controller = new Controller();
-		$controller->model = "user";
+	public function testGuessModelInst() {
+		$controller = new UserController();
 
 		$this->assertIsA($controller->modelInst(), "DataObjectSet");
 		$this->assertEqual($controller->modelInst()->DataClass(), "user");
 		$this->assertNull($this->unitTestGetSingleModel($controller));
+	}
+
+	/**
+	 *
+	 */
+	public function testGetSingleModelFromRequest() {
+		$controller = new UserController();
 
 		$controller->setRequest($request = new Request("get", "test"));
-		$request->params["id"] = DataObject::get_one("user")->id;
+		$user =  DataObject::get_one("user");
+		$request->params["id"] = $user->id;
 		$this->assertIsA($this->unitTestGetSingleModel($controller), "user");
-		$this->assertEqual($this->unitTestGetSingleModel($controller), DataObject::get_one("user"));
+		$this->assertEqual($this->unitTestGetSingleModel($controller), $user);;
 
-		$this->assertIsA($controller->modelInst("admin"), "admin");
-		$this->assertEqual($controller->modelInst()->DataClass(), "admin");
+		$this->assertIsA($controller->modelInst(), "DataObjectSet");
+		$this->assertEqual($controller->modelInst()->DataClass(), "user");
+	}
 
-		$controller->model = "admin";
-		$controller->model_inst = null;
+	/**
+	 * checks if we can change the "single model"
+	 */
+	public function testSwitchGetSingleModel() {
+		$controller = new UserController();
+
+		$controller->setRequest($request = new Request("get", "test"));
+		$user =  DataObject::get_one("user");
+		$request->params["id"] = $user->id;
+		$this->assertIsA($this->unitTestGetSingleModel($controller), "user");
+
+		$controller->setModelInst(new \admin());
 
 		$this->assertIsA($this->unitTestGetSingleModel($controller), "admin");
-		$this->assertIsA($controller->modelInst("admin"), "admin");
+		$this->assertIsA($controller->modelInst(), "admin");
 		$this->assertEqual($controller->modelInst()->DataClass(), "admin");
 	}
 
+	/**
+	 * @param $controller
+	 * @return mixed
+	 */
 	public function unitTestGetSingleModel($controller) {
 		$reflectionMethod = new ReflectionMethod("controller", "getSingleModel");
 		$reflectionMethod->setAccessible(true);
 		return $reflectionMethod->invoke($controller);
-	}
-
-	public function testGetSafableModel() {
-		$controller = new Controller();
-        $controller->setModelInst($user = new User(array(
-            "id" => 2
-        )));
-
-        $this->assertEqual($controller->getSafableModel(array())->id, 0);
-        $this->assertIsA($controller->getSafableModel(array()), User::class);
-
-        $this->assertEqual($user, $controller->getSafableModel(array(), $user));
-
-        $this->assertEqual($controller->getSafableModel(array(
-            "test" => 123
-        ))->test, 123);
 	}
 
     /**
@@ -161,6 +157,40 @@ class ControllerTest extends GomaUnitTest {
 	/**
 	 * tests controllerIsNextToRootOfType
 	 */
+	public function testcontrollerIsNextToRootOfTypeTrueSubControllerThrows() {
+		$controller = new TestSubClassController();
+		$controller2 = new TestSubControllerWithSubForRequestController();
+
+		$request = new Request("get", "lala");
+		$controller->Init($request);
+		$controller2->Init($request);
+
+		$this->assertThrows(function() use($controller) {
+			$controller->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class, true);
+		}, LogicException::class);
+		$this->assertThrows(function() use($controller2) {
+			$controller2->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class, true);
+		}, LogicException::class);
+	}
+
+	/**
+	 * tests controllerIsNextToRootOfType
+	 */
+	public function testcontrollerIsNextToRootOfTypeTrueSubController() {
+		$controller = new TestSubClassController();
+		$controller2 = new TestSubControllerWithSubForRequestController();
+
+		$request = new Request("get", "lala");
+		$controller->handleRequest($request);
+		$controller2->handleRequest($request);
+
+		$this->assertTrue($controller->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class, true));
+		$this->assertFalse($controller2->controllerIsNextToRootOfType(TestSubControllerWithSubForRequestController::class, true));
+	}
+
+	/**
+	 * tests controllerIsNextToRootOfType
+	 */
 	public function testcontrollerIsNextToRootOfTypeFalse() {
 		$controller = new TestSubClassController();
 		$controller2 = new TestSubControllerWithSubForRequestController();
@@ -192,6 +222,10 @@ class ControllerTest extends GomaUnitTest {
         $this->assertInstanceOf(TestSubControllerForRequestController::class, $request->getRequestController());
     }
 
+	/**
+	 * tests request for clean index
+	 * @throws \Exception
+	 */
 	public function testRequestForIndexClean() {
 		$request = new Request(
 			"GET",
@@ -201,6 +235,50 @@ class ControllerTest extends GomaUnitTest {
 		$controller = new TestSubControllerForRequestController();
 		$this->assertEqual("Sub", $controller->handleRequest($request));
 		$this->assertEqual("test", $request->remaining());
+	}
+
+	/**
+	 * tests basic function from that method
+	 */
+	public function testgetActionCompleteText() {
+		$controller = new Controller();
+		$reflectionMethod = new ReflectionMethod(Controller::class, "getActionCompleteText");
+		$reflectionMethod->setAccessible(true);
+		$this->assertEqual(lang("successful_published", "The entry was successfully published."),
+			$reflectionMethod->invoke($controller, "publish_success")
+		);
+	}
+
+	public function testRecordCount() {
+		$set = new DataObjectSet(DumpDBElementPerson::class);
+		$set->setVersion(DataObject::VERSION_PUBLISHED);
+
+		/** @var MockIDataObjectSetDataSource $source */
+		$source = $set->getDbDataSource();
+
+		$source->records = array(
+			$this->daniel,
+			$this->simone
+		);
+
+		TestIndexCountController::$indexCount = 0;
+
+		$controller = new TestIndexCountController();
+		$controller->setModelInst($set);
+
+		$request = new Request("get", "record/1");
+		$this->assertEqual("lala", $controller->handleRequest($request));
+		$this->assertEqual(1, TestIndexCountController::$indexCount);
+	}
+}
+
+class TestIndexCountController extends Controller {
+	static $indexCount = 0;
+
+	public function index()
+	{
+		self::$indexCount++;
+		return "lala";
 	}
 }
 
@@ -241,3 +319,8 @@ class TestSubControllerWithSubForRequestController extends \RequestHandler {
 class TestSubClassController extends TestSubControllerWithSubForRequestController {
 
 }
+
+class UserController extends Controller {
+
+}
+

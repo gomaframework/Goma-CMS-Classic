@@ -1,30 +1,7 @@
 <a href="./" class="">&laquo; {$_lang_back}</a>
 <div id="apps">
-	<% IF $folders %>
-        <% CONTROL folders() AS $folder %>
-            <div class="app">
-                <div class="icon">
-                    <% IF $folder.icon %>
-                    <img src="{$folder.icon}" alt="" width="64" />
-                    <% END %>
-                </div>
-                <div class="button_right">
-                    <a href="{BASE_SCRIPT}install/restoreFolder/$folder.directory.url(){URLEND}" class="button"><% lang("install.restore") %></a>
-                </div>
-                <div class="info">
-                    <h1>{$_lang_install.existent_folder}: $folder.directory</h1>
-                    <p>$folder.title ($folder.name)</p>
-                    <p>{$_lang_version} $folder.version</p>
-                    <% IF $folder.working %>
-                    <p><img src="images/success.png" /> {$_lang_install.database_working}</p>
-                    <% END %>
-                </div>
-                <div class="clear"></div>
-            </div>
-        <% ENDCONTROL %>
-	<% END %>
 
-	<% IF $apps OR $folders %>
+	<% IF $apps %>
 		<% CONTROL apps() AS $app %>
             <div class="app">
 				<div class="icon">

@@ -17,24 +17,16 @@ class tpl extends gObject
 
 	/**
 	 * currently parsed template
-	 *
-	 * @name tpl
-	 * @access public
 	 */
 	public static $tpl = "";
 
 	/**
 	 * dataStack
-	 *
-	 * @name dataStack
 	 */
 	public static $dataStack = array();
 
 	/**
 	 * some words you can use like this: <% WORD data %> will be like <% word(data); %>
-	 *
-	 * @name language_reserved_words
-	 * @access public
 	 */
 	public static $language_reserved_words = array(
 		"INCLUDE_JS_MAIN",
@@ -51,18 +43,13 @@ class tpl extends gObject
 
 	/**
 	 * this is a static array for convert_vars
-	 *
-	 * @name convert_var_temp
-	 * @access public
 	 */
 	private static $convert_vars_temp = array();
 
 	/**
-	 * @access public
 	 * @param string - filename
-	 * @param bollean - to follow <!tpl inc:"neu"> or not
+	 * @param boolean - to follow <!tpl inc:"neu"> or not
 	 * @param array - for replacement like {$content}
-	 * @use: parse tpl
 	 * @return mixed
 	 */
 	public static function init($name, $follow = true, $replacement = array(), $ifsa = array(), $blockvars = array(), $class = "")
@@ -377,7 +364,7 @@ class tpl extends gObject
 				continue;
 			}
 
-			$data = preg_replace_callback('/([a-zA-Z0-9_\.]+)\(/si', array("tpl", "functions"), $data);
+			$data = preg_replace_callback('/\$?([a-zA-Z0-9_\.]+)\(/si', array("tpl", "functions"), $data);
 
 			$data = preg_replace_callback('/\{?\$([a-zA-Z0-9_][a-zA-Z0-9_\-\.]+)\.([a-zA-Z0-9_]+)\((.*?)\)}?/si', array("tpl", "convert_vars"), $data);
 			$data = preg_replace_callback('/\$([a-zA-Z0-9_][a-zA-Z0-9_\.]+)/si', array("tpl", "percent_vars"), $data);

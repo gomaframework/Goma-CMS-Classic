@@ -120,7 +120,8 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
                 }
 
                 // if same
-                if($this->getOwner()->fieldGet($name . "id") == $this->getOwner()->id) {
+                if(ClassManifest::isOfType($relationShip->getTargetClass(), $relationShip->getOwner()) &&
+                    $this->getOwner()->fieldGet($name . "id") == $this->getOwner()->id) {
                     return $this->getOwner();
                 }
 

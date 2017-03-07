@@ -34,7 +34,7 @@ class Group extends DataObject implements HistoryData, PermProvider
     /**
      * icon for this model
      */
-    static public $icon = "images/icons/fatcow16/group.png";
+    static public $icon = "system/images/icons/fatcow16/group.png";
 
     /**
      * database-fields
@@ -222,19 +222,19 @@ class Group extends DataObject implements HistoryData, PermProvider
             case "update":
             case "publish":
                 $lang = lang("h_group_update", '$user updated the group <a href="$groupUrl">$group</a>');
-                $icon = "images/icons/fatcow16/group_edit.png";
+                $icon = "system/images/icons/fatcow16/group_edit.png";
                 break;
             case "insert":
                 $lang = lang("h_group_create", '$user created the group <a href="$groupUrl">$group</a>');
-                $icon = "images/icons/fatcow16/group_add.png";
+                $icon = "system/images/icons/fatcow16/group_add.png";
                 break;
             case "remove":
                 $lang = lang("h_user_remove", '$user removed the group $group');
-                $icon = "images/icons/fatcow16/group_delete.png";
+                $icon = "system/images/icons/fatcow16/group_delete.png";
                 break;
             default:
                 $lang = "Unknowen event " . $record->action;
-                $icon = "images/icons/fatcow16/group_edit.png";
+                $icon = "system/images/icons/fatcow16/group_edit.png";
         }
 
         $lang = str_replace('$groupUrl', "admin/group/" . $record->record()->id . URLEND, $lang);

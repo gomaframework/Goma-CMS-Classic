@@ -66,11 +66,12 @@ class adminController extends Controller
     }
 
     /**
+     * @param null $service
      * @param null $keyChain
      */
-    public function __construct($keyChain = null)
+    public function __construct($service = null, $keyChain = null)
     {
-        parent::__construct($keyChain);
+        parent::__construct($service, $keyChain);
 
         Resources::addData("goma.ENV.is_backend = true;");
         defined("IS_BACKEND") OR define("IS_BACKEND", true);
@@ -80,9 +81,12 @@ class adminController extends Controller
     /**
      * global admin-enabling
      *
-     * @name handleRequest
+     * @param Request $request
+     * @param bool $subController
+     * @return false|string
+     * @throws Exception
+     * @internal param $handleRequest
      * @access public
-     * @return string|false
      */
     public function handleRequest($request, $subController = false)
     {
@@ -126,7 +130,6 @@ class adminController extends Controller
     /**
      * title
      *
-     * @name title
      * @return string
      */
     public function title()
@@ -484,7 +487,7 @@ class admin extends ViewAccessableData implements PermProvider
 
                     $data->push(array('text'   => parse_lang($class->text),
                                       'uname'  => str_replace("\\", "-", substr($class->classname, 0, -5)),
-                                      'sort'   => $class->sort,
+                                      'sort'   => StaticsManager::getStatic($class, "sort", true),
                                       "active" => $active,
                                       "icon"   => ClassInfo::getClassIcon($class->classname)));
                 }

@@ -212,7 +212,7 @@ class Boxes extends DataObject implements Notifier {
 	 */
 	public static function NotifySettings()
 	{
-		return array("title" => lang("boxes"), "icon" => "images/icons/fatcow16/layout_content@2x.png");
+		return array("title" => lang("boxes"), "icon" => "system/images/icons/fatcow16/layout_content@2x.png");
 	}
 
 	/**
@@ -377,7 +377,7 @@ class boxpage extends Page {
 	/**
 	 * pretty nice icon for that
 	 */
-	public static $icon = "images/icons/fatcow-icons/16x16/layout_content.png";
+	public static $icon = "system/images/icons/fatcow-icons/16x16/layout_content.png";
 
 	/**
 	 * gets a object of this record with id and versionid set to 0
