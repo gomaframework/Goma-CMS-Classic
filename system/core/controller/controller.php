@@ -27,18 +27,6 @@ class Controller extends RequestHandler
     protected static $live_counter = false;
 
     /**
-     * how much data is on one page? 2
-     */
-    public $perPage = null;
-
-    /**
-     * defines whether to use pages or not
-     *
-     * @var bool
-     */
-    public $pages = false;
-
-    /**
      * allowed actions
      */
     public $allowed_actions = array(
