@@ -16,6 +16,11 @@ class FrontedController extends Controller
     protected static $live_counter = true;
 
     /**
+     * @var string
+     */
+    protected $baseTemplate = "site.html";
+
+    /**
      * gets $view
      *
      * @return string
@@ -66,8 +71,6 @@ class FrontedController extends Controller
     /**
      * fronted-bar for admins
      *
-     * @name frontedBar
-     * @access public
      * @return array
      */
     public function frontedBar()
@@ -76,27 +79,21 @@ class FrontedController extends Controller
     }
 
     /**
-     * handles the request with showing as site
-     * @param string $content
-     * @param GomaResponseBody $body
-     * @return mixed|string
+     * @param GomaResponse|string $content
+     * @return GomaResponse|string
      */
-    public function serve($content, $body)
+    public function __output($content)
     {
-        if ((Core::is_ajax() && isset($_GET["dropdownDialog"])) || Director::isResponseFullPage($body)) {
-            return $content;
+        if($this->isManagingController($content) && !isset($this->getRequest()->get_params["ajaxfy"])) {
+            $view = $this->getServeModel(
+                Director::getStringFromResponse($content)
+            );
+            return parent::__output(
+                \Director::setStringToResponse($content, $view->renderWith($this->baseTemplate, $this->inExpansion))
+            );
         }
 
-        if(strpos(strtolower($content), "</body") !== false) {
-            throw new LogicException("Before FrontedController serve, no HTML-Body should be generated. Seems like somebody called serve twice.");
-        }
-
-        if (SITE_MODE == STATUS_MAINTANANCE && !Permission::check("ADMIN")) {
-            return $this->getServeModel($content)->renderWith("page_maintenance.html");
-        }
-
-
-        return $this->renderWith("site.html", $this->getServeModel($content));
+        return parent::__output($content);
     }
 
     /**
@@ -105,9 +102,10 @@ class FrontedController extends Controller
      * @return ViewAccessableData
      */
     protected function getServeModel($content) {
-        $model = is_object($this->modelInst()) ? $this->modelInst() : new ViewAccessableData();
-
+        $model = new ViewAccessableData();
+        $model->customise($this->tplVars);
         $model->customise(array(
+            "model"      => clone $this->modelInst(),
             "title"      => $this->Title(),
             "own_css"    => $this->own_css(),
             "addcontent" => $this->addcontent(),
@@ -146,68 +144,5 @@ class FrontedController extends Controller
         ));
         $this->callExtending("appendContent", $object);
         return $object->html();
-    }
-}
-
-class siteController extends Controller
-{
-    public $shiftOnSuccess = false;
-    public static $keywords;
-    public static $description;
-
-    /**
-     * @var PageService
-     */
-    protected $pageService;
-
-    /**
-     * siteController constructor.
-     * @param KeyChain $keychain
-     * @param PageService $pageService
-     */
-    public function  __construct($keychain = null, $pageService = null)
-    {
-        parent::__construct($keychain);
-
-        $this->pageService = isset($pageService) ? $pageService : new PageService();
-    }
-
-    public function handleRequest($request, $subController = false)
-    {
-        if (SITE_MODE == STATUS_MAINTANANCE && !Permission::check("ADMIN")) {
-            $data = new ViewAccessAbleData();
-            return $data->customise()->renderWith("page_maintenance.html");
-        }
-
-        return parent::handleRequest($request, $subController);
-    }
-
-    /**
-     * gets the content
-     *
-     * @return bool|false|mixed|null|string
-     */
-    public function index()
-    {
-        $path = $this->getParam("path");
-        if ($path) {
-            /** @var Page $page */
-            $page = $this->pageService->getPageWithState(
-                array("path" => array("LIKE", $path), "parentid" => 0),
-                isset($this->request->get_params["pages_state"])
-            );
-            if ($page) {
-                return ControllerResolver::instanceForModel($page)->handleRequest($this->request, $this->isSubController());
-            } else {
-
-                unset($page, $path);
-                $error = DataObject::get_one("errorpage");
-                if ($error) {
-                    return $error->controller()->handleRequest($this->request, $this->isSubController());
-                }
-                unset($error);
-            }
-
-        }
     }
 }

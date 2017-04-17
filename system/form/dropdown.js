@@ -35,6 +35,7 @@ DropDown.prototype = {
 	currentSearchResult: "",
 	currentRequest: null,
 	inSort: false,
+	hideTimeout: null,
 
 	getValue: function() {
 		return this.input.val();
@@ -88,22 +89,23 @@ DropDown.prototype = {
 
 	/**
 	 * inits the dropdown-events
-	 *
-	 *@name init
 	 */
 	init: function() {
 		var that = this;
 
-
 		this.widget.disableSelection();
 		this.widget.find(" > .field").css("cursor", "pointer");
 
-		this.widget.find(" > .field").click(function(){
+		this.widget.find(" > .field").on("click, focus", function(){
 			if(!that.inSort) {
 				that.toggleDropDown();
 			}
 			return false;
 		});
+
+		this.widget.find(" > .field").on("blur", this.checkFocusForHide.bind(this));
+		this.widget.find(" > .dropdown > .header > .search").on("blur", this.checkFocusForHide.bind(this));
+		this.widget.find(" > .dropdown a").on("blur", this.checkFocusForHide.bind(this));
 
 		this.widget.find(" > input").css("display", "none");
 		this.widget.find(" > .field").css("margin-top", 0);
@@ -192,10 +194,19 @@ DropDown.prototype = {
 
 		this.bindFieldEvents();
 	},
+
+	checkFocusForHide: function() {
+		clearTimeout(this.hideTimeout);
+		this.hideTimeout = setTimeout(function() {
+			if($(document.activeElement).parents("#" + this.widget.attr("id")).length == 0) {
+				this.hideDropDown();
+			}
+		}.bind(this), 100);
+	},
+
 	/**
 	 * sets the content of the field, which is clickable and is showing current selection
 	 *
-	 *@name setField
 	 *@param string - content
 	 */
 	setField: function(content, setHeight) {
@@ -213,7 +224,6 @@ DropDown.prototype = {
 	/**
 	 * sets the content of the dropdown
 	 *
-	 *@name setContent
 	 *@param string - content
 	 */
 	setContent: function(content) {
@@ -222,11 +232,10 @@ DropDown.prototype = {
 
 	/**
 	 * shows the dropdown
-	 *
-	 *@name showDropDown
 	 */
 	showDropDown: function() {
 		if(this.widget.find(" > .dropdown").css("display") == "none") {
+			this.widget.find(" > .field").attr("tabindex", -1);
 			this.widget.find(" > .field").addClass("active");
 			// set correct position
 			this.updateDropdownPosition();
@@ -264,6 +273,7 @@ DropDown.prototype = {
 		clearTimeout(this.timeout);
 		this.widget.find(" > .dropdown").fadeOut(200);
 		this.widget.find(" > .field").removeClass("active");
+		this.widget.find(" > .field").attr("tabindex", 0);
 	},
 
 	/**
@@ -356,9 +366,9 @@ DropDown.prototype = {
 								content += "<li>";
 
 								if (data.value[val.key] || data.value[val.key] === 0)
-									content += "<a href=\"javascript:;\" class=\"checked\" id=\"dropdown_" + that.id + "_" + val.key + "\"><span title=\"" + val.value.replace('"', '\\"') + "\">" + val.value + "</span></a>";
+									content += "<a href=\"javascript:;\" tabindex='-1' class=\"checked\" id=\"dropdown_" + that.id + "_" + val.key + "\"><span title=\"" + val.value.replace('"', '\\"') + "\">" + val.value + "</span></a>";
 								else
-									content += "<a href=\"javascript:;\" id=\"dropdown_" + that.id + "_" + val.key + "\"><span title=\"" + val.value.replace('"', '\\"') + "\">" + val.value + "</span></a>";
+									content += "<a href=\"javascript:;\" tabindex='-1' id=\"dropdown_" + that.id + "_" + val.key + "\"><span title=\"" + val.value.replace('"', '\\"') + "\">" + val.value + "</span></a>";
 
 								if (typeof val.smallText == "string") {
 									content += "<span class=\"record_info\">" + val.smallText + "</span>";

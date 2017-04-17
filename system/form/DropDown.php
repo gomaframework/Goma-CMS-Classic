@@ -215,7 +215,8 @@ class DropDown extends FormField {
 		), array(
 			$this->field = new HTMLNode("div", array(
 				"class" => "field",
-				"id" => $this->ID() . "_field"
+				"id" => $this->ID() . "_field",
+				"tabindex" => $this->isDisabled() ? -1 : 0
 			), $this->renderInputWidget()),
 			$this->dropdown = new HTMLNode("div", array("class" => "dropdown"), array(
 				new HTMLNode("div", array("class" => "header"), array(
@@ -224,20 +225,24 @@ class DropDown extends FormField {
 						"autocomplete" => "off",
 						"id" => $this->ID() . "_search",
 						"class" => "search",
-						"placeholder" => lang("search", "search...")
+						"placeholder" => lang("search", "search..."),
+						"tabindex" => -1
 					)),
 					new HTMLNode("a", array(
 						"href" => "javascript:;",
-						"class" => "cancel"
+						"class" => "cancel",
+						"tabindex" => -1
 					)),
 					new HTMLNode("div", array("class" => "pagination"), array(
 						new HTMLNode("span", array("class" => "left"), array(new HTMLNode("a", array(
 							"class" => "left disabled fa fa-angle-left fa-3x",
-							"href" => "javascript:;"
+							"href" => "javascript:;",
+							"tabindex" => -1
 						), ""))),
 						new HTMLNode("span", array("class" => "right"), array(new HTMLNode("a", array(
 							"class" => "right disabled fa fa-angle-right fa-3x",
-							"href" => "javascript:;"
+							"href" => "javascript:;",
+							"tabindex" => -1
 						), "")))
 					)),
 					new HTMLNode("div", array("class" => "clear"))
@@ -269,7 +274,7 @@ class DropDown extends FormField {
 	 */
 	public function addRenderData($info, $notifyField = true)
 	{
-		$info->addCSSFile("dropdown.css");
+		$info->addCSSFile("dropdown.less");
 		$info->addJSFile("system/form/dropdown.js");
 		$info->addCSSFile("font-awsome/font-awesome.css");
 

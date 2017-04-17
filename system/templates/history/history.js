@@ -105,16 +105,17 @@
 		});
 
 		if(div.find("a.newer").length == 0) {
-			goma.Pusher.subscribe("presence-goma", function(){
-				this.bind("history-update", function(data) {
-					if(data.rendering && (!f || !data.class_name || in_array(data.class_name, f))) {
-						div.prepend(data.rendering);
-						div.find(".event.first").removeClass("first");
-						div.find(".event:first-child").addClass("first").css("display", "none").slideDown("fast");
-					}
+			if(goma.Pusher !== undefined) {
+				goma.Pusher.subscribe("presence-goma", function () {
+					this.bind("history-update", function (data) {
+						if (data.rendering && (!f || !data.class_name || in_array(data.class_name, f))) {
+							div.prepend(data.rendering);
+							div.find(".event.first").removeClass("first");
+							div.find(".event:first-child").addClass("first").css("display", "none").slideDown("fast");
+						}
+					});
 				});
-			});
-
+			}
 		}
 
 		function in_array(item,arr) {

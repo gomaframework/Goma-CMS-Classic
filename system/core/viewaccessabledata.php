@@ -1028,6 +1028,20 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 	}
 
 	/**
+	 * gets the class as an instance of the given class-name.
+	 *
+	 * @param   string $type of object
+	 * @return  gObject of type $value
+	 */
+	public function getClassAs($type) {
+		if (is_subclass_of($type, $this->DataClass())) {
+			return new $type(array_merge($this->data, array("class_name" => $type)));
+		}
+
+		return $this;
+	}
+
+	/**
 	 * get an array of pages by given pagecount
 	 *
 	 * @param int $pagecount

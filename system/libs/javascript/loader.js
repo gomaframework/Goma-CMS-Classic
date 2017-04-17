@@ -36,51 +36,65 @@ var json_regexp = /^\(?\{/,
 			 * we stop execution of JavaScript while loading
 			 */
 			gloaded = {"-": true},
+			// TODO: Remove Deprecation
 			loadScript = function (comp, fn) {
-
 				if (gloaded[comp] == null)
 				{
-					$.ajax({
+					gloaded[comp] = $.ajax({
 						cache: true,
 						noRequestTrack: true,
 						url: BASE_SCRIPT + "gloader/" + comp + ".js?v2b8",
 						dataType: "script",
 						async: false
 					});
-
-					gloaded[comp] = true;
-
-					if (fn != null) {
-						fn();
-					}
 				}
 
+				if (fn != null) {
+					fn();
+				}
 			},
 
 			loadScriptAsync = function (comp) {
-				var deferred = $.Deferred();
 				if (gloaded[comp] == null)
 				{
-					$.ajax({
+					gloaded[comp] = $.ajax({
 						cache: true,
 						noRequestTrack: true,
 						url: BASE_SCRIPT + "gloader/" + comp + ".js?v2b8",
 						dataType: "script"
-					}).done(function () {
-						gloaded[comp] = true;
-						deferred.resolve();
-					}).fail(deferred.reject);
+					});
+					return gloaded[comp];
 				} else {
-					setTimeout(deferred.resolve, 1);
+					if(gloaded[comp] === true) {
+						return $.Deferred().resolve().promise();
+					} else {
+						return gloaded[comp];
+					}
 				}
-
-				return deferred.promise();
 			},
 
             CheckForDomUpdate = function() {
                 RetinaReplace();
                 checkForEndlessContainer();
+                checkForTags();
             },
+
+			checkForTags = function() {
+                for (var query in goma.ui.tags) {
+                    if (goma.ui.tags.hasOwnProperty(query)) {
+                        var file = goma.ui.tags[query];
+                        if (file != null) {
+                            if ($(query + ":not(.g-file-loaded)").length > 0) {
+                                $(query).addClass("g-file-loaded");
+                                goma.ui.loadAsync("ajaxLoader").done(function () {
+                                    goma.ui.ajaxloader.loadAndRunSingleJSFileIfNeeded(file, null);
+                                });
+                                delete goma.ui.tags[query];
+                            }
+                        }
+                    }
+                }
+			},
 
 			RetinaReplace = function () {
                 if (goma.ui.getDevicePixelRatio() > 1.5) {
@@ -247,17 +261,22 @@ var json_regexp = /^\(?\{/,
 			 * defines if we are in backend
 			 */
 			is_backend: false,
+			tags: {},
+            checkForTags: checkForTags,
 
 			/**
 			 * registers a flex-box. A flex-box is a box, which have to be as high as the window minus some elements around.
 			 * it calculates the correct elements around automatically.
 			 *
-			 * @access public
 			 * @param jquery-object
 			 */
 			addFlexBox: function ($container) {
 				flexBoxes.push($container);
 				updateFlexHeight($($container));
+			},
+
+			registerTags: function(tags) {
+				this.tags = tags;
 			},
 
 			/**
@@ -411,8 +430,6 @@ var json_regexp = /^\(?\{/,
 
 			/**
 			 * updates page and replaces all normal images with retina-images if defined in attribute data-retina of img-tag
-			 *
-			 *@name updateRetina
 			 */
 			updateRetina: function () {
 				RetinaReplace();
@@ -420,8 +437,6 @@ var json_regexp = /^\(?\{/,
 
 			/**
 			 * fires unload events and returns perfect result for onbeforeunload event
-			 *
-			 *@name fireUnloadEvents
 			 */
 			fireUnloadEvents: function (node) {
 				node = ($(node).length > 0) ? $(node) : goma.ui.getContentRoot();
@@ -451,9 +466,9 @@ var json_regexp = /^\(?\{/,
 			/**
 			 * binds unload-event on specfic html-node
 			 *
-			 *@param string - selector for event-binding
-			 *@param object - data //optional
-			 *@param function - handler
+			 * @param string - selector for event-binding
+			 * @param object - data //optional
+			 * @param function - handler
 			 */
 			bindUnloadEvent: function (select, data, handler) {
 				$(select).addClass("g-unload-handler");
@@ -463,9 +478,8 @@ var json_regexp = /^\(?\{/,
 			/**
 			 * removes unbind-handler from specific object
 			 *
-			 *@name removeUnloadHandler
-			 *@param string - selector
-			 *@param function - handler to remove - optional
+             * @param string - selector
+			 * @param function - handler to remove - optional
 			 */
 			unbindUnloadEvent: function (select, handler) {
 				$(select).off("onbeforeunload", handler);
@@ -525,9 +539,6 @@ var json_regexp = /^\(?\{/,
 
 			/**
 			 * global ajax renderer
-			 *
-			 *@name renderResponse
-			 *@access public
 			 */
 			renderResponse: function (html, xhr, node, object, checkUnload, progress) {
                 var deferred = $.Deferred();
@@ -543,9 +554,6 @@ var json_regexp = /^\(?\{/,
 
 			/**
 			 * register a resource loaded
-			 *
-			 *@name registerResource
-			 *@access public
 			 */
 			registerResource: function (type, file) {
 				goma.ui.registerResources(type, [file]);
@@ -553,9 +561,6 @@ var json_regexp = /^\(?\{/,
 
 			/**
 			 * register resources loaded
-			 *
-			 *@name registerResources
-			 *@access public
 			 */
 			registerResources: function (type, files) {
 				var i;
@@ -563,14 +568,18 @@ var json_regexp = /^\(?\{/,
 					case "css":
 
 						for (i in files) {
-							goma.ui.CSSFiles[files[i]] = "";
-							goma.ui.CSSIncluded[files[i]] = true;
+                            if(files.hasOwnProperty(i)) {
+                                goma.ui.CSSFiles[files[i]] = "";
+                                goma.ui.CSSIncluded[files[i]] = true;
+                            }
 						}
 						break;
 					case "js":
 
 						for (i in files) {
-							goma.ui.JSIncluded[files[i]] = true;
+                            if(files.hasOwnProperty(i)) {
+                                goma.ui.JSIncluded[files[i]] = true;
+                            }
 						}
 						break;
 				}
@@ -596,12 +605,12 @@ var json_regexp = /^\(?\{/,
 
 				if (js != null) {
 					for (i in jsfiles) {
-
-						file = jsfiles[i];
-
-						if (run_regexp.test(file) && goma.ui.JSFiles[file] !== undefined && goma.ui.JSIncluded[file] !== true) {
-							eval_global(goma.ui.JSFiles[file]);
-						}
+                        if(jsfiles.hasOwnProperty(i)) {
+                            file = jsfiles[i];
+                            if (run_regexp.test(file) && goma.ui.JSFiles[file] !== undefined && goma.ui.JSIncluded[file] !== true) {
+                                eval_global(goma.ui.JSFiles[file]);
+                            }
+                        }
 					}
 				}
 			},
@@ -714,7 +723,7 @@ if (window.loader === undefined) {
 
 				$.ajax({
 					url: $this.attr("href"),
-					data: {"container": $container},
+					data: {"container": $container, "ajaxfy": true},
 					dataType: "html",
 					headers: {
 						accept: "text/javascript; charset=utf-8"
@@ -752,7 +761,6 @@ if (window.loader === undefined) {
 			{
 				var $this = $(this);
 				goma.ui.loadAsync("dropdownDialog").done(function () {
-
 					var options = {
 						uri: $this.attr("data-href") ? $this.attr("data-href") : $this.attr("href")
 					};
@@ -1204,6 +1212,7 @@ if (window.loader === undefined) {
 			else
 				window.eval(codetoeval);
 		} catch(e) {
+            console.log && console.log(codetoeval);
 			console.log && console.log(e);
 			throw e;
 		}

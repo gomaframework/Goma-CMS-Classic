@@ -81,13 +81,18 @@ class GomaCKEditor extends GomaEditor {
 	 */
 	public function generateEditor($name, $type, $text, $params = array()) {
 		$id = $this->classname . "_" . $name;
-
 		
-		return new HTMLNode("textarea", array(
+		$node = new HTMLNode("textarea", array(
 			"name"	=> $name,
 			"id"	=> $id,
-			"style"	=> "width: 100%;height: 400px;"
+            "class" => "input"
 		), convert::raw2text($text));
+
+        if(isset($params["width"])) {
+            $node->attr("width", $params["width"]);
+        }
+
+        return $node;
 	}
 
 	/**
@@ -125,14 +130,13 @@ class GomaCKEditor extends GomaEditor {
 				}
 			}
 		}
-		$pageLinksJS = ClassInfo::exists("pages") ? "if(window['__pagelinksloaded'] == null) {
-		$.getScript(\"system/libs/ckeditor_goma/pagelinks.js\"); window['__pagelinksloaded'] = true; }" : "";
 
+		$start = "";
+		Core::callHook(self::ADD_JS_HOOK, $start);
 		return '
-window.CKEDITOR_BASEPATH = "'.BASE_URI.'system/libs/thirdparty/ckeditor4_6/";
-$.getScript("system/libs/thirdparty/ckeditor4_6/ckeditor.js").done(function(){
-	'.$pageLinksJS.'
-	$(function(){
+    window.CKEDITOR_BASEPATH = "'.BASE_URI.'system/libs/thirdparty/ckeditor4_6/";
+	$.getScript("system/libs/thirdparty/ckeditor4_6/ckeditor.js").done(function() {
+	    '.$start.'
 		CKEDITOR.basePath = "'.BASE_URI.'system/libs/thirdparty/ckeditor4_6/";
 		// apple bug with contenteditable of iOS 4 and lower
 		// firefox 3 and above are supported, otherwise dont load up
@@ -162,7 +166,6 @@ $.getScript("system/libs/thirdparty/ckeditor4_6/ckeditor.js").done(function(){
 			$(".editor_toggle").css("display", "block");
 		}
 	});
-});
 window.toggleEditor_'.$name.' = function() {
 	if(CKEDITOR.instances["'.$id.'"] != null) {
 		CKEDITOR.instances["'.$id.'"].destroy();

@@ -453,19 +453,16 @@ class FileSystem extends gObject {
 	 * @param string $file
 	 * @param string $filename
 	 * @param Request|null $request
-	 * @return bool
+	 * @return GomaResponse|null
 	 */
 	public static function sendFile($file, $filename = null, $request = null) {
 		if(!file_exists($file))
-			return false;
+			return null;
 
 		if(isset($request) && $request->canReplyJSON()) {
-			header("content-type: application/json");
-			echo json_encode(array("file" => self::getSendFileLink($file, $filename)));
-			exit;
+			return new JSONResponseBody(array("file" => self::getSendFileLink($file, $filename)));
 		} else {
-			HTTPResponse::redirect(self::getSendFileLink($file, $filename));
-			exit;
+			return GomaResponse::redirect(self::getSendFileLink($file, $filename));
 		}
 	}
 

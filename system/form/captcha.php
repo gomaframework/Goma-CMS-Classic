@@ -30,7 +30,7 @@ class Captcha extends FormField {
 	public function field($info) {
 		$this->callExtending("beforeField");
 
-		$container = new HTMLNode("div");
+		$container = new HTMLNode("div", array("class" => "input"));
 
 		$container->append(new HTMLNode('img', array(
 			"src" => "system/images/captcha/captcha.php",

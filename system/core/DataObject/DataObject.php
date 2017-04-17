@@ -27,6 +27,9 @@
  * @property    User autor
  *
  * @method      string[] hasMany($component = null)
+ * @method      DataObject|null getHasOne($name)
+ * @method      HasMany_DataObjectSet getHasMany($name, $filter = null, $sort = null)
+ * @method      ManyMany_DataObjectSet getManyMany($name, $filter = null, $sort = null)
  * @method      ModelHasOneRelationshipInfo[]|ModelHasOneRelationshipInfo hasOne($component = null)
  */
 abstract class DataObject extends ViewAccessableData implements PermProvider,
@@ -1150,8 +1153,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
 
         // default submission
         $form->setSubmission(isset($submission) ? $submission : "submit_form");
+        $form->add(new HiddenField("class_name", $this->DataClass()));
 
-        $form->setResult(clone $this);
+        $form->setModel(clone $this);
 
         // render form
         if ($edit) {
@@ -2017,12 +2021,12 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     /**
      * gets the class as an instance of the given class-name.
      *
-     * @param   string type of object
+     * @param   string $type of object
      * @return  gObject of type $value
      */
-    public function getClassAs($value) {
-        if (is_subclass_of($value, $this->baseClass)) {
-            return new $value(array_merge($this->data, array("class_name" => $value)));
+    public function getClassAs($type) {
+        if (is_subclass_of($type, $this->baseClass)) {
+            return new $type(array_merge($this->data, array("class_name" => $type)));
         }
 
         return $this;

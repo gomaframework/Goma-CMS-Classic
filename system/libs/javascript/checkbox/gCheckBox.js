@@ -15,7 +15,7 @@
     $.fn.gCheckBox = function( options ) {
         var settings = $.extend( true, {}, $.fn.gCheckBox.defaults, options );
         
-        goma.ui.load("jquery-color");
+        goma.ui.loadAsync("jquery-color");
         
         return this.each(function() {
         	
@@ -232,6 +232,17 @@
 							}
 						});
 					});
+
+					$wrapper.on("keypress", function(e) {
+						alert(e.keyCode);
+						if(e.keyCode == 13){
+							switchValue();
+						} else if(e.keyCode == 37) {
+							switchUIValueToOff();
+						} else if(e.keyCode == 39) {
+							switchUIValueToOn();
+						}
+					});
 		        };
 				
 				if ($this.prop("checked")) {
@@ -241,11 +252,9 @@
 				}
 				
 				if (!$this.prop("disabled")) {
-					
-                    //$wrapper.find("div, label").click(switchValue);
-					
 					InitDrag();
 				} else {
+					$wrapper.attr("tabindex", -1);
 					$wrapper.addClass("disabled");
 				}
 				
@@ -266,7 +275,8 @@
     $.fn.gCheckBox.defaults = {
     	wrapper: {
 	    	attrs: {
-		    	"class": "g-checkbox"
+		    	"class": "g-checkbox",
+				"tabindex": 0
 	    	},
 	    	css: {}
     	},

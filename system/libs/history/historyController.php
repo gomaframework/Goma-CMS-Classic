@@ -92,23 +92,23 @@ class HistoryController extends Controller {
 		
 		
 		// render the tabset
-		$tabs = new Tabs("history");
+		$tabs = new DataSet();
 		if(isset($filter["dbobject"]) && ClassInfo::exists($filter["dbobject"])) {
 			$content = HistoryController::renderHistory($filter, $this->namespace);
 			if($content) {
-				$tabs->addTab(ClassInfo::getClassTitle($filter["dbobject"]), $content, $filter["dbobject"]);
+				$tabs->add(array(
+					"title" => ClassInfo::getClassTitle($filter["dbobject"]),
+					"name"	=> $filter["dbobject"],
+					"content" => $content
+				));
 			}
 		}
-		$tabs->addTab(lang("h_all_events"), HistoryController::renderHistory(array(), $this->namespace), "h_all_events");
-		$output = $tabs->render();
-		
-		if(Core::is_ajax()) {
-			HTTPResponse::setBody($output);
-			HTTPResponse::output();
-			exit;
-		} else {
-			return $output;
-		}
+		$tabs->add(array(
+			"name" 		=> "h_all_events",
+			"title" 	=> lang("h_all_events"),
+			"content"	=> HistoryController::renderHistory(array(), $this->namespace)
+		));
+		return $tabs->renderWith("tabs/tabs.html");
 	}
 	
 	/**

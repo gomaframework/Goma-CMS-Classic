@@ -324,9 +324,6 @@ div.adminPanel table, div.adminPanel td {
 
         > ul {
           list-style: none;
-          position: absolute;
-          top: 2.82em;
-          left: -2em;
           z-index: 960;
 
           -webkit-overflow-scrolling: touch;
@@ -487,11 +484,9 @@ div.adminPanel table, div.adminPanel td {
   }
 
   #history.content_container {
-    > div > div > div {
       p a {
         padding: 0;
       }
-    }
   }
 
   .adminContent {
@@ -1109,27 +1104,27 @@ body .updateInfo .changelog_scroll {
   display: none;
 }
 body {
-  .tabs > ul li {
+  .tabs > ul li, gtabs > ul > li[for] {
 
   }
 
-  .tabs > ul li a, .tabs > ul li .tab {
+  .tabs > ul li a, .tabs > ul li .tab, gtabs > ul > li[for] {
     border-bottom: 2px solid transparent;
   }
 
-  .tabs > ul li a:hover, .tabs > ul li .tab:hover, .tabs > ul li button:hover {
+  .tabs > ul li a:hover, .tabs > ul li .tab:hover, .tabs > ul li button:hover, gtabs > ul > li[for]:hover {
     border-bottom: 2px solid @system-action;
     background: transparent;
   }
 
-  .tabs > ul li .active {
+  .tabs > ul li .active, gtabs > ul > li[for].active {
     color: @system-highlight;
     font-weight: normal;
     background: transparent;
     border-bottom: 2px solid @system-highlight;
   }
 
-  .tabs > ul li a.active:hover, .tabs > ul li input.active:hover, .tabs > ul li button.active:hover {
+  .tabs > ul li a.active:hover, .tabs > ul li input.active:hover, .tabs > ul li button.active:hover, gtabs > ul > li[for].active:hover {
     border-bottom: 2px solid @system-highlight;
   }
 }

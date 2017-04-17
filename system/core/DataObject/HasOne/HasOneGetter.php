@@ -255,7 +255,7 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
                 if(!$query->aliasExists($baseTable . "_" . $hasOnePrefix . "_state")) {
                     $query->innerJoin(
                         $baseTable . '_state',
-                        $baseTable . "_" . $hasOnePrefix . '_state.'.$versionField.' = ' . $ownerTable . '.'. $has_one[$hasOnePrefix]->getRelationShipName() .'id',
+                        $baseTable . "_" . $hasOnePrefix . '_state.id = ' . $ownerTable . '.'. $has_one[$hasOnePrefix]->getRelationShipName() .'id',
                         $baseTable . "_" . $hasOnePrefix . '_state',
                         false
                     );

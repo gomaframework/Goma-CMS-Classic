@@ -3,28 +3,28 @@
 <script type="text/javascript">
     $(function(){
         var scrollPos = -1;
-        var categoryView = $(".category-view");
+        var categoryView = $("#category-view-$cid");
         categoryView.addClass("sidebar-hidden");
-        categoryView.find(".menu .mobile-bar").click(function(){
+        categoryView.find(" > .menu .mobile-bar").click(function(){
             if(categoryView.hasClass("sidebar-hidden")) {
                 scrollPos = $(window).scrollTop();
                 categoryView.removeClass("sidebar-hidden");
-                scrollToHash("category-view");
+                scrollToHash("category-view-$cid");
             } else {
                 $(window).scrollTop(scrollPos);
                 categoryView.addClass("sidebar-hidden");
             }
         });
-        categoryView.find(".menu ul li a").click(function(){
+        categoryView.find(" > .menu ul li a").click(function(){
             $(window).scrollTop(scrollPos);
             categoryView.addClass("sidebar-hidden");
         });
         CallonDocumentClick(function(){
             categoryView.addClass("sidebar-hidden");
-        }, [categoryView.find(".menu")]);
+        }, [categoryView.find(" > .menu")]);
     })
 </script>
-<div class="category-view" id="category-view">
+<div class="category-view" id="category-view-$cid">
     <div class="menu">
         <div class="menu-wrapper">
             <ul>

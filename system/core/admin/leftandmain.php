@@ -126,7 +126,8 @@ class LeftAndMain extends AdminItem {
 				"SITETREE" => $this->createTree($this->getParam("searchtree")),
 				"searchtree" => $this->getParam("searchtree"),
 				"ROOT_NODE" => $this->getRootNode(),
-				"TREEOPTIONS" => $this->generateTreeOptions()
+				"TREEOPTIONS" => $this->generateTreeOptions(),
+				"adminURI"	=> $this->adminURI()
 			)
 		)->renderWith($this->baseTemplate);
 
@@ -312,7 +313,7 @@ class LeftAndMain extends AdminItem {
 	 */
 	public function ajaxSave($data, $response, $form, $controller, $forceInsert = false, $forceWrite = false, $overrideCreated = false) {
 		try {
-			$model = $this->save($data, 1, $forceInsert, $forceWrite, $overrideCreated, $form->getModel());
+			$model = $this->service()->saveModel($form->getModel(), $data, 1, $forceInsert, $forceWrite, $overrideCreated);
 			// notify the user
 			Notification::notify($model->classname, lang("SUCCESSFUL_SAVED", "The data was successfully written!"), lang("SAVED"));
 
@@ -375,7 +376,7 @@ class LeftAndMain extends AdminItem {
 	 * @return AjaxResponse
 	 */
 	public function ajaxPublish($data, $response, $form = null, $controller = null, $overrideCreated = false) {
-		if($model = $this->save($data, 2, false, false, $overrideCreated, $form->getModel())) {
+		if($model = $this->service()->saveModel($form->getModel(), $data, 2, false, false, $overrideCreated)) {
 			// notify the user
 			Notification::notify($model->classname, lang("successful_published", "The data was successfully published!"), lang("published"));
 

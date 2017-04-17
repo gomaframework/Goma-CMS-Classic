@@ -12,10 +12,14 @@ defined("IN_GOMA") OR die();
 class Controller extends RequestHandler
 {
     /**
+     *
+     */
+    protected static $default_service = \Goma\Service\DefaultControllerService::class;
+
+    /**
      * showform if no edit right
      *
      * @var bool
-     * @default false
      */
     public static $showWithoutRight = false;
 
@@ -150,7 +154,7 @@ class Controller extends RequestHandler
      * @return \Goma\Service\DefaultControllerService
      */
     protected function defaultService($model = null) {
-        return new \Goma\Service\DefaultControllerService(
+        return new static::$default_service(
             $this->guessModel($model)
         );
     }
@@ -424,9 +428,7 @@ class Controller extends RequestHandler
 
         /** @var DataObject $model */
         $name = !isset($name) ? $model->classname . "_" . $model->id . "_" . $model->versionid : $name;
-        $form = $model->generateForm($name, $edit, $disabled, isset($this->request) ? $this->request : null, $this);
-        $form->add(new HiddenField("class_name", $model->classname));
-        $form->setSubmission($submission);
+        $form = $model->generateForm($name, $edit, $disabled, isset($this->request) ? $this->request : null, $this, $submission);
 
         foreach($fields as $field) {
             $form->add($field);
@@ -937,6 +939,10 @@ class Controller extends RequestHandler
      */
     public function save($data, $priority = 1, $forceInsert = false, $forceWrite = false, $overrideCreated = false, $givenModel = null)
     {
+        if(isPHPUnit()) {
+            throw new InvalidArgumentException("Controller::save is deprecated.");
+        }
+
         return $this->service()->saveData($data, $priority, $forceInsert, $forceWrite, $overrideCreated, $givenModel);
     }
 

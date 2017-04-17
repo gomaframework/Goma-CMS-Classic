@@ -93,6 +93,16 @@ abstract class AbstractFormComponent extends RequestHandler {
     protected $errors;
 
     /**
+     * template-view.
+     */
+    protected $templateView;
+
+    /**
+     * @var string
+     */
+    protected $template;
+
+    /**
      * created field.
      *
      * @param string $name
@@ -108,6 +118,9 @@ abstract class AbstractFormComponent extends RequestHandler {
         $this->dbname = strtolower(trim($this->name));
         $this->setModel($model);
 
+        if($this->template) {
+            $this->templateView = new ViewAccessableData();
+        }
 
         if ($parent) {
             $parent->add($this);
@@ -466,5 +479,45 @@ abstract class AbstractFormComponent extends RequestHandler {
         }
 
         return parent::getRedirect($sender);
+    }
+
+    /**
+     * @return string
+     */
+    public function getTemplate()
+    {
+        return $this->template;
+    }
+
+    /**
+     * @param string $template
+     * @return $this
+     */
+    public function setTemplate($template)
+    {
+        $this->template = $template;
+        if($template && !$this->templateView) {
+            $this->templateView = new ViewAccessableData();
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTemplateView()
+    {
+        return $this->templateView;
+    }
+
+    /**
+     * @param mixed $templateView
+     * @return $this
+     */
+    public function setTemplateView($templateView)
+    {
+        $this->templateView = $templateView;
+        return $this;
     }
 }

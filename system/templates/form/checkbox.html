@@ -1,0 +1,10 @@
+<div class="checkbox-wrapper">
+    <% IF $title %>
+    <label for="$id">$title</label>
+    <% END %>
+    <% IF $model %>
+    <input id="$id" name="$postname" type="checkbox" value="1" checked="checked" />
+    <% ELSE %>
+    <input id="$id" name="$postname" type="checkbox" value="1" />
+    <% END %>
+</div>

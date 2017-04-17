@@ -19,7 +19,6 @@ var gDateField = function(field, args, form) {
         return false;
     });
     fieldElement.on('cancel.daterangepicker', function(ev, picker) {
-        $(this).val('');
         return false;
     });
 

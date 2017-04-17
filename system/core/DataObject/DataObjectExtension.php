@@ -10,6 +10,15 @@
  */
 abstract class DataObjectExtension extends Extension
 {
+    static $db = null;
+    static $has_one = null;
+    static $has_many = null;
+    static $many_many = null;
+    static $belongs_many_many = null;
+    static $default = null;
+    static $index = null;
+    static $many_many_extra_fields = null;
+    static $search_fields = null;
 
     /**
      * @param string $class

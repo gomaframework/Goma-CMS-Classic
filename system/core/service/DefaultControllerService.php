@@ -39,6 +39,14 @@ class DefaultControllerService extends gObject {
     protected $singleModelCache = array();
 
     /**
+     * if to validate model class.
+     * TODO: Decide if this should be true.
+     *
+     * @var bool
+     */
+    protected $validateModelClass = false;
+
+    /**
      * @param \IDataSet|\ViewAccessableData $model
      * @param null|\IModelRepository $repository
      */
@@ -329,7 +337,7 @@ class DefaultControllerService extends gObject {
      * @param bool $overrideCreated
      */
     protected function storeModel($model, $priority, $forceInsert, $forceWrite, $overrideCreated) {
-        if(!\ClassManifest::isOfType($model, $this->getModel()->DataClass())) {
+        if($this->validateModelClass && !\ClassManifest::isOfType($model, $this->getModel()->DataClass())) {
             throw new \LogicException("Model is not of type {$this->getModel()->DataClass()}");
         }
 

@@ -741,15 +741,15 @@ class tplCaller extends gObject
      */
     public function __call($methodName, $args)
     {
-        if (gObject::method_exists($this->classname, $methodName)) {
+        if (isset($this->callers[strtolower($methodName)]) && !$args) {
+            return $this->callers[strtolower($methodName)];
+        } else if (gObject::method_exists($this->classname, $methodName)) {
             if (method_exists($this->classname, $methodName))
                 return call_user_func_array(array("gObject", $methodName), $args);
             else
                 return call_user_func_array(array("gObject", "__call"), array($methodName, $args));
         } else if (gObject::method_exists($this->classname, "_" . $methodName)) {
             return call_user_func_array(array($this, "_" . $methodName), $args);
-        } else if (isset($this->callers[strtolower($methodName)])) {
-            return $this->callers[strtolower($methodName)];
         } else {
             if (gObject::method_exists($this->dataobject, $methodName)) {
                 return call_user_func_array(array($this->dataobject, $methodName), $args);

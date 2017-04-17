@@ -169,6 +169,10 @@ class Director extends gObject {
             return $response->isFullPage();
         }
 
+        if($response === null) {
+            return true;
+        }
+
         return false;
     }
 

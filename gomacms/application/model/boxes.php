@@ -67,13 +67,13 @@ class Boxes extends DataObject implements Notifier {
 	 */
 	static $default_sort = "sort ASC";
 
-	/**
-	 * generates the form to add boxes
-	 */
+    /**
+     * generates the form to add boxes
+     * @param Form $form
+     */
 	public function getForm(&$form)
 	{
-		$insertAfter = (isset($_GET["insertafter"])) ? ++$_GET["insertafter"] : 1000;
-		$form->add(new Hiddenfield("sort", $insertAfter));
+		$form->add(new Hiddenfield("sort", $form->getModel()["sort"]));
 		$form->add(new HiddenField("seiteid", $this->seiteid));
 		$form->add(new Select("class_name", lang("BOXTYPE", "boxtype"), $this->getBoxTypes()));
 		$form->add(new Hiddenfield("width", "auto"));
@@ -81,8 +81,10 @@ class Boxes extends DataObject implements Notifier {
 
 	/**
 	 * generates form-actions
+	 * @param Form $form
+	 * @param bool $edit
 	 */
-	public function getActions(&$form)
+	public function getActions(&$form, $edit = false)
 	{
 		$form->addAction(new CancelButton("cancel", lang("cancel")));
 

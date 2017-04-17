@@ -53,7 +53,7 @@ class contentControllerTest extends GomaUnitTest
     /**
      *
      */
-    public function testPassword() {
+    public function testPasswordTwice() {
         $request = new Request("get", "");
         $controller = new ContentController(null, $chain = new Keychain(false, null, null, "testKeychainContentController"));
         $controller->setModelInst($page = new Page(array("data" => "Hallo Welt")));
@@ -101,6 +101,82 @@ class contentControllerTest extends GomaUnitTest
 
         $chain->add("1234");
         $this->assertNoPattern("/prompt_text/", $controller->handleRequest($request));
+    }
+
+    /**
+     *
+     */
+    public function testPassword() {
+        $request = new Request("get", "");
+        $controller = new ContentController(null, $chain = new Keychain(false, null, null, "testKeychainContentController"));
+        $controller->setModelInst($page = new Page(array("data" => "Hallo Welt")));
+        $page->read_permission->password = "1234";
+        $page->read_permission->type = "password";
+        $chain->clear();
+
+        $this->assertEqual($page->read_permission->type, "password");
+
+        $chain->clear();
+        // check if secret works
+        $request->post_params["prompt_text"] = "1234";
+        $response = $controller->handleRequest($request);
+        $this->assertPattern("/prompt_text/", (string) $response);
+        $this->assertNoPattern("/Hallo Welt/", (string) $response);
+
+        $chain->clear();
+
+        $formData = GlobalSessionManager::globalSession()->get("form_state_prompt_contentcontroller");
+        $request->post_params["form_submit_prompt_contentcontroller"] = 1;
+        $request->post_params["secret_form_" . md5("prompt_contentcontroller")] = $formData["secret"];
+        $request->post_params["save"] = "ok";
+        $chain->clear();
+        $this->assertPattern("/Hallo Welt/", (string) $controller->handleRequest($request));
+    }
+
+    /**
+     *
+     */
+    public function testPasswordViaKeychain() {
+        $request = new Request("get", "");
+        $controller = new ContentController(null, $chain = new Keychain(false, null, null, "testKeychainContentController"));
+        $controller->setModelInst($page = new Page(array("data" => "Hallo Welt")));
+        $page->read_permission->password = "1234";
+        $page->read_permission->type = "password";
+        $chain->clear();
+
+        $this->assertEqual($page->read_permission->type, "password");
+
+        $chain->add("1234");
+        $this->assertNoPattern("/prompt_text/", $controller->handleRequest($request));
+    }
+
+    /**
+     *
+     */
+    public function testPasswordCancel() {
+        $request = new Request("get", "");
+        $controller = new ContentController(null, $chain = new Keychain(false, null, null, "testKeychainContentController"));
+        $controller->setModelInst($page = new Page(array("data" => "Hallo Welt")));
+        $page->read_permission->password = "1234";
+        $page->read_permission->type = "password";
+        $chain->clear();
+
+        $this->assertEqual($page->read_permission->type, "password");
+
+        $response = $controller->handleRequest($request);
+        $this->assertPattern("/prompt_text/", (string) $response);
+        $this->assertNoPattern("/Hallo Welt/", (string) $response);
+
+        $request->post_params["form_submit_prompt_contentcontroller"] = 1;
+        $request->post_params["save"] = null;
+        $request->post_params["cancel"] = "cancel";
+        $formData = GlobalSessionManager::globalSession()->get("form_state_prompt_contentcontroller");
+        $request->post_params["secret_form_" . md5("prompt_contentcontroller")] = $formData["secret"];
+        /** @var GomaResponse $response */
+        $chain->clear();
+        $response = $controller->handleRequest($request);
+        $this->assertIsA($response, "GomaResponse");
+        $this->assertEqual($response->getStatus(), 302);
     }
 
     public function testTrackLinking() {

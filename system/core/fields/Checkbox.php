@@ -76,9 +76,22 @@ class CheckBoxSQLField extends DBField {
         } while(is_subclass_of($classname, DataObject::class));
     }
 
+    /**
+     * @param string $fieldName
+     * @param mixed $default
+     * @param array $args
+     * @return string
+     */
     public static function getSQLDefault($fieldName, $default, $args)
     {
         return $default ? "1" : "0";
+    }
+
+    /**
+     * @return int
+     */
+    public function forDB() {
+        return $this->value ? 1 : 0;
     }
 }
 

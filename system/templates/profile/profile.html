@@ -1,16 +1,29 @@
-<% INCLUDE_CSS "profile.css" %>
+<% INCLUDE_CSS "profile.less" %>
+<% INCLUDE_CSS "tabs.less" %>
 
-<div class="profile-left">
-	<div class="profile-photo">
-		<a href="{$image.raw()}" rel="dropdownDialog">$image.setSize(150, 150)</a>
-	</div>
-</div>
-	
 <div class="profile-content">
 	<div class="profile-actions profile-ui-right">
 		$profile_actions
 	</div>
 	<h1 class="profile-title">$title.text()</h1>
-	$tabs
+
+	<gtabs>
+		<ul>
+			<% CONTROL tabs() %>
+			<li for="profile_tab_$tabs.name">$tabs.title</li>
+			<% ENDCONTROL %>
+            <li class="clear"></li>
+		</ul>
+		<% CONTROL tabs() %>
+		<div id="profile_tabs_$tabs.name">
+			$tabs.content
+		</div>
+		<% ENDCONTROL %>
+	</gtabs>
+</div>
+<div class="profile-left">
+	<div class="profile-photo">
+		<a href="{$image.raw()}" rel="dropdownDialog">$image.setSize(150, 150)</a>
+	</div>
 </div>
 <div class="clear"></div>

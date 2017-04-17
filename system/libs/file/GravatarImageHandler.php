@@ -132,8 +132,6 @@ class GravatarImageHandler extends ImageUploads {
 	/**
 	 * sets the width
 	 *
-	 * @name setWidth
-	 * @access public
 	 * @return string
 	 */
 	public function setWidth($width, $absolute = false, $html = "", $style = "") {
@@ -143,8 +141,6 @@ class GravatarImageHandler extends ImageUploads {
 	/**
 	 * sets the Size
 	 *
-	 * @name setSize
-	 * @access public
 	 * @return string
 	 */
 	public function setSize($width, $height, $absolute = false, $html = "", $style = "") {
@@ -154,8 +150,6 @@ class GravatarImageHandler extends ImageUploads {
 	/**
 	 * sets the size on the original,  so not the thumbnail we saved
 	 *
-	 * @name orgSetSize
-	 * @access public
 	 * @return string
 	 */
 	public function orgSetSize($width, $height, $absolute = false, $html = "", $style = "") {
@@ -176,12 +170,21 @@ class GravatarImageHandler extends ImageUploads {
 	/**
 	 * sets the height on the original, so not the thumbnail we saved
 	 *
-	 * @name orgSetHeight
-	 * @access public
 	 * @return string
 	 */
 	public function orgSetHeight($height, $absolute = false, $html = "", $style = "") {
 		return self::get_gravatar($this->email, $height, "mm", "g", true, array(), $html, $style);
+	}
+
+	/**
+	 * @param int $desiredWidth
+	 * @param int $desiredHeight
+	 * @param bool $noCrop
+	 * @return String
+	 */
+	public function getResizeUrl($desiredWidth, $desiredHeight, $noCrop = false)
+	{
+		return self::get_gravatar($this->email, $desiredWidth, "mm", "g");
 	}
 
 	/**

@@ -57,9 +57,10 @@ class ConfirmationForm extends Form {
 
     /**
      * @param array $errors
+     * @param bool $notSavedYet
      * @return mixed|string
      */
-    public function renderForm($errors = array())
+    public function renderForm($errors = array(), $notSavedYet = false)
     {
         $this->random = "dialog_" . randomString(10);
         if($this->getRequest()->canReplyJavaScript()) {
@@ -80,7 +81,7 @@ class ConfirmationForm extends Form {
             }
         }
 
-        $content = parent::renderForm($errors);
+        $content = parent::renderForm($errors, $notSavedYet);
 
         if($this->getRequest()->canReplyJavaScript()) {
             $ajaxResponse = new AjaxResponse();

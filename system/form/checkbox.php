@@ -10,19 +10,11 @@ defined("IN_GOMA") OR die();
  * @version 1.1
  */
 class CheckBox extends FormField {
-	/**
-	 * creates the node
-	 *
-	 * @name createNode
-	 * @access public
-	 * @return HTMLNode
-	 */
-	public function createNode() {
-		$node = parent::createNode();
-		$node->type = "checkbox";
 
-		return $node;
-	}
+    /**
+     * @var string
+     */
+    protected $template = "form/checkbox.html";
 
 	/**
 	 * @return array|bool|string|ViewAccessableData
@@ -36,17 +28,6 @@ class CheckBox extends FormField {
 		}
 
 		return parent::getModel();
-	}
-
-	/**
-	 * sets the value
-	 */
-	public function setValue() {
-		if(!!$this->getModel())
-			$this->input->checked = "checked";
-
-		$this->input->value = 1;
-
 	}
 
     /**

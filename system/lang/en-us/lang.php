@@ -178,8 +178,8 @@ $lang = array(
 	"menupoint_title_info"							=> "Title of the page in the menu.",
 	"OVERVIEW"                                     	=> "Overview",
 	"own_css"                                      	=> "Own CSS (For Developers)",
-	"less_rights"                                  	=> "You don't have the permission to do this!",
-	"wrong_login"                                  	=> "<strong>Error</strong><br />Unknowen user or wrong password!",
+	"less_rights"                                  	=> "You don't have the permission to do this.",
+	"wrong_login"                                  	=> "Unknown user or wrong password.",
 	"edit_profile"                                 	=> "Edit profile",
 	"show_profile"                                 	=> "Show profile",
 	"profile"										=> "Profile",
@@ -196,8 +196,8 @@ $lang = array(
 	"cache_del_info"								=> "If you empty the cache, Goma regenerates some files, which are cached, so the performance may go down, but data is after that latest.",
 	"login"                                        	=> "Sign In" ,
 	/* infos */
-	"usergroups_info"								=> "<h3>Welcome</h3>Here you can manage Users & Groups. Click on one of the points in the tree to edit it.",
-	"email_info"									=> "You can separate multiple e-mail-adresses with commas.",
+	
+	"email_info"									=> "You can add multiple email-adresses seperated by commas.",
 	"email_correct_info"							=> "This email-adresse should be yours.",
 	'dragndrop_info'								=> "Drag elements to sort them.",
 	"no_item_selected"								=> "No item selected.",

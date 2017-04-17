@@ -330,7 +330,7 @@ class contentAdmin extends LeftAndMain {
         $form->add($parentDropdown = new HasOneDropDown("parent", lang("parentpage", "Parent Page"), "title", ' `pages`.`class_name` IN ("' . implode($allowed_parents, '","') . '")'));
         $parentDropdown->info_field = "url";
 
-        $form->add(new HiddenField("class_name", $model->classname));
+        $form->add(new HiddenField("class_name", $model->DataClass()));
 
         $form->addValidator(new requiredFields(array('filename', 'title', 'parenttype')), "default_required_fields"); // valiadte it!
         $form->addValidator(new FormValidator(array($model, "validatePageType")), "pagetype");

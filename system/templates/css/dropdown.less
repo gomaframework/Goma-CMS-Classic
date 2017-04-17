@@ -6,7 +6,7 @@
   * last modified: 04.07.2013
 */
 
-@dropdown-field-size: 16em;
+@dropdown-field-size: 100%;
 
 .dropdownContainer .info_field {
 	padding-left: 0.375em;
@@ -22,32 +22,28 @@
 .dropdown_widget  {
 	position: relative;
 	display: inline-block;
-	
+	width: @dropdown-field-size;
+
 	.field {
 		width: @dropdown-field-size;
 		vertical-align: center;
-		padding: 0.25em 0.5em;
-		
-	    
-		-moz-border-radius: 0.25em;
-		-webkit-border-radius: 0.25em; 
-		border-radius: 0.25em;
 
 		border: 1px solid #ccc;
-		margin: 0.25em;
-	    
-	    background: #eee;
-		max-width: 95%;
+		background: #eee;
+		border-radius: 0;
+		max-width: 98%;
+		padding: 0.25em 0 0.25em 0.5em;
+		margin: 0.25em 0 0.25em 0.25em;
 		display: block;
 		text-decoration: none;
-		
+
 		.no-value {
 			color: #777;
 			padding: .25em 0;
 			display:block;
 		}
 	}
-	
+
 	.field.active {
 		/*-moz-box-shadow:0 0 10px #ccc;
 		-webkit-box-shadow:0 0 10px #ccc;
@@ -55,18 +51,18 @@
 		border-color: #ccc !important;
 		outline-width:0;
 	}
-	
+
 	.value-holder {
 
 		display: inline-block;
 		min-height: 1.25em;
 
 		-webkit-touch-callout: none;
-	    -webkit-user-select: none;
-	    -khtml-user-select: none;
-	    -moz-user-select: none;
-	    -ms-user-select: none;
-	    user-select: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
 
 		.value {
 			float: left;
@@ -83,16 +79,16 @@
 			.value-title {
 				padding-right: 0.25em;
 			}
-			
+
 			.value-remove {
 				padding: 0 0.25em;
 				color: darken(@system-tint, 15%);
-				
+
 				font-weight: bold;
 				position: absolute;
 				right: .25em;
 				top: .25em;
-				
+
 				:hover {
 					text-decoration: none;
 					color: #fff;
@@ -118,21 +114,21 @@
 		opacity: 0;
 		cursor: pointer;
 	}
-	
+
 	.dropdown {
 		display: none;
 		background: #fff;
 		max-height: 25.5em;
 		border: 1px solid #ccc;
 		border-top: 1px solid #ccc;
-		
+
 		-webkit-border-bottom-left-radius: 0.25em;
 		-webkit-border-bottom-right-radius: 0.25em;
 		-moz-border-radius-bottomleft: 0.25em;
 		-moz-border-radius-bottomright: 0.25em;
 		border-bottom-left-radius: 0.25em;
 		border-bottom-right-radius: 0.25em;
-		
+
 		position: absolute;
 		top: 1.75em;
 		left: 0.25em;
@@ -142,16 +138,16 @@
 		overflow: auto;
 		-webkit-overflow-scrolling: touch;
 		z-index: 995;
-		
+
 		opacity: 0.95;
-		
+
 		.header {
 			background: #fff;
 			border-bottom: .125em solid #ccc;
 			margin: 0;
 			padding: 0;
 			height: 2.5em;
-			
+
 			.search, .search:focus {
 				width: 100%;
 				font-size: 1em;
@@ -171,7 +167,7 @@
 				-webkit-box-sizing: border-box;
 				-moz-box-sizing: border-box;
 			}
-			
+
 			.cancel {
 				position: absolute;
 				top: 0.75em;
@@ -183,40 +179,40 @@
 				background-size: 1em 1em;
 				cursor: pointer;
 			}
-			
+
 			.pagination {
 				float: right;
 				width: 3em;
 				margin-right: 0.5em;
 				margin-top: 0.5em;
 				height: 1.5em;
-				
+
 				> .left,  > .right {
 					width: 1em;
 					height: 1.5em;
 					margin: 0.125em 0.25em;
 					text-decoration: none;
 					display: inline-block !important;
-					
+
 					a {
 						text-decoration: none !important;
 					}
-					
+
 					.disabled {
 						color: #444 !important;
 						cursor: text;
 					}
-					
+
 				}
-				
-				
-				
+
+
+
 			}
 		}
-		
+
 		.content {
 			background: #eee;
-			
+
 			.loading {
 				padding: 1em;
 			}
@@ -224,12 +220,12 @@
 				padding: 0;
 				margin: 0;
 				list-style: none;
-				
+
 				li {
 					position: relative;
 					height: 2.25em;
 					overflow: hidden;
-					
+
 					a {
 						position: absolute;
 						z-index: 1001;
@@ -239,17 +235,17 @@
 						color: #333;
 						text-decoration: none;
 						width: 100%;
-						
+
 						box-sizing: border-box;
 						-webkit-box-sizing: border-box;
 						-moz-box-sizing: border-box;
-						
+
 						span {
 							background: #eee;
 							padding: .125em;
 						}
 					}
-					
+
 					.record_info {
 						position: absolute;
 						top: 0.75em;
@@ -259,16 +255,16 @@
 						z-index: 999;
 						line-height: 1em;
 					}
-					
+
 					.checked {
-						background: url(images/checked.png) no-repeat 0.5em 0.75em;	
+						background: url(images/checked.png) no-repeat 0.5em 0.75em;
 					}
 
 				}
-				
+
 				li:hover {
 					a {
-						
+
 					}
 				}
 			}
@@ -292,12 +288,12 @@
 
 @media only screen and (min-width: 600px) {
 	.dropdown_widget .field {
-		width: 400px;
+		width: @dropdown-field-size;
 	}
 	.dropdown_widget .hiddenbutton {
-		width: 405px;
+		width: @dropdown-field-size;
 	}
 	.dropdown_widget .dropdown {
-		width: 408px;
+		width: @dropdown-field-size;
 	}
 }

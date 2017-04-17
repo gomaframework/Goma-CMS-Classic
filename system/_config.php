@@ -27,7 +27,6 @@ Director::addRules(array(
 	'treeserver' 					=> 'TreeServer',
 
 	'system/cron'					=> 'CronController',
-	'system/help' 					=> 'HelpController',
 	'system/smtp'					=> 'SMTPConnector',
 	"system/livecounter"			=> 'liveCounterController',
 	'system/ajax//link/$id' 		=> 'ajaxlink',
@@ -78,6 +77,8 @@ gloader::addLoadAble("helpbox", "system/libs/javascript/helpBox.js");
 gloader::addLoadAble("hammer", "system/libs/thirdparty/hammer.js/hammer.js");
 gloader::addLoadAble("ajaxLoader", "system/libs/javascript/ajaxLoader.js");
 gloader::addLoadAble("placeholderPolyfill", "system/libs/javascript/placeholderPolyfill.js");
+
+Resources::addTag("gtabs", "system/libs/tabs/tabs.js");
 
 // Breadcrump seperator
 define('BREADCRUMB_SEPERATOR', ' &raquo; ');

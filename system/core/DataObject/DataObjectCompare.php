@@ -16,20 +16,23 @@ class DataObjectCompare {
      *
      * @param DataObject $model
      * @param array $newdata
+     * @param array $additionalFields
      * @return array
      */
-    public static function getChanges($model, $newdata)
+    public static function getChanges($model, $newdata, $additionalFields = array())
     {
         $changed = array();
 
         if (is_object($newdata) && gObject::method_exists($newdata, "toArray")) {
             /** @var ViewAccessableData $newdata */
-            $newdata = $newdata->ToArray();
+            $newdata = ArrayLib::map_key("strtolower", $newdata->ToArray());
         }
 
         // first calculate change-count
-        $data = $model->ToArray();
-        foreach ($data as $key => $val) {
+        $data = ArrayLib::map_key("strtolower", $model->ToArray());
+        $keys = array_merge(array_keys($data), $additionalFields);
+        foreach ($keys as $key) {
+            $val = isset($data[$key]) ? $data[$key] : null;
             if (isset($newdata[$key])) {
                 $comparableTypes = array("boolean", "integer", "string", "double");
                 if (gettype($newdata[$key]) != gettype($val) &&

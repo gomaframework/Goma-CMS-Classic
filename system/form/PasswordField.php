@@ -18,7 +18,6 @@ class PasswordField extends FormField {
 	{
 		$node = parent::createNode();
 		$node->type = "password";
-		$node->css("width", "250px");
 		return $node;
 	}
 

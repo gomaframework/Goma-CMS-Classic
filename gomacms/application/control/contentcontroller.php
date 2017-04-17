@@ -20,8 +20,6 @@ class ContentController extends FrontedController
     /**
      * this is for mainbar, so we know, which ids of site has to be marked as active
      *
-     * @name activeids
-     * @access public
      * @var array
      */
     public static $activeids = array();
@@ -159,13 +157,10 @@ class ContentController extends FrontedController
      * @return GomaFormResponse
      */
     protected function showPasswordForm($passwords) {
-        // set password + breadcrumb
-        $object = $this;
-
-        return $this->promptByForm(lang("password"), function($pwd) use($passwords, $object) {
+        return $this->promptByForm(lang("password"), function($pwd) use($passwords) {
             foreach ($passwords as $password) {
                 if ($pwd == $password) {
-                    $object->keychain()->add($pwd);
+                    $this->keychain()->add($pwd);
                     return true;
                 }
             }

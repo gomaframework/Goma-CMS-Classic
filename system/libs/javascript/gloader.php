@@ -77,10 +77,13 @@ class gLoader extends RequestHandler
             $name = substr($name, 0, -3);
         }
 
-        HTTPResponse::addHeader('content-type', "text/javascript");
+        $response = new GomaResponse(array(
+            "content-type", "text/javascript"
+        ), GomaResponseBody::create(null)->setIsFullPage(true));
+
         if (isset(self::$resources[$name])) {
-            HTTPResponse::addHeader('Cache-Control', 'public, max-age=5511045');
-            HTTPResponse::addHeader("pragma", "Public");
+            $response->setHeader('Cache-Control', 'public, max-age=5511045');
+            $response->setHeader("pragma", "Public");
 
             $data = self::$resources[$name];
             if (file_exists($data["file"])) {
@@ -88,49 +91,41 @@ class gLoader extends RequestHandler
                 $this->checkMTime($name, $data, $mtime);
 
                 $etag = strtolower(md5("gload_" . $name . "_" . md5(var_export($data, true)) . "_" . $mtime));
-                HTTPResponse::addHeader("Etag", '"' . $etag . '"');
+                $response->setHeader("Etag", '"' . $etag . '"');
 
                 // 304 by HTTP_IF_MODIFIED_SINCE
                 if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
                     if (strtolower(gmdate('D, d M Y H:i:s', $mtime) . ' GMT') == strtolower($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
-                        HTTPResponse::setResHeader(304);
-                        HTTPResponse::sendHeader();
-                        if (PROFILE)
-                            Profiler::End();
+                        $response->setStatus(304);
 
-                        exit;
+                        return $response;
                     }
                 }
                 // 304 by ETAG
                 if (isset($_SERVER["HTTP_IF_NONE_MATCH"])) {
                     if ($_SERVER["HTTP_IF_NONE_MATCH"] == '"' . $etag . '"') {
-                        HTTPResponse::setResHeader(304);
-                        HTTPResponse::sendHeader();
+                        $response->setStatus(304);
 
-                        if (PROFILE)
-                            Profiler::End();
-
-                        exit;
+                        return $response;
                     }
                 }
 
                 $temp = ROOT . CACHE_DIRECTORY . '/gloader.' . $name . self::VERSION . "." . md5(var_export($data, true)) . ".js";
                 $expiresAdd = defined("DEV_MODE") ? 3 * 60 * 60 : 48 * 60 * 60;
-                HTTPResponse::setCachable(NOW + $expiresAdd, $mtime, true);
+                $response->setCacheHeader(NOW + $expiresAdd, $mtime, true);
                 if (!file_exists($temp) || filemtime($temp) < $mtime) {
                     FileSystem::write($temp, $this->buildFile($name, $data));
                 }
 
-
-                HTTPResponse::sendHeader();
+                if(PROFILE)
+                    Profiler::end();
+                $response->sendHeader();
                 readfile($temp);
                 exit;
-            } else {
-                exit;
             }
-        } else {
-            exit;
         }
+
+        return $response;
     }
 
     /**
@@ -167,8 +162,9 @@ goma.ui.setLoaded('" . $name . "'); goma.ui.registerResource('js', '" . $data["f
     /**
      * this is for checking cache active
      *
-     * @name buildMTime
-     * @access protected
+     * @param string $name
+     * @param array $data
+     * @param int $mtime
      * @return bool
      */
     protected function checkMTime($name, $data, &$mtime)
@@ -188,6 +184,8 @@ goma.ui.setLoaded('" . $name . "'); goma.ui.registerResource('js', '" . $data["f
         if ($mtime < filemtime($data["file"])) {
             $mtime = filemtime($data["file"]);
         }
+
+        return true;
     }
 }
 

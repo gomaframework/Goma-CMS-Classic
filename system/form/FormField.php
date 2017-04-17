@@ -188,25 +188,40 @@ class FormField extends AbstractFormComponent {
 
         $this->setValue();
 
-        $this->container->append(new HTMLNode(
-            "label",
-            array("for" => $this->ID()),
-            $this->title
-        ));
-
-        if($this->maxLength > 0) {
-            $this->input->attr("maxlength", $this->maxLength);
-        }
-
-        $this->input->placeholder = $this->placeholder;
-
-        if($this->isDisabled()) {
-            $this->input->disabled = "disabled";
+        if($this->template) {
+            $this->container->append(
+                $this->templateView->customise(
+                    $info->ToRestArray()
+                )->customise(
+                    array(
+                        "model"    => $this->getModel(),
+                        "postname" => $this->PostName()
+                    )
+                )->renderWith($this->template)
+            );
         } else {
-            $this->input->removeAttr("disabled");
-        }
+            // old way of doing it
+            // TODO: Replace all Fields with new way
+            $this->container->append(new HTMLNode(
+                "label",
+                array("for" => $this->ID()),
+                $this->title
+            ));
 
-        $this->container->append($this->input);
+            if ($this->maxLength > 0) {
+                $this->input->attr("maxlength", $this->maxLength);
+            }
+
+            $this->input->placeholder = $this->placeholder;
+
+            if ($this->isDisabled()) {
+                $this->input->disabled = "disabled";
+            } else {
+                $this->input->removeAttr("disabled");
+            }
+
+            $this->container->append($this->input);
+        }
 
         if($this->errors) {
             $this->container->addClass("form-field-has-error");

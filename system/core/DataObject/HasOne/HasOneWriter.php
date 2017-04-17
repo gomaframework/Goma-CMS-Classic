@@ -171,4 +171,4 @@ class HasOneWriter extends Extension {
     }
 }
 
-gObject::extend("ModelWriter", "HasOneWriter");
+gObject::extend(ModelWriter::class, HasOneWriter::class);

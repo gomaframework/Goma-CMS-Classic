@@ -276,7 +276,7 @@ class RequestHandler extends gObject {
 	 *@param string $content
 	 *@param bool $handleWithMethod
 	 */
-	public function onBeforeHandleAction($action, $content, &$handleWithMethod) {
+	public function onBeforeHandleAction($action, &$content, &$handleWithMethod) {
 
 	}
 
@@ -455,6 +455,48 @@ class RequestHandler extends gObject {
 	}
 
 	/**
+	 * returns if this controller is the next controller to the root of this type.
+	 * @param string $type
+	 * @param bool $ignoreSubController
+	 * @return bool
+	 */
+	public function controllerIsMostSpecialOfType($type, $ignoreSubController = false) {
+		if(!is_a($this, $type)) {
+			throw new InvalidArgumentException("You can only compare with types you are.");
+		}
+
+		if($this->request) {
+			$controllers = array_reverse($this->request->getController());
+			foreach ($controllers as $controller) {
+				if (is_a($controller, $type) && (!$ignoreSubController || !$controller->isSubController())) {
+					return spl_object_hash($controller) == spl_object_hash($this);
+				}
+			}
+
+			throw new LogicException("Object not found in request-tree.");
+		}
+
+		// should be true if no request is set.
+		return true;
+	}
+
+	/**
+	 * the root view controller is
+	 * - the most special
+	 * - non-subcontroller
+	 * - checks if response is not full page - Can be disabled by providing null as response
+	 *
+	 * @param null|GomaResponse|GomaResponseBody|string $response
+	 * @param string $type
+	 * @return bool
+	 */
+	public function isManagingController($response = null, $type = null) {
+		$type = isset($type) ? $type : self::class;
+		return !$this->isSubController() && !\Director::isResponseFullPage($response) &&
+			$this->controllerIsMostSpecialOfType($type, true);
+	}
+
+	/**
 	 * @return Request|null
 	 */
 	public function getRequest()
@@ -495,7 +537,7 @@ class RequestHandler extends gObject {
             }
         }
 
-        if($this->currentActionHandled != "index" || (is_object($sender) && $sender != $this)) {
+        if($this->currentActionHandled != "index" || strtolower($sender) == "tothis" || (is_object($sender) && $sender != $this)) {
             return ROOT_PATH . $this->namespace;
         }
 

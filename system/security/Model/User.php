@@ -601,7 +601,7 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 	/**
 	 * gets the avatar
 	 *
-	 * @return Uploads
+	 * @return ImageUploads
 	 */
 	public function getImage() {
 		if($this->avatar && $this->avatar->realfile) {

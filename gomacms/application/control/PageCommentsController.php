@@ -26,7 +26,7 @@ class PageCommentsController extends FrontedController {
      */
     public function ajaxsave($data, $response, $form)
     {
-        $model = $this->save($data);
+        $model = $this->service()->saveModel($form->getModel(), $data);
         $response->prepend(".comments", $model->customise(array(
         "namespace" => $this->parentController()->namespace
         ))->renderWith("comments/onecomment.html"));
@@ -70,9 +70,10 @@ class PageCommentsControllerExtension extends ControllerExtension {
 
     public function pagecomments()
     {
-        if ($this->getOwner()->modelInst()->showcomments)
+        if ($this->getOwner()->modelInst()->showcomments) {
             return ControllerResolver::instanceForModel($this->getOwner()->modelInst()->comments())
-                ->handleRequest($this->getOwner()->request, $this->getOwner()->isSubController());
+                ->handleRequest($this->getOwner()->request, false);
+        }
 
         return "";
     }

@@ -176,6 +176,21 @@ class ControllerTest extends GomaUnitTest {
 	/**
 	 * tests controllerIsNextToRootOfType
 	 */
+	public function testcontrollerIsMostSpecialOfTypeTrueSubController() {
+		$controller = new TestSubClassController();
+		$controller2 = new TestSubControllerWithSubForRequestController();
+
+		$request = new Request("get", "lala");
+		$controller->handleRequest($request);
+		$controller2->handleRequest($request);
+
+		$this->assertFalse($controller->controllerIsMostSpecialOfType(TestSubControllerWithSubForRequestController::class, true));
+		$this->assertTrue($controller2->controllerIsMostSpecialOfType(TestSubControllerWithSubForRequestController::class, true));
+	}
+
+	/**
+	 * tests controllerIsNextToRootOfType
+	 */
 	public function testcontrollerIsNextToRootOfTypeTrueSubController() {
 		$controller = new TestSubClassController();
 		$controller2 = new TestSubControllerWithSubForRequestController();

@@ -14,6 +14,12 @@ defined("IN_GOMA") OR die();
  * @version 1.0
  */
 class BoxesController extends FrontedController {
+
+    /**
+     * @var string
+     */
+    protected static $default_service = \GomaCMS\Service\BoxesService::class;
+
     /**
      * some urls
      */
@@ -81,7 +87,8 @@ class BoxesController extends FrontedController {
     public function add()
     {
         $boxes = new Boxes(array(
-            "seiteid" => $this->getParam("pid")
+            "seiteid" => $this->getParam("pid"),
+            "sort"    => (isset($this->getRequest()->get_params["insertafter"])) ? ++$this->getRequest()->get_params["insertafter"] : 1000
         ));
 
         return $this->form("add", $boxes);
@@ -134,6 +141,8 @@ class BoxesController extends FrontedController {
         if (isset($pid)) {
             $data = DataObject::get("boxes", array("seiteid" => $pid));
             $this->setModelInst($data);
+        } else {
+            throw new InvalidArgumentException();
         }
 
         $this->callExtending("beforeRenderBoxes", $pid);
@@ -209,22 +218,22 @@ class BoxesController extends FrontedController {
 
     /**
      * saves via ajax
-     *
-     * @name ajaxSave
-     * @access public
+     * @param array $data
+     * @param AjaxResponse $response
+     * @param Form $form
+     * @return AjaxResponse
      */
-    public function ajaxSave($data, $response)
+    public function ajaxSave($data, $response, $form)
     {
-        if ($this->save($data, 2) !== false) {
+        try {
+            $this->service()->saveModel($form->getModel(), $data, 2);
             Notification::notify("boxes", lang("box_successful_saved", "The data was successfully written!"), lang("saved"));
-            //$response->exec(new Dialog(lang("successful_saved", "The data was successfully written!"), lang("okay"), 3));
             $response->exec('$("#boxes_new_' . convert::raw2js($data["seiteid"]) . '").html("' . convert::raw2js(BoxesController::renderBoxes($data["seiteid"])) . '");');
             $response->exec('dropdownDialog.get(ajax_button.parents(".dropdownDialog").attr("id")).hide();');
 
             return $response;
-        } else {
-
-            $response->exec(new Dialog(lang("mysql_error"), lang("error"), 5));
+        } catch(Exception $e) {
+            $response->exec(new Dialog($e->getMessage(), lang("error"), 5));
 
             return $response;
         }
