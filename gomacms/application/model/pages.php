@@ -1078,7 +1078,7 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
                     $node->addClass("hidden");
                 }
 
-                if($record->children()->count() > 0) {
+                if($record->children()->setVersion($data->getVersion())->filter($data->getFilter())->count() > 0) {
                     $node->setChildCallback(array("pages", "build_tree"), $dataParams);
                 }
 

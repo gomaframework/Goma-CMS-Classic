@@ -12,6 +12,7 @@ class PageUtils {
         $path = trim($path);
         $path = strtolower($path);
 
+
         // special chars
         $path = str_replace("ä", "ae", $path);
         $path = str_replace("ö", "oe", $path);
