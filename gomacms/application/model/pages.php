@@ -26,8 +26,6 @@
  * @method HasMany_DataObjectSet children($filter = null, $sort = null)
  */
 
-abc
-
 class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
     /**
      * name
