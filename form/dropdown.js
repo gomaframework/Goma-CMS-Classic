@@ -34,7 +34,10 @@ DropDown.prototype = {
 
 	currentSearchResult: "",
 	currentRequest: null,
+    currentRequestTimeout: null,
 	inSort: false,
+	hideTimeout: null,
+    oldFieldHTML: null,
 
 	getValue: function() {
 		return this.input.val();
@@ -88,22 +91,30 @@ DropDown.prototype = {
 
 	/**
 	 * inits the dropdown-events
-	 *
-	 *@name init
 	 */
 	init: function() {
 		var that = this;
 
-
 		this.widget.disableSelection();
 		this.widget.find(" > .field").css("cursor", "pointer");
 
-		this.widget.find(" > .field").click(function(){
+		this.widget.find(" > .field").on("focus", function(e){
 			if(!that.inSort) {
 				that.toggleDropDown();
 			}
 			return false;
 		});
+
+        this.widget.find(" > .field").on("click", function(e){
+            if(!that.inSort) {
+                that.toggleDropDown();
+            }
+            return false;
+        });
+
+		this.widget.find(" > .field").on("blur", this.checkFocusForHide.bind(this));
+		this.widget.find(" > .dropdown > .header > .search").on("blur", this.checkFocusForHide.bind(this));
+		this.widget.find(" > .dropdown a").on("blur", this.checkFocusForHide.bind(this));
 
 		this.widget.find(" > input").css("display", "none");
 		this.widget.find(" > .field").css("margin-top", 0);
@@ -192,10 +203,19 @@ DropDown.prototype = {
 
 		this.bindFieldEvents();
 	},
+
+	checkFocusForHide: function() {
+		clearTimeout(this.hideTimeout);
+		this.hideTimeout = setTimeout(function() {
+			if($(document.activeElement).parents("#" + this.widget.attr("id")).length == 0) {
+				this.hideDropDown();
+			}
+		}.bind(this), 100);
+	},
+
 	/**
 	 * sets the content of the field, which is clickable and is showing current selection
 	 *
-	 *@name setField
 	 *@param string - content
 	 */
 	setField: function(content, setHeight) {
@@ -213,25 +233,29 @@ DropDown.prototype = {
 	/**
 	 * sets the content of the dropdown
 	 *
-	 *@name setContent
-	 *@param string - content
+	 * @param string - content
 	 */
 	setContent: function(content) {
 		this.widget.find(" > .dropdown > .content").html('<div class="animationwrapper">' + content + '</div>');
 	},
 
+    getContent: function() {
+        return this.widget.find(" > .dropdown > .content").html();
+    },
+
 	/**
 	 * shows the dropdown
-	 *
-	 *@name showDropDown
 	 */
 	showDropDown: function() {
 		if(this.widget.find(" > .dropdown").css("display") == "none") {
+			this.widget.find(" > .field").attr("tabindex", -1);
 			this.widget.find(" > .field").addClass("active");
 			// set correct position
 			this.updateDropdownPosition();
 
-			var oldFieldHTML = this.widget.find(" > .field").html();
+            if(this.oldFieldHTML == null) {
+                this.oldFieldHTML = this.widget.find(" > .field").html();
+            }
 
 			// show loading
 			this.setFieldLoading();
@@ -241,7 +265,8 @@ DropDown.prototype = {
 			this.reloadData(function(){
 				//$this.widget.find(" > .field").css({height: ""});
 				$this.widget.find(" > .dropdown").fadeIn(200);
-				$this.setField(oldFieldHTML);
+				$this.setField($this.oldFieldHTML);
+                $this.oldFieldHTML = null;
 				var width = $this.widget.find(" > .field").outerWidth(false) - ($this.widget.find(" > .dropdown").outerWidth(false) - $this.widget.find(" > .dropdown").width());
 				$this.widget.find(" > .dropdown").css({ width: width});
 				$this.widget.find(" > .dropdown .search").focus();
@@ -264,19 +289,30 @@ DropDown.prototype = {
 		clearTimeout(this.timeout);
 		this.widget.find(" > .dropdown").fadeOut(200);
 		this.widget.find(" > .field").removeClass("active");
+		this.widget.find(" > .field").attr("tabindex", 0);
+
+        if(this.currentRequest) {
+            this.currentRequest.abort();
+        }
+        clearTimeout(this.currentRequestTimeout);
 	},
+
+    clearTogglTimeout: null,
 
 	/**
 	 * toggles the dropdown
 	 *
-	 *@name toggleDropDown
+	 * @name toggleDropDown
 	 */
 	toggleDropDown: function() {
-		if(this.widget.find(" > .dropdown").css("display") == "none") {
-			this.showDropDown();
-		} else {
-			this.hideDropDown();
-		}
+        clearTimeout(this.clearTogglTimeout);
+        this.clearTogglTimeout = setTimeout(function() {
+            if(this.widget.find(" > .dropdown").css("display") == "none") {
+                this.showDropDown();
+            } else {
+                this.hideDropDown();
+            }
+        }.bind(this), 50);
 	},
 
 	/**
@@ -286,20 +322,20 @@ DropDown.prototype = {
 	 *@name reloadData
 	 */
 	reloadData: function(fn) {
-		var onfinish = fn;
-		var that = this;
-		var search = this.widget.find(" > .dropdown > .header > .search").val();
+		var onfinish = fn,
+            that = this,
+            timeout = 0,
+            search = this.widget.find(" > .dropdown > .header > .search").val();
 
-		this.setContent("<div class=\"loading\" style=\"text-align: center;\"><img src=\"images/16x16/loading.gif\" alt=\"loading\" /> "+lang("loading", "loading...")+"</div>");
+		this.setContent("<div class=\"loading\" style=\"text-align: center;\"><img src=\"system/images/16x16/loading.gif\" alt=\"loading\" /> "+lang("loading", "loading...")+"</div>");
 		clearTimeout(this.timeout);
 
 		// we limit the request, so just send if in the last 200 milliseconds no edit in search was done
 		if(search != "" && search != lang("search", "search...")) {
 			this.widget.find(" > .dropdown > .header > .cancel").fadeIn(100);
-			var timeout = 300;
+            timeout = 300;
 		} else  { // if no search is set, limit is not needed
 			this.widget.find(" > .dropdown > .header > .cancel").fadeOut(100);
-			var timeout = 0;
 		}
 
 		var makeAjax = function(){
@@ -307,80 +343,88 @@ DropDown.prototype = {
 				that.currentRequest.abort();
 			}
 
+            var oldContent = that.getContent();
 			that.currentRequest = $.ajax({
 				url: that.url + "/getData/" + that.page + "/",
 				type: "post",
 				data: {"search": search},
-				dataType: "json",
-				error: function(jqXHR, status, text) {
-					if(status != "abort") {
-						that.setContent("Error! Please try again");
-						if (onfinish != null) {
-							onfinish();
-						}
+				dataType: "json"
+			}).fail(function(jqXHR, status, text) {
+				if(status != "abort") {
+                    try {
+                        var json = JSON.parse(jqXHR.responseText);
+                        that.setContent("Error! Please try again. " + json.error);
+                        console.log(json);
+                    } catch(e) {
+                        that.setContent("Error! Please try again. " + e);
+                    }
 
-						setTimeout(that.reloadData.bind(that, fn), 1000);
-					}
-				},
-				success: function(data) {
-					var inputVal = that.widget.find(" > .dropdown > .header > .search").val();
-					if(this != inputVal && that.currentSearchResult == inputVal) {
-						return;
-					}
-
-					that.currentSearchResult = this;
-
-					if(!data || data == "")
-						that.setContent("No data given, Your Session might have timed out.");
-
-					if(data.right) {
-						that.widget.find(".dropdown > .header > .pagination > span > .right").removeClass("disabled");
-					} else {
-						that.widget.find(".dropdown > .header > .pagination > span > .right").addClass("disabled");
-					}
-
-					if(data.left) {
-						that.widget.find(".dropdown > .header > .pagination > span > .left").removeClass("disabled");
-					} else {
-						that.widget.find(".dropdown > .header > .pagination > span > .left").addClass("disabled");
-					}
-
-					var content = "";
-					// render data
-					if(data.data) {
-						content += "<ul>";
-						for(var i in data.data) {
-							if(data.data.hasOwnProperty(i)) {
-								var val = data.data[i];
-
-								content += "<li>";
-
-								if (data.value[val.key] || data.value[val.key] === 0)
-									content += "<a href=\"javascript:;\" class=\"checked\" id=\"dropdown_" + that.id + "_" + val.key + "\"><span title=\"" + val.value.replace('"', '\\"') + "\">" + val.value + "</span></a>";
-								else
-									content += "<a href=\"javascript:;\" id=\"dropdown_" + that.id + "_" + val.key + "\"><span title=\"" + val.value.replace('"', '\\"') + "\">" + val.value + "</span></a>";
-
-								if (typeof val.smallText == "string") {
-									content += "<span class=\"record_info\">" + val.smallText + "</span>";
-								}
-
-								content += "</li>";
-							}
-						}
-
-						content += "</ul>";
-						if(i == -1)
-							content = '<div class="no_data">' + lang("no_result", "There is no data to show.") + '</div>';
-						that.setContent(content);
-						that.bindContentEvents();
-					}
-
-					if(onfinish != null) {
+					if (onfinish != null) {
 						onfinish();
 					}
 
-				}.bind(search)
-			});
+					that.currentRequestTimeout = setTimeout(that.reloadData.bind(that, fn), 1000);
+				} else {
+                    that.setContent(oldContent);
+                }
+			}).done(function(data) {
+				var inputVal = that.widget.find(" > .dropdown > .header > .search").val();
+				if(this != inputVal && that.currentSearchResult == inputVal) {
+					return;
+				}
+
+				that.currentSearchResult = this;
+
+				if(!data || data == "")
+					that.setContent("No data given, Your Session might have timed out.");
+
+				if(data.right) {
+					that.widget.find(".dropdown > .header > .pagination > span > .right").removeClass("disabled");
+				} else {
+					that.widget.find(".dropdown > .header > .pagination > span > .right").addClass("disabled");
+				}
+
+				if(data.left) {
+					that.widget.find(".dropdown > .header > .pagination > span > .left").removeClass("disabled");
+				} else {
+					that.widget.find(".dropdown > .header > .pagination > span > .left").addClass("disabled");
+				}
+
+				var content = "";
+				// render data
+				if(data.data) {
+					content += "<ul>";
+					for(var i in data.data) {
+						if(data.data.hasOwnProperty(i)) {
+							var val = data.data[i];
+
+							content += "<li>";
+
+							if (data.value[val.key] || data.value[val.key] === 0)
+								content += "<a href=\"javascript:;\" tabindex='-1' class=\"checked\" id=\"dropdown_" + that.id + "_" + val.key + "\"><span title=\"" + val.value.replace('"', '\\"') + "\">" + val.value + "</span></a>";
+							else
+								content += "<a href=\"javascript:;\" tabindex='-1' id=\"dropdown_" + that.id + "_" + val.key + "\"><span title=\"" + val.value.replace('"', '\\"') + "\">" + val.value + "</span></a>";
+
+							if (typeof val.smallText == "string") {
+								content += "<span class=\"record_info\">" + val.smallText + "</span>";
+							}
+
+							content += "</li>";
+						}
+					}
+
+					content += "</ul>";
+					if(i == -1)
+						content = '<div class="no_data">' + lang("no_result", "There is no data to show.") + '</div>';
+					that.setContent(content);
+					that.bindContentEvents();
+				}
+
+				if(onfinish != null) {
+					onfinish();
+				}
+
+			}.bind(search));
 		};
 
 		if(timeout == 0)
@@ -530,6 +574,6 @@ DropDown.prototype = {
 	 * sets field loading.
 	 */
 	setFieldLoading: function(){
-		this.setField("<img height=\"12\" width=\"12\" src=\"images/16x16/loading.gif\" alt=\"loading\" /> "+lang("loading", "loading..."), true);
+		this.setField("<img height=\"12\" width=\"12\" src=\"system/images/16x16/loading.gif\" alt=\"loading\" /> "+lang("loading", "loading..."), true);
 	}
 }

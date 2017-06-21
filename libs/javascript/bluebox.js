@@ -40,7 +40,7 @@ function bluebox(url, title, _class, drag)
 								<tr>\
 									<td class="con_shadow bluebox_border" style="width: 16px;background-repeat: repeat-y;"></td>\
 									<td class="bluebox_inner">\
-										<div align="center" class="bluebox_loading"><img src="images/loading.gif" alt="loading..." /></div>\
+										<div align="center" class="bluebox_loading"><img src="system/images/loading.gif" alt="loading..." /></div>\
 										<div class="bluebox_data">\
 											<span class="bluebox_close" style="display: none;" onmouseover="this.style.color = \'#ffffff\';" onmouseout="this.style.color = \'#afafaf\';" onclick="getblueboxbyid($(this).parents(\'.bluebox_wrapper\').attr(\'id\').replace(\'bluebox_\',\'\')).close();">x</span>\
 											<div class="bluebox_title"></div>\

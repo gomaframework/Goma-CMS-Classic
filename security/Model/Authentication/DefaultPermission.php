@@ -59,10 +59,11 @@ class DefaultPermission {
     /**
      * forces groups to be existing or creates them.
      *
-     * @param 	DataObject of Type User
+     * @param    DataObject of Type User
+     * @return ManyMany_DataObjectSet
      */
     public static function forceGroups($user) {
-
+        /** @var ManyMany_DataObjectSet $groups */
         $groups = $user->groups(null, "type DESC");
 
         // if no group is set, set default group user
@@ -70,7 +71,7 @@ class DefaultPermission {
             $group = self::getDefaultGroup();
 
             $groups->add($group);
-            $groups->write(false, true, 2, false, false);
+            $groups->commitStaging(false, true, 2);
         }
 
         return $groups;

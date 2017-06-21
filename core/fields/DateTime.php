@@ -15,7 +15,17 @@ class DateTimeSQLField extends DBField {
 	 * @return string
 	 */
 	static public function getFieldType($args = array()) {
-		return "int(30)";
+		return "int(30) NULL";
+	}
+
+	/**
+	 * @param string $name
+	 * @param string $value
+	 * @param string $format
+	 * @return static
+	 */
+	public static function createFromFormat($name, $value, $format) {
+		return new static($name, $value, array($format));
 	}
 
 	/**
@@ -26,16 +36,47 @@ class DateTimeSQLField extends DBField {
 	 */
 	public function __construct($name, $value, $args = array())
 	{
-		if($value !== null) {
-			if(preg_match('/^[0-9]+$/', trim($value))) {
-				$value = trim($value);
+		$parsedValue = $this->parseDateTime($value, $args);
+		parent::__construct($name, $parsedValue, $args);
+	}
+
+	/**
+	 * @param $value
+	 * @param $args
+	 * @param bool $useTime
+	 * @return int
+	 */
+	protected function parseDateTime($value, $args, $useTime = true) {
+		if($value === null || (is_string($value) && trim($value) == "")) {
+			return null;
+		}
+
+		if(!is_int($value)) {
+			if(preg_match('/^\-?[0-9]+$/', trim($value))) {
+				return (int) trim($value);
+			} else if(isset($args[0]) && is_string($args[0]) && ($datetime = DateTime::createFromFormat($args[0], $value, new DateTimeZone(date_default_timezone_get())))) {
+				if($useTime) {
+					return $datetime->getTimestamp();
+				}
+
+				return mktime(0, 0, 0, date("m", $datetime->getTimestamp()), date("d", $datetime->getTimestamp()), date("Y", $datetime->getTimestamp()));
+			} else if($useTime && preg_match('/^([0-9]{4})\-([0-9]{2})\-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})/', $value, $matches)) {
+				return mktime($matches[4], $matches[5], $matches[6], $matches[2], $matches[3], $matches[1]);
+			} else if((!$useTime || strtotime($value) === false) && preg_match('/^([0-9]{4})\-([0-9]{2})\-([0-9]{2})/', $value, $matches)) {
+				return mktime(0, 0, 0, $matches[2], $matches[3], $matches[1]);
 			} else {
-				$time = strtotime($value);
-				$value = $time;
+				if(!($timestamp = strtotime($value))) {
+					throw new InvalidArgumentException("Argument is not any kind of date. " . gettype($value) . var_export($value, true));
+				}
+
+				if($useTime) {
+					return $timestamp;
+				}
+				return mktime(0, 0, 0, date("m", $timestamp), date("d", $timestamp), date("Y", $timestamp));
 			}
 		}
 
-		parent::__construct($name, $value, $args);
+		return $value;
 	}
 
 	/**
@@ -144,15 +185,9 @@ class DateTimeSQLField extends DBField {
 	}
 
 	/**
-	 * @internal
-	 * @param DataObject $class
-	 * @param string $fieldName
-	 * @param array $args
-	 * @param string $fieldType
+	 * @return int|null
 	 */
-	public static function argumentClassInfo($class, $fieldName, $args, $fieldType) {
-		if(!isset(ClassInfo::$class_info[$class->classname]["defaults"][$fieldName])) {
-			ClassInfo::$class_info[$class->classname]["defaults"][$fieldName] = 0;
-		}
+	public function getTimestamp() {
+		return $this->value;
 	}
 }

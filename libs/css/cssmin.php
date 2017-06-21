@@ -15,34 +15,25 @@ class CSSMin extends gObject
 		/**
 		  * the before char.
 		  *
-		  *@name a
-		  *@access protected
-		  *@var string
+		  * @var string
 		*/
 		protected $a = "";
 		
 		/**
 		  * the current char.
 		  *
-		  *@name b
-		  *@access protected
-		  *@var string
+		  * @var string
 		*/
 		protected $b = "";
 		
 		/**
 		 * the next char.
-		 *
-		 *@name c
-		 *@access protected 
 		*/
 		protected $c = "";
 		
 		/**
 		  * the data to minify.
 		  *
-		  *@name input
-		  *@access protected
 		  *@var string
 		*/
 		protected $input = "";
@@ -50,26 +41,20 @@ class CSSMin extends gObject
 		/**
 		  * the length of the data.
 		  *
-		  *@name inputLength
-		  *@access protected
-		  *@var numeric
+		  *@var int
 		*/
 		protected $inputLenght = 0;
 		
 		/**
 		  * the current position.
 		  *
-		  *@name inputIndex
-		  *@access protected
-		  *@var numeric
+		  *@var int
 		*/
 		protected $inputIndex = 0;
 		
 		/**
 		  * the minfied version.
 		  *
-		  *@name output
-		  *@access public
 		  *@var string
 		*/
 		public $output = "";
@@ -77,8 +62,6 @@ class CSSMin extends gObject
 		/**
 		 * this array contains the data for the obfuscator.
 		 *
-		 *@name dataarray1
-		 *@access public
 		 *@var string
 		*/
 		public static $dataarray1 = array(
@@ -87,9 +70,6 @@ class CSSMin extends gObject
 		
 		/**
 		 * this array contains the data for the obfuscator.
-		 *
-		 *@name dataarray2
-		 *@access public
 		 *@var string
 		*/
 		public static $dataarray2 = array(
@@ -98,9 +78,8 @@ class CSSMin extends gObject
 		
 		/**
 		 * minfies css-code
-		 *@name minify
-		 *@param string - css
-		 *@return new code
+		 *@param string $css
+		 *@return string new code
 		*/
 		public static function minify($css)
 		{
@@ -110,24 +89,14 @@ class CSSMin extends gObject
 		}
 		
 		/**
-		 *@name __construct
-		 *@param string - css-code
+		 *@param string $input
 		 *@param boolean pase as less-file
 		*/
-		public function __construct($input, $less = true)
+		public function __construct($input)
 		{
-			if($less) {
-				try {			
-					$less = new lessc;
-					$this->input = $less->compile($input);
-				} catch(Exception $e) {
-					$this->input = $input;
-					log_exception($e);
-				}
-			} else {
-				$this->input = $input;
-			}
-			
+			parent::__construct();
+
+			$this->input = $input;
 			$this->input = str_replace(array("\r\n", "\r", "\n", "	"), " ", $this->input);
 			$this->input = preg_replace("/\/\*(.*)\*\//Usi", "", $this->input); // comments
 			$this->inputLenght = strlen($this->input);

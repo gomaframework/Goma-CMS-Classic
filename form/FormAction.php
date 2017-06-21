@@ -94,6 +94,12 @@ class FormAction extends FormField implements FormActionHandler
             $this->input->val($this->title);
         }
 
+        if ($this->isDisabled()) {
+            $this->input->disabled = "disabled";
+        } else {
+            $this->input->removeAttr("disabled");
+        }
+
         $this->container->append($this->input);
 
         $this->container->setTag("span");

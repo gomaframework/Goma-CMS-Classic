@@ -6,7 +6,7 @@ defined("IN_GOMA") OR die();
 /**
  * Tests tpl-class.
  *
- * @package GerSozi
+ * @package Goma
  *
  * @author Goma Team
  * @copyright 2017 Goma Team

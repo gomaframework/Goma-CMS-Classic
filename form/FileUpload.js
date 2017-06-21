@@ -61,6 +61,7 @@ function FileUpload(form, field, formelement, url, size, types) {
 		browse: this.browse,
 		usePut: false,
 		useSlice: true,
+        isAbort: false,
 
 		max_size: size,
 
@@ -69,9 +70,13 @@ function FileUpload(form, field, formelement, url, size, types) {
 		// events
 		uploadStarted: function() {
 			var that = this;
-			$this.infoZone.html('<div class="progressbar"><div class="progress"></div><span><img src="images/16x16/loading.gif" alt="Uploading.." /></span><div class="cancel"></div></div>');
+			$this.infoZone.html('<div class="progressbar"><div class="progress"></div><span><img src="system/images/16x16/loading.gif" alt="Uploading.." /></span><div class="cancel"></div></div>');
 			$this.infoZone.find(".cancel").click(function(){
+                that.isAbort = true;
 				that.abort();
+                setTimeout(function(){
+                    that.isAbort = false;
+                }, 300);
 			});
 			$($this.element).append('<div class="loading"></div>');
             $this.form.setLeaveCheck(true);
@@ -106,7 +111,7 @@ function FileUpload(form, field, formelement, url, size, types) {
 		 * called when the progress was updated, just for ajax-upload
 		 */
 		progressUpdate: function(fileIndex, file, newProgress) {
-			$this.infoZone.find(".progress").stop().animate({width: newProgress + "%"}, 500);
+			$this.infoZone.find(".progress").stop().animate({width: newProgress + "%"}, 500).css("overflow", "visible");
 		},
 
 		/**
@@ -114,7 +119,7 @@ function FileUpload(form, field, formelement, url, size, types) {
 		 */
 		always: function() {
 			$this.infoZone.find("span").html("100%");
-			$this.infoZone.find(".progress").css("width", "100%");
+			$this.infoZone.find(".progress").css({"width": "100%"});
 			setTimeout(function(){
 				$this.infoZone.find(".progressbar").slideUp("fast", function(){
 					$this.infoZone.html("");
@@ -214,8 +219,10 @@ function FileUpload(form, field, formelement, url, size, types) {
 		failExt: function() {
 			$this.infoZone.html('<div class="error">'+lang("files.filetype_failure")+'</div>');
 		},
-		fail: function(status, response) {
-			$this.infoZone.html('<div class="error">'+response+'</div>');
+		fail: function(status, response, index, uploader, xhr) {
+            if(!this.isAbort) {
+                $this.infoZone.html('<div class="error">' + response + '</div>');
+            }
 		}
 
 	});

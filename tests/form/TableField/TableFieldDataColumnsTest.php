@@ -24,29 +24,22 @@ class TableFieldDataColumnsTest extends TableComponentFieldTests
         return $field;
     }
 
+    /**
+     * tests if setDisplayFields works.
+     */
     public function testSetDisplayFields() {
         $model = new FakeModelWithsummaryFields();
         $model->_data = true;
-        $fields = array(
-            "test" => "int(10)",
-            "blub" => "int(20)"
-        );
-        FakeModelWithsummaryFields::$summaryFields = $fields;
 
         $tableField = new TableField("test", "blah", $model);
 
         $field = new TableFieldDataColumns();
+        $this->assertEqual(array(), $field->getDisplayFields($tableField));
 
-        $this->assertEqual($field->getDisplayFields($tableField), $fields);
-
-        $fields2 = array(
+        $fields = array(
             "test" => "blah"
         );
-        $field->setDisplayFields($fields2);
-
-        $this->assertEqual($field->getDisplayFields($tableField), $fields2);
-
-        $field->setDisplayFields(array());
+        $field->setDisplayFields($fields);
 
         $this->assertEqual($field->getDisplayFields($tableField), $fields);
     }

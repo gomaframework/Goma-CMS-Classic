@@ -37,5 +37,6 @@ $lang = array(
 	"frameworkVerErr"	=> "You need to have a higher framework-version installed to run this application!",
 	"version"			=> "version",
 	"existent_folder"	=> "Existing folder",
-	"database_working" 	=> "Database working"
+	"database_working" 	=> "Database working",
+	"existing"			=> "Existing Installation"
 );

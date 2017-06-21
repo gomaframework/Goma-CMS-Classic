@@ -23,8 +23,8 @@ class ControllerResolverTest extends GomaUnitTest implements TestAble {
 	public function testssetModelInst() {
 		$dataObjectSet = new MyTestControllerForDataObjectSet();
 		$dataObjectSet->setModelInst(new Uploads());
-		$this->assertEqual($dataObjectSet->model, "uploads");
-		$this->assertIsA($dataObjectSet->modelInst(), "uploads");
+		$this->assertEqual($dataObjectSet->model(), strtolower(Uploads::class));
+		$this->assertIsA($dataObjectSet->modelInst(), Uploads::class);
 	}
 }
 

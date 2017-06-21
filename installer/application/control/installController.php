@@ -8,7 +8,7 @@
   * last modified: 15.09.2012
   * $Version 2.1.1
 */
-class InstallController extends Controller {
+class InstallController extends FrontedController {
 	/**
 	 * url_handlers
 	*/
@@ -32,7 +32,23 @@ class InstallController extends Controller {
 	*/
 	public function index() {
 		if(GlobalSessionManager::globalSession()->hasKey("lang")) {
-			return tpl::render("install/index.html");
+			$folders = array();
+			foreach(scandir(ROOT) as $directory) {
+				if($directory != "system" && file_exists($directory . "/info.plist") &&
+					is_dir($directory . "/application") && file_exists($directory . "/application/application.php")) {
+					$info = $this->getFolderInfo($directory);
+					$folders[$directory] = array_merge($info, array(
+						"directory" => $directory,
+						"working"   => file_exists($directory . "/config.php") &&
+							$this->testConfig($directory . "/config.php")
+					));
+				}
+			}
+
+			$view = new ViewAccessableData();
+			return $view->customise(array(
+				"folders" => new DataSet($folders)
+			))->renderWith("install/index.html");
 		} else {
 			return GomaResponse::Redirect(BASE_URI . BASE_SCRIPT . "/install/langselect/");
 		}
@@ -68,23 +84,9 @@ class InstallController extends Controller {
 			}
 		}
 
-        $folders = array();
-		foreach(scandir(ROOT) as $directory) {
-			if($directory != "system" && file_exists($directory . "/info.plist") &&
-				is_dir($directory . "/application") && file_exists($directory . "/application/application.php")) {
-                $info = $this->getFolderInfo($directory);
-                $folders[$directory] = array_merge($info, array(
-                    "directory" => $directory,
-                    "working"   => file_exists($directory . "/config.php") &&
-                        $this->testConfig($directory . "/config.php")
-                ));
-            }
-		}
-
 		$data = new ViewAccessableData();
 		return $data->customise(array(
-            "apps" => new DataSet($apps),
-            "folders" => new DataSet($folders)
+            "apps" => new DataSet($apps)
         ))->renderWith("install/selectApp.html");
 	}
 
@@ -280,22 +282,6 @@ class InstallController extends Controller {
 	}
 
     /**
-     * serve
-     *
-     * @param string $content
-     * @param GomaResponseBody $body
-     * @return string
-     */
-	public function serve($content, $body) {
-        if ((Core::is_ajax() && isset($_GET["dropdownDialog"])) || !$body->isFullPage()) {
-            return $content;
-        }
-
-        $data = new ViewAccessAbleData();
-		return $data->customise(array("content" => $content))->renderWith("install/install.html");
-	}
-
-    /**
      * shows a form to select a file to restore
      *
      * @name selectRestore
@@ -473,26 +459,5 @@ class InstallController extends Controller {
 		} else {
 			return "file not found";
 		}
-	}
-
-    /**
-     * returns an array of the wiki-article and youtube-video for this controller
-     *
-     * @name helpArticle
-     * @access public
-     * @return array
-     */
-	public function helpArticle() {
-		
-		if($this->getParam("action") == "installapp")
-			if(isset($_SESSION["install"]))
-				return array("yt" => "QcIBX3Rh0RA#t=03m40s");
-			else
-				return array("yt" => "QcIBX3Rh0RA#t=03m18s");
-		
-		if($this->getParam("action") == "install")
-			return array("yt" => "QcIBX3Rh0RA#t=03m12s");
-		
-		return array("yt" => "QcIBX3Rh0RA#t=03m08s");
 	}
 }

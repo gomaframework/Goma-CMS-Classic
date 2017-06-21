@@ -13,8 +13,6 @@ class ImageUploadField extends FileUpload
 {
 	/**
 	 * all allowed file-extensions
-	 *@name allowed_file_types
-	 *@access public
 	 */
 	public $allowed_file_types = array(
 		"jpg",
@@ -56,10 +54,16 @@ class ImageUploadField extends FileUpload
 	/**
 	 * advanced mode means, that aspect ratio is used.
 	 *
+	 * @param bool $mode
 	 * @return $this
 	 */
-	public function enableAdvancedMode() {
-		$this->template = "form/ImageUpload.html";
+	public function setAdvancedMode($mode = true) {
+		if($mode) {
+			$this->template = "form/ImageUpload.html";
+		} else {
+			$this->template = "form/FileUpload.html";
+		}
+
 		return $this;
 	}
 
@@ -74,7 +78,7 @@ class ImageUploadField extends FileUpload
 		$info->addJSFile("system/libs/thirdparty/jcrop/jquery.Jcrop.js");
 		$info->addJSFile("system/form/imageUpload.js");
 		$info->addJSFile("system/libs/tabs/tabs.js");
-		$info->addCSSFile("system/templates/css/tabs.css");
+		$info->addCSSFile("system/templates/css/tabs.less");
 		$info->addCSSFile("system/libs/thirdparty/jcrop/jquery.Jcrop.css");
 
 		$info->getRenderedField()->append(
@@ -84,7 +88,7 @@ class ImageUploadField extends FileUpload
 
 	/**
 	 * @param null $fieldErrors
-	 * @return $this
+	 * @return FileUploadRenderData
 	 */
 	public function exportBasicInfo($fieldErrors = null)
 	{
@@ -111,51 +115,61 @@ class ImageUploadField extends FileUpload
 	 * sets crop-info.
 	 */
 	public function setCropInfo() {
-		if(!$this->request->isPOST()) {
-			throw new BadRequestException("You need to use POST.");
-		}
+        $microtime = microtime(true);
 
-		if(!is_a($this->getModel(), "ImageUploads")) {
-			throw new InvalidArgumentException("Value is not type of ImageUpload.");
-		}
+        if (!$this->request->isPOST()) {
+            throw new BadRequestException("You need to use POST.");
+        }
 
-		$crop = true;
-		foreach(array("thumbHeight", "thumbWidth", "thumbLeft", "thumbTop") as $key) {
-			if(!RegexpUtil::isDouble($this->getParam($key))) {
-				$crop = false;
-			}
-		}
+        if (!is_a($this->getModel(), "ImageUploads")) {
+            throw new InvalidArgumentException("Value is not type of ImageUpload.");
+        }
 
-		/** @var ImageUploads $image */
-		$image = $this->getModel();
+        $crop = true;
+        foreach (array("thumbHeight", "thumbWidth", "thumbLeft", "thumbTop") as $key) {
+            if (!RegexpUtil::isDouble($this->getParam($key))) {
+                $crop = false;
+            }
+        }
 
-		if($this->getParam("useSource") && $this->getParam("useSource") != "false") {
-			if(!$image->sourceImage) {
-				throw new InvalidArgumentException("Source Image not defined.");
-			}
+        /** @var ImageUploads $image */
+        $image = $this->getModel();
 
-			$image = $image->sourceImage;
-		}
+        if ($this->getParam("useSource") && $this->getParam("useSource") != "false") {
+            if (!$image->sourceImage) {
+                if($this->getParam("useSource") != "may") {
+                    throw new InvalidArgumentException("Source Image not defined.");
+                }
+            } else {
+                $image = $image->sourceImage;
+            }
+        }
 
-		if($this->getParam("thumbWidth") == 0 || $this->getParam("thumbHeight") == 0 || !$crop) {
-			$upload = $image;
-		} else {
-			$upload = $image->addImageVersionBySizeInPx($this->getParam("thumbLeft"), $this->getParam("thumbTop"), $this->getParam("thumbWidth"), $this->getParam("thumbHeight"));
-		}
+        if ($this->getParam("thumbWidth") == 0 || $this->getParam("thumbHeight") == 0 || !$crop) {
+            $upload = $image;
+        } else {
+            $upload = $image->addImageVersionBySizeInPx($this->getParam("thumbLeft"), $this->getParam("thumbTop"), $this->getParam("thumbWidth"), $this->getParam("thumbHeight"));
+        }
+
+        $end = microtime(true);
 
         // cleanup
-        if($this->getModel()->sourceImage && $this->getModel()->id != $upload->id) {
-            if($this->getModel()->hasNoLinks()) {
+        if ($this->getModel()->sourceImage && $this->getModel()->id != $upload->id) {
+            if ($this->getModel()->hasNoLinks()) {
                 $this->getModel()->remove(true);
             }
         }
 
-		$this->model = $upload;
+        $this->model = $upload;
 
-		return new JSONResponseBody(array(
-			"status" => 1,
-			"file" => $this->getFileResponse($upload)
-		));
+        $end2 = microtime(true);
+
+        return new JSONResponseBody(array(
+            "status" => 1,
+            "file" => $this->getFileResponse($upload),
+            "time" => $end - $microtime,
+            "time2" => $end2 - $microtime
+        ));
 	}
 
     /**
@@ -190,11 +204,12 @@ class ImageUploadField extends FileUpload
 	 * @throws Exception
 	 */
 	public function handleException($e) {
-		if(in_array($this->request->getParam("action"), $this->allowed_actions)) {
+		if(in_array(strtolower($this->request->getParam("action")), $this->allowed_actions)) {
 			return GomaResponse::create(null, JSONResponseBody::create(array(
 				"class" => get_class($e),
 				"errstring" => $e->getMessage(),
-				"code" => $e->getCode()
+				"code" => $e->getCode(),
+                "error" => get_class($e)
 			)))->setStatus(
 				method_exists($e, "http_status") ?
 					$e->http_status() :

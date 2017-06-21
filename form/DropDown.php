@@ -72,13 +72,6 @@ class DropDown extends FormField {
 	public $keyField = "id";
 
 	/**
-	 * this field needs to have the full width.
-	 *
-	 * @var bool
-	 */
-	protected $fullSizedField = true;
-
-	/**
 	 * unique key for this field.
 	 *
 	 * @var string
@@ -169,7 +162,7 @@ class DropDown extends FormField {
 		}
 	}
 
-	/**
+    /**
 	 * @return array|string|null
 	 */
 	public function getModel()
@@ -178,7 +171,9 @@ class DropDown extends FormField {
 			return null;
 		}
 
-		return parent::getModel();
+		$model = parent::getModel();
+		$this->model = $model;
+		return $model;
 	}
 
 	/**
@@ -213,7 +208,8 @@ class DropDown extends FormField {
 		), array(
 			$this->field = new HTMLNode("div", array(
 				"class" => "field",
-				"id" => $this->ID() . "_field"
+				"id" => $this->ID() . "_field",
+				"tabindex" => $this->isDisabled() ? -1 : 0
 			), $this->renderInputWidget()),
 			$this->dropdown = new HTMLNode("div", array("class" => "dropdown"), array(
 				new HTMLNode("div", array("class" => "header"), array(
@@ -222,20 +218,24 @@ class DropDown extends FormField {
 						"autocomplete" => "off",
 						"id" => $this->ID() . "_search",
 						"class" => "search",
-						"placeholder" => lang("search", "search...")
+						"placeholder" => lang("search", "search..."),
+						"tabindex" => -1
 					)),
 					new HTMLNode("a", array(
 						"href" => "javascript:;",
-						"class" => "cancel"
+						"class" => "cancel",
+						"tabindex" => -1
 					)),
 					new HTMLNode("div", array("class" => "pagination"), array(
 						new HTMLNode("span", array("class" => "left"), array(new HTMLNode("a", array(
 							"class" => "left disabled fa fa-angle-left fa-3x",
-							"href" => "javascript:;"
+							"href" => "javascript:;",
+							"tabindex" => -1
 						), ""))),
 						new HTMLNode("span", array("class" => "right"), array(new HTMLNode("a", array(
 							"class" => "right disabled fa fa-angle-right fa-3x",
-							"href" => "javascript:;"
+							"href" => "javascript:;",
+							"tabindex" => -1
 						), "")))
 					)),
 					new HTMLNode("div", array("class" => "clear"))
@@ -267,7 +267,7 @@ class DropDown extends FormField {
 	 */
 	public function addRenderData($info, $notifyField = true)
 	{
-		$info->addCSSFile("dropdown.css");
+		$info->addCSSFile("dropdown.less");
 		$info->addJSFile("system/form/dropdown.js");
 		$info->addCSSFile("font-awsome/font-awesome.css");
 
@@ -393,7 +393,7 @@ class DropDown extends FormField {
 		$this->container->append(new HTMLNode("label", array("for" => $this->ID()), $this->title));
 
 		$this->container->append($this->input);
-		$this->container->append(new HTMLNode("div", array("class" => "widgetwrapper"), array($this->widget)));
+		$this->container->append(new HTMLNode("div", array("class" => "widgetwrapper input"), array($this->widget)));
 		$this->container->addClass("dropdownContainer");
 
 		if($this->errors) {
@@ -475,7 +475,7 @@ class DropDown extends FormField {
 	protected function getResultFromData($page, $dataSource) {
 		// generate paging-data
 		$start = ($page * 10) - 10;
-		$end = $start + 9;
+		$end = $start + 10;
 		$i = 0;
 		$left = ($page == 1) ? false : true;
 		$right = false;
@@ -564,7 +564,7 @@ class DropDown extends FormField {
 			}
 		}
 
-		throw new InvalidArgumentException("Option must have correct DataType: Array, Object or String.");
+		throw new InvalidArgumentException("Option must have correct DataType: Array, Object or String. Please verify if the correct showfield was set.");
 	}
 
 	/**
@@ -627,10 +627,9 @@ class DropDown extends FormField {
 
 		$arr = $data["data"];
 
-		//print_r($this);
 		$value = ($this->multiselect) ? array_values($this->dataset) : array($this->getKeyFromKey($this->getModel()));
 
-		if(empty($value) || $value[0] === null) {
+		if(count($value) == 0 || $value[0] === null) {
 			$value = array();
 		} else {
 			$value = array_flip($value);

@@ -64,112 +64,124 @@ ImageUploadController.prototype = {
     aspectRatio: null,
     internalSize: null,
     saveCropTimeout: null,
-    initingJCrop: false,
+    initialUpdate: true,
+    initCropAreaDeferred: null,
 
     updateCropArea: function(data) {
-        if (this.jcropInstance != null) {
-            this.jcropInstance.destroy();
-            this.jcropInstance = null;
-        }
-
-        if(data == null || !data.status) {
+        if(data === null || !data.status) {
             this.super.actions.find(".crop").hide();
             this.fieldElement.find(".crop-button").hide();
             if(this.fieldElement.find(".crop-button").hasClass("active")) {
                 this.fieldElement.find(".preview-button").click();
             }
+            this.initialUpdate = false;
         } else {
-            this.placeCropButton();
+            this.placeCropButton().done(function(){
+                if(this.fieldElement.find(".crop-button").length > 0 && !this.initialUpdate && !this.fieldElement.find(".crop-button").hasClass("active")) {
+                    this.fieldElement.find(".crop-button").click();
+                }
+                this.initialUpdate = false;
+            }.bind(this));
         }
     },
 
     placeCropButton: function() {
+        var deferred = $.Deferred();
+
         this.super.actions.find(".crop").show();
         this.fieldElement.find(".crop-button").show();
 
         this.fieldElement.find(".crop-wrapper").css("height", "auto");
 
         if(this.fieldElement.find(".crop-button").length > 0 && this.fieldElement.find(".crop-button").hasClass("active")) {
-            this.initCropArea(
-                {
-                    width: this.fieldElement.find(".crop-wrapper > img").width(),
-                    height: this.fieldElement.find(".crop-wrapper > img").height()
-                },
-                this.fieldElement.find(".crop-wrapper > img"),
-                this.field.upload.orgImageSize.width
-            );
+            var cropImage = this.fieldElement.find(".crop-wrapper > img").get(0);
+            var image = new Image();
+            image.onload = function () {
+                this.initCropArea(
+                    {
+                        width: this.fieldElement.find(".crop-wrapper > img").width(),
+                        height: this.fieldElement.find(".crop-wrapper > img").height()
+                    },
+                    this.fieldElement.find(".crop-wrapper > img"),
+                    this.field.upload.orgImageSize.width
+                ).done(deferred.resolve).fail(deferred.reject);
+            }.bind(this);
+            image.src = cropImage.src;
+        } else {
+            deferred.resolve();
         }
+
+        return deferred.promise();
     },
 
     initCropArea: function(size, image, imageWidth) {
-        if(this.initingJCrop) {
-            return;
+        if(this.initCropAreaDeferred != null) {
+            if(this.initCropAreaDeferred.state() !== "resolved") {
+                return this.initCropAreaDeferred.promise();
+            }
         }
 
-        if (this.jcropInstance != null) {
-            this.jcropInstance.destroy();
-            this.jcropInstance = null;
+        this.initCropAreaDeferred = $.Deferred();
 
-            return setTimeout(this.initCropArea.bind(this, size, image, imageWidth), 100);
-        }
+        this.safeDestoryCrop().done(function() {
+            this.fieldElement.find(".crop-wrapper").css("height", size.height + "px");10
 
-        this.fieldElement.find(".crop-wrapper").css("height", size.height + "px");
-
-        this.initingJCrop = true;
-
-        var $this = this,
-            options = {
-                boxWidth: size.width,
-                boxHeight: size.height,
-                onChange: $this.updateCoords.bind($this),
-                onSelect: $this.updateCoords.bind($this),
-                onRelease: function() {
-                    if($this.aspectRatio != null) {
-                        $this.jcropInstance.setSelect($this.setSelectForAspect(size));
+            var $this = this,
+                options = {
+                    boxWidth: size.width,
+                    boxHeight: size.height,
+                    onChange: $this.updateCoords.bind($this),
+                    onSelect: $this.updateCoords.bind($this),
+                    onRelease: function() {
+                        if($this.aspectRatio != null) {
+                            $this.jcropInstance.setSelect($this.setSelectForAspect(size));
+                        }
                     }
-                }
-            };
+                };
 
-        this.internalSize = size;
+            this.internalSize = size;
 
-        $this.factor = size.width / imageWidth;
+            $this.factor = size.width / imageWidth;
 
-        var upload = $this.field.upload, thumbSelectionW = size.width, thumbSelectionH = size.height, y = 0, x = 0;
+            var upload = $this.field.upload, thumbSelectionW = size.width, thumbSelectionH = size.height, y = 0, x = 0;
 
-        if (this.aspectRatio != null) {
-            options.aspectRatio = this.aspectRatio;
-        }
+            if (this.aspectRatio != null) {
+                options.aspectRatio = this.aspectRatio;
+            }
 
-        if (upload.thumbLeft != 50 || upload.thumbTop != 50 || upload.thumbWidth != 100 || upload.thumbHeight != 100) {
-            thumbSelectionW = upload.thumbWidth / 100 * size.width;
-            thumbSelectionH = upload.thumbHeight / 100 * size.height;
-            y = (size.height - thumbSelectionH) * upload.thumbTop / 100;
-            x = (size.width - thumbSelectionW) * upload.thumbLeft / 100;
+            if (upload.thumbLeft != 50 || upload.thumbTop != 50 || upload.thumbWidth != 100 || upload.thumbHeight != 100) {
+                thumbSelectionW = upload.thumbWidth / 100 * size.width;
+                thumbSelectionH = upload.thumbHeight / 100 * size.height;
+                y = (size.height - thumbSelectionH) * upload.thumbTop / 100;
+                x = (size.width - thumbSelectionW) * upload.thumbLeft / 100;
 
-            options.setSelect = [
-                x, y, x + thumbSelectionW, y + thumbSelectionH
-            ];
+                options.setSelect = [
+                    x, y, x + thumbSelectionW, y + thumbSelectionH
+                ];
 
-            this.updateCoords({
-                h: thumbSelectionH,
-                w: thumbSelectionW,
-                x: x,
-                y: y
+                this.updateCoords({
+                    h: thumbSelectionH,
+                    w: thumbSelectionW,
+                    x: x,
+                    y: y
+                });
+            } else
+
+            if (this.aspectRatio != null && thumbSelectionW / thumbSelectionH != this.aspectRatio) {
+                options.setSelect = this.setSelectForAspect(size);
+            }
+
+            if(this.aspectRatio != null) {
+                options.aspectRatio = this.aspectRatio;
+            }
+
+            image.Jcrop(options, function () {
+                $this.jcropInstance = this;
+                $this.initCropAreaDeferred.resolve();
             });
-        } else
+        }.bind(this));
 
-        if (this.aspectRatio != null && thumbSelectionW / thumbSelectionH != this.aspectRatio) {
-            options.setSelect = this.setSelectForAspect(size);
-        }
-
-        if(this.aspectRatio != null) {
-            options.aspectRatio = this.aspectRatio;
-        }
-
-        image.Jcrop(options, function () {
-            $this.jcropInstance = this;
-            $this.initingJCrop = false;
-        });
+        return this.initCropAreaDeferred.promise();
     },
 
     setSelectForAspect: function(size) {
@@ -196,6 +208,10 @@ ImageUploadController.prototype = {
 
     cropButtonClicked: function() {
         var $this = this;
+
+        if(this.fieldElement.find(".crop-button").hasClass("active")) {
+            return;
+        }
 
         this.widget.fadeIn("fast");
 
@@ -265,7 +281,7 @@ ImageUploadController.prototype = {
         this.fieldElement.find(".ThumbHeightValue").val(this.internalHeight);
         this.fieldElement.find(".ThumbWidthValue").val(this.internalWidth);
 
-        if(data.w == 0 || data.h == 0) {
+        if(data.w === 0 || data.h === 0) {
             this.field.upload.thumbWidth = this.field.upload.thumbHeight = 100;
             this.field.upload.thumbLeft = this.field.upload.thumbTop = 50;
         } else {
@@ -284,21 +300,51 @@ ImageUploadController.prototype = {
     },
 
     hideCrop: function() {
-        if(this.jcropInstance != null) {
-            this.jcropInstance.destroy();
-        }
+        this.safeDestoryCrop();
 
         this.widget.fadeOut("fast");
         return false;
     },
 
+    safeDestoryCrop: function() {
+        var deferred = $.Deferred();
+
+        if(this.jcropInstance != null) {
+            this.jcropInstance.destroy();
+            this.jcropInstance = null;
+            setTimeout(deferred.resolve, 100);
+        } else {
+            setTimeout(deferred.resolve(), 10);
+        }
+
+        return deferred.promise();
+    },
+
     saveCrop: function(updatePreviewOnly) {
         var $this = this;
 
-        if(this.jcropInstance != null && updatePreviewOnly !== true) {
-            this.jcropInstance.destroy();
+        $this.super.formelement.find(".image-preview-img").parent().addClass("loading").css("height", "400px");
+
+        if(updatePreviewOnly !== true) {
+            this.safeDestoryCrop();
         }
         this.widget.fadeOut("fast");
+
+        var useSource = null;
+        if(this.field.upload.sourceImage != null) {
+            if(this.field.upload.sourceImage === true) {
+                useSource = "may";
+            } else {
+                useSource = "true";
+            }
+        }
+
+        console.log(useSource);
+
+        if(!useSource) {
+            // if saveCrop is fired a second time, while response is not here, yet, the new image has a sourceImage.
+            this.field.upload.sourceImage = true;
+        }
 
         $.ajax({
             url: this.updateUrl,
@@ -308,19 +354,24 @@ ImageUploadController.prototype = {
                 thumbTop: this.internalTop,
                 thumbWidth: this.internalWidth,
                 thumbHeight: this.internalHeight,
-                useSource: this.field.upload.sourceImage != null
+                useSource: useSource
             },
             datatype: "json"
         }).done(function(data){
             if(updatePreviewOnly === true) {
                 if(data.file.imageHeight400) {
-                    $this.super.formelement.find(".image-preview-img").css({
-                        width: "",
-                        height: ""
-                    }).attr({
-                        "src": data.file.imageHeight400,
-                        "data-retina": null
-                    });
+                    var image = new Image();
+                    image.onload = function() {
+                        $this.super.formelement.find(".image-preview-img").parent().css("height", "").removeClass("loading");
+                        $this.super.formelement.find(".image-preview-img").css({
+                            width: "",
+                            height: ""
+                        }).attr({
+                            "src": data.file.imageHeight400,
+                            "data-retina": null
+                        });
+                    };
+                    image.src = data.file.imageHeight400;
                     $this.field.upload = data.file;
                     $this.super.formelement.find(".upload-link").attr("href", data.file.path);
                     $this.super.destInput.val(data.file.realpath);

@@ -54,7 +54,6 @@ class ClassManifest {
 		
 		if(class_exists('Core', false)) {
 			Core::callHook('loadedClass', $class);
-			Core::callHook('loadedClass' . $class);
 		}
 		
 		if(PROFILE)
@@ -196,6 +195,8 @@ class ClassManifest {
             }
 
             $class = strtolower(get_class($class));
+        } else if(is_array($class)) {
+            throw new InvalidArgumentException("Classname should be string or object.");
         } else {
             $class = strtolower(trim($class));
         }
@@ -615,7 +616,7 @@ class ClassManifest {
 	 */
 	public static function include_all() {
 		foreach(ClassInfo::$files as $class => $file) {
-			if(!class_exists($class, false) && !interface_exists($class, false)) {
+			if(!class_exists($class, false) && !interface_exists($class, false) && strtolower($class) != "l") {
 				self::load($class);
 			}
 		}

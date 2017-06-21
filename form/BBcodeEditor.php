@@ -38,15 +38,14 @@ class BBcodeEditor extends Textarea {
 	/**
 	 * generates the JavaScript for this field
 	 *
-	 *@name JS
-	 *@access public
+	 * @return string
 	 */
 	public function JS() {
 		Resources::add("system/form/BBCodeEditor.js", "js", "tpl");
-		Resources::add("bbcode.css");
+		Resources::add("bbcode.less");
 		$js = "$(function(){ 
-							$('#" . $this->ID() . "').BBCodeEditor(" . json_encode($this->options) . "); 
-						});";
+			$('#" . $this->ID() . "').BBCodeEditor(" . json_encode($this->options) . ");
+		});";
 		return $js;
 	}
 

@@ -9,7 +9,7 @@
 defined("IN_GOMA") OR die();
 
 
-StaticsManager::AddSaveVar(Resources::class, "names");
+StaticsManager::AddSaveVar(Resources::class, "tagLoader");
 StaticsManager::AddSaveVar(Resources::class, "scanFolders");
 StaticsManager::AddSaveVar(Resources::class, "gzip");
 
@@ -56,6 +56,11 @@ class Resources extends gObject {
 	public static $lessVars = "default.less";
 
 	/**
+	 * @var array
+	 */
+	public static $tagLoader = array();
+
+	/**
 	 * enables debug
 	 *
 	 */
@@ -86,13 +91,6 @@ class Resources extends gObject {
 	private static $resources_css = array();
 
 	/**
-	 * this var contains names for special resources
-	 *
-	 *@var array
-	 */
-	public static $names = array();
-
-	/**
 	 * raw data
 	 *
 	 *@var array
@@ -113,13 +111,11 @@ class Resources extends gObject {
 	public static $cacheUpdated = false;
 
 	/**
-	 * adds a special name
-	 *@param string - name
-	 *@param string - file
+	 * @param string $domQuery
+	 * @param string $file
 	 */
-	public static function addName($name, $file)
-	{
-		self::$names[$name] = $file;
+	public static function addTag($domQuery, $file) {
+		self::$tagLoader[$domQuery] = $file;
 	}
 
 	/**
@@ -152,16 +148,6 @@ class Resources extends gObject {
 	public static function add($content, $type = null, $combine_name = null, $lessVars = null) {
 		if (PROFILE) Profiler::mark("resources::Add");
 
-		// special names
-		if (isset(self::$names[$content])) {
-			$content = self::$names[$content];
-		}
-
-		if (isset(gloader::$resources[$content])) {
-			gloader::load($content);
-			return;
-		}
-
 		// find out type if not set
 		if (!isset($type)) {
 			if (RegexpUtil::checkFileExt($content, "css") || RegexpUtil::checkFileExt($content, "less")) {
@@ -189,8 +175,6 @@ class Resources extends gObject {
 			case "css":
 			case "style":
 			case "stylesheet":
-
-
 				if(RegexpUtil::checkFileExt($content, "php") || !self::file_exists(ROOT . $content)) {
 					self::registerLoaded("css", $content);
 
@@ -366,6 +350,13 @@ class Resources extends gObject {
 		if ($css && self::$registeredResources["css"])
 			self::$resources_data[] = "goma.ui.registerResources('css', ".json_encode(array_values(self::$registeredResources["css"])).");";
 
+		if(self::$tagLoader) {
+			$tagString = "goma.ui.registerTags(" . json_encode(self::$tagLoader) . ")";
+			if(!in_array($tagString, self::$resources_data)) {
+				self::$resources_data[] = $tagString;
+			}
+		}
+
 		if (Core::is_ajax() || $asArray) {
 			// write data to file
 			if($js) {
@@ -441,10 +432,11 @@ class Resources extends gObject {
 
 	/**
 	 * generates a css file given by combined data
-	 *
+	 * @param string $combine_css
+	 * @param string $name
+	 * @param array $css_files
 	 */
 	public static function generateCSSFile($combine_css, $name = "",  &$css_files) {
-
 		$lessFiles = array(self::$lessVars);
 
 		if(isset($combine_css["less"])) {
@@ -483,7 +475,7 @@ class Resources extends gObject {
 				}
 				unset($cfile, $data, $cachefile);
 			}
-			FileSystem::Write($file,self::getEncodedString($css));
+			FileSystem::Write($file, self::getEncodedString($css));
 			$css_files[] = $file;
 			unset($filepointer, $css);
 		}
@@ -675,7 +667,8 @@ class Resources extends gObject {
 	/**
 	 * makes a combined javascript-file
 	 *
-	 *@param data-array
+	 * @param data -array
+	 * @return string
 	 */
 	public static function makeCombiedJS($data) {
 		if (PROFILE) Profiler::mark("Resources::makeCombinedJS");

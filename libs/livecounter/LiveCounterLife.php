@@ -23,6 +23,7 @@ class liveCounter_live extends DataObject {
         "browser"		=> "varchar(200)",
         "ip"			=> "varchar(200)",
         "hitcount"		=> "int(10)",
+        "user"          => "int(10)"
     );
 
     /**

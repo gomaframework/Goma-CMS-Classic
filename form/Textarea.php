@@ -19,12 +19,10 @@ class Textarea extends FormField
     /**
      * width of this textarea
      */
-    public $width = "100%";
+    public $width = null;
 
     /**
      * this field needs to have the full width
-     *
-     * @name fullSizedField
      */
     protected $fullSizedField = true;
 
@@ -42,7 +40,8 @@ class Textarea extends FormField
      * @param null $parent
      * @return Textarea
      */
-    public static function createWithMaxLengthAndHeight($name, $title, $maxLength, $height, $value = null, $parent = null) {
+    public static function createWithMaxLengthAndHeight($name, $title, $maxLength, $height, $value = null, $parent = null)
+    {
         /** @var Textarea $field */
         $field = parent::createWithMaxLength($name, $title, $maxLength, $value, $parent);
         $field->height = $height;
@@ -140,9 +139,16 @@ class Textarea extends FormField
     public function addRenderData($info, $notifyField = true)
     {
         $this->input->css("height", $this->height);
-        $this->input->css("width", $this->width);
+        if($this->width) {
+            $this->input->css("width", $this->width);
+        }
 
-        if($this->autoResize) {
+        if($this->height) {
+            $this->input->css("height", $this->width);
+            $this->input->css("min-height", "auto");
+        }
+
+        if ($this->autoResize) {
             $info->addJSFile("system/form/Textarea.js");
         }
 
@@ -152,9 +158,10 @@ class Textarea extends FormField
     /**
      * @return string
      */
-    public function js() {
-        if($this->autoResize) {
-            return '$(function(){ new resizableTextarea('.var_export($this->ID(), true).'); });';
+    public function js()
+    {
+        if ($this->autoResize) {
+            return '$(function(){ new resizableTextarea(' . var_export($this->ID(), true) . '); });';
         }
     }
 

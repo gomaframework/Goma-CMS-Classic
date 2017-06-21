@@ -8,9 +8,6 @@
             goma.ui.ajaxloader = {
             /**
              * global ajax renderer
-             *
-             *@name renderResponse
-             *@access public
              */
             renderResponse: function (html, xhr, node, object, checkUnload, progress) {
                 var deferred = $.Deferred(),
@@ -126,6 +123,92 @@
                 return deferred.promise();
             },
 
+            loadSingleJSFileIfNeeded: function(file, completionHandler) {
+                // we don't load modenizr, because it causes trouble sometimes if you load it via AJAX
+                if (goma.ui.JSFiles[file] === undefined && goma.ui.JSIncluded[file] === undefined && !file.match(/modernizr\.js/)) {
+                    // we create a new scope for this to don't have problems with overwriting vars and then callbacking with false ones
+                    return (function (file) {
+                        $.ajax({
+                            cache: true,
+                            url: file,
+                            noRequestTrack: true,
+                            dataType: "html"
+                        }).done(function (js) {
+                            // build into internal cache
+                            goma.ui.JSFiles[file] = js;
+                        }).always(function(){
+                            if(completionHandler != null) {
+                                completionHandler();
+                            }
+                        });
+                    })(file);
+                } else {
+                    if(completionHandler != null) {
+                        completionHandler();
+                    }
+                }
+            },
+
+            runSingleJSFileIfNeeded: function(file, completionHandler) {
+                if(goma.ui.JSFiles[file] === undefined) {
+                    throw "file was not loaded, yet. Call load first.";
+                }
+
+                try {
+                    if (goma.ui.JSIncluded[file] !== true) {
+                        goma.ui.JSIncluded[file] = true;
+                        eval_global(goma.ui.JSFiles[file]);
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+
+                if(completionHandler != null) {
+                    completionHandler();
+                }
+            },
+
+            loadAndRunSingleJSFileIfNeeded: function(file, completionHandler) {
+                goma.ui.ajaxloader.loadSingleJSFileIfNeeded(file, function(){
+                    goma.ui.ajaxloader.runSingleJSFileIfNeeded(file, completionHandler);
+                });
+            },
+
+            loadAndIncludeCSSFile: function(file, completionHandler) {
+                if (!external_regexp.test(file) && file != "") {
+                    if (goma.ui.CSSFiles[file] === undefined) {
+                        return $.ajax({
+                            cache: true,
+                            url: file,
+                            noRequestTrack: true,
+                            dataType: "html"
+                        }).done(function (css) {
+                            goma.ui.CSSFiles[file] = css;
+                            goma.ui.CSSIncluded[file] = true;
+
+                            $("head").prepend('<style type="text/css" id="css_'+file.replace(/[^a-zA-Z0-9_\-]/g, "_")+'">'+css+'</style>');
+                        }).always(function(){
+                            if(completionHandler != null) {
+                                completionHandler();
+                            }
+                        });
+                    } else if (goma.ui.CSSIncluded[file] === undefined) {
+                        $("head").prepend('<style type="text/css" id="css_'+file.replace(/[^a-zA-Z0-9_\-]/g, "_")+'">'+goma.ui.CSSFiles[file]+'</style>');
+                        goma.ui.CSSIncluded[file] = true;
+                    }
+                } else {
+                    goma.ui.CSSFiles[file] = css;
+                    goma.ui.CSSIncluded[file] = true;
+                    if ($("head").html().indexOf(file) != -1) {
+                        $("head").prepend('<link rel="stylesheet" href="'+file+'" type="text/css" />');
+                    }
+                }
+
+                if(completionHandler != null) {
+                    completionHandler();
+                }
+            },
+
             loadResources: function(request, progress) {
                 var deferred = $.Deferred(),
 
@@ -147,98 +230,33 @@
                         // i is for both js and css files
                         // first we load js files and then css, cause when js files fail we can't show the page anymore, so no need of loading css is needed
                         if (i >= jsfiles.length) {
-
                             // get correct index for css-files
                             var a = i - jsfiles.length;
                             if (a < cssfiles.length) {
-
-                                var file = cssfiles[a],
-                                    loadfile = (!http_regexp.test(file)) ? base_uri + file : file;
-
-                                // scope to don't have problems with data
-                                (function (f) {
-                                    var file = f;
-                                    if (!external_regexp.test(file) && file != "") {
-                                        if (goma.ui.CSSFiles[file] === undefined) {
-                                            return $.ajax({
-                                                cache: true,
-                                                url: loadfile,
-                                                noRequestTrack: true,
-                                                dataType: "html"
-                                            }).done(function (css) {
-                                                // patch uris
-                                                var base = file.substring(0, file.lastIndexOf("/"));
-                                                //css = css.replace(/url\(([^'"]+)\)/gi, 'url(' + root_path + base + '/$2)');
-                                                //css = css.replace(/url\(['"]?([^'"#\>\!\s]+)['"]?\)/gi, 'url(' + base_uri + base + '/$1)');
-
-                                                goma.ui.CSSFiles[file] = css;
-                                                goma.ui.CSSIncluded[file] = true;
-
-                                                $("head").prepend('<style type="text/css" id="css_'+file.replace(/[^a-zA-Z0-9_\-]/g, "_")+'">'+css+'</style>');
-                                            }).always(function(){
-                                                if (goma.ui.progress !== undefined && p) {
-                                                    goma.ui.setProgress(goma.ui.progress + perProgress);
-                                                }
-
-                                                i++;
-                                                loadFile();
-                                            });
-                                        } else if (goma.ui.CSSIncluded[file] === undefined) {
-                                            $("head").prepend('<style type="text/css" id="css_'+file.replace(/[^a-zA-Z0-9_\-]/g, "_")+'">'+CSSLoaded[file]+'</style>');
-                                            goma.ui.CSSIncluded[file] = true;
-                                        }
-                                    } else {
-                                        goma.ui.CSSFiles[file] = css;
-                                        goma.ui.CSSIncluded[file] = true;
-                                        if ($("head").html().indexOf(file) != -1) {
-                                            $("head").prepend('<link rel="stylesheet" href="'+file+'" type="text/css" />');
-                                        }
+                                goma.ui.ajaxloader.loadAndIncludeCSSFile(cssfiles[a], function(){
+                                    if (goma.ui.progress !== undefined && p) {
+                                        goma.ui.setProgress(goma.ui.progress + perProgress);
                                     }
 
                                     i++;
                                     loadFile();
-                                })(file);
+                                });
                             } else {
                                 setTimeout(function () {
                                     deferred.notify("loaded");
                                 }, 10);
                             }
                         } else {
-                            var file = jsfiles[i],
-                                loadfile = (!http_regexp.test(file)) ? base_uri + file : file;
-
+                            var file = jsfiles[i];
                             if (file != "") {
-                                // check for internal cache
-                                // we don't load modenizr, because it causes trouble sometimes if you load it via AJAX
-                                if (goma.ui.JSFiles[file] === undefined && goma.ui.JSIncluded[file] === undefined && !file.match(/modernizr\.js/)) {
-
-                                    // we create a new scope for this to don't have problems with overwriting vars and then callbacking with false ones
-                                    return (function (file) {
-                                        $.ajax({
-                                            cache: true,
-                                            url: loadfile,
-                                            noRequestTrack: true,
-                                            dataType: "html"
-                                        }).done(function (js) {
-                                            // build into internal cache
-                                            goma.ui.JSFiles[file] = js;
-                                        }).always(function(){
-                                            if (goma.ui.progress !== undefined && p) {
-                                                goma.ui.setProgress(goma.ui.progress + perProgress);
-                                            }
-
-                                            i++;
-                                            loadFile();
-                                        });
-                                    })(file);
-                                } else {
+                                goma.ui.ajaxloader.loadSingleJSFileIfNeeded(file, function(){
                                     if (goma.ui.progress !== undefined && p) {
                                         goma.ui.setProgress(goma.ui.progress + perProgress);
                                     }
 
                                     i++;
-                                    return loadFile();
-                                }
+                                    loadFile();
+                                });
                             } else {
                                 i++;
                                 loadFile();
@@ -248,7 +266,6 @@
 
                 // init loading
                 loadFile();
-
 
                 deferred.progress(function () {
                     var i,

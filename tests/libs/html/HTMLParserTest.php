@@ -42,10 +42,12 @@ class HTMLParserTests extends GomaUnitTest {
 		$this->unitParseLink("./blah/test/notexisting", '"./blah/test/notexisting"', "index.php/");
 		$this->unitParseLink("blah/test/notexisting", '"base.php/blah/test/notexisting"', "base.php/");
 		$this->unitParseLink("base.php/blah/test/notexisting", '"base.php/blah/test/notexisting"', "base.php/");
+
+		$this->unitParseLink("/MBG//#abc", '"#abc" data-anchor="abc"', "", "/MBG/");
 	}
 
 	public function unitParseLink($url, $expected, $base = BASE_SCRIPT, $root = ROOT_PATH) {
-		$this->assertEqual(trim(HTMLParser::parseLink($url, "", "", $base, $root)), $expected, $url . " %s");
+		$this->assertEqual($expected, trim(HTMLParser::parseLink($url, "", "", $base, $root)), $url);
 	}
 
 	public function testProcessLinks() {

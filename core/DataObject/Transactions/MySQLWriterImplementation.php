@@ -79,7 +79,7 @@ class MySQLWriterImplementation implements iDataBaseWriter {
     public function publish()
     {
         $this->writer->callExtending("onBeforePublish");
-        $this->model()->onBeforePublish();
+        $this->model()->onBeforePublish($this->writer);
 
         $this->insertIntoStateTable(array(
             "id"            => $this->recordid(),
@@ -135,8 +135,10 @@ class MySQLWriterImplementation implements iDataBaseWriter {
                 }
             }
 
-            $this->model()->callExtending("deleteOldVersions", $manipulation, $this->writer->getOldId());
-            $this->writer->callExtending("deleteOldVersions", $manipulation, $this->writer->getOldId());
+            $oldId = $this->writer->getOldId();
+            $this->model()->callExtending("deleteOldVersions", $manipulation, $oldId);
+            $oldId = $this->writer->getOldId();
+            $this->writer->callExtending("deleteOldVersions", $manipulation, $oldId);
 
             SQL::manipulate($manipulation);
         }

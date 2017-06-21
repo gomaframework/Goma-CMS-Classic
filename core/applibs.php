@@ -357,6 +357,10 @@ function writeProjectConfig($data = array(), $project = CURRENT_PROJECT) {
 		);
 	}
 
+	if(!isset($defaults["lang"]) || !isset($defaults["status"])) {
+		throw new LogicException("Something got wrong initializing project config.");
+	}
+
 	$new = array_merge($defaults, $data);
 	$info = array();
 	$info["status"] = $new["status"];
@@ -1165,6 +1169,17 @@ function parseUrl() {
 	}
 }
 
+function umlautMap($str){
+	$bad = array(
+		'ü', 'Ü', 'ä', 'Ä', 'Ö', 'ö', 'ß'
+	);
+
+	$good = array(
+		'ue', 'Ue', 'ae', 'Ae', 'Oe', 'oe',' ss'
+	);
+	return str_replace($bad,$good,$str);
+}
+
 function validateServerConfig() {
     if (!file_exists(ROOT . ".htaccess") && !file_exists(ROOT . "web.config")) {
         writeServerConfig();
@@ -1382,4 +1397,17 @@ class ServiceUnavailable extends GomaException {
 		return 503;
 	}
 
+}
+
+class InvalidStateException extends GomaException {
+	protected $standardCode = ExceptionManager::INVALID_STATE;
+	/**
+	 * constructor.
+	 * @param string $m
+	 * @param null $code
+	 * @param Exception $previous
+	 */
+	public function __construct($m = "Invalid State", $code = null, Exception $previous = null) {
+		parent::__construct($m, $code, $previous);
+	}
 }

@@ -18,11 +18,14 @@ class MySQLDateSQLField extends DBField {
 
     /**
      * converts every type of time to a date fitting in this object.
+     * @param string $name
+     * @param mixed $value
+     * @param array $args
      */
     public function __construct($name, $value, $args = array())
     {
         if($value !== null) {
-            if(preg_match("/^[0-9]+$/", trim($value))) {
+            if(preg_match("/^\-?[0-9]+$/", trim($value))) {
                 $time = (int) trim($value);
             } else {
                 $time = strtotime($value);

@@ -27,6 +27,7 @@ class DataObjectClassInfo extends Extension
 
         self::generateModelClassInfo($class);
 
+
         if (class_exists($class, false) && class_exists("DataObject", false) && is_subclass_of($class, "DataObject")) {
             /** @var DataObject $classInstance */
             $classInstance = gObject::instance($class);
@@ -41,6 +42,9 @@ class DataObjectClassInfo extends Extension
                 $table_name = $classInstance->prefix . str_replace("\\", "_", $class);
             }
 
+            if(strlen(DB_PREFIX . $table_name) > 58) {
+                $table_name = md5($table_name);
+            }
 
             $many_many = ModelInfoGenerator::generateMany_many($class);
             $db_fields = ModelInfoGenerator::generateDBFields($class);

@@ -26,7 +26,6 @@
 class User extends DataObject implements HistoryData, PermProvider, Notifier
 {
 	const USERS_PERMISSION = "USERS_MANAGE";
-	const ID = "User";
 
 	/**
 	 * the name of this dataobject
@@ -548,13 +547,13 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 	 */
 	public static function getHistoryIcon($record) {
 		$icon = array(
-			"insert" => "images/icons/fatcow16/user_add.png",
-			IModelRepository::COMMAND_TYPE_INSERT => "images/icons/fatcow16/user_add.png",
-			"remove" => "images/icons/fatcow16/user_delete.png",
-			IModelRepository::COMMAND_TYPE_DELETE => "images/icons/fatcow16/user_delete.png",
+			"insert" => "system/images/icons/fatcow16/user_add.png",
+			IModelRepository::COMMAND_TYPE_INSERT => "system/images/icons/fatcow16/user_add.png",
+			"remove" => "system/images/icons/fatcow16/user_delete.png",
+			IModelRepository::COMMAND_TYPE_DELETE => "system/images/icons/fatcow16/user_delete.png",
 		);
 
-		return isset($icon[$record->action]) ? $icon[$record->action] : "images/icons/fatcow16/user_edit.png";
+		return isset($icon[$record->action]) ? $icon[$record->action] : "system/images/icons/fatcow16/user_edit.png";
 	}
 
 	/**
@@ -601,7 +600,7 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 	/**
 	 * gets the avatar
 	 *
-	 * @return Uploads
+	 * @return ImageUploads
 	 */
 	public function getImage() {
 		if($this->avatar && $this->avatar->realfile) {
@@ -627,7 +626,7 @@ class User extends DataObject implements HistoryData, PermProvider, Notifier
 	 * @return array
 	 */
 	public static function NotifySettings() {
-		return array("title" => lang("user"), "icon" => "images/icons/fatcow16/user@2x.png");
+		return array("title" => lang("user"), "icon" => "system/images/icons/fatcow16/user@2x.png");
 	}
 
 	/**

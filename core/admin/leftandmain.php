@@ -55,6 +55,11 @@ class LeftAndMain extends AdminItem {
 	static $render_class = "LeftAndMain_TreeRenderer";
 
 	/**
+	 * @var bool
+	 */
+	static $useStateData = true;
+
+	/**
 	 * gets the title of the root node
 	 *
 	 * @return string
@@ -79,14 +84,25 @@ class LeftAndMain extends AdminItem {
 	}
 
 	/**
-	 * inserts the data in the leftandmain-template
-	 *
-	 * @param string $content
-	 * @return mixed|string
+	 * @param null|ViewAccessableData $model
+	 * @return \Goma\Service\DefaultControllerService
 	 */
-	public function serve($content) {
-		if($this->request->is_ajax()) {
-			return $content;
+	protected function defaultService($model = null)
+	{
+		return static::$useStateData ?
+		new \Goma\Service\StateControllerService(
+			$this->guessModel($model)
+		) : parent::defaultService($model);
+	}
+
+	/**
+	 * @param GomaResponse|string $content
+	 * @return GomaResponse|string
+	 */
+	public function __output($content)
+	{
+		if(!$this->isManagingController($content) || $this->getRequest()->is_ajax()) {
+			return parent::__output($content);
 		}
 
 		// add resources
@@ -104,17 +120,19 @@ class LeftAndMain extends AdminItem {
 
 		$output = $data->customise(
 			array(
-				"CONTENT"	=> $content,
+				"CONTENT"	=> Director::getStringFromResponse($content),
 				"activeAdd" => $this->getParam("model"),
 				"SITETREE" => $this->createTree($this->getParam("searchtree")),
 				"searchtree" => $this->getParam("searchtree"),
 				"ROOT_NODE" => $this->getRootNode(),
-				"TREEOPTIONS" => $this->generateTreeOptions()
+				"TREEOPTIONS" => $this->generateTreeOptions(),
+				"adminURI"	=> $this->adminURI()
 			)
 		)->renderWith($this->baseTemplate);
 
-		// parent-serve
-		return parent::serve($output);
+		return parent::__output(
+			Director::setStringToResponse($content, $output)
+		);
 	}
 
 	/**
@@ -168,12 +186,12 @@ class LeftAndMain extends AdminItem {
 
 			$data = array(
 				array(
-					"icon"		=> "images/16x16/edit.png",
+					"icon"		=> "system/images/16x16/edit.png",
 					"label" 	=> lang("edit"),
 					"onclick"	=> "LoadTreeItem(".$child->recordid.");"
 				),
 				array(
-					"icon"		=> "images/16x16/del.png",
+					"icon"		=> "system/images/16x16/del.png",
 					"label" 	=> lang("delete"),
 					"ajaxhref"	=> $this->originalNamespace . "/record/" . $child->recordid . "/delete" . URLEND
 				)
@@ -295,7 +313,7 @@ class LeftAndMain extends AdminItem {
 	 */
 	public function ajaxSave($data, $response, $form, $controller, $forceInsert = false, $forceWrite = false, $overrideCreated = false) {
 		try {
-			$model = $this->save($data, 1, $forceInsert, $forceWrite, $overrideCreated, $form->getModel());
+			$model = $this->service()->saveModel($form->getModel(), $data, 1, $forceInsert, $forceWrite, $overrideCreated);
 			// notify the user
 			Notification::notify($model->classname, lang("SUCCESSFUL_SAVED", "The data was successfully written!"), lang("SAVED"));
 
@@ -331,7 +349,7 @@ class LeftAndMain extends AdminItem {
                     DataObject::update($this->tree_class, array($field => $key), array("recordid" => $value), "");
                 }
 
-                return GomaResponse::create()->setShouldServe(false)->setBody(
+                return GomaResponse::create()->setIsFullPage(true)->setBody(
                     GomaResponseBody::create($this->createTree())->setParseHTML(false)
                 );
             }
@@ -358,7 +376,7 @@ class LeftAndMain extends AdminItem {
 	 * @return AjaxResponse
 	 */
 	public function ajaxPublish($data, $response, $form = null, $controller = null, $overrideCreated = false) {
-		if($model = $this->save($data, 2, false, false, $overrideCreated, $form->getModel())) {
+		if($model = $this->service()->saveModel($form->getModel(), $data, 2, false, false, $overrideCreated)) {
 			// notify the user
 			Notification::notify($model->classname, lang("successful_published", "The data was successfully published!"), lang("published"));
 
@@ -378,13 +396,12 @@ class LeftAndMain extends AdminItem {
 	 * @access public
 	 * @param object $model
 	 * @param array $add
-	 * @param gObject|null $controller
 	 * @return DataObject
 	 */
-	public function decorateModel($model, $add = array(), $controller = null) {
+	public function decorateModel($model, $add = array()) {
 		$add["types"] = $this->Types();
 
-		return parent::decorateModel($model, $add, $controller);
+		return parent::decorateModel($model, $add);
 	}
 
 	/**
@@ -399,16 +416,6 @@ class LeftAndMain extends AdminItem {
 			$arr->push(array("value" => str_replace("\\", "-", $class), "title" => $title, "icon" => ClassInfo::getClassIcon($class)));
 		}
 		return $arr;
-	}
-
-	/**
-	 * hook in this function to decorate a created record of record()-method
-	 * @param DataObjectSet|DataObject $record
-	 */
-	public function decorateRecord(&$record) {
-		if(is_a($record, "DataObjectSet")) {
-			if (!$record->getVersion()) $record->setVersion("state");
-		}
 	}
 
 	/**
@@ -443,7 +450,7 @@ class LeftAndMain extends AdminItem {
 			$model->queryVersion = "state";
 		}
 
-		return $this->selectModel($model)->form();
+		return $this->form(null, $model);
 	}
 
 	/**

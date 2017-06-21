@@ -66,13 +66,7 @@ class AjaxSubmitButton extends FormAction {
      */
     public function js()
     {
-        // appendix to the url
-        $append = '?redirect=' . urlencode($this->getRedirect($this));
-        foreach ($this->form()->getRequest()->get_params as $key => $val) {
-            $append .= '&' . urlencode($key) . '=' . urlencode($val);
-        }
-
-        return 'initAjaxSubmitbutton(' . var_export($this->ID(), true) . ', ' . var_export($this->divID(), true) . ', form, field, ' . var_export($this->form()->url, true) . ', ' . var_export($append, true) . ');';
+        return 'initAjaxSubmitbutton(' . var_export($this->ID(), true) . ', ' . var_export($this->divID(), true) . ', form, field, ' . var_export($this->form()->url, true) . ', "");';
     }
 
     public function canSubmit($data)

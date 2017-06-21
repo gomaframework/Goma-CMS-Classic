@@ -57,7 +57,8 @@ abstract class AbstractCategoryController extends \Controller {
                 "content"       => \Director::getStringFromResponse($content),
                 "namespace"     => $this->namespace,
                 "currentAction" => $this->currentAction,
-                "activeTitle"   => $this->getExtendedCategories()[$this->currentAction]
+                "activeTitle"   => $this->getExtendedCategories()[$this->currentAction],
+                "cid"           => randomString(5)
             ));
             return parent::__output(
                 \Director::setStringToResponse($content, $view->renderWith("framework/categoryView.html", $this->inExpansion))
@@ -172,11 +173,15 @@ abstract class AbstractCategoryController extends \Controller {
     }
 
     /**
-     * @param \gObject $sender
+     * @param \gObject|string $sender - action or sender
      * @return string
      */
     public function getRedirect($sender)
     {
+        if($sender == "index") {
+            return parent::getRedirect($sender);
+        }
+
         if($this->currentAction) {
             if($this->currentAction == "index") {
                 return parent::getRedirect($sender);

@@ -34,7 +34,7 @@ class ModelInfoGenerator {
 
         // if parents, include parents.
         $parent = get_parent_class($class);
-        if ($useParents === true && $parent != "DataObject" && $parent !== false) {
+        if ($useParents === true && $parent != "DataObject" && $parent !== false && class_exists($parent, false)) {
             $fields = array_merge(self::generate_combined_array($parent, $staticProp, $extensionMethod, true), $fields);
         }
 
@@ -78,7 +78,7 @@ class ModelInfoGenerator {
         foreach($fields as $name => $type) {
             // hack to not break current Goma-CMS Build
             if((
-                    in_array($name, array("long", "order", "select", "where", "group", "bool")) ||
+                    in_array($name, array("long", "order", "select", "where", "group", "bool", "int")) ||
                     in_array($name, ViewAccessableData::$notViewableMethods) ||
                     !preg_match('/^[a-zA-Z_][a-zA-Z_0-9]+$/', $name)
                 )
@@ -250,7 +250,7 @@ class ModelInfoGenerator {
 
         foreach(gObject::getExtensionsForClass($class, false) as $extension) {
             if(gObject::method_exists($extension, "many_many_extra_fields")) {
-                if($extensionFields = call_user_func_array(array($extension, "many_many_extra_fields"), array())) {
+                if($extensionFields = call_user_func_array(array($extension, "many_many_extra_fields"), array($class))) {
                     $extensionFields = ArrayLib::map_key("strtolower", $extensionFields);
                     if(isset($extensionFields[$name])) {
                         $fields = array_merge($fields, $extensionFields[$name]);

@@ -12,13 +12,8 @@ class SQL
 {
     /**
      * this var contains the last query, for debug
-     *
-     * @name last_query
-     * @access public
      */
     public static $last_query;
-    public static $error;
-    public static $errno;
 
     /**
      *
@@ -73,7 +68,8 @@ class SQL
     }
 
     /**
-     * @use: connect to db
+     * connect to db
+     *
      * @param null $driver
      * @param null $dbuser
      * @param null $dbdb
@@ -100,8 +96,7 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use: connect to db
+     * connect to db
      **/
     static function connect($dbuser, $dbdb, $dbpass, $dbhost)
     {
@@ -134,7 +129,8 @@ class SQL
     }
 
     /**
-     * @use: run a query
+     * run a query
+     *
      * @param string $sql
      * @param bool $async
      * @param bool $track
@@ -173,16 +169,11 @@ class SQL
             }
         }
 
-        if (!$result && $track && self::$track) {
-            self::$error = self::$driver->error();
-            self::$errno = self::$driver->errno();
-        }
         return $result;
     }
 
     /**
-     * @access public
-     * @use: fetch_row
+     * fetch_row
      */
     static function fetch_row($result)
     {
@@ -190,8 +181,7 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use to diconnect
+     * disconnect
      **/
     static function close()
     {
@@ -199,8 +189,7 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use to fetch object
+     * fetch object
      **/
     static function fetch_object($result)
     {
@@ -208,8 +197,7 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use to fetch array
+     * fetch array
      */
     static function fetch_array($result)
     {
@@ -217,8 +205,7 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use to fetch assoc
+     * fetch_assoc
      */
     static function fetch_assoc($result)
     {
@@ -226,8 +213,7 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use to fetch num rows
+     * num_rows
      */
     static function num_rows($result)
     {
@@ -235,26 +221,23 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use to fetch error
+     * error of last query
      */
     static function error()
     {
-        return self::$error;
+        return self::$driver->error();
     }
 
     /**
-     * @access public
-     * @use to fetch errno
+     * errno of last query
      */
     static function errno()
     {
-        return self::$errno;
+        return self::$driver->errno();
     }
 
     /**
-     * @access public
-     * @use to fetch insert id
+     * insert_id of last query
      */
     static function insert_id()
     {
@@ -262,8 +245,9 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use to get memory
+     * free memory
+     * @param $result
+     * @return
      */
     static function free_result($result)
     {
@@ -271,8 +255,7 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use to protect
+     * protect string.
      */
     static function escape_string($result)
     {
@@ -280,8 +263,7 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use to protect
+     * protect string.
      */
     static function real_escape_string($result)
     {
@@ -289,8 +271,7 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use to protect
+     * protect.
      */
     static function protect($result)
     {
@@ -299,9 +280,6 @@ class SQL
 
     /**
      * returns affected rows after update or delete
-     *
-     * @name affected_rows
-     * @access public
      */
     static function affected_rows()
     {
@@ -309,8 +287,7 @@ class SQL
     }
 
     /**
-     * @access public
-     * @use to split queries
+     * split queries at semicolon.
      */
     static function split($sql)
     {

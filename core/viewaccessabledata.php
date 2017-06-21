@@ -1,13 +1,5 @@
 <?php
-/**
- * @package		Goma\Core
- *
- * @author		Goma-Team
- * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
- */
-
 defined("IN_GOMA") OR die();
-
 /**
  * Goma-Core to access data in a class from the template.
  *
@@ -18,13 +10,12 @@ defined("IN_GOMA") OR die();
  * array-access
  * overloading properties.
  *
- * @package		Goma\Core
- * @version		2.3.4
+ * @package		Goma\Core\ViewModel
+ *
+ * @author		Goma-Team
+ * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  */
 class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IFormForModelGenerator {
-
-	const ID = "ViewAccessableData";
-
 	/**
 	 * default datatype for casting.
 	 *
@@ -205,9 +196,9 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
      * @param array - data for loops
      * @return $this
      */
-	public function customise($loops = array()) {
-		$loops = Arraylib::map_key("strtolower", $loops);
-		$this->customised = array_merge($this->customised, $loops);
+	public function customise($custom_data = array()) {
+		$custom_data = Arraylib::map_key("strtolower", $custom_data);
+		$this->customised = array_merge($this->customised, $custom_data);
 
 		return $this;
 	}
@@ -751,19 +742,26 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 		$currentvar = trim(strtolower($currentvar));
 		$data = $this->getOffset($currentvar, array());
 
-
 		$casting = $this->casting();
 
-		if(is_object($data) && $remaining != "" && method_exists($data, "getTemplateVar")) {
-			return $data->getTemplateVar($remaining);
-		} else if(is_object($data) && gObject::method_exists($data, "forTemplate")) {
-			return $data->forTemplate();
-		} else if(isset($casting[$currentvar]) && !is_object($data)) {
+		if(is_object($data)) {
+			if(trim($remaining) != "" && method_exists($data, "getTemplateVar")) {
+				return $data->getTemplateVar($remaining);
+			} else if(gObject::method_exists($data, "forTemplate")) {
+				return $data->forTemplate();
+			} else if(method_exists($data, "__toString")) {
+				return (string) $data;
+			} else {
+				return print_r($data, true);
+			}
+		}
+
+		if(isset($casting[$currentvar])) {
 			$object = $this->makeObject($currentvar, $data);
 			return $remaining == "" ? $object->forTemplate() : $object->getTemplateVar($remaining);
-		} else {
-			return $data;
 		}
+
+		return $data;
 	}
 
 	//!Attribute-Object-Generation
@@ -924,9 +922,10 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
         }
     }
 
-
-    /**
+	/**
 	 * sets the value of a given field.
+	 * @param string $name
+	 * @param mixed $value
 	 */
 	public function setField($name, $value) {
 		$this->setOffset($name, $value);
@@ -1015,6 +1014,19 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 		return property_exists($item, $prop) ? $item->$prop : null;
 	}
 
+    /**
+     * @param array|gObject $item1
+     * @param array|gObject $item2
+     * @param string $prop
+     * @return bool
+     */
+    static function isEqualProp($item1, $item2, $prop) {
+        return DataObjectCompare::isEqual(
+            self::getItemProp($item1, $prop),
+            self::getItemProp($item2, $prop)
+        );
+    }
+
 	/**
 	 * @param array $data
 	 * @return ViewAccessableData
@@ -1025,6 +1037,20 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 		}
 
 		return new $this($data);
+	}
+
+	/**
+	 * gets the class as an instance of the given class-name.
+	 *
+	 * @param   string $type of object
+	 * @return  gObject of type $value
+	 */
+	public function getClassAs($type) {
+		if (is_subclass_of($type, $this->DataClass())) {
+			return new $type(array_merge($this->data, array("class_name" => $type)));
+		}
+
+		return $this;
 	}
 
 	/**

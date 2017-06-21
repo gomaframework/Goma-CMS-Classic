@@ -81,7 +81,7 @@ class ProfileController extends FrontedController {
 			}
 		}
 
-		$this->tabs = new Tabs("profile_tabs");
+		$this->tabs = new DataSet();
 		$this->profile_actions = new HTMLNode("ul");
 
 		if((isset(member::$id) && $id == member::$id)) {
@@ -96,14 +96,18 @@ class ProfileController extends FrontedController {
 
 		$userdata->editable = ((isset(member::$id) && $id == member::$id)) ? true : false;
 		$info = $userdata->renderWith("profile/info.html");
-		$this->tabs->addTab(lang("general", "General Information"), $info, "info");
+		$this->tabs->add(array(
+			"name"		=> "info",
+			"title" 	=> lang("general", "General Information"),
+			"content"	=> $info
+		));
 
 		Core::addBreadcrumb($userdata->title, URL . URLEND);
 		Core::setTitle($userdata->title);
 
 		$this->callExtending("beforeRender", $userdata);
 
-		return $userdata->customise(array("tabs" => $this->tabs->render(), "profile_actions" => $this->profile_actions->render()))->renderWith("profile/profile.html");
+		return $userdata->customise(array("tabs" => $this->tabs, "profile_actions" => $this->profile_actions->render()))->renderWith("profile/profile.html");
 	}
 
 	/**

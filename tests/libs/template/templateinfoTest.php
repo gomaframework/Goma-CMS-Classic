@@ -26,7 +26,10 @@ class TemplateInfoTest extends GomaUnitTest {
         $this->assertEqual(TemplateInfo::get_available_templates("gomacms", "100.0-10000", "0"), array());
         $this->assertEqual(TemplateInfo::get_available_templates("gomacms", "0", "100.0-10000"), array());
         $this->assertEqual(count(TemplateInfo::get_available_templates(null, null, "100.0-10000")), count(TemplateInfo::getTemplates()));
-        $this->assertTrue((count(TemplateInfo::get_available_templates("gomacms", "100.0-10000", "100.0-10000")) > 0));
+
+        if(ClassInfo::$appENV["app"]["name"] == "gomacms") {
+            $this->assertTrue((count(TemplateInfo::get_available_templates("gomacms", "100.0-10000", "100.0-10000")) > 0));
+        }
     }
 
     public function initDir($author) {

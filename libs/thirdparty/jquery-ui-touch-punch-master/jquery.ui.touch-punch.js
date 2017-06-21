@@ -22,7 +22,7 @@
       _mouseInit = mouseProto._mouseInit,
       touchHandled;
       
-  var autoAssign = true;
+  var autoAssign = false;
   
   $.fn.touchPunch = function() {
 	  // Delegate the touch handlers to the widget's element

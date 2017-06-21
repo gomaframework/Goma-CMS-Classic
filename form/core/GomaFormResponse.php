@@ -285,7 +285,7 @@ class GomaFormResponse extends GomaResponse {
      * @param string $value
      * @return $this
      */
-    public function setHeader($name, $value) {
+    public function setHeader($name, $value = "") {
         if(is_a($this->renderedForm, "GomaResponse")) {
             $this->renderedForm->setHeader($name, $value);
         } else {
@@ -330,25 +330,24 @@ class GomaFormResponse extends GomaResponse {
     }
 
     /**
-     * @param string $model
-     * @param null $view
+     * @param string $view
+     * @param gObject $model
      * @param string $formName default: "form"
      * @param string|null $inExpansion
      * @return $this
      */
-    public function setRenderWith($model, $view = null, $formName = null, $inExpansion = null) {
+    public function setRenderWith($view, $model = null, $formName = null, $inExpansion = null) {
         if(!isset($formName)) {
             $formName = "form";
         }
 
         $this->resolveCache = array();
-        if(is_string($model)) {
-            if(!isset($view)) {
-                $view = $model;
-                $model = new ViewAccessableData();
-            } else {
-                throw new InvalidArgumentException();
-            }
+        if(!isset($model)) {
+            $model = new ViewAccessableData();
+        } else if(is_string($model)) {
+            $currentView = $model;
+            $model = $view;
+            $view = $currentView;
         }
 
         $this->serveWithModel = $model;

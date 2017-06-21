@@ -24,8 +24,6 @@ interface ExtensionModel {
  */
 abstract class gObject
 {
-    const ID = "gObject";
-
     /**
      * caches
      */

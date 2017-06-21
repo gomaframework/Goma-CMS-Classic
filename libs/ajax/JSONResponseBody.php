@@ -17,7 +17,7 @@ class JSONResponseBody extends GomaResponseBody
 {
     /**
      * JSONResponseBody constructor.
-     * @param null|string $body
+     * @param null|string|array $body
      */
     public function __construct($body)
     {
@@ -53,7 +53,7 @@ class JSONResponseBody extends GomaResponseBody
     {
         if(is_string($body)) {
             $data = json_decode($body);
-            if($data !== null) {
+            if(json_last_error() == JSON_ERROR_NONE) {
                 $this->body = $data;
                 return $this;
             }

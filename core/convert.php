@@ -39,6 +39,7 @@ class Convert {
 			if(function_exists("get_magic_quotes_gpc") && get_magic_quotes_gpc()) {
 				return sql::escape_string(stripslashes($raw));
 			}
+			if(is_bool($raw)) $raw = $raw ? 1 : 0;
 			$raw = sql::escape_string($raw);
 			return $raw;
 		}

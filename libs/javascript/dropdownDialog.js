@@ -461,6 +461,9 @@ self.dropdownDialogs = [];
 				profiler.unmark("dropdownDialog.setContent");
 			}
 
+			if(goma !== undefined && goma.ui !== undefined) {
+				goma.ui.triggerContentLoaded();
+			}
 		},
 
 		/**
@@ -598,15 +601,11 @@ self.dropdownDialogs = [];
 		player_ajax: function(uri) {
 			var that = this;
 			var oldURI = uri;
-			if(uri.indexOf("?") == -1) {
-				uri += "?dropdownDialog=1&dropElem=" + this.id;
-			} else {
-				uri += "&dropdownDialog=1&dropElem=" + this.id;
-			}
+
 			$.ajax({
 				url: uri,
 				type: "get",
-				// data should always be html as basic, we can interpret layteron
+				data: {"ajaxfy": true},
 				dataType: "html"
 			}).done(function(response, status, jqXHR){
 				// run code
@@ -731,7 +730,6 @@ self.dropdownDialogs = [];
 			};
 			var o = $.extend(defaults, options);
 
-			var that = this;
 			var obj = {
 				instances: [],
 				hide: function() {

@@ -22,7 +22,7 @@ function tree_bind(tree) {
 			// if ajax
 			if(link.parent().hasClass("ajax") && link.parent().find(".load").length == 0) {
 				li.addClass("expanded").removeClass("collapsed");
-				li.append("<ul><li class=\"load\"><span class=\"a\"><span class=\"b\"><img src=\"images/16x16/loading.gif\" alt=\"\" /> Loading...</span></span></li></ul>");
+				li.append("<ul><li class=\"load\"><span class=\"a\"><span class=\"b\"><img src=\"system/images/16x16/loading.gif\" alt=\"\" /> Loading...</span></span></li></ul>");
 				
 				link.parent().removeClass("ajax");
 				$.ajax({

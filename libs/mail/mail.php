@@ -12,35 +12,23 @@ class Mail
 {
     /**
      * the sender.
-     *
-     * @name    sendermail
-     * @access    public
      * @var    string
-     **/
+     */
     public $senderemail;
 
     /**
      * the name of the sender
-     *
-     * @name    sendername
-     * @access    public
      */
     public $sendername;
 
     /**
      * This var defines if the message is html
-     *
-     * @name    html
-     * @access    public
      * @var    bool
      **/
     public $html;
 
     /**
      * This var defines if the message schould be replied
-     *
-     * @name    reply
-     * @access    public
      * @var    bool
      **/
     public $reply;
@@ -59,6 +47,23 @@ class Mail
      * body.
      */
     public $body;
+
+    /**
+     * @var array
+     */
+    public $bcc = array();
+
+    /**
+     * @var array
+     */
+    public $cc = array();
+
+    /**
+     * @var null|array
+     *
+     * array of type filename => path
+     */
+    public $attachements = null;
 
     /**
      * sets $sender, $html, $reply
@@ -107,10 +112,12 @@ class Mail
 
         $mail = $this->prepareMail();
 
-        GlobalSessionManager::globalSession()->stopSession();
-        $r = $mail->send();
-
-        GlobalSessionManager::globalSession()->init();
+        try {
+            GlobalSessionManager::globalSession()->stopSession();
+            $r = $mail->send();
+        } finally {
+            GlobalSessionManager::globalSession()->init();
+        }
 
         return $r;
     }
@@ -138,6 +145,17 @@ class Mail
         $mail->Body = $this->body;
 
         $this->addAddresses($this->address, $mail);
+        $this->addBCC($mail);
+
+        if($this->attachements) {
+            foreach ($this->attachements as $filename => $path) {
+                if(!file_exists($path)) {
+                    throw new InvalidArgumentException("Attachements need format filename => path");
+                }
+
+                $mail->addAttachment($path, $filename ? $filename : "");
+            }
+        }
 
         Core::callHook("mail_prepareSend", $this, $mail);
 
@@ -177,6 +195,33 @@ class Mail
         foreach (self::parseAddress($address) as $addAddr) {
             if (is_array($addAddr)) {
                 $mailer->addAddress($addAddr[0], $addAddr[1]);
+            }
+        }
+    }
+
+    /**
+     * adds bccs to mail.
+     *
+     * @param PHPMailer $mailer
+     */
+    protected function addBCC($mailer) {
+        foreach (self::parseAddress($this->bcc) as $addAddr) {
+            if (is_array($addAddr)) {
+                $mailer->addBCC($addAddr[0], $addAddr[1]);
+            }
+        }
+    }
+
+
+    /**
+     * adds ccs to mail.
+     *
+     * @param PHPMailer $mailer
+     */
+    protected function addCC($mailer) {
+        foreach (self::parseAddress($this->cc) as $addAddr) {
+            if (is_array($addAddr)) {
+                $mailer->addCC($addAddr[0], $addAddr[1]);
             }
         }
     }

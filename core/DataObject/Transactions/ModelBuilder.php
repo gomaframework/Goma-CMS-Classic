@@ -19,6 +19,13 @@ class ModelBuilder {
     public static function checkForTableExisting($model, $create = false) {
         // check if table in db and if not, create it
         if ($model->baseTable != "" && !isset(ClassInfo::$database[$model->baseTable])) {
+
+            // really check for non cached version before throwing.
+            if($fields = SQL::getFieldsOfTable($model->baseTable)) {
+                ClassInfo::$database[$model->baseTable] = $fields;
+                ClassInfo::delete();
+            }
+            
             if(isCommandLineInterface() || $create || (isset($_GET["create"]) && $_GET["create"] == $model->classname)) {
                 logging("Rebuild {$model->classname}");
                 foreach (array_merge(ClassInfo::getChildren($model->classname), array($model->classname)) as $child) {

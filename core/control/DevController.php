@@ -73,22 +73,24 @@ class Dev extends RequestHandler {
 			throw new PermissionException();
 		}
 
-		return parent::handleRequest($request, $subController);
+		return $this->__output(parent::handleRequest($request, $subController));
 
 	}
 
 	/**
-	 * serves data
-	 * @param string $content
-	 * @param GomaResponseBody $body
-	 * @return string
+	 * @param $content
+	 * @return GomaResponse|GomaResponseBody|mixed|string
 	 */
-	public function serve($content, $body) {
+	public function __output($content) {
+		if(!$this->isManagingController($content) || isset($this->getRequest()->get_params["ajaxfy"])) {
+			return $content;
+		}
+
 		$viewabledata = new ViewAccessableData();
-		$viewabledata->content = $content;
+		$viewabledata->content = Director::getStringFromResponse($content);
 		$viewabledata->title = self::$title;
 
-		return $viewabledata->renderWith("framework/dev.html");
+		return Director::setStringToResponse($content, $viewabledata->renderWith("framework/dev.html"));
 	}
 
 	/**
@@ -344,9 +346,9 @@ class Dev extends RequestHandler {
 						foreach($tables as $table) {
 							$sql = "DELETE FROM " . DB_PREFIX . $table . " WHERE id IN('" . implode("','", $deleteids) . "')";
 							if(SQL::Query($sql)) {
-                                $log .= '<div><img src="images/success.png" height="16" alt="Loading..." /> Delete versions of ' . $table . '</div>';
+                                $log .= '<div><img src="system/images/success.png" height="16" alt="Loading..." /> Delete versions of ' . $table . '</div>';
                             } else {
-                                $log .= '<div><img src="images/16x16/del.png" height="16" alt="Loading..." /> Failed to delete versions of ' . $table . '</div>';
+                                $log .= '<div><img src="system/images/16x16/del.png" height="16" alt="Loading..." /> Failed to delete versions of ' . $table . '</div>';
                             }
 						}
 					}

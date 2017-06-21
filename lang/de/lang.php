@@ -234,7 +234,6 @@ $lang = array(
 	"deleted"										=> "Gelöscht",
 	"successful_published"							=> "Der Eintrag wurden erfolgreich gespeichert und veröffentlicht!",
 	"published"										=> "Veröffentlicht",
-	'edit_settings'									=> "Einstellungen bearbeiten",
 	'sites_edit'									=> "Seiten verwalten und anlegen",
 	'admin_smilies'									=> "Smilies verwalten",
 	'admin_boxes'									=> "Inhalt der Boxen verwalten",
@@ -682,5 +681,7 @@ $lang = array(
 	"imageTooBig"		=> "Die hochgeladene Datei ist zu groß.",
 	"usercount"			=> "Benutzer",
 	"leave_page_upload_confirm"	=> "Ein Upload läuft, soll dieser abgebrochen werden?",
-	"apply"			=> "Anwenden"
+	"apply"			=> "Anwenden",
+
+	"uploads_manage"	=> "Dateien verwalten"
 );

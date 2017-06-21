@@ -12,19 +12,18 @@
 class ObjectRadioButton extends RadioButton  {
     /**
      * these fields need javascript
-     *
-     * @name javaScriptNeeded
-     * @access protected
      */
     protected $javaScriptNeeded = array();
 
     /**
      * defines if we hide disabled nodes
-     *
-     * @name hideDisabled
-     * @access public
      */
     public $hideDisabled = true;
+
+    /**
+     * @var bool
+     */
+    public $useResultFromField = false;
 
     /**
      * template.
@@ -36,6 +35,40 @@ class ObjectRadioButton extends RadioButton  {
      */
     protected $templateView;
 
+    /**
+     * @param null $name
+     * @param null $title
+     * @param array $options
+     * @param null $selected
+     * @param null $form
+     * @return static
+     */
+    public static function create($name = null, $title = null, $options = array(), $selected = null, $form = null) {
+        return new static($name, $title, $options, $selected, $form);
+    }
+
+    /**
+     * @param null $name
+     * @param null $title
+     * @param array $options
+     * @param null $selected
+     * @param null $form
+     * @return static
+     */
+    public static function createWithUseResult($name = null, $title = null, $options = array(), $selected = null, $form = null) {
+        $obj = static::create($name, $title, $options, $selected, $form);
+        $obj->useResultFromField = true;
+        return $obj;
+    }
+
+    /**
+     * ObjectRadioButton constructor.
+     * @param null $name
+     * @param null $title
+     * @param array $options
+     * @param null $selected
+     * @param null $form
+     */
     public function __construct($name = null, $title = null, $options = array(), $selected = null, $form = null)
     {
         parent::__construct($name, $title, $options, $selected, $form);
@@ -198,5 +231,44 @@ class ObjectRadioButton extends RadioButton  {
     {
         $js = 'initObjectRadioButtons(field, field.divId, ' . json_encode($this->javaScriptNeeded) . ');';
         return parent::js() . $js;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function result()
+    {
+        $result = parent::result();
+        if($this->useResultFromField) {
+            foreach ($this->options as $value => $title) {
+                if ($value == $result) {
+                    if (is_array($title)) {
+                        $field = $this->form()->getField($title[1]);
+                        $result = $field->result();
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @param boolean $useResultFromField
+     * @return $this
+     */
+    public function setUseResultFromField($useResultFromField)
+    {
+        $this->useResultFromField = $useResultFromField;
+        return $this;
+    }
+
+    /**
+     * @param mixed $hideDisabled
+     * @return $this
+     */
+    public function setHideDisabled($hideDisabled)
+    {
+        $this->hideDisabled = $hideDisabled;
+        return $this;
     }
 }

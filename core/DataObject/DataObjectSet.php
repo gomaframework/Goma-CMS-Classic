@@ -16,7 +16,7 @@
 class DataObjectSet extends ViewAccessableData implements IDataSet {
 	const FETCH_MODE_CREATE_NEW = "fetch_create_new";
 	const FETCH_MODE_EDIT = "fetch_mode_edit";
-	const POOL_PROP_SIZE = 2;
+	const POOL_PROP_SIZE = 2.5;
 
 	/**
 	 * how many items per page
@@ -247,14 +247,14 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	}
 
 	/**
-	 * @param array $loops
+	 * @param array $custom_data
 	 * @return $this
 	 */
-	public function customise($loops = array())
+	public function customise($custom_data = array())
 	{
-		$this->protected_customised = $loops;
+		$this->protected_customised = $custom_data;
 
-		return parent::customise($loops);
+		return parent::customise($custom_data);
 	}
 
 	/**
@@ -687,7 +687,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 				}
 				$this->items = array_values($this->getRecordsByRange($limit[0], $limit[1]));
 				if(isset($this->firstCache)) array_unshift($this->items, $this->firstCache);
-				if(isset($this->lastCache)) $this->items[count($this->items) - $offsetInsertLast] = $this->lastCache;
+				if(isset($this->lastCache) &&
+					$this->lastCache !== $this->firstCache) {
+					$this->items[count($this->items) - $offsetInsertLast] = $this->lastCache;
+				}
 
 				if ($this->page === null) {
 					$this->count = count($this->items);
@@ -1004,6 +1007,13 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	}
 
 	/**
+	 * @return mixed
+	 */
+	public function getFilter() {
+		return $this->filter;
+	}
+
+	/**
 	 * @param int $start
 	 * @param int $length
 	 * @return array
@@ -1030,15 +1040,16 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
             // merge with staging
             $stageCount = $this->getStagingWithFilterAndSort()->count();
             if($stageCount > 0) {
-                if($start > $this->countWholeSet() - $stageCount) {
-                    $start -= ($this->countWholeSet() - $stageCount);
+                $mergeStart = $start;
+                if($mergeStart > $this->countWholeSet() - $stageCount) {
+                    $mergeStart -= ($this->countWholeSet() - $stageCount);
                 }
 
-                $result = $this->mergeWithStaging($result, $length, $start, $start != 0 && isset($result[0]) ? $result[0] : null);
+                $result = $this->mergeWithStaging($result, $length, $mergeStart, $mergeStart != 0 && isset($result[0]) ? $result[0] : null);
             }
 		}
 
-		return $result;
+		return (array) $result;
 	}
 
     /**
@@ -1046,7 +1057,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
      * @param int $length
      * @param int $startIndex
      * @param null $startElement
-     * @return array|ArrayList
+     * @return array
      */
     protected function mergeWithStaging($result, $length, $startIndex = 0, $startElement = null) {
         if($result) {
@@ -1060,7 +1071,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
         }
 
         if($length < 0) {
-            return $merged->getRange($merged->count() - $length, abs($length));
+            return $merged->getRange($merged->count() - $length, abs($length))->ToArray();
         }
 
         if(isset($startElement)) {
@@ -1780,27 +1791,27 @@ class DataObjectSet extends ViewAccessableData implements IDataSet {
 	 */
 	public function pickRandomly($n) {
 		$set = new ArrayList();
-		$propability = 1 / $this->countWholeSet() * $n;
+		$probability = 1 / $this->countWholeSet() * $n;
 		if($this->staging->count() == $this->countWholeSet()) {
 			return $this->staging->pickRandomly($n);
 		}
 		foreach($this->staging as $record) {
-			if($set->count() < $n && rand(0, 1) < $propability) {
+			if($set->count() < $n && rand(0, 1) < $probability) {
 				$set->add($record);
 			}
 		}
 
 		if($set->count() < $n) {
 			/*
-			 * we limit the propability of the pool, so mysql does not need to sort
+			 * we limit the probability of the pool, so mysql does not need to sort
 			 * the whole table, but just a small amount of that.
 			 * the POOL_PROP_SIZE defines the factor how much greater the pool is than the set we want to get.
 			 * It's a good compromise to use something like 2 here.
 			 */
-			$poolPropability = ($n - $set->count()) / $this->countWholeSet() * self::POOL_PROP_SIZE;
+			$poolProbability = ($n - $set->count()) / $this->countWholeSet() * self::POOL_PROP_SIZE;
 			$subQuery = $this->dbDataSource()->buildExtendedQuery($this->version, array_merge(
 				$this->getFilterForQuery(),
-				array(" RAND() < {$poolPropability} ")
+				array(" RAND() < {$poolProbability} ")
 			), array(), array(), $this->getJoinForQuery(), true);
 
 			$join = $this->getJoinForQuery();

@@ -62,7 +62,6 @@
 
 					var actions = $(this).prev(".bbcode_actions");
 
-					actions.css("width", $(this).outerWidth());
 					var input = $(this).get(0);
 
 					// create UI

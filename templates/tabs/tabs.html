@@ -1,0 +1,15 @@
+<% INCLUDE_CSS "tabs.less" %>
+<gtabs>
+    <ul>
+        <% CONTROL this() %>
+        <li for="tabs_$this.name">$this.title</li>
+        <% ENDCONTROL %>
+        <li class="clear"></li>
+    </ul>
+    <% CONTROL this() %>
+    <div id="tabs_$this.name">
+        $this.content
+    </div>
+    <% ENDCONTROL %>
+</gtabs>
+

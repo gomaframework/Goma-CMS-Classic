@@ -313,27 +313,21 @@ div.adminPanel table, div.adminPanel td {
       }
 
       #userbar-langSelect {
-
         position: relative;
 
         > a {
           display: block;
-          padding: 0.75em;
-          padding-top: 0.56em;
+          padding: 0.56em 0.75em 0.75em;
         }
 
         > ul {
           list-style: none;
-          position: absolute;
-          top: 2.82em;
-          left: -2em;
           z-index: 960;
 
           -webkit-overflow-scrolling: touch;
           overflow: auto;
 
-          margin: 0;
-          margin-top: -1px;
+          margin: -1px -20em 0 0;
           padding: @space-normal 0;
           width: 10em;
 
@@ -487,17 +481,15 @@ div.adminPanel table, div.adminPanel td {
   }
 
   #history.content_container {
-    > div > div > div {
       p a {
         padding: 0;
       }
-    }
   }
 
   .adminContent {
     padding: 0.75em;
 
-    .header {
+    > .header {
       background: #eee;
       border-bottom: 1px solid #ccc;
       padding: .5em;
@@ -864,10 +856,9 @@ textarea, input[type=text], input[type=search], input[type=password] {
 }
 
 .form_field {
-  padding: 0.8em;
-  padding-bottom: 1em;
+  padding: 0.8em 0.8em 1em;
 
-  > label {
+  > label, .checkbox-wrapper > label {
     color: #000;
     font-weight: normal;
   }
@@ -1108,47 +1099,30 @@ body .updateInfo .changelog_scroll {
 #history {
   display: none;
 }
+body {
+  .tabs > ul li, gtabs > ul > li[for] {
 
-/* tabs */
-.tabs > ul li {
-  margin-left: 0;
-  margin-right: 0;
-}
+  }
 
-.tabs > ul li a, .tabs > ul li .tab {
-  background: transparent !important;
-  border: 0;
-  color: @color-action;
+  .tabs > ul li a, .tabs > ul li .tab, gtabs > ul > li[for] {
+    border-bottom: 2px solid transparent;
+  }
 
-  margin-left: 0;
-  margin-right: 0;
+  .tabs > ul li a:hover, .tabs > ul li .tab:hover, .tabs > ul li button:hover, gtabs > ul > li[for]:hover {
+    border-bottom: 2px solid @system-action;
+    background: transparent;
+  }
 
-  padding-top: 0.63em;
-  padding-bottom: 0.59em;
-  margin-top: -0.063em !important;
-  margin-bottom: -0.063em;
-  border-bottom: 2px solid transparent;
-}
+  .tabs > ul li .active, gtabs > ul > li[for].active {
+    color: @system-highlight;
+    font-weight: normal;
+    background: transparent;
+    border-bottom: 2px solid @system-highlight;
+  }
 
-.tabs > ul li a:hover, .tabs > ul li input.tab:hover, .tabs > ul li button.tab:hover {
-  color: @color-action !important;
-  padding-bottom: 0.6em;
-  border-bottom: 2px solid @color-action;
-}
-
-.tabs > ul li input.active, .tabs > ul li a.active, .tabs > ul li button.active {
-  color: @color-highlight !important;
-  border: 0;
-  border-bottom: 2px solid @color-highlight !important;
-  padding-bottom: .6em;
-}
-
-.tabs > ul li a.active:hover, .tabs > ul li input.active:hover, .tabs > ul li button.active:hover {
-  color: @color-highlight !important;
-}
-
-.tabs > ul li button.active {
-  padding-bottom: .63em;
+  .tabs > ul li a.active:hover, .tabs > ul li input.active:hover, .tabs > ul li button.active:hover, gtabs > ul > li[for].active:hover {
+    border-bottom: 2px solid @system-highlight;
+  }
 }
 
 ul.list-view {

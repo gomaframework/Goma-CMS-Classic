@@ -460,7 +460,7 @@ class Request extends gObject {
 	 * @return bool
 	 */
 	public function is_ajax() {
-		return $this->getParam("ajax") || (isset($this->headers["x-requested-with"]) && $this->headers["x-requested-with"] == "XMLHttpRequest");
+		return $this->getParam("ajaxfy") || (isset($this->headers["x-requested-with"]) && $this->headers["x-requested-with"] == "XMLHttpRequest");
 	}
 
 	/**

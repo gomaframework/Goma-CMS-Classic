@@ -171,10 +171,6 @@ class RequestHandler extends gObject {
 			$this->request->setState($preservedRequest);
             return $this->handleAction("index");
 		} catch(Exception $e) {
-			if($subController) {
-				throw $e;
-			}
-
 			return $this->handleException($e);
 		}
 	}
@@ -276,7 +272,7 @@ class RequestHandler extends gObject {
 	 *@param string $content
 	 *@param bool $handleWithMethod
 	 */
-	public function onBeforeHandleAction($action, $content, &$handleWithMethod) {
+	public function onBeforeHandleAction($action, &$content, &$handleWithMethod) {
 
 	}
 
@@ -397,6 +393,10 @@ class RequestHandler extends gObject {
 	 * @throws Exception
 	 */
 	public function handleException($e) {
+        if($this->isSubController()) {
+            throw $e;
+        }
+
 		$content = null;
 		$this->callExtending("handleException", $e, $content);
 
@@ -404,21 +404,23 @@ class RequestHandler extends gObject {
 			return $content;
 		}
 
-		if(is_a($e, "LogicException")) {
-			throw $e;
+		if (gObject::method_exists($e, "http_status")) {
+			$status = $e->http_status();
 		} else {
-			log_exception($e);
+			$status = 500;
 		}
 
-		if($this->request->canReplyJavaScript()) {
-			return new JSONResponseBody(array(
+		log_exception($e);
+
+		if($this->request->canReplyJavaScript() || $this->request->canReplyJSON()) {
+			return GomaResponse::create(null, new JSONResponseBody(array(
 				"status" => $e->getCode(),
 				"error" => $e->getMessage(),
 				"errorClass" => get_class($e)
-			));
+			)))->setStatus($status);
 		}
 
-		return $e->getCode() . ": " . get_class($e) . "\n" . $e->getMessage();
+		return GomaResponse::create(null, $e->getCode() . ": " . get_class($e) . "\n" . $e->getMessage())->setStatus($status);
 	}
 
 	/**
@@ -432,16 +434,17 @@ class RequestHandler extends gObject {
 	/**
 	 * returns if this controller is the next controller to the root of this type.
 	 * @param string $type
+	 * @param bool $ignoreSubController
 	 * @return bool
 	 */
-	public function controllerIsNextToRootOfType($type) {
+	public function controllerIsNextToRootOfType($type, $ignoreSubController = false) {
 		if(!is_a($this, $type)) {
 			throw new InvalidArgumentException("You can only compare with types you are.");
 		}
 
 		if($this->request) {
 			foreach ($this->request->getController() as $controller) {
-				if (is_a($controller, $type)) {
+				if (is_a($controller, $type) && (!$ignoreSubController || !$controller->isSubController())) {
 					return spl_object_hash($controller) == spl_object_hash($this);
 				}
 			}
@@ -451,6 +454,48 @@ class RequestHandler extends gObject {
 
 		// should be true if no request is set.
 		return true;
+	}
+
+	/**
+	 * returns if this controller is the next controller to the root of this type.
+	 * @param string $type
+	 * @param bool $ignoreSubController
+	 * @return bool
+	 */
+	public function controllerIsMostSpecialOfType($type, $ignoreSubController = false) {
+		if(!is_a($this, $type)) {
+			throw new InvalidArgumentException("You can only compare with types you are.");
+		}
+
+		if($this->request) {
+			$controllers = array_reverse($this->request->getController());
+			foreach ($controllers as $controller) {
+				if (is_a($controller, $type) && (!$ignoreSubController || !$controller->isSubController())) {
+					return spl_object_hash($controller) == spl_object_hash($this);
+				}
+			}
+
+			throw new LogicException("Object not found in request-tree.");
+		}
+
+		// should be true if no request is set.
+		return true;
+	}
+
+	/**
+	 * the root view controller is
+	 * - the most special
+	 * - non-subcontroller
+	 * - checks if response is not full page - Can be disabled by providing null as response
+	 *
+	 * @param null|GomaResponse|GomaResponseBody|string $response
+	 * @param string $type
+	 * @return bool
+	 */
+	public function isManagingController($response = null, $type = null) {
+		$type = isset($type) ? $type : self::class;
+		return !$this->isSubController() && !\Director::isResponseFullPage($response) &&
+			$this->controllerIsMostSpecialOfType($type, true);
 	}
 
 	/**
@@ -481,6 +526,7 @@ class RequestHandler extends gObject {
 	/**
 	 * @param gObject|string $sender
 	 * @return string
+	 * @deprecated
 	 */
 	public function getRedirect($sender)
 	{
@@ -494,7 +540,7 @@ class RequestHandler extends gObject {
             }
         }
 
-        if($this->currentActionHandled != "index" || (is_object($sender) && $sender != $this)) {
+        if($this->currentActionHandled != "index" || strtolower($sender) == "tothis" || (is_object($sender) && $sender != $this)) {
             return ROOT_PATH . $this->namespace;
         }
 
@@ -507,6 +553,13 @@ class RequestHandler extends gObject {
         }
 
 		return BASE_URI;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getRedirectToSelf() {
+		return $this->request->url . URLEND . "?" . $this->request->queryString();
 	}
 }
 

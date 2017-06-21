@@ -389,6 +389,9 @@
         text-align: center;
         position: relative;
 
+        > .crop-loading {
+          display: none;
+        }
         > img {
           height: 200px;
           width: auto;
@@ -407,6 +410,20 @@
             display: inline-block;
             padding: .5em;
           }
+        }
+      }
+      .image-preview.loading {
+        > .crop-loading {
+          padding-top: 4em;
+          display: block;
+          text-align: center;
+
+          p {
+            color: #555;
+          }
+        }
+        > .image-preview-img {
+          display: none;
         }
       }
     }
@@ -430,7 +447,7 @@
   height: auto !important;
 }
 
-@media screen and (max-width: 50em) {
+@media screen and (max-width: 35em) {
   .fileupload-advanced {
     .top-actions {
       text-align: right;

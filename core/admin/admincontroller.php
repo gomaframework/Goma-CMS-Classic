@@ -66,11 +66,12 @@ class adminController extends Controller
     }
 
     /**
+     * @param null $service
      * @param null $keyChain
      */
-    public function __construct($keyChain = null)
+    public function __construct($service = null, $keyChain = null)
     {
-        parent::__construct($keyChain);
+        parent::__construct($service, $keyChain);
 
         Resources::addData("goma.ENV.is_backend = true;");
         defined("IS_BACKEND") OR define("IS_BACKEND", true);
@@ -80,9 +81,12 @@ class adminController extends Controller
     /**
      * global admin-enabling
      *
-     * @name handleRequest
+     * @param Request $request
+     * @param bool $subController
+     * @return false|string
+     * @throws Exception
+     * @internal param $handleRequest
      * @access public
-     * @return string|false
      */
     public function handleRequest($request, $subController = false)
     {
@@ -104,10 +108,11 @@ class adminController extends Controller
      */
     public function handleItem()
     {
-        if (!Permission::check("ADMIN"))
-            return $this->modelInst()->renderWith("admin/index_not_permitted.html");
+        if (!Permission::check("ADMIN")) {
+            return null;
+        }
 
-          $class = str_replace("-", "\\", $this->request->getParam("item")) . "admin";
+        $class = str_replace("-", "\\", $this->request->getParam("item")) . "admin";
 
         if (ClassInfo::exists($class)) {
             /** @var RequestHandler $controller */
@@ -126,7 +131,6 @@ class adminController extends Controller
     /**
      * title
      *
-     * @name title
      * @return string
      */
     public function title()
@@ -209,13 +213,14 @@ class adminController extends Controller
     }
 
     /**
-     * post in own structure
+     * @param GomaResponse|string $content
+     * @return GomaResponse|string
      */
-    public function serve($content)
+    public function __output($content)
     {
         Core::setHeader("robots", "noindex,nofollow");
-        if (!Permission::check("ADMIN") && Core::is_ajax()) {
-            Resources::addJS("location.reload();");
+        if(!$this->isManagingController($content) || $this->getRequest()->is_ajax()) {
+            return parent::__output($content);
         }
 
         if (Permission::check("ADMIN")) {
@@ -224,22 +229,20 @@ class adminController extends Controller
             Resources::addJS("addHelp(" . json_encode($data) . ");");
         }
 
-        if (!Core::is_ajax()) {
-            if (!preg_match('/<\/html/i', $content)) {
-                if (!Permission::check("ADMIN")) {
-                    $admin = new Admin();
+        $admin = new Admin();
+        $prepared = $admin->customise(array(
+            "content" => Director::getStringFromResponse($content)
+        ));
 
-                    return $admin->customise(array("content" => $content))->renderWith("admin/index_not_permitted.html");
-                } else {
-                    $admin = new Admin();
-
-                    return $admin->customise(array("content" => $content))->renderWith("admin/index.html");
-                }
-            }
+        if (!Permission::check("ADMIN")) {
+            $newContent = $prepared->renderWith("admin/index_not_permitted.html");
+        } else {
+            $newContent = $prepared->renderWith("admin/index.html");
         }
 
-        return $content;
-
+        return parent::__output(
+            Director::setStringToResponse($content, $newContent)
+        );
     }
 
     /**
@@ -252,25 +255,22 @@ class adminController extends Controller
     {
         if (Permission::check("ADMIN")) {
 
-            if (isset($_GET["flush"])) {
+            if (isset($this->getRequest()->get_params["flush"])) {
                 Core::deleteCache(true);
 
                 AddContent::addSuccess(lang("cache_deleted"));
             }
 
-            return parent::index();
+            return static::class == self::class ? "" : parent::index();
         } else {
             $this->template = "admin/index_not_permitted.html";
 
-            return parent::index();
+            return static::class == self::class ? "" : parent::index();
         }
     }
 
     /**
-     * update algorythm
-     *
-     * @name handleUpdate
-     * @access public
+     * update action
      */
     public function handleUpdate()
     {
@@ -484,7 +484,7 @@ class admin extends ViewAccessableData implements PermProvider
 
                     $data->push(array('text'   => parse_lang($class->text),
                                       'uname'  => str_replace("\\", "-", substr($class->classname, 0, -5)),
-                                      'sort'   => $class->sort,
+                                      'sort'   => StaticsManager::getStatic($class, "sort", true),
                                       "active" => $active,
                                       "icon"   => ClassInfo::getClassIcon($class->classname)));
                 }

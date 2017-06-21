@@ -1,0 +1,141 @@
+/**
+  *@package goma css framework
+  *@link http://goma-cms.org
+  *@license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
+  *@author Goma-Team
+  * last modified: 03.04.2012
+*/
+
+.bbcode_actions {
+	background: #ddd;
+	border-bottom: 1px solid #ccc;
+	border-top: 1px solid #ccc;
+	padding-left: .25em;
+	-webkit-border-top-left-radius: .25em;
+	-webkit-border-top-right-radius: .25em;
+	
+	border-top-left-radius: .25em;
+	border-top-right-radius: .25em;
+	
+	-moz-border-radius-topleft: .25em;
+	-moz-border-radius-topright: .25em;
+	
+	box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    -khtml-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    
+    overflow: hidden;
+}
+.bbcode_actions .item, .bbcode_actions .spacer {
+	float: left;
+	padding: .5em;
+}
+.bbcode_actions .itemset {
+	float: left;
+	background: #ddd url(images/bbcode/item_bg.png) repeat-x;
+	
+	margin: .25em;
+	
+	border: 1px solid #aaa;
+	
+	-webkit-border-radius: .25em;
+	-moz-border-radius: .25em;
+	border-radius: .25em;
+	
+	-webkit-box-shadow: #bbb 0 0 .25em;
+	box-shadow: #bbb 0 0 .25em;
+	-moz-box-shadow: #bbb 0 0 .25em;
+}
+.bbcode_actions .itemset .item {
+	padding: .125em .5em;
+	border-left: 1px solid #aaa;
+	
+	text-align: center;
+	min-width: 1.125em;
+	height: 1.375em;
+	font-size: 1em;
+	line-height: 1.375em;
+	
+	cursor: pointer;
+}
+.bbcode_actions .itemset .item:first-child {
+	border-left: 0 !important;
+	
+	-webkit-border-top-left-radius: .25em;
+	-webkit-border-bottom-left-radius: .25em;
+	border-top-left-radius: .25em;
+	border-bottom-left-radius: .25em;
+	-moz-border-radius-topleft: .25em;
+	-moz-border-radius-bottomleft: .25em;
+}
+
+.bbcode_actions .itemset .item:last-child {
+	-webkit-border-top-right-radius: .25em;
+	-webkit-border-bottom-right-radius: .25em;
+	border-top-right-radius: .25em;
+	border-bottom-right-radius: .25em;
+	-moz-border-radius-topright: .25em;
+	-moz-border-radius-bottomright: .25em;
+}
+.bbcode_actions .itemset .item:hover, .bbcode_actions .itemset .item.active {
+	background: #ddd url(images/bbcode/item_bg_hover.png) repeat-x;
+}
+
+.bbcode_actions .itemset .item.bold {
+	font-weight: bold;
+}
+.bbcode_actions .itemset .item.italic {
+	font-style: italic;
+}
+.bbcode_actions .itemset .item.underlined {
+	text-decoration: underline;
+}
+
+
+
+.bbcode_actions .itemset .img span {
+	margin-top: .25em;
+	margin-left: .125em;
+	height: 1em;
+	width: 1em;
+	display: block;
+}
+.bbcode_actions .itemset .item.align-left span {
+	background: url(images/bbcode/align-left.png) no-repeat;
+}
+.bbcode_actions .itemset .item.align-right span {
+	background: url(images/bbcode/align-right.png) no-repeat;
+}
+.bbcode_actions .itemset .item.align-center span {
+	background: url(images/bbcode/align-center.png) no-repeat;
+}
+.bbcode_actions .itemset .item.align-block span {
+	background: url(images/bbcode/align-block.png) no-repeat;
+}
+
+.bbcode_actions .itemset .item.image span {
+	background: url(images/bbcode/image.png) no-repeat;
+}
+.bbcode_actions .itemset .item.link span {
+	background: url(images/bbcode/link.png) no-repeat;
+}
+.bbcode_actions .itemset .item.quote span {
+	background: url(images/bbcode/quote.png) no-repeat;
+}
+
+.bbcoded_editor {
+	border: 1px solid #d0d0d0 !important;
+	border-top-color: #ddd !important;
+	background: #fff;
+	
+	margin-top: 0 !important;
+	margin-left: 0 !important;
+	
+	padding: 8px;
+
+	-webkit-border-radius: 0 0 .25em .25em;
+	border-radius: 0 0 .25em .25em;
+	-moz-border-radius: 0 0 .25em .25em;
+}

@@ -149,7 +149,9 @@ class HasOneWriter extends Extension {
             $owner->getSilent(),
             $owner->getUpdateCreated(),
             $owner->getWriteType(),
-            $owner->getDatabaseWriter());
+            $owner->getDatabaseWriter(),
+            $owner->isForceWrite()
+        );
         $writer->write();
     }
     /**
@@ -169,4 +171,4 @@ class HasOneWriter extends Extension {
     }
 }
 
-gObject::extend("ModelWriter", "HasOneWriter");
+gObject::extend(ModelWriter::class, HasOneWriter::class);

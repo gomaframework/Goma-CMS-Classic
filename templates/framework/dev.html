@@ -17,7 +17,7 @@
 
                     goma.ui.setProgress(1);
 
-                    $(".ajax-result").html('<div class="progress"><img src="images/loading.gif" /> Creating archive...</div>');
+                    $(".ajax-result").html('<div class="progress"><img src="system/images/loading.gif" /> Creating archive...</div>');
 
                     fireAjax($.ajax({
 						url: form.attr("action"),
@@ -46,7 +46,7 @@
                                         goma.ui.setProgress(data.progress, true);
                                     }
 
-                                    $(".ajax-result").html('<div class="progress"><img src="images/loading.gif" /> Creating archive... ' + progress + '</div>');
+                                    $(".ajax-result").html('<div class="progress"><img src="system/images/loading.gif" /> Creating archive... ' + progress + '</div>');
                                     fireAjax($.ajax({
                                         url: data.redirect,
                                         dataType: "json"
@@ -119,7 +119,7 @@
 			<div class="logo_wrapper">
 				<div class="content_wrapper">
 					<div class="beside_logo">
-						<a href="{BASE_SCRIPT}admin/switchlang/" title="{$_lang_switchlang}"><img src="images/icons/fatcow-icons/32x32/locate.png" alt="{$_lang_switchlang}" /></a>
+						<a href="{BASE_SCRIPT}admin/switchlang/" title="{$_lang_switchlang}"><img src="system/images/icons/fatcow-icons/32x32/locate.png" alt="{$_lang_switchlang}" /></a>
 					</div>
 					<a href="{BASE_SCRIPT}admin{URLEND}"><img id="logo" src="system/templates/admin/images/logo.png" data-retina="system/templates/admin/images/logo@2x.png" alt="logo" /></a>
 				</div>

@@ -18,15 +18,19 @@ class ExternalFormController extends RequestHandler {
      * @return mixed
      */
     public function handleRequest($request, $subController = false) {
+        try {
+            $this->request = $request;
+            $this->subController = $subController;
 
-        $this->request = $request;
-        $this->subController = $subController;
+            $this->init();
 
-        $this->init();
+            $form = $request->getParam("form");
+            $field = $request->getParam("field");
 
-        $form = $request->getParam("form");
-        $field = $request->getParam("field");
-        return $this->FieldExtAction($form, $field);
+            return $this->FieldExtAction($form, $field);
+        } catch(Exception $e) {
+            return $this->handleException($e);
+        }
     }
 
     /**

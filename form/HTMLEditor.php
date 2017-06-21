@@ -11,8 +11,16 @@
  */
 class HTMLEditor extends Textarea {
 
+    /**
+     * @return array
+     */
     protected function getParams() {
-        return array("width" => $this->width, "baseUri" => BASE_URI, "lang" => Core::$lang, "css" => $this->buildEditorCSS());
+        return array(
+            "width" => $this->width,
+            "baseUri" => BASE_URI,
+            "lang" => Core::$lang,
+            "css" => $this->buildEditorCSS()
+        );
     }
 
     /**

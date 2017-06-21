@@ -30,10 +30,10 @@ class Captcha extends FormField {
 	public function field($info) {
 		$this->callExtending("beforeField");
 
-		$container = new HTMLNode("div");
+		$container = new HTMLNode("div", array("class" => "input"));
 
 		$container->append(new HTMLNode('img', array(
-			"src" => "images/captcha/captcha.php",
+			"src" => "system/images/captcha/captcha.php",
 			"alt" => "captcha",
 			"id" => $this->ID() . "_captcha",
 			"onclick" => "$('#" . $this->ID() . "').focus();"
@@ -63,7 +63,7 @@ class Captcha extends FormField {
 		if(!isset($_SESSION['goma_captcha_spam'], $this->getRequest()->post_params[$this->name]) || $_SESSION['goma_captcha_spam'] != $this->getRequest()->post_params[$this->name]) {
 			throw new FormInvalidDataException($this->name, lang("captcha_wrong", "The Code was wrong"));
 		}
-		return null;
+		return true;
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Captcha extends FormField {
 	public function JS() {
 		return '$(function(){
 				$("#' . $this->form()->ID() . '").bind("ajaxresponded", function(){
-					$("#' . $this->ID() . '_captcha").attr("src","images/captcha/captcha.php?"+Math.random());
+					$("#' . $this->ID() . '_captcha").attr("src","system/images/captcha/captcha.php?"+Math.random());
 					$("#' . $this->ID() . '").val("");
 				});
 			});';

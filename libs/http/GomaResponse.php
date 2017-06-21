@@ -82,6 +82,11 @@ class GomaResponse extends gObject {
     protected $shouldServe = true;
 
     /**
+     * @var bool
+     */
+    protected $isFullPage = null;
+
+    /**
      * GomaResponse constructor.
      *
      * @param array|null $header
@@ -449,7 +454,21 @@ class GomaResponse extends gObject {
      * @return bool
      */
     public function isFullPage() {
-        return $this->getBody()->isFullPage();
+        return is_bool($this->isFullPage) ? $this->isFullPage : $this->getBody()->isFullPage();
+    }
+
+    /**
+     * @param boolean|null $isFullPage
+     * @return $this
+     */
+    public function setIsFullPage($isFullPage)
+    {
+        if(isset($isFullPage) && !is_bool($isFullPage)) {
+            throw new InvalidArgumentException();
+        }
+
+        $this->isFullPage = $isFullPage;
+        return $this;
     }
 
     /**

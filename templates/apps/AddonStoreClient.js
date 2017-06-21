@@ -190,7 +190,7 @@ if(typeof goma.AddOnStore == "undefined") {
 						}
 					}
 					
-					destination.html('<span class="loading"><img src="images/16x16/loading.gif" alt="" /> '+lang("loading")+'</span>');
+					destination.html('<span class="loading"><img src="system/images/16x16/loading.gif" alt="" /> '+lang("loading")+'</span>');
 					
 					if(!hideLoading) {
 						goma.ui.setProgress(5).done(function(){	

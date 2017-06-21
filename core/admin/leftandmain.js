@@ -156,12 +156,10 @@ var LaM_type_timeout;
 						data: {"ajaxfy": true}
 					}).done(function(html, node, request) {
 						$("#content .success, #content .error, #content .notice").hide("fast");
-						$(".tree .marked").removeClass("marked");
 						$(".left-and-main .LaM_tabs > div.create ul li.active").removeClass("active");
 
 						if(typeof $this != "undefined") {
 							$this.removeClass("loading");
-							$this.parent().parent().addClass("marked");
 						}
 
 						updateSidebarToggle();
@@ -243,7 +241,7 @@ var LaM_type_timeout;
 			$this.find("input[type=text]").blur();
 		}
 
-		$this.parents(".classtree").find(".treewrapper").html("&nbsp;<img src=\"images/16x16/ajax-loader.gif\" alt=\"\" /> Loading...");
+		$this.parents(".classtree").find(".treewrapper").html("&nbsp;<img src=\"system/images/16x16/ajax-loader.gif\" alt=\"\" /> Loading...");
 		var treewrapper = $this.parents(".classtree").find(".treewrapper");
 		// if no search
 		if(value == "") {
@@ -343,7 +341,7 @@ var LaM_type_timeout;
                             }
                             var update = new Date().getTime();
                             sortXhr = $.ajax({
-								url: BASE_SCRIPT + adminURI + "/savesort/" + marked_node + "/?t=" + update,
+								url: BASE_SCRIPT + adminURI + "/savesort/?t=" + update,
 								data: sortSerialized + "&" + oForm.serialize(),
 								type: 'post',
 								error: function(e)
@@ -407,7 +405,6 @@ var LaM_type_timeout;
 		setTimeout(function(){
 			goma.ui.ajax(undefined, {
 				beforeSend: function() {
-					$this.parent().parent().addClass("marked");
 					if(typeof HistoryLib.push == "function")
 						HistoryLib.push($this.attr("href"));
 				},
@@ -423,9 +420,6 @@ var LaM_type_timeout;
 				}
 
 				$("#content .success, #content .error, #content .notice").hide("fast");
-				self.marked_node = $this.attr("nodeid");
-				$(".tree .marked").removeClass("marked");
-				$this.parent().parent().addClass("marked");
 				$this.removeClass("loading");
 
 				$(".treewrapper .loadingBar").remove();

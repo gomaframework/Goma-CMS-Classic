@@ -65,21 +65,21 @@ class HistoryController extends Controller {
 		$dbfilter = is_array($filter["dbobject"]) ? $filter["dbobject"] : array();
 		return $data->customise(array("id" => $id, "namespace" => $namespace, "filter" => json_encode($dbfilter)))->renderWith("history/history.html");
 	}
-	
+
 	/**
 	 * name of this controller
 	 *
-	 *@name PageTitle
-	*/
+	 * @return null|string
+	 */
 	public function PageTitle() {
 		return lang("history");
 	}
-	
+
 	/**
 	 * index-method
 	 *
-	 *@name index
-	*/
+	 * @return bool|string
+	 */
 	public function index() {
 		$filter = array();
 		$class = $this->getParam("c");
@@ -92,33 +92,27 @@ class HistoryController extends Controller {
 		
 		
 		// render the tabset
-		$tabs = new Tabs("history");
+		$tabs = new DataSet();
 		if(isset($filter["dbobject"]) && ClassInfo::exists($filter["dbobject"])) {
 			$content = HistoryController::renderHistory($filter, $this->namespace);
 			if($content) {
-				$tabs->addTab(ClassInfo::getClassTitle($filter["dbobject"]), $content, $filter["dbobject"]);
+				$tabs->add(array(
+					"title" => ClassInfo::getClassTitle($filter["dbobject"]),
+					"name"	=> $filter["dbobject"],
+					"content" => $content
+				));
 			}
 		}
-		$tabs->addTab(lang("h_all_events"), HistoryController::renderHistory(array(), $this->namespace), "h_all_events");
-		$output = $tabs->render();
-		
-		if(Core::is_ajax()) {
-			HTTPResponse::setBody($output);
-			HTTPResponse::output();
-			exit;
-		} else {
-			return $output;
-		}
+		$tabs->add(array(
+			"name" 		=> "h_all_events",
+			"title" 	=> lang("h_all_events"),
+			"content"	=> HistoryController::renderHistory(array(), $this->namespace)
+		));
+		return GomaResponseBody::create($tabs->renderWith("tabs/tabs.html"))->setIsFullPage($this->getRequest()->is_ajax());
 	}
-	
-	/**
-	 * Permissions
-	*/
-	
+
 	/**
 	 * you can restore a version if you are author or publisher
-	 *
-	 *@name canRestoreVersion
 	*/
 	public function canRestoreVersion() {
 		if(ClassInfo::exists($this->getParam("class"))) {
@@ -194,6 +188,8 @@ class HistoryController extends Controller {
 	public function compareVersion() {
 		$oldversion = DataObject::get_one($this->getParam("class"), array("versionid" => $this->getParam("id")));
 		$newversion = DataObject::get_one($this->getParam("class"), array("versionid" => $this->getParam("nid")));
+
+		$casting = $oldversion->casting();
 		
 		// get all fields for compare-view
 		$compareFields = $oldversion->getVersionedFields();
@@ -205,17 +201,23 @@ class HistoryController extends Controller {
 				if(isset($oldversion[$field]) && isset($newversion[$field])) {
 					$oldversiondata = $this->getDataFromVersion($field, $oldversion);
 					$newversiondata = $this->getDataFromVersion($field, $newversion);
-					
-					// first check if HTML or other format
-					if(!preg_match('/(\<img|\<a|\<div|\<p|\<span)/i', $oldversiondata) && !preg_match('/(\<img|\<a|\<div|\<p|\<span)/i', $newversiondata)) {
-						$oldversiondata = convert::raw2text($oldversiondata);
-						$newversiondata = convert::raw2text($newversiondata);
+
+					if ($casting[strtolower($field)] = DBField::parseCasting($casting[strtolower($field)])) {
+						$compareContent = call_user_func_array(
+							array($casting[strtolower($field)]["class"], "getDiffOfContents"),
+							array(
+								$field,
+								(isset($casting[strtolower($field)]["args"])) ? $casting[strtolower($field)]["args"] : array(),
+							  	$oldversiondata,
+							  	$newversiondata
+							)
+						);
+						$fieldset->push(array("title" => $title, "content" => $compareContent));
+					} else {
+						$fieldset->push(array("title" => $title, "content" =>
+							'<del>' . convert::raw2text($oldversiondata) . '</del>' .
+							'<ins>' . convert::raw2text($newversiondata) . '</ins>'));
 					}
-					
-					$object = new diff_match_patch;
-					$diff = $object->diff_compute($oldversiondata, $newversiondata, true);
-					$object->diff_cleanupEfficiency($diff);
-					$fieldset->push(array("title" => $title, "content" => trim($this->diffToHTML($diff))));
 				}
 			}
 			
