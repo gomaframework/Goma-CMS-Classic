@@ -73,22 +73,24 @@ class Dev extends RequestHandler {
 			throw new PermissionException();
 		}
 
-		return parent::handleRequest($request, $subController);
+		return $this->__output(parent::handleRequest($request, $subController));
 
 	}
 
 	/**
-	 * serves data
-	 * @param string $content
-	 * @param GomaResponseBody $body
-	 * @return string
+	 * @param $content
+	 * @return GomaResponse|GomaResponseBody|mixed|string
 	 */
-	public function serve($content, $body) {
+	public function __output($content) {
+		if(!$this->isManagingController($content) || isset($this->getRequest()->get_params["ajaxfy"])) {
+			return $content;
+		}
+
 		$viewabledata = new ViewAccessableData();
-		$viewabledata->content = $content;
+		$viewabledata->content = Director::getStringFromResponse($content);
 		$viewabledata->title = self::$title;
 
-		return $viewabledata->renderWith("framework/dev.html");
+		return Director::setStringToResponse($content, $viewabledata->renderWith("framework/dev.html"));
 	}
 
 	/**

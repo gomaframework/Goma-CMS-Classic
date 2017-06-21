@@ -17,9 +17,6 @@ StaticsManager::addSaveVar(History::class, "storeHistoryForDays");
  * @version    1.0
  */
 class History extends DataObject {
-
-	const ID = "History";
-
 	/**
 	 * store history for this count of days.
 	 *

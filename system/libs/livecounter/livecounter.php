@@ -291,7 +291,7 @@ class livecounter extends DataObject
 		*/
 		$data = DataObject::get_one("livecounter_live", array("phpsessid" => $user_identifier, "last_modified" => array(">", $timeout)));
 		if($data && date("d", $data->created) == date("d", time())) {
-			DataObject::update("livecounter_live", array("user" => self::userId(), "hitcount" => $data->hitcount + 1), array("id" => $data->versionid));
+			DataObject::update(livecounter_live::class, array("user" => self::userId(), "hitcount" => $data->hitcount + 1), array("id" => $data->versionid));
 		} else {
 			if($data) {
 				$lt = $data->longtermid;

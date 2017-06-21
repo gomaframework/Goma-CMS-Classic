@@ -36,23 +36,6 @@ var json_regexp = /^\(?\{/,
 			 * we stop execution of JavaScript while loading
 			 */
 			gloaded = {"-": true},
-			// TODO: Remove Deprecation
-			loadScript = function (comp, fn) {
-				if (gloaded[comp] == null)
-				{
-					gloaded[comp] = $.ajax({
-						cache: true,
-						noRequestTrack: true,
-						url: BASE_SCRIPT + "gloader/" + comp + ".js?v2b8",
-						dataType: "script",
-						async: false
-					});
-				}
-
-				if (fn != null) {
-					fn();
-				}
-			},
 
 			loadScriptAsync = function (comp) {
 				if (gloaded[comp] == null)
@@ -494,13 +477,11 @@ var json_regexp = /^\(?\{/,
 			},
 
 			/**
-			 * loading-script
+			 * loading-script async
 			 *
-			 *@name load
-			 *@param string - mod
-			 *@param function - fn
+			 * @param string - mod
+			 * @param function - fn
 			 */
-			load: loadScript,
 			loadAsync: loadScriptAsync,
 
 			/**
@@ -749,7 +730,7 @@ if (window.loader === undefined) {
 				goma.ui.ajax(destination, {
 					pushToHistory: (!$(this).hasClass("no-history")),
 					url: $this.attr("href"),
-					data: {"ui-ajax": true}
+					data: {"ajaxfy": true}
 				}).done(function () {
 					$this.removeClass("loading");
 				});
@@ -932,9 +913,9 @@ if (window.loader === undefined) {
 		/**
 		 * if you have a dropdown and you want to close it on click on the document, but not on the dropdown, use this function
 		 *
-		 *@name CallonDocumentClick
-		 *@param fn
-		 *@param array - areas, which aren't calling this function (css-selectors)
+		 * @name CallonDocumentClick
+		 * @param fn
+		 * @param array - areas, which aren't calling this function (css-selectors). Attentien: These selectors need to exist!
 		 */
 		w.CallonDocumentClick = function (call, exceptions) {
 			var fn = call,
@@ -1333,6 +1314,10 @@ if (window.loader === undefined) {
 			}
 		});
 	}, 1000);
+}
+
+function isTouchDevice(){
+	return true == ("ontouchstart" in window || window.DocumentTouch && document instanceof DocumentTouch);
 }
 
 var measurePerformance = function(timeout) {

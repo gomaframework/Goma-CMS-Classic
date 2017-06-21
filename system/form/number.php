@@ -90,10 +90,11 @@ class NumberField extends FormField {
 	 *
 	 * @param null|int $start
 	 * @param null|int $end
-	 * @access public
+	 * @return $this
 	 */
 	public function setRange($start = null, $end = null) {
 		$this->rangeStart = $start;
 		$this->rangeEnd = $end;
+		return $this;
 	}
 }

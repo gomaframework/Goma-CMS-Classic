@@ -6,6 +6,9 @@
 class CheckBoxSQLField extends DBField {
     /**
      * converts every type of value into bool.
+     * @param string $name
+     * @param bool $value
+     * @param array $args
      */
     public function __construct($name, $value, $args = array())
     {
@@ -21,8 +24,6 @@ class CheckBoxSQLField extends DBField {
     /**
      * gets the field-type
      *
-     * @name getFieldType
-     * @access public
      * @return string
      */
     static public function getFieldType($args = array()) {
@@ -32,8 +33,6 @@ class CheckBoxSQLField extends DBField {
     /**
      * generatesa a switch.
      *
-     * @name formfield
-     * @access public
      * @param string $title
      * @return Checkbox|FormField
      */

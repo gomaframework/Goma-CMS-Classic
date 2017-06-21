@@ -92,10 +92,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
 
     /**
      * info helps users to understand, what the field means, so you should add info to each field, which is not really clear with the title
-     *
-     *@name fieldInfo
-     *@access public
-     *@var array
      */
     public $fieldInfo = array();
 
@@ -233,17 +229,17 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * @param String $name Model or Table
      * @param array $data data to update
      * @param array $where where-clause
-     * @param string $limit optional limit
      * @param boolean $silent if to change last-modified-date
      * @return bool
      * @throws MySQLException
      */
-    public static function update($name, $data, $where, $limit = "", $silent = false)
+    public static function update($name, $data, $where, $silent = false)
     {
         if (PROFILE) Profiler::mark("DataObject::update");
-        //Core::Deprecate(2.0);
 
-        if (ClassInfo::exists($name) && is_subclass_of($name, "DataObject")) {
+        if(isset(ClassInfo::$class_info[$name]["table"])) {
+            $table_name = ClassInfo::$class_info[$name]["table"];
+        } elseif (ClassInfo::exists($name) && method_exists($name, "Table")) {
             $DataObject = gObject::instance($name);
             $table_name = $DataObject->Table();
         } else if (isset(ClassInfo::$database[$name])) {
@@ -254,61 +250,27 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
 
         if (!isset($data["last_modified"]) && !$silent)
         {
-            $data["last_modified"] = NOW;
+            $data["last_modified"] = time();
         }
 
-        $updates = "";
-        $i = 0;
-        foreach($data as $field => $value)
-        {
-            if (!isset(ClassInfo::$database[$table_name][$field]))
-            {
-                continue;
-            }
+        DataObjectQuery::clearCache($name);
 
-            if ($i == 0)
-            {
-                $i = 1;
-            } else
-            {
-                $updates .= ", ";
-            }
-            $updates .= "".convert::raw2sql($field)." = '".convert::raw2sql($value)."'";
-        }
-        $where = SQL::ExtractToWhere($where);
+        $manipulation = array(
+            "update" => array(
+                "command" => "update",
+                "table_name" => $table_name,
+                "fields" => $data,
+                "where" => $where
+            )
+        );
 
-        if ($limit != "") {
-            if (is_array($limit)) {
-                if (count($limit) > 1 && preg_match("/^[0-9]+$/", $limit[0]) && preg_match("/^[0-9]+$/", $limit[1]))
-                    $limit = " LIMIT ".$limit[0].", ".$limit[1]."";
-                else if (count($limit) == 1 && preg_match("/^[0-9]+$/", $limit[0]))
-                    $limit = " LIMIT ".$limit[0];
-
-            } else if (preg_match("/^[0-9]+$/", $limit)) {
-                $limit = " LIMIT ".$limit;
-            } else if (preg_match('/^\s*([0-9]+)\s*,\s*([0-9]+)\s*$/', $limit)) {
-                $limit = " LIMIT ".$limit;
-            } else {
-                $limit = "";
-            }
-        }
-
-        $alias = SelectQuery::getAlias($table_name);
-        $sql = "UPDATE
-						".DB_PREFIX . $table_name." AS ".$alias."
-					SET
-						".$updates."
-					".$where."
-					".$limit."";
-
-        if (SQL::query($sql))
-        {
+        if(SQL::manipulate($manipulation)) {
             if (PROFILE) Profiler::unmark("DataObject::update");
             return true;
-        } else
-        {
-            throw new MySQLException();
         }
+
+        if (PROFILE) Profiler::unmark("DataObject::update");
+        throw new MySQLException(print_r($manipulation));
     }
 
     /**
@@ -323,10 +285,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     public static function get_one($dataClass, $filter = array(), $sort = array(), $joins = array())
     {
         if (PROFILE) Profiler::mark("DataObject::get_one");
-
-        if(is_int($filter)) {
-            $filter = array("id" => $filter);
-        }
 
         $output = self::get($dataClass, $filter, $sort, array(1), $joins)->first();
 
@@ -607,7 +565,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      */
     public function onBeforeRemove(&$manipulation)
     {
-
+        $this->callExtending("onBeforeRemove", $manipulation);
     }
 
     /**
@@ -615,14 +573,8 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      */
     public function onAfterRemove()
     {
-
+        $this->callExtending("onAfterRemove");
     }
-
-    public function onBeforeRead(&$data)
-    {
-        $this->callExtending("onBeforeRead", $data);
-    }
-
 
     /**
      * will be called before write
@@ -688,28 +640,27 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * is called before unpublish
      */
     public function onBeforeUnPublish() {
-
+        $this->callExtending("onBeforUnPublish");
     }
 
     /**
      * is called before publish
+     * @param ModelWriter $modelWriter
      */
-    public function onBeforePublish() {
-
+    public function onBeforePublish($modelWriter) {
+        $this->callExtending("onBeforPublish", $modelWriter);
     }
 
     /**
      * writes changed data without throwing exceptions.
      *
-     *@name write
-     *@access public
-     *@param bool - to force insert (default: false)
-     *@param bool - to force write (default: false)
-     *@param int - priority of the snapshop: autosave 0, save 1, publish 2
-     *@param bool - if to force publishing also when not permitted (default: false)
-     *@param bool - whether to track in history (default: true)
-     *@param bool - whether to write silently, so without chaning anything automatically e.g. last_modified (default: false)
-     *@return bool
+     * @param bool - to force insert (default: false)
+     * @param bool - to force write (default: false)
+     * @param int - priority of the snapshop: autosave 0, save 1, publish 2
+     * @param bool - if to force publishing also when not permitted (default: false)
+     * @param bool - whether to track in history (default: true)
+     * @param bool - whether to write silently, so without chaning anything automatically e.g. last_modified (default: false)
+     * @return bool
      * @deprecated
      */
     public function write($forceInsert = false, $forceWrite = false, $snap_priority = 2, $forcePublish = false, $history = true, $silent = false)
@@ -797,33 +748,19 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     }
 
     /**
-     * returns maximum target-sort.
-     *
-     * @param ModelManyManyRelationShipInfo $relationShip
-     * @param array $existing
-     * @return int
-     */
-    protected function maxTargetSort($relationShip, $existing) {
-        $maxSort = 0;
-        foreach($existing as $record) {
-            if($record[$relationShip->getTargetSortField()] > $maxSort) {
-                $maxSort = $record[$relationShip->getTargetSortField()];
-            }
-        }
-
-        return $maxSort;
-    }
-
-    /**
      * unpublishes the record
      *
      * @param bool $force
      * @param bool $history
      * @return bool
+     * @throws InvalidStateException
      * @throws PermissionException
-     * @access public
      */
     public function unpublish($force = false, $history = true) {
+        if(!self::Versioned($this->classname)) {
+            throw new InvalidStateException("Class of type " . $this->classname . " is not versioned and can't be unpublished though.");
+        }
+
         if ((!$this->can("Publish")) && !$force)
             throw new PermissionException("Record {$this->id} of type {$this->classname} can't " .
                 "be unpublished cause of missing publish permissions.",
@@ -844,8 +781,10 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         $this->onBeforeUnPublish();
         $this->callExtending("OnBeforeUnPublish");
 
-        $this->onBeforeManipulate($manipulation, $b = "unpublish");
-        $this->callExtending("onBeforeManipulate", $manipulation, $b = "unpublish");
+        $b = "unpublish";
+        $this->onBeforeManipulate($manipulation, $b);
+        $b = "unpublish";
+        $this->callExtending("onBeforeManipulate", $manipulation, $b);
 
         if (SQL::manipulate($manipulation)) {
             if (StaticsManager::getStatic($this->classname, "history") && $history) {
@@ -1020,8 +959,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     /**
      * returns if original version of the record is published
      *
-     * @name isrOrgPublished
-     * @access public
      * @return bool
      */
     public function isOrgPublished() {
@@ -1035,8 +972,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     /**
      * gives back if ever published
      *
-     * @name isPublished
-     * @access public
      * @return bool
      */
     public function everPublished() {
@@ -1173,45 +1108,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         }
 
         return $form;
-    }
-
-    /**
-     * gets a list of all fields with according titles of this object
-     */
-    public function summaryFields() {
-        $f = ArrayLib::key_value(array_keys($this->DataBaseFields()));
-        $this->fieldTitles = array_merge($this->fieldTitles, $this->getFieldTitles());
-
-        unset($f["autorid"]);
-        unset($f["editorid"]);
-
-        $fields = array();
-
-        foreach($f as $field) {
-            $field = trim($field);
-
-            if (isset($this->fieldTitles[$field])) {
-                $fields[$field] = parse_lang($this->fieldInfo[$field]);
-            } else {
-                if ($field == "name") {
-                    $fields[$field] = lang("name");
-                } else if ($field == "title") {
-                    $fields[$field] = lang("title");
-                } else if ($field == "description") {
-                    $fields[$field] = lang("description");
-                } else if ($field == "content") {
-                    $fields[$field] = lang("content");
-                } else if ($field == "filename") {
-                    $fields[$field] = lang("filename");
-                } else if ($field == "email") {
-                    $fields[$field] = lang("email");
-                } else {
-                    $fields[$field] = $field;
-                }
-            }
-        }
-
-        return $fields;
     }
 
     /**
@@ -1573,6 +1469,9 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         $this->callExtending("argumentQuery", $query, $version, $filter, $sort, $limit, $join, $forceClasses);
         $this->callExtending("argumentSearchSQL", $query, $searchQuery, $version, $filter, $sort, $limit, $join, $forceClasses);
 
+        $this->callExtending("postArgumentQuery", $query, $version, $filter, $sort, $limit, $joins, $forceClasses);
+        $this->callExtending("postArgumentSearchQuery", $query, $searchQuery, $version, $filter, $sort, $limit, $joins, $forceClasses);
+
         $this->argumentQuery($query);
 
         if (PROFILE) Profiler::unmark("DataObject::buildSearchQuery");
@@ -1680,6 +1579,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         $query = $this->buildQuery($version, $filter, $sort, $limit, $joins, $forceClasses);
 
         $this->callExtending("argumentQuery", $query, $version, $filter, $sort, $limit, $joins, $forceClasses);
+        $this->callExtending("postArgumentQuery", $query, $version, $filter, $sort, $limit, $joins, $forceClasses);
 
         $this->argumentQuery($query);
         if (PROFILE) Profiler::unmark("DataObject::buildExtendedQuery");
@@ -1720,8 +1620,8 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
             }
             unset($limithash, $joinhash, $searchhash);
             if (PROFILE) Profiler::unmark("getRecords::hash");
-            if (isset(DataObjectQuery::$datacache[$this->baseClass][$hash])) {
-                return DataObjectQuery::$datacache[$this->baseClass][$hash];
+            if ($cachedData = DataObjectQuery::getCached($this, $hash)) {
+                return $cachedData;
             }
         }
 
@@ -1748,7 +1648,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         $this->callExtending("argumentQueryResult", $arr, $query, $version, $filter, $sort, $limit, $joins, $search);
 
         /** @var String $hash */
-        DataObjectQuery::$datacache[$this->baseClass][$hash] = $arr;
+        DataObjectQuery::addCached($this, $hash, $arr);
 
         $query->free();
         unset($hash, $basehash, $limits, $sort, $filter, $query); // free memory
@@ -2122,21 +2022,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
             ), (array) $this->defaults) != $this->data);
     }
 
-    /**
-     * clears the data-cache
-     *
-     *@name clearDataCache
-     *@access public
-     */
-    public static function clearDataCache($class = null) {
-        if (isset($class)) {
-            $class = strtolower($class);
-            DataObjectQuery::$datacache[$class] = array();
-        } else {
-            DataObjectQuery::$datacache = array();
-        }
-    }
-
     //!API for Config
 
     /**
@@ -2223,18 +2108,11 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     /**
      * returns if a DataObject is versioned
      *
+     * @param string $class
      * @return bool
      */
     public static function Versioned($class) {
-        if (StaticsManager::hasStatic($class, "versions") && StaticsManager::getStatic($class, "versions") == true)
-            return true;
-
-        $inst = gObject::instance($class);
-        if (property_exists($inst, "versioned"))
-            if($inst->versioned === true)
-                return true;
-
-        return false;
+        return !!StaticsManager::getStatic($class, "versions", true);
     }
 
     /**
@@ -2367,7 +2245,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
             );
         }
 
-        $engine = StaticsManager::getStatic($this->classname, "engine");
+        $engine = StaticsManager::getStatic($this->classname, "engine", true);
         if($engine) {
 
             $engines = array_map("strtolower", SQL::listStorageEngines());
@@ -2395,26 +2273,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
                 );
                 ClassInfo::$database[$tableName] = $fields;
             }
-        }
-
-        // sort of table
-        $sort = StaticsManager::getStatic($this->classname, "default_sort");
-
-        if (is_array($sort)) {
-            if (isset($sort["field"], $sort["type"])) {
-                $field = $sort["field"];
-                $type = $sort["type"];
-            } else {
-                $sort = array_values($sort);
-                $field = $sort[0];
-                $type = isset($sort[1]) ? $sort[1] : "ASC";
-            }
-        } else if (preg_match('/^([a-zA-Z0-9_\-]+)\s(DESC|ASC)$/Usi', $sort, $matches)) {
-            $field = $sort[1];
-            $type = $sort[2];
-        } else {
-            $field = $sort;
-            $type = "ASC";
         }
 
         $this->callExtending("buildDB", $prefix, $log);

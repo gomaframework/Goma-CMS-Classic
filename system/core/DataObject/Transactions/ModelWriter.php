@@ -225,6 +225,18 @@ class ModelWriter extends gObject {
     }
 
     /**
+     * @param string $field
+     * @return bool
+     */
+    public function isChangedField($field)  {
+        if(!$this->getObjectToUpdate()) {
+            return true;
+        }
+
+        return !ViewAccessableData::isEqualProp($this->getObjectToUpdate(), $this->getModel(), $field);
+    }
+
+    /**
      * updates fields like author or last-modified when required.
      */
     protected function updateStatusFields() {

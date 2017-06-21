@@ -19,32 +19,58 @@ class FormRequestExtensionTests extends GomaUnitTest
      */
     public $name = "FormRequestExtension";
 
-    public function testRequests() {
-        $request = new Request("get", "forms/form/blub/blah/test");
-        $this->assertEqual($this->unitTestRequests(
-            array('$Action/$Id', '$Action', '$Id', '$blah', '$hulapalu/$lalala/$lustigeNamen'), $request), array("blub", "blah"));
-
+    /**
+     * tests forms with name form.
+     */
+    public function testFormWithNameForm() {
         $request = new Request("get", "forms/form/form/blah/test");
         $this->assertEqual($this->unitTestRequests(
-            array('$Action/$Id', '$Action', '$Id', '$blah', '$hulapalu/$lalala/$lustigeNamen'), $request), array("form", "blah"));
-
-        $request = new Request("get", "forms/form/blah/test");
-        $this->assertEqual($this->unitTestRequests(
-            array('$Action/$Id', '$Action', '$Id', '$blah', '$hulapalu/$lalala/$lustigeNamen'), $request), array("blah", "test"));
-
-        $request = new Request("get", "form/form/blah/test");
-        $this->assertEqual($this->unitTestRequests(
-            array('$Action/$Id', '$Action', '$Id', '$blah', '$hulapalu/$lalala/$lustigeNamen'), $request), "");
+            array('$Action/$Id', '$Action', '$Id', '$blah', '$hulapalu/$lalala/$lustigeNamen', '$blah//$blub/$blib'), $request), array("form", "blah"));
     }
 
     /**
-     * @param string $match
+     * tests after forms/form three more parts
+     */
+    public function testFormsFormWithThreeMoreParts() {
+        $request = new Request("get", "forms/form/blah/test/test");
+        $this->assertEqual($this->unitTestRequests(
+            array('$Action/$Id', '$Action', '$Id', '$blah', '$hulapalu/$lalala/$lustigeNamen', '$blah//$blub/$blib'), $request), array("blah", "test"));
+    }
+
+    /**
+     * tests after forms/form two more parts
+     */
+    public function testFormsFormWithTwoMoreParts() {
+        $request = new Request("get", "forms/form/blah/test");
+        $this->assertEqual($this->unitTestRequests(
+            array('$Action/$Id', '$Action', '$Id', '$blah', '$hulapalu/$lalala/$lustigeNamen', '$blah//$blub/$blib'), $request), array("blah", "test"));
+    }
+
+    /**
+     * tests if with any url-handler condition a URL with form/form does not work.
+     */
+    public function testRequestFormFormNotWorking() {
+        $request = new Request("get", "form/form/blah/test");
+        $this->assertEqual($this->unitTestRequests(
+            array('$Action/$Id', '$Action', '$Id', '$blah', '$hulapalu/$lalala/$lustigeNamen', '$blah//$blub/$blib'), $request), "");
+    }
+
+    /**
+     * 1. foreach urlScheme in matchUrls
+     * 1.1 assert that it matches request
+     * 1.2 Creates FormRequestExtension with MockControlller
+     * 1.3 Executres onBeforeHandleAction on FormRequestExtension
+     * 1.4 Adds Result to array, which is either "" or array(form, field)
+     * 2. Asserts that all array results are the same
+     * 3. returns first array result
+     *
+     * @param string $matchUrlSchemes
      * @param Request $request
      * @return mixed
      */
-    public function unitTestRequests($match, $request) {
+    public function unitTestRequests($matchUrlSchemes, $request) {
         $contents = array();
-        foreach((array) $match as $currentMatch) {
+        foreach((array) $matchUrlSchemes as $currentMatch) {
             $currentRequest = clone $request;
 
             $this->assertTrue(!!$currentRequest->match($currentMatch, true));

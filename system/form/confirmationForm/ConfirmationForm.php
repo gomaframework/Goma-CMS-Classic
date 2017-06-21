@@ -30,7 +30,7 @@ class ConfirmationForm extends Form {
      *
      * @var string
      */
-    protected $random;
+    protected $ajaxSubmitID;
 
     /**
      * @param string $methodName
@@ -44,8 +44,13 @@ class ConfirmationForm extends Form {
             if(isset($this->callbacks[$name]) && isset($args[0], $args[1], $args[2])) {
                 $response = call_user_func_array($this->callbacks[$name], $args);
 
-                if(is_a($response, "FormAjaxResponse")) {
-                    $response->exec("window['confirm_".$this->random."'] .hide();$('#".$this->random."').remove();");
+                if(is_a($response, AjaxResponse::class)) {
+                    $response->exec("var id = $('#".$this->ajaxSubmitID."').parents('.dropdownDialog').attr('id');if(id) {
+                        var dialog = dropdownDialog.get(id);
+                        if(dialog) {
+                            dialog.hide();
+                        }
+                    }");
                 }
 
                 return $response;
@@ -62,21 +67,21 @@ class ConfirmationForm extends Form {
      */
     public function renderForm($errors = array(), $notSavedYet = false)
     {
-        $this->random = "dialog_" . randomString(10);
-        if($this->getRequest()->canReplyJavaScript()) {
+        if($this->getRequest()->canReplyJavaScript() || isset($this->request->get_params["ajaxfy"])) {
             foreach($this->actions as $actionData) {
                 /** @var FormAction $action */
                 $action = $actionData["field"];
                 if(!is_a($action, "AjaxSubmitButton") && is_a($action, "FormAction")) {
                     $this->removeAction($action->name);
                     $this->callbacks[strtolower($action->name)] = $action->getSubmit() == Form::DEFAULT_SUBMSSION ? $this->getSubmission() : $action->getSubmit();
-                    $this->addAction(new AjaxSubmitButton(
+                    $this->addAction($ajax = new AjaxSubmitButton(
                         $action->name,
                         $action->getTitle(),
                         array($this, "submit_" . $action->name),
                         array($this, "submit_" . $action->name),
                         $action->getClasses()
                     ));
+                    $this->ajaxSubmitID = $ajax->id();
                 }
             }
         }
@@ -86,9 +91,9 @@ class ConfirmationForm extends Form {
         if($this->getRequest()->canReplyJavaScript()) {
             $ajaxResponse = new AjaxResponse();
 
-            $ajaxResponse->append("body", '<div style="display: none;" id="'.$this->random.'">'.$content.'</div>');
+            $ajaxResponse->append("body", '<div style="display: none;" id="'.$this->ajaxSubmitID.'">'.$content.'</div>');
             $ajaxResponse->exec("gloader.loadAsync('dropdownDialog').done(function(){
-                window['confirm_".$this->random."'] = new dropdownDialog('#".$this->random."', null, 'fixed', {
+                window['confirm_".$this->ajaxSubmitID."'] = new dropdownDialog('#".$this->ajaxSubmitID."', null, 'fixed', {
                     copyElement: false
                 });
             });");

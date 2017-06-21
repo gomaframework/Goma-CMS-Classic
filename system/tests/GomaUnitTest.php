@@ -1,5 +1,9 @@
 <?php defined("IN_GOMA") OR die();
 
+if(class_exists( PHPUnit_Framework_TestCase::class)) {
+    class_alias(PHPUnit_Framework_TestCase::class, \PHPUnit\Framework\TestCase::class);
+}
+
 /**
  * Base-Class for all Goma Unit-Tests.
  *
@@ -18,7 +22,7 @@
  * @method void assertNotInstanceOf($class, $object, $message = null)
  * @method void assertNotNull($object, $message = null)
  */
-abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAble {
+abstract class GomaUnitTest extends \PHPUnit\Framework\TestCase implements TestAble {
 	/**
 	 * information about area.
 	*/
@@ -102,3 +106,4 @@ abstract class GomaUnitTest extends PHPUnit_Framework_TestCase implements TestAb
 		}
 	}
 }
+

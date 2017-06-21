@@ -61,13 +61,14 @@ class DateField extends FormField
 	 */
 	public function validate($value)
 	{
-		if (($timestamp = strtotime($value)) === false) {
-			throw new FormInvalidDataException($this->name, lang("no_valid_date", "No valid date."));
-		} else {
-			if ($this->between && is_array($this->between)) {
-				$this->validateTimestamp($timestamp);
-			}
-		}
+        try {
+            $datetime = new DateTimeSQLField("parse", parent::result(), array($this->format));
+            if ($this->between && is_array($this->between)) {
+                $this->validateTimestamp($datetime->getTimestamp());
+            }
+        } catch(InvalidArgumentException $e) {
+            throw new FormInvalidDataException($this->name, lang("no_valid_date", "No valid date.") . " " . $this->getTitle(), null, $e);
+        }
 
 		return true;
 	}
@@ -297,5 +298,15 @@ class DateField extends FormField
 	{
 		$this->showClear = $showClear;
 		return $this;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function result()
+	{
+		$this->validate(parent::result());
+		$datetime = new DateTimeSQLField("parse", parent::result(), array($this->format));
+		return $datetime->getTimestamp() === null ? null : date($this->format, $datetime->getTimestamp());
 	}
 }

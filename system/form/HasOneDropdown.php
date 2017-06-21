@@ -158,6 +158,6 @@ class HasOneDropdown extends SingleSelectDropDown
 	 */
 	public function result()
 	{
-		return $this->getModel();
+		return !$this->getModel() ? 0 : $this->getModel();
 	}
 }

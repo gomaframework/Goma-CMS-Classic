@@ -347,8 +347,8 @@ AjaxUpload.prototype = {
     /**
      * called when failed.
      */
-    _fail: function(status, response, fileIndex, upload) {
-        this.fail(status, response, fileIndex, upload);
+    _fail: function(status, response, fileIndex, upload, xhr) {
+        this.fail(status, response, fileIndex, upload, xhr);
     },
 
     /**
@@ -435,7 +435,7 @@ AjaxUpload.prototype = {
             },
             fail: function(status, data, xhr, uploader) {
                 _this._complete(xhr, uploader.fileIndex, uploader);
-                _this._fail(xhr.status, xhr.responseText, uploader.fileIndex, uploader);
+                _this._fail(xhr.status, xhr.responseText, uploader.fileIndex, uploader, xhr);
             }
         });
     },

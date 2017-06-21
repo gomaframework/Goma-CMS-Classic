@@ -26,7 +26,6 @@
 class User extends DataObject implements HistoryData, PermProvider, Notifier
 {
 	const USERS_PERMISSION = "USERS_MANAGE";
-	const ID = "User";
 
 	/**
 	 * the name of this dataobject

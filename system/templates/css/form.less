@@ -26,21 +26,21 @@ fieldset {
   padding: 0.3em;
 
   .input {
-    width: ~"calc(100% - 20em)";
+    width: ~"calc(100% - 18em)";
   }
   > label, .checkbox-wrapper > label {
     font-weight: bold;
-    width: 18em;
+    width: 16em;
   }
   > .err {
-    padding-left: 18.5em;
+    padding-left: 16.5em;
   }
   .info_field {
     padding: 0.4em 0.2em;
     font-size: 0.8em;
     color: #666;
-    margin-left: 23em;
-    width: ~"calc(100% - 25em)";
+    margin-left: 21em;
+    width: ~"calc(100% - 23em)";
   }
 
   .select-wrapper {
@@ -55,7 +55,6 @@ fieldset {
     display: inline-block;
 
     > select {
-      min-width: 16em;
       width: 100%;
 
       padding: 0.5em;
@@ -66,10 +65,7 @@ fieldset {
       border: 0;
     }
   }
-  &.textarea {
-    > label {
-      float: left;
-    }
+  &.textarea, &.htmleditor, &.bbcodeeditor {
     textarea {
       max-width: 100%;
       min-height: 12em;
@@ -131,6 +127,9 @@ fieldset, fieldset.hidden {
       padding: 0.25em 0;
       width: 100%;
     }
+    > .info_field {
+      margin-left: 0;
+    }
     > label, .checkbox-wrapper > label {
       display: block;
       font-weight: normal;
@@ -151,7 +150,6 @@ fieldset, fieldset.hidden {
 
 .form_field .inputHolder {
   margin-left: 18.5em;
-  margin-top: -1.5em;
 }
 
 .cke_browser_webkit {
@@ -195,6 +193,9 @@ span.formaction {
     }
     a {
       padding-left: .5em;
+    }
+    input[type=text] {
+      width: 10em;
     }
   }
   > label {
@@ -357,9 +358,15 @@ div.form_field.checkbox div.checkbox-wrapper {
       }
     }
   }
+  &.native-datepicker {
+    .clear-date {
+      right: auto;
+      left: .25em;
+    }
+  }
 }
 
-@media screen and (max-width: 32em) {
+@media screen and (max-width: 34em) {
   .form_field > .input {
     width: 100%;
   }
@@ -367,12 +374,21 @@ div.form_field.checkbox div.checkbox-wrapper {
     margin-left: 0;
     width: auto;
   }
+  .form_field .inputHolder {
+    margin-left: 0;
+    margin-top: 0;
+  }
   fieldset, fieldset.hidden {
     > legend {
       float: none;
     }
     > .form_field {
       margin-left: 0;
+    }
+  }
+  .date-field {
+    .input {
+      width: ~"calc(100% - .5em)";
     }
   }
 }

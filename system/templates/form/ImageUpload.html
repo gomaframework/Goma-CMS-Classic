@@ -1,5 +1,6 @@
 <label for="$id">$title</label>
 <div class="fileupload-advanced">
+    <div class="progress_info"></div>
     <div class="top-actions fileupload-actions">
         <button $disabledString class="button delete-file-button red"><i class="fa fa-trash delete-icon" type="button"></i>
         </button>
@@ -11,20 +12,20 @@
     <input name="{$postname}_file" id="{$id}_hidden"
            type="hidden" value="$upload.realpath" class="FileUploadValue"/>
     <input name="{$postname}_thumbleft" id="{$id}_thumbleft"
-           type="hidden" value="$upload.thumbLeft" class="ThumbLeftValue"/>
+           type="hidden" value="-1" class="ThumbLeftValue"/>
     <input name="{$postname}_thumbtop" id="{$id}_thumbtop"
-           type="hidden" value="$upload.thumbTop" class="ThumbTopValue"/>
+           type="hidden" value="-1" class="ThumbTopValue"/>
     <input name="{$postname}_thumbwidth" id="{$id}_thumbwidth"
-           type="hidden" value="$upload.thumbWidth" class="ThumbWidthValue"/>
+           type="hidden" value="-1" class="ThumbWidthValue"/>
     <input name="{$postname}_thumbheight" id="{$id}_thumbheight"
-           type="hidden" value="$upload.thumbHeight" class="ThumbHeightValue"/>
-    <div class="progress_info"></div>
+           type="hidden" value="-1" class="ThumbHeightValue"/>
     <div class="fileupload-tabs tabs">
         <ul>
             <li><a href="javascript:;" id="{$id}_tabpreview_tab" class="active preview-button"><% lang("preview") %></a></li>
             <% IF NOT $disabled %>
             <li><a href="javascript:;" id="{$id}_tabcrop_tab" class="show-on-js crop-button"><% lang("crop_image") %></a></li>
             <% END %>
+            <li class="clear"></li>
         </ul>
         <% IF $upload %>
         <div class="with-upload tab-wrapper image-area">
@@ -33,6 +34,10 @@
                 <% END %>
                 <div class="preview drop-area active" id="{$id}_tabpreview">
                     <a target="_blank" href="$upload.path" class="upload-link image-preview">
+                        <span class="crop-loading">
+                            <img src="images/loading.gif" />
+                            <p><% lang("loading") %></p>
+                        </span>
                         <img class="image-preview-img" src="$upload.imageHeight400" data-retina="$upload.imageHeight400" alt="$upload.name" />
                         <div class="filename-wrapper">
                             <span class="filename">$upload.name</span>

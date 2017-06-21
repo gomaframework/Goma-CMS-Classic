@@ -14,7 +14,7 @@ defined("IN_GOMA") OR die();
  *
  * @method DataObject getOwner()
  */
-class ManyManyGetter extends AbstractGetterExtension implements ArgumentsQuery {
+class ManyManyGetter extends AbstractGetterExtension implements PostArgumentsQuery {
     /**
      * extra-methods.
      */
@@ -60,7 +60,7 @@ class ManyManyGetter extends AbstractGetterExtension implements ArgumentsQuery {
      * @param array|string|int $joins
      * @param bool $forceClasses if to only get objects of this type of every object from the table
      */
-    public function argumentQuery($query, $version, $filter, $sort, $limit, $joins, $forceClasses)
+    public function postArgumentQuery($query, $version, $filter, $sort, $limit, $joins, $forceClasses)
     {
         $manyManyRelationships = $this->getOwner()->ManyManyRelationships();
 
@@ -113,7 +113,7 @@ class ManyManyGetter extends AbstractGetterExtension implements ArgumentsQuery {
             array(
                 DataObject::JOIN_TYPE => "INNER",
                 DataObject::JOIN_TABLE => $relationShip->getTableName(),
-                DataObject::JOIN_STATEMENT => $relationShip->getTableName() . "." . $relationShip->getTargetField() . " = " . $relationShip->getTargetTableName() . ".id",
+                DataObject::JOIN_STATEMENT => $relationShip->getTableName() . "." . $relationShip->getTargetField() . " = " . $relationShip->getTargetBaseTableName() . ".id",
                 DataObject::JOIN_INCLUDEDATA => false
             )
         ), $forceClasses);

@@ -331,7 +331,7 @@ $lang = array(
 	// right-mangement
 	"following_groups"								=> "Following groups",
 	"editors"										=> "Permission to edit",
-	"publish"										=> "Permission to publish",
+	"publish"										=> "Publish",
 	"viewer_types"									=> "Permission to view",
 	"everybody"										=> "Everyone",
 	"login_groups"									=> "Everyone, who can login",
@@ -694,5 +694,7 @@ $lang = array(
 
 	"leave_page_upload_confirm"	=> "A upload is running, should it be cancelled?",
 
-	"apply"	=> "apply"
+	"apply"	=> "apply",
+
+	"uploads_manage"	=> "Manage attachements"
 );

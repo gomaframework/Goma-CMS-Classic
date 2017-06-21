@@ -69,10 +69,15 @@ class ExceptionManager {
 	*/
 	const EMAIL_INVALID = -20;
 
-	/*
+	/**
 	 * login invalid.
 	*/
 	const LOGIN_INVALID = -16;
+
+	/**
+	 * invalid state transition.
+	 */
+	const INVALID_STATE = -19;
 
 	/**
 	 * user locked.

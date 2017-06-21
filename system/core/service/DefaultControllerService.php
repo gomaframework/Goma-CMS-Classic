@@ -74,7 +74,7 @@ class DefaultControllerService extends gObject {
     public function setRepository($repository)
     {
         if(isset($repository) && !is_a($repository, \IModelRepository::class)) {
-            throw new InvalidArgumentException();
+            throw new InvalidArgumentException("Repository must be an instance of IModelRepository.");
         }
 
         $this->repository = $repository;
@@ -233,6 +233,8 @@ class DefaultControllerService extends gObject {
 
     /**
      * changes data on model by key-value.
+     * This does live-changes, the object will *not* be copied.
+     *
      * @param ViewAccessableData $model
      * @param array|gObject $data Data or Object of Data
      * @return ViewAccessableData
@@ -260,7 +262,7 @@ class DefaultControllerService extends gObject {
      * @param bool $overrideCreated
      * @return DataObject
      */
-    public function save($model, $data, $force = false, $overrideCreated = false) {
+    public function save($model, $data = array(), $force = false, $overrideCreated = false) {
         return $this->saveModel($model, $data, 2, false, $force, $overrideCreated);
     }
 
@@ -271,7 +273,7 @@ class DefaultControllerService extends gObject {
      * @param bool $overrideCreated
      * @return DataObject
      */
-    public function add($model, $data, $force = false, $overrideCreated = false) {
+    public function add($model, $data = array(), $force = false, $overrideCreated = false) {
         return $this->saveModel($model, $data, 2, true, $force, $overrideCreated);
     }
 
@@ -282,7 +284,7 @@ class DefaultControllerService extends gObject {
      * @param bool $overrideCreated
      * @return DataObject
      */
-    public function addDraft($model, $data, $force = false, $overrideCreated = false) {
+    public function addDraft($model, $data = array(), $force = false, $overrideCreated = false) {
         return $this->saveModel($model, $data, 1, true, $force, $overrideCreated);
     }
 
@@ -293,8 +295,40 @@ class DefaultControllerService extends gObject {
      * @param bool $overrideCreated
      * @return DataObject
      */
-    public function saveDraft($model, $data, $force = false, $overrideCreated = false) {
+    public function saveDraft($model, $data = array(), $force = false, $overrideCreated = false) {
         return $this->saveModel($model, $data, 1, false, $force, $overrideCreated);
+    }
+
+    /**
+     * @param null|string|int $id
+     * @return null
+     */
+    public function revertChanges($id = null) {
+        /** @var \Article $model */
+        if($model = $this->getSingleModel($id)) {
+            // get published version
+            $publishedVersion = \DataObject::get_by_id($model->classname, $model->id);
+            $this->save($publishedVersion, array());
+
+            return $publishedVersion;
+        }
+
+        return null;
+    }
+
+    /**
+     * unpublishes a record.
+     * @param null|string|int $id
+     * @return bool|null
+     * @throws \PermissionException
+     */
+    public function unpublish($id = null) {
+        if($model = $this->getSingleModel($id)) {
+            $model->unpublish();
+            return true;
+        }
+
+        return null;
     }
 
     /**
@@ -310,7 +344,7 @@ class DefaultControllerService extends gObject {
         if (PROFILE) \Profiler::mark("Controller::save");
 
         if(!isset($model)) {
-            throw new InvalidArgumentException();
+            throw new InvalidArgumentException("Model must be set for saving. If you're using a Form, add a model to it.");
         }
 
         if(isset($data["id"], $data["versionid"])) {

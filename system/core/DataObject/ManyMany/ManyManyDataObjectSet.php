@@ -549,6 +549,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             if(!isset($manipulation[self::MANIPULATION_INSERT_NEW])) {
                 $manipulation[self::MANIPULATION_INSERT_NEW] = array(
                     "command"       => "insert",
+                    "ignore"        => true,
                     "table_name"	=> $this->relationShip->getTableName(),
                     "fields"        => array()
                 );
@@ -622,11 +623,11 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
         /** @var DataObject $changedRecord */
         if(($changedRecord = $this->updateFieldsStage->find("versionid", $id)) && $changedRecord->hasChanged()) {
             foreach($this->relationShip->getExtraFields() as $field => $type) {
-                $newRecord[$field] = isset($changedRecord->{$field}) ? $changedRecord->{$field} : "";
+                $newRecord[$field] = isset($changedRecord->{$field}) ? $changedRecord->{$field} : null;
             }
         } else {
             foreach($this->relationShip->getExtraFields() as $field => $type) {
-                $newRecord[$field] = isset($record[$field]) ? $record[$field] : "";
+                $newRecord[$field] = isset($record[$field]) ? $record[$field] : null;
             }
         }
 

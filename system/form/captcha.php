@@ -63,7 +63,7 @@ class Captcha extends FormField {
 		if(!isset($_SESSION['goma_captcha_spam'], $this->getRequest()->post_params[$this->name]) || $_SESSION['goma_captcha_spam'] != $this->getRequest()->post_params[$this->name]) {
 			throw new FormInvalidDataException($this->name, lang("captcha_wrong", "The Code was wrong"));
 		}
-		return null;
+		return true;
 	}
 
 	/**

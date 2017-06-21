@@ -281,7 +281,7 @@ class TreeRenderer extends gObject {
 					} else if(isset($menuAction["href"])) {
 						$point->onclick = 'location.href = '.var_export($menuAction["href"], true).';';
 					} else if(isset($menuAction["ajaxhref"])) {
-						$point->onclick = 'goma.ui.ajax(undefined, {pushToHistory: true, url: '.var_export($menuAction["ajaxhref"], true).'});';
+						$point->onclick = 'goma.ui.ajax(undefined, {pushToHistory: true, data: {ajaxfy: true}, url: '.var_export($menuAction["ajaxhref"], true).'});';
 					}
 					
 					if(isset($menuAction["disabled"])) {

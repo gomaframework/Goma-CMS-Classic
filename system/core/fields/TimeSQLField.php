@@ -9,6 +9,7 @@ class TimeSQLField extends DBField {
 
     /**
      * gets the field-type
+     * @param array $args
      * @return string
      */
     static public function getFieldType($args = array()) {
@@ -17,11 +18,19 @@ class TimeSQLField extends DBField {
 
     /**
      * converts every type of time to a date fitting in this object.
+     * @param string $name
+     * @param mixed $value
+     * @param array $args
      */
     public function __construct($name, $value, $args = array())
     {
         if($value !== null) {
-            $value = date("H:i:s", strtotime(str_replace(".", ":", $value)));
+            if(preg_match('/^\-?[0-9]+$/', trim($value))) {
+                $value = (int) trim($value);
+            } else {
+                $value = strtotime(str_replace(".", ":", $value));
+            }
+            $value = date("H:i:s", $value);
         }
 
         parent::__construct($name, $value, $args);

@@ -65,21 +65,21 @@ class HistoryController extends Controller {
 		$dbfilter = is_array($filter["dbobject"]) ? $filter["dbobject"] : array();
 		return $data->customise(array("id" => $id, "namespace" => $namespace, "filter" => json_encode($dbfilter)))->renderWith("history/history.html");
 	}
-	
+
 	/**
 	 * name of this controller
 	 *
-	 *@name PageTitle
-	*/
+	 * @return null|string
+	 */
 	public function PageTitle() {
 		return lang("history");
 	}
-	
+
 	/**
 	 * index-method
 	 *
-	 *@name index
-	*/
+	 * @return bool|string
+	 */
 	public function index() {
 		$filter = array();
 		$class = $this->getParam("c");
@@ -108,17 +108,11 @@ class HistoryController extends Controller {
 			"title" 	=> lang("h_all_events"),
 			"content"	=> HistoryController::renderHistory(array(), $this->namespace)
 		));
-		return $tabs->renderWith("tabs/tabs.html");
+		return GomaResponseBody::create($tabs->renderWith("tabs/tabs.html"))->setIsFullPage($this->getRequest()->is_ajax());
 	}
-	
-	/**
-	 * Permissions
-	*/
-	
+
 	/**
 	 * you can restore a version if you are author or publisher
-	 *
-	 *@name canRestoreVersion
 	*/
 	public function canRestoreVersion() {
 		if(ClassInfo::exists($this->getParam("class"))) {

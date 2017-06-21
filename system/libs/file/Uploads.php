@@ -145,6 +145,7 @@ class Uploads extends DataObject {
         if(file_exists($file->realfile) ||
             ($rename && rename($realfile, $file->realfile)) ||
             (!$rename && copy($realfile, $file->realfile))) {
+            FileSystem::chmod($file->realfile, FileSystem::getMode());
             $file->writeToDB(true, true);
 
             return $file;

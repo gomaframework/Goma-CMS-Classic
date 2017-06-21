@@ -167,13 +167,15 @@ class FileSystem extends gObject {
 		}
 	}
 
-    /**
-     * alias for writeFileContents
-     *
-     * @name write
-     * @access public
-     * @return bool
-     */
+	/**
+	 * alias for writeFileContents
+	 *
+	 * @param $file
+	 * @param $content
+	 * @param null $modifier
+	 * @param null $mode
+	 * @return bool
+	 */
 	public static function write($file, $content, $modifier = null, $mode = null) {
 		return self::writeFileContents($file, $content, $modifier, $mode);
 	}

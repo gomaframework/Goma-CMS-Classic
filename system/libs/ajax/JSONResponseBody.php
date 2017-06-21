@@ -17,7 +17,7 @@ class JSONResponseBody extends GomaResponseBody
 {
     /**
      * JSONResponseBody constructor.
-     * @param null|string $body
+     * @param null|string|array $body
      */
     public function __construct($body)
     {

@@ -260,8 +260,8 @@ class ClassInfo extends gObject {
 	 * gets specific info from class.
 	 *
 	 * @param string $class
-	 * @param string info
-	 * @param string default
+	 * @param string $name
+	 * @param string $default
 	 * @return mixed
 	 */
 	public static function getSpecificInfo($class, $name, $default = null) {
@@ -691,7 +691,7 @@ class ClassInfo extends gObject {
 			}
 
 			foreach(self::$class_info as $class => $data) {
-				Core::callHook("loadedClass" . $class);
+				Core::callHook("loadedClass", $class);
 			}
 
 			if(PROFILE)

@@ -47,6 +47,15 @@ class FormRequestExtension extends Extension {
                     $request->shift(2);
                 }
 
+                // fix problems with // in URL-Schemes
+                for($i = 1; $i < count($params); $i++) {
+                    if(isset($parts[0]) && $params[$i] == $parts[0]) {
+                        array_shift($parts);
+                    } else {
+                        break;
+                    }
+                }
+
                 $formRequest = $request;
                 if (count($params) > 2) {
                     $formRequest = clone $formRequest;

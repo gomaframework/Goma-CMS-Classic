@@ -2,17 +2,15 @@
 namespace Goma\Core\Model\Usecase;
 defined("IN_GOMA") OR die();
 /**
- * Describe your class
+ * Tests boolean values in DataBase.
  *
- * @package SOREDI
+ * @package Goma\Test
  *
- * @author D
- * @copyright 2017 D
+ * @author Goma-Team
+ * @copyright 2017 Goma-Team
  *
  * @version 1.0
  */
-
-
 class SwitchTest extends \GomaUnitTest {
     /**
      *

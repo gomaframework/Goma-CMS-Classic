@@ -66,7 +66,7 @@ class DropdownTest extends GomaUnitTest {
         $this->assertEqual($dropdown->result(), 3);
 
         $dropdown->getRequest()->params["value"] = 2;
-        $dropdown->getRequest()->params["ajax"] = true;
+        $dropdown->getRequest()->params["ajaxfy"] = true;
         $dropdown->checkValue();
 
         $this->assertEqual($dropdown->getModel(), 2);

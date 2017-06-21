@@ -353,14 +353,14 @@ class Form extends AbstractFormComponentWithChildren {
 	}
 
 	/**
-	 * @param string|ViewAccessableData $model
 	 * @param string $view
+	 * @param string|ViewAccessableData $model
 	 * @param string $formName
 	 * @param string|null $inExpansion
 	 * @return GomaResponse
 	 */
-	public function renderWith($model, $view = null, $formName = "form", $inExpansion = null) {
-		return GomaFormResponse::create(null, $this)->setRenderWith($model, $view, $formName, $inExpansion);
+	public function renderWith($view, $model = null, $formName = "form", $inExpansion = null) {
+		return GomaFormResponse::create(null, $this)->setRenderWith($view, $model, $formName, $inExpansion);
 	}
 
 	/**
@@ -515,11 +515,15 @@ class Form extends AbstractFormComponentWithChildren {
 
 					$response->addErrorField($field);
 				}
-			} else if (is_a($error, "FormInvalidDataException")) {
+
+                if(!$response->getErrorFields()) {
+                    log_exception($error);
+                }
+			} else if (is_a($error, FormInvalidDataException::class)) {
 				/** @var FormInvalidDataException $error */
 				if ($error->getMessage()) {
 					$response->addError(
-						str_replace('$title', $this->getTitleForFieldOrDefault($error->getField()), lang($error->getMessage(), $error->getMessage()))
+					    $this->getFieldMessage($error, $error->getMessage(), $this->getTitleForFieldOrDefault($error->getField()))
 					);
 				}
 
@@ -527,12 +531,14 @@ class Form extends AbstractFormComponentWithChildren {
 			} else {
 				log_exception($error);
 
-				if ($error->getMessage()) {
-					$prev = $error->getPrevious() ? " " . $error->getPrevious()->getMessage() : "";
-					$response->addError(lang($error->getMessage(), $error->getMessage()) . $prev);
-				}
+				$response->addError($this->getFieldMessage($error, $error->getMessage()));
 			}
 		}
+
+        if(!$response->getErrorFields() && !$response->getErrors()) {
+            $response->addError("Unknown Errors Occurres. Please contact your developer.");
+        }
+
 		return $response;
 	}
 
@@ -560,10 +566,11 @@ class Form extends AbstractFormComponentWithChildren {
 			if(is_a($error, "FormMultiFieldInvalidDataException")) {
 				/** @var FormMultiFieldInvalidDataException $error */
 				foreach($error->getFieldsMessages() as $field => $message) {
+				    $fieldMessage = str_replace('$title', $this->getTitleForFieldOrDefault($field),
+                        lang($message, $message)
+                    );
 					$set[] = array(
-						"message" 	=> str_replace('$title', $this->getTitleForFieldOrDefault($field),
-                            lang($message, $message)
-                        ),
+						"message" 	=> $fieldMessage,
 						"field" 	=> $field,
 						"type"		=> "FormInvalidDataException"
 					);
@@ -571,16 +578,15 @@ class Form extends AbstractFormComponentWithChildren {
 			} else if(is_a($error, "FormInvalidDataException")) {
 				/** @var FormInvalidDataException $error */
 				$set[] = array(
-					"message" 	=>
-                        str_replace('$title', $this->getTitleForFieldOrDefault($error->getField()),
-                            lang($error->getMessage(), $error->getMessage())
-                        ),
+					"message" 	=> $this->getFieldMessage($error, $error->getMessage(), $this->getTitleForFieldOrDefault($error->getField())),
 					"field" 	=> $error->getField(),
 					"type"		=> "FormInvalidDataException"
 				);
 			} else {
+                log_exception($error);
+
 				$set[] = array(
-					"message" 	=> lang($error->getMessage(), $error->getMessage()),
+					"message" 	=> $this->getFieldMessage($error, $error->getMessage()),
 					"type"		=> get_class($error)
 				);
 			}
@@ -599,6 +605,22 @@ class Form extends AbstractFormComponentWithChildren {
 
 		return $set;
 	}
+
+    /**
+     * @param Exception $error
+     * @param String $message
+     * @param null|String $title
+     * @return mixed|string
+     */
+	protected function getFieldMessage($error, $message, $title = null) {
+	    $message = lang($message, $message);
+
+	    if(isset($title)) {
+	        $message = str_replace('$title', $title, $message);
+        }
+
+	    return $message ? $message : get_class($error) . ": $title <br />" . nl2br(convert::raw2text($error->getTraceAsString()));
+    }
 
 	protected function getFormFields($fieldErrors) {
 		$fields = array();
@@ -691,16 +713,21 @@ class Form extends AbstractFormComponentWithChildren {
 			$this->activateSecret();
 		}
 
-		/** @var Form $data */
-		$data = $this->session->get(self::SESSION_PREFIX . "." . strtolower($this->name));
-		$data->request = $this->request;
-		$data->submitRequest = $this->submitRequest;
-		$data->secretKey = $this->secretKey;
-		$data->state = $this->state;
-
-		$this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
-
 		try {
+			/** @var Form $data */
+			$data = $this->session->get(self::SESSION_PREFIX . "." . strtolower($this->name));
+			if($data->url != $this->url) {
+				throw new FormNotSubmittedException();
+			}
+
+			$data->request = $this->request;
+			$data->submitRequest = $this->submitRequest;
+			$data->secretKey = $this->secretKey;
+			$data->state = $this->state;
+
+			$this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
+
+
             $content = $data->handleSubmit();
 
 			/** @var Form|GomaFormResponse $content */
@@ -889,6 +916,7 @@ class Form extends AbstractFormComponentWithChildren {
 	 * @param array $post
 	 * @param array $result
 	 * @return null|string
+	 * @throws FormNotValidException
 	 */
 	protected static function findSubmission($form, $post, $result) {
 		$submission = null;
@@ -903,6 +931,10 @@ class Form extends AbstractFormComponentWithChildren {
 							$submission = $form->submission;
 						} else {
 							$submission = $submit;
+						}
+
+						if(!$submission) {
+							throw new FormNotValidException("Neither your Form nor your FormAction defines a submission. Please define one.");
 						}
 						break;
 					} else {

@@ -12,7 +12,13 @@ defined("IN_GOMA") OR die();
  *
  * @version 1.0
  */
-class ControllerRedirectBackResponse extends GomaResponse {
+class ControllerRedirectResponse extends GomaResponse {
+    /**
+     * message types.
+     */
+    const MESSAGE_TYPE_NOTICE = "notice";
+    const MESSAGE_TYPE_SUCCESS = "success";
+    const MESSAGE_TYPE_ERROR = "error";
 
     /**
      * hinted.
@@ -21,6 +27,8 @@ class ControllerRedirectBackResponse extends GomaResponse {
 
     /**
      * from url.
+     *
+     * TODO: Find out why we need this?
      */
     protected $fromUrl;
 
@@ -38,6 +46,11 @@ class ControllerRedirectBackResponse extends GomaResponse {
      * @var bool
      */
     protected $useJavascript;
+
+    /**
+     * messages.
+     */
+    protected $messages = array();
 
     /**
      * ControllerRedirectBackResponse constructor.
@@ -63,6 +76,18 @@ class ControllerRedirectBackResponse extends GomaResponse {
         try {
             AddContent::add(AddContent::get());
         } catch(Exception $e) {} catch(Throwable $e) {}
+
+        foreach($this->messages as $message) {
+            if($message[1] == self::MESSAGE_TYPE_ERROR) {
+                AddContent::addError($message[0]);
+            } else if($message[1] == self::MESSAGE_TYPE_NOTICE) {
+                AddContent::addNotice($message[0]);
+            } else if($message[1] == self::MESSAGE_TYPE_SUCCESS) {
+                AddContent::addSuccess($message[0]);
+            } else {
+                AddContent::add($message[0]);
+            }
+        }
 
         if($this->useJavascript) {
             GomaResponse::create($this->header, $this->body)->redirectByJavaScript($url)->output();
@@ -171,5 +196,22 @@ class ControllerRedirectBackResponse extends GomaResponse {
     public function setUseJavascript($useJavascript)
     {
         $this->useJavascript = $useJavascript;
+    }
+
+    /**
+     * clears all messages.
+     */
+    public function clear() {
+        $this->messages = array();
+    }
+
+    /**
+     * @param string $message HTML Message
+     * @param string $type MessageType
+     * @return $this
+     */
+    public function addMessage($message, $type = self::MESSAGE_TYPE_NOTICE) {
+        $this->messages[] = array($message, $type);
+        return $this;
     }
 }

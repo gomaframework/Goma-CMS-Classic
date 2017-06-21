@@ -9,20 +9,15 @@ class DateSQLField extends DateTimeSQLField {
 
     /**
      * converts every type of time to a date fitting in this object.
+     * @param string $name
+     * @param string $value
+     * @param array $args
      */
     public function __construct($name, $value, $args = array())
     {
-        if($value !== null) {
+        $parsedValue = $this->parseDateTime($value, $args, false);
 
-            if(preg_match("/^[0-9]+$/", trim($value))) {
-                $value = trim($value);
-            } else {
-                $time = strtotime($value);
-                $value = mktime(0,0,0, date("n", $time), date("j", $time), date("Y", $time));
-            }
-        }
-
-        parent::__construct($name, $value, $args);
+        parent::__construct($name, $parsedValue, $args);
     }
 
     /**

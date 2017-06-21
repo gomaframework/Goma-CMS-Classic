@@ -143,6 +143,11 @@ class Textarea extends FormField
             $this->input->css("width", $this->width);
         }
 
+        if($this->height) {
+            $this->input->css("height", $this->width);
+            $this->input->css("min-height", "auto");
+        }
+
         if ($this->autoResize) {
             $info->addJSFile("system/form/Textarea.js");
         }

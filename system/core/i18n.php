@@ -1,11 +1,4 @@
 <?php
-/**
- * @package		Goma\System\Core
- *
- * @author		Goma-Team
- * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
- */
-
 defined("IN_GOMA") OR die();
 
 StaticsManager::addSaveVar("i18n", "languagefiles");
@@ -14,6 +7,9 @@ StaticsManager::addSaveVar("i18n", "selectByHttp");
 
 /**
  * Class for localization.
+ *
+ * @author		Goma-Team
+ * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  *
  * @package		Goma\System\Core
  * @version		1.4.5
@@ -140,11 +136,55 @@ class i18n extends gObject {
 			}
 
 			$cacher->write($lang, 600);
+
+            if($language == DEFAULT_LANG) {
+                self::createLangClass();
+            } else if(!file_exists(APPLICATION . "/application/l.php")) {
+                i18n::Init(DEFAULT_LANG);
+                i18n::Init($language);
+            }
 		}
 
 		if(PROFILE)
 			Profiler::unmark("i18n::Init");
 	}
+
+    /**
+     *
+     */
+    public static function createLangClass() {
+        $class = '<?php class MMM___LLL L {' . "\n";
+
+        foreach(array_keys($GLOBALS["lang"]) as $key) {
+            $const = strtoupper(preg_replace('/[^a-zA-Z0-9_]/', '_', $key));
+            if(in_array(strtolower($const), array("new", "class", "interface", "method", "function", "var", "const"))) {
+                $const = "_" . $const;
+            }
+            $class .= " const " . $const . " = ".var_export($key, true).";\n";
+        }
+
+        $class .= "\n}";
+
+        $class = str_replace("MMM___LLL ", "MMM___LLL", $class);
+        try {
+            eval(substr($class, 5));
+        } catch(Error $e) {
+            var_dump($class);
+            log_exception($e);
+            if(isPHPUnit()) {
+                throw $e;
+            }
+            return;
+        }
+
+        $class = str_replace("MMM___LLL", "", $class);
+
+        ClassInfo::$files["l"] = APPLICATION . "/application/l.php";
+
+        if(!FileSystem::write(ROOT . APPLICATION . "/application/l.php", $class)) {
+			throw new LogicException("Could not write ".APPLICATION."/application/l.php. Please set permissions of ".APPLICATION."/application to 0777.");
+		}
+    }
 
 	/**
 	 * sets session-language.
@@ -388,6 +428,40 @@ class i18n extends gObject {
 			return array($code);
 	}
 
+	/**
+	 * @param null|string $lang code of language
+	 * @return array
+	 */
+	public static function getMonthArray($lang = null) {
+		if(!isset($lang) || !file_exists(LANGUAGE_DIRECTORY . "/" . $lang)) {
+			$lang = Core::$lang;
+		}
+
+		/** @var $calendar */
+		require LANGUAGE_DIRECTORY . "/" . $lang . "/calendar.php";
+		return array(
+			1 => $calendar["January"],
+			2 => $calendar["February"],
+			3 => $calendar["March"],
+			4 => $calendar["April"],
+			5 => $calendar["May"],
+			6 => $calendar["June"],
+			7 => $calendar["July"],
+			8 => $calendar["August"],
+			9 => $calendar["September"],
+			10 => $calendar["October"],
+			11 => $calendar["November"],
+			12 => $calendar["December"]
+		);
+	}
+
+    /**
+     * extracts preferred language from header.
+     *
+     * @param $available_languages
+     * @param string $http_accept_language
+     * @return string
+     */
 	public static function prefered_language ($available_languages, $http_accept_language="auto") {
 		// if $http_accept_language was left out, read it from the HTTP-Header
 		if ($http_accept_language == "auto") $http_accept_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';

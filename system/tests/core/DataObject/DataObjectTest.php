@@ -209,6 +209,74 @@ class DataObjectTests extends GomaUnitTest
             }
         }
     }
+
+    /**
+     * tests update.
+     */
+    public function testDataObjectUpdate() {
+        try {
+            $entitiy = new MockWriteEntityWithFields();
+            $entitiy->test = 2;
+            $entitiy->writeToDB(false, true);
+
+            $this->assertTrue(DataObject::update(MockWriteEntityWithFields::class, array("test" => 3), array("recordid" => $entitiy->id)));
+            $entityFromDb = DataObject::get_by_id(MockWriteEntityWithFields::class, $entitiy->id);
+            $this->assertEqual(3, $entityFromDb->test);
+            $this->assertEqual(2, $entitiy->test);
+        } finally {
+            if($entitiy) {
+                $entitiy->remove(true);
+            }
+        }
+    }
+
+    /**
+     * tests updating an object silently and enforces it does not update last_modified.
+     */
+    public function testDataObjectUpdateSilent() {
+        try {
+            $entitiy = new MockWriteEntityWithFields();
+            $entitiy->test = 2;
+            $entitiy->writeToDB(false, true);
+
+            $this->assertTrue(DataObject::update(MockWriteEntityWithFields::class, array("last_modified" => 1), array("recordid" => $entitiy->id)));
+            $entityFromDb = DataObject::get_by_id(MockWriteEntityWithFields::class, $entitiy->id);
+            $this->assertEqual(1, $entityFromDb->last_modified);
+
+            $this->assertTrue(DataObject::update(MockWriteEntityWithFields::class, array("test" => 3), array("recordid" => $entitiy->id), true));
+            $entityFromDb2 = DataObject::get_by_id(MockWriteEntityWithFields::class, $entitiy->id);
+            $this->assertEqual(1, $entityFromDb2->last_modified);
+            $this->assertEqual(3, $entityFromDb2->test);
+        } finally {
+            if($entitiy) {
+                $entitiy->remove(true);
+            }
+        }
+    }
+
+    /**
+     * tests updating an object silently and enforces it does not update last_modified.
+     */
+    public function testDataObjectUpdateNotSilent() {
+        try {
+            $entitiy = new MockWriteEntityWithFields();
+            $entitiy->test = 2;
+            $entitiy->writeToDB(false, true);
+
+            $this->assertTrue(DataObject::update(MockWriteEntityWithFields::class, array("last_modified" => 1), array("recordid" => $entitiy->id)));
+            $entityFromDb = DataObject::get_by_id(MockWriteEntityWithFields::class, $entitiy->id);
+            $this->assertEqual(1, $entityFromDb->last_modified);
+
+            $this->assertTrue(DataObject::update(MockWriteEntityWithFields::class, array("test" => 3), array("recordid" => $entitiy->id), false));
+            $entityFromDb2 = DataObject::get_by_id(MockWriteEntityWithFields::class, $entitiy->id);
+            $this->assertEqual(time(), $entityFromDb2->last_modified);
+            $this->assertEqual(3, $entityFromDb2->test);
+        } finally {
+            if($entitiy) {
+                $entitiy->remove(true);
+            }
+        }
+    }
 }
 
 class MockWriteEntity extends DataObject {}

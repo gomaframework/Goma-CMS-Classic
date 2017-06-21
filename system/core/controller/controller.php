@@ -304,8 +304,8 @@ class Controller extends RequestHandler
      * @return string|GomaResponse
      */
     public function __output($content) {
-        /** @var ControllerRedirectBackResponse $content */
-        if(is_a($content, "ControllerRedirectBackResponse")) {
+        /** @var ControllerRedirectResponse $content */
+        if(is_a($content, "ControllerRedirectResponse")) {
             if($content->getFromUrl() != $this->namespace && !$content->getHintUrl()) {
                 $content->setHintUrl($this->namespace);
                 $content->setParentControllerResolved(true);
@@ -448,7 +448,7 @@ class Controller extends RequestHandler
      * @param null|ViewAccessableData $model
      * @return string
      */
-    public function renderForm($name = false, $fields = array(), $submission = "safe", $disabled = false, $model = null)
+    public function renderForm($name = false, $fields = array(), $submission = null, $disabled = false, $model = null)
     {
         if (!isset($model))
             $model = $this->modelInst();
@@ -475,7 +475,7 @@ class Controller extends RequestHandler
                 $disabled = false;
             }
 
-            return $this->form("edit_" . $this->classname . $model->id, $model, array(), true, "safe", $disabled);
+            return $this->form("edit_" . $this->classname . $model->id, $model, array(), true, null, $disabled);
         }
     }
 
@@ -595,7 +595,7 @@ class Controller extends RequestHandler
      * @throws Exception
      * @deprecated
      */
-    public function safe($data, $form = null, $controller = null, $overrideCreated = false, $priority = 1, $action = 'save_success')
+    public function safe($data, $form, $controller, $overrideCreated = false, $priority = 1, $action = 'save_success')
     {
         /** @var DataObject $givenModel */
         $givenModel = isset($form) ? $form->getModel() : $this->modelInst();
@@ -620,7 +620,7 @@ class Controller extends RequestHandler
      * @return string
      * @throws Exception
      */
-    public function submit_form($data, $form = null, $controller = null)
+    public function submit_form($data, $form, $controller)
     {
         return $this->actionComplete("save_success", $this->service()->save($form->getModel(), $data));
     }
@@ -640,7 +640,7 @@ class Controller extends RequestHandler
      * @return string
      * @throws Exception
      */
-    public function publish($data, $form = null, $controller = null)
+    public function publish($data, $form, $controller)
     {
         return $this->actionComplete("publish_success",
             $this->service()->save($form->getModel(), $data)
@@ -650,7 +650,7 @@ class Controller extends RequestHandler
     /**
      * @param string $action
      * @param ViewAccessableData|null $record
-     * @return ControllerRedirectBackResponse|string
+     * @return ControllerRedirectResponse|string
      */
     protected function getActionCompleteText($action, $record) {
         if(isset($record)) {
@@ -680,17 +680,21 @@ class Controller extends RequestHandler
      *
      * it is called when actions of this controller are completed and the user should be notified. For example if the user saves data and it was successfully saved, this method is called with the param save_success. It is also called if an error occurs.
      *
+     * TODO: Find a replacement.
+     * @deprecated
      * @param    string $action the action called
      * @param    ViewAccessableData|null $record
      * @return string
      */
     public function actionComplete($action, $record = null)
     {
+        $redirect = $this->redirectback();
+
         if($text = $this->getActionCompleteText($action, $record)) {
-            AddContent::addSuccess($text);
+            $redirect->addMessage($text, ControllerRedirectResponse::MESSAGE_TYPE_SUCCESS);
         }
 
-        return $this->redirectback();
+        return $redirect;
     }
 
     /**
@@ -702,7 +706,8 @@ class Controller extends RequestHandler
      * @access    public
      * @param    string $param get-parameter
      * @param    string $value value of the get-parameter
-     * @return ControllerRedirectBackResponse
+     * @return ControllerRedirectResponse
+     * @deprecated Replace by own Rediret
      */
     public function redirectback($param = null, $value = null)
     {
@@ -716,8 +721,22 @@ class Controller extends RequestHandler
 
         $this->callExtending("redirectback", $redirect);
 
-        return ControllerRedirectBackResponse::create(
+        return ControllerRedirectResponse::create(
             $redirect,
+            $this->request ? $this->request->getShiftedPart() : null,
+            $this->request ? $this->request->canReplyJavaScript() : false
+        )->setParam($param, $value);
+    }
+
+    /**
+     * @param string $redirectUrl
+     * @param null $param
+     * @param null $value
+     * @return ControllerRedirectResponse
+     */
+    public function redirect($redirectUrl, $param = null, $value = null) {
+        return ControllerRedirectResponse::create(
+            $redirectUrl,
             $this->request ? $this->request->getShiftedPart() : null,
             $this->request ? $this->request->canReplyJavaScript() : false
         )->setParam($param, $value);
@@ -792,6 +811,10 @@ class Controller extends RequestHandler
             function($responseString, $data){
                 /** @var GomaFormResponse $data */
                 if(!$data->isFullPage()) {
+                    if(isset($this->getRequest()->get_params["ajaxfy"])) {
+                        $data->setIsFullPage(true);
+                    }
+
                     return $this->showWithDialog($responseString, lang("confirm", "Confirm..."));
                 }
             });
@@ -882,6 +905,10 @@ class Controller extends RequestHandler
             function($responseString, $data){
                 /** @var GomaFormResponse $data */
                 if(!$data->isFullPage()) {
+                    if(isset($this->getRequest()->get_params["ajaxfy"])) {
+                        $data->setIsFullPage(true);
+                    }
+
                     return $this->showWithDialog($responseString, lang("prompt", "Insert Text..."));
                 }
             });

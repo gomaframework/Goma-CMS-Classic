@@ -96,14 +96,13 @@ class LeftAndMain extends AdminItem {
 	}
 
 	/**
-	 * inserts the data in the leftandmain-template
-	 *
-	 * @param string $content
-	 * @return mixed|string
+	 * @param GomaResponse|string $content
+	 * @return GomaResponse|string
 	 */
-	public function serve($content) {
-		if($this->request->is_ajax()) {
-			return $content;
+	public function __output($content)
+	{
+		if(!$this->isManagingController($content) || $this->getRequest()->is_ajax()) {
+			return parent::__output($content);
 		}
 
 		// add resources
@@ -121,7 +120,7 @@ class LeftAndMain extends AdminItem {
 
 		$output = $data->customise(
 			array(
-				"CONTENT"	=> $content,
+				"CONTENT"	=> Director::getStringFromResponse($content),
 				"activeAdd" => $this->getParam("model"),
 				"SITETREE" => $this->createTree($this->getParam("searchtree")),
 				"searchtree" => $this->getParam("searchtree"),
@@ -131,8 +130,9 @@ class LeftAndMain extends AdminItem {
 			)
 		)->renderWith($this->baseTemplate);
 
-		// parent-serve
-		return parent::serve($output);
+		return parent::__output(
+			Director::setStringToResponse($content, $output)
+		);
 	}
 
 	/**
@@ -349,7 +349,7 @@ class LeftAndMain extends AdminItem {
                     DataObject::update($this->tree_class, array($field => $key), array("recordid" => $value), "");
                 }
 
-                return GomaResponse::create()->setShouldServe(false)->setBody(
+                return GomaResponse::create()->setIsFullPage(true)->setBody(
                     GomaResponseBody::create($this->createTree())->setParseHTML(false)
                 );
             }

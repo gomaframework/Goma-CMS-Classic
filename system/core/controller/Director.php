@@ -262,7 +262,15 @@ class Director extends gObject {
      * @return Request
      */
     public static function createRequestFromEnvironment($url) {
-        return self::createRequestWithData($url, $_SERVER, $_GET, $_POST, $_FILES, getallheaders());
+        $server = $_SERVER;
+        $get = $_GET;
+        $post = $_POST;
+        $files = $_FILES;
+        $headers = getallheaders();
+
+        Core::callHook("getEnvironment", $server, $get, $post, $files, $headers);
+
+        return self::createRequestWithData($url, $server, $get, $post, $files, $headers);
     }
 
     /**

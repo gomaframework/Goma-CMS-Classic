@@ -26,11 +26,18 @@ class intSQLField extends Varchar
      */
     public static function argumentClassInfo($class, $fieldName, $args, $fieldType) {
         if(!isset(ClassInfo::$class_info[$class->classname]["defaults"][$fieldName])) {
-            ClassInfo::$class_info[$class->classname]["defaults"][$fieldName] = 0;
+            if(!self::isNullType($fieldType)) {
+                ClassInfo::$class_info[$class->classname]["defaults"][$fieldName] = 0;
+            }
         }
     }
 
-
+    /**
+     * @param string $fieldName
+     * @param mixed $default
+     * @param array $args
+     * @return mixed|null
+     */
     public static function getSQLDefault($fieldName, $default, $args)
     {
         return $default != 0 ? $default : null;

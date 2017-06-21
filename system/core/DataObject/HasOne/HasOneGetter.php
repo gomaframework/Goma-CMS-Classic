@@ -14,7 +14,7 @@ defined("IN_GOMA") OR die();
  *
  * @method DataObject getOwner()
  */
-class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
+class HasOneGetter extends AbstractGetterExtension implements postArgumentsQuery {
     /**
      * extra-methods.
      */
@@ -179,7 +179,7 @@ class HasOneGetter extends AbstractGetterExtension implements ArgumentsQuery {
      * @param bool $forceClasses if to only get objects of this type of every object from the table
      * @return mixed
      */
-    public function argumentQuery($query, $version, $filter, $sort, $limit, $joins, $forceClasses)
+    public function postArgumentQuery($query, $version, $filter, $sort, $limit, $joins, $forceClasses)
     {
         if (is_array($query->filter))
         {

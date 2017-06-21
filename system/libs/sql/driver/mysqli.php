@@ -103,6 +103,7 @@ class mysqliDriver implements SQLDriver
      * @param bool $unbuffered
      * @param bool $debug
      * @return bool|mysqli_result
+     * @throws SQLException
      */
     public function query($sql, $unbuffered = false, $debug = true)
     {
@@ -117,8 +118,13 @@ class mysqliDriver implements SQLDriver
             $this->errno = $this->_db->errno;
 
             if ($debug) {
+                if(isPHPUnit()) {
+                    throw new SQLException($sql);
+                }
+
                 $trace = debug_backtrace();
-                log_error('SQL-Error in Statement: ' . $sql . ' in ' . $trace[1]["file"] . ' on line ' . $trace[1]["line"] . '.');
+                log_error('SQL-Error in Statement: ' . $sql . ' in ' . $trace[1]["file"] . ' on line ' . $trace[1]["line"] . '. ' .
+                    $this->errno . ": " . $this->error);
                 $this->runDebug($sql);
                 unset($trace);
             }
@@ -493,7 +499,8 @@ class mysqliDriver implements SQLDriver
                     "type" => $row->Type,
                     "key" => $row->Key,
                     "default" => $row->Default,
-                    "extra" => $row->Extra
+                    "extra" => $row->Extra,
+                    "null" => $row->Null == "YES" ? true : false
                 );
             }
             return $fields;
@@ -557,37 +564,39 @@ class mysqliDriver implements SQLDriver
                     $editsql .= ' DEFAULT "' . addslashes($defaults[$name]) . '"';
                     $updates .= ' ' . $name . ' = "' . addslashes($defaults[$name]) . '",';
                 }
-                $editsql .= " NOT NULL,";
+                if(!DBField::definesNullInfo($type)) {
+                    $editsql .= " NOT NULL";
+                }
+                $editsql .= ",";
 
                 $log .= "ADD Field " . $name . " " . $type . "\n";
             } else {
-
-                // correct fields with edited type or default-value
+                // type value
                 $type = str_replace(", ", ",", $type);
-                if (str_replace('"', "'", $tableInfo[$name]["type"]) != $type && str_replace("'", '"', $tableInfo[$name]["type"]) != $type && $tableInfo[$name]["type"] != $type) {
-                    $editsql .= " MODIFY " . $name . " " . $type . ",";
-                    $log .= "Modify Field " . $name . " from " . $tableInfo[$name]["type"] . " to " . $type . "\n";
-                } else
+                if (self::fieldNeedsTypeUpdate($tableInfo[$name], $type) ||
+                    self::fieldNeedsDefaultUpdate($name, $tableInfo[$name], $defaults) ||
+                    self::fieldNeedsDropDefault($name, $tableInfo[$name], $defaults)) {
+                    $editsql .= " MODIFY " . $name . " " . $type . "";
+                    if(!DBField::definesNullInfo($type)) {
+                        $editsql .= " NOT NULL";
+                    }
 
-                    if (!preg_match('/enum/i', $fields[$name])) {
-                        if (!isset($defaults[$name]) && $tableInfo[$name]["default"] != "") {
-                            $editsql .= " ALTER COLUMN " . $name . " DROP DEFAULT,";
+                    if(self::fieldNeedsDropDefault($name, $tableInfo[$name], $defaults)) {
+                        if(DBField::isNullType($type)) {
+                            $editsql .= " DEFAULT NULL";
                         }
-
-                        if (isset($defaults[$name]) &&
-                            $tableInfo[$name]["default"] != $defaults[$name] &&
-                            strtolower($tableInfo[$name]["type"]) != "text" &&
-                            strtolower($tableInfo[$name]["type"]) != "blob"
-                        ) {
-                            if($this->isFieldInt($type)) {
-                                if($defaults[$name] != 0) {
-                                    $editsql .= " ALTER COLUMN " . $name . " SET DEFAULT " . ((int)$defaults[$name]) . ",";
-                                }
-                            } else {
-                                $editsql .= " ALTER COLUMN " . $name . " SET DEFAULT \"" . addslashes($defaults[$name]) . "\",";
+                    } else if(self::fieldNeedsDefaultUpdate($name, $tableInfo[$name], $defaults)) {
+                        if($this->isFieldInt($type)) {
+                            if($defaults[$name] != 0) {
+                                $editsql .= " DEFAULT " . ((int)$defaults[$name]) . "";
                             }
+                        } else {
+                            $editsql .= " DEFAULT \"" . addslashes($defaults[$name]) . "\"";
                         }
                     }
+                    $editsql .= ",";
+                    $log .= "Modify Field " . $name . " from " . $tableInfo[$name]["type"] . " to " . $type . "\n";
+                }
             }
         }
 
@@ -731,6 +740,58 @@ class mysqliDriver implements SQLDriver
             throw new MySQLException();
     }
 
+    /**
+     * returns true if field needs type update.
+     *
+     * @param array $info
+     * @param string $type
+     * @return bool
+     */
+    protected static function fieldNeedsTypeUpdate($info, $type) {
+        if (str_replace('"', "'", $info["type"]) != $type &&
+            str_replace("'", '"', $info["type"]) != $type &&
+            $info["type"] != $type) {
+            return true;
+        }
+
+        // if nullable collumn shouldn't be nullable anymore
+        if($info["null"] && !DBField::isNullType($type)) {
+            return true;
+        }
+
+        // if not nullable column should be nullable
+        if(!$info["null"] && DBField::isNullType($type)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * returns true if field needs "default" update.
+     *
+     * @param string $name
+     * @param array $info
+     * @param string $defaults
+     * @return bool
+     */
+    protected static function fieldNeedsDefaultUpdate($name, $info, $defaults) {
+        return isset($defaults[$name]) &&
+        $info["default"] != $defaults[$name] &&
+        strtolower($info["type"]) != "text" &&
+        strtolower($info["type"]) != "blob";
+    }
+
+    /**
+     * @param string $name
+     * @param array $info
+     * @param array $defaults
+     * @return bool
+     */
+    protected static function fieldNeedsDropDefault($name, $info, $defaults) {
+        return !isset($defaults[$name]) && isset($info["default"]);
+    }
+
     protected function isFieldInt($field) {
         return strtolower(substr(trim($field), 0, 3)) == "int";
     }
@@ -747,9 +808,6 @@ class mysqliDriver implements SQLDriver
      * @throws MySQLException
      */
     protected function createTable($table, $fields, $indexes, $defaults, $prefix) {
-
-        $forceUserMyISAM = false;
-
         $sql = "CREATE TABLE " . $prefix . $table . " ( ";
         $i = 0;
         foreach ($fields as $name => $value) {
@@ -758,6 +816,7 @@ class mysqliDriver implements SQLDriver
             } else {
                 $sql .= ",";
             }
+
             $sql .= ' ' . $name . ' ' . $value . ' ';
             if (isset($defaults[$name]) &&
                 trim(strtolower($value)) != "text" && trim(strtolower($value)) != "blob") {
@@ -768,7 +827,7 @@ class mysqliDriver implements SQLDriver
                 } else {
                     $sql .= " DEFAULT '" . addslashes($defaults[$name]) . "'";
                 }
-            } else {
+            } else if(!DBField::definesNullInfo($value)) {
                 $sql .= " NOT NULL";
             }
         }
@@ -813,17 +872,13 @@ class mysqliDriver implements SQLDriver
         }
         $sql .= ") DEFAULT CHARACTER SET 'utf8' COLLATE utf8_general_ci";
 
-        if($forceUserMyISAM) {
-            $sql .= " ENGINE = MyISAM";
-        }
-
         if (sql::query($sql)) {
             ClassInfo::$database[$table] = $fields;
 
             if ($version = $this->getServerVersion()) {
                 $engines = $this->listStorageEngines();
 
-                if (!$forceUserMyISAM && version_compare($version, "5.6", ">=") && isset($engines["innodb"])) {
+                if (version_compare($version, "5.6", ">=") && isset($engines["innodb"])) {
                     $this->setStorageEngine($prefix . $table, "InnoDB");
                 } else if (isset($engines["myisam"])) {
                     $this->setStorageEngine($prefix . $table, "MyISAM");
@@ -1034,12 +1089,6 @@ class mysqliDriver implements SQLDriver
             }
 
             foreach($fields as $field) {
-                if(!isset($record[$field])) {
-                    throw new InvalidArgumentException("Every dictionary must have the same entry-keys.\n" .
-                        print_r($record, true) .
-                        " fields: " . print_r($fields, true));
-                }
-
                 if($field != $fields[0]) {
                     $sql .= ", ";
                 }

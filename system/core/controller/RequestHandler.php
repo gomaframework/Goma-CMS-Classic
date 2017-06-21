@@ -171,10 +171,6 @@ class RequestHandler extends gObject {
 			$this->request->setState($preservedRequest);
             return $this->handleAction("index");
 		} catch(Exception $e) {
-			if($subController) {
-				throw $e;
-			}
-
 			return $this->handleException($e);
 		}
 	}
@@ -397,6 +393,10 @@ class RequestHandler extends gObject {
 	 * @throws Exception
 	 */
 	public function handleException($e) {
+        if($this->isSubController()) {
+            throw $e;
+        }
+
 		$content = null;
 		$this->callExtending("handleException", $e, $content);
 
@@ -404,21 +404,23 @@ class RequestHandler extends gObject {
 			return $content;
 		}
 
-		if(is_a($e, "LogicException")) {
-			throw $e;
+		if (gObject::method_exists($e, "http_status")) {
+			$status = $e->http_status();
 		} else {
-			log_exception($e);
+			$status = 500;
 		}
 
-		if($this->request->canReplyJavaScript()) {
-			return new JSONResponseBody(array(
+		log_exception($e);
+
+		if($this->request->canReplyJavaScript() || $this->request->canReplyJSON()) {
+			return GomaResponse::create(null, new JSONResponseBody(array(
 				"status" => $e->getCode(),
 				"error" => $e->getMessage(),
 				"errorClass" => get_class($e)
-			));
+			)))->setStatus($status);
 		}
 
-		return $e->getCode() . ": " . get_class($e) . "\n" . $e->getMessage();
+		return GomaResponse::create(null, $e->getCode() . ": " . get_class($e) . "\n" . $e->getMessage())->setStatus($status);
 	}
 
 	/**
@@ -524,6 +526,7 @@ class RequestHandler extends gObject {
 	/**
 	 * @param gObject|string $sender
 	 * @return string
+	 * @deprecated
 	 */
 	public function getRedirect($sender)
 	{
@@ -550,6 +553,13 @@ class RequestHandler extends gObject {
         }
 
 		return BASE_URI;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getRedirectToSelf() {
+		return $this->request->url . URLEND . "?" . $this->request->queryString();
 	}
 }
 

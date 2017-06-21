@@ -37,9 +37,21 @@ class DBField extends gObject implements IDataBaseField
     {
         parent::__construct();
 
+        if(!is_string($name)) {
+            throw new InvalidArgumentException("\$name must be a string. " . gettype($args));
+        }
+
+        if(isset($value) && !is_string($value) && !is_bool($value) && !is_numeric($value)) {
+            throw new InvalidArgumentException("DBField \$value of field {$name} must be either null, string, bool or numeric. Type given: " . gettype($args));
+        }
+
+        if(isset($args) && !is_array($args)) {
+            throw new InvalidArgumentException("DBField \$args of field {$name} must be either array or null. Type given: " . gettype($args));
+        }
+
         $this->name = $name;
         $this->value = $value;
-        $this->args = $args;
+        $this->args = (array) $args;
     }
 
     /**
@@ -378,7 +390,8 @@ class DBField extends gObject implements IDataBaseField
     /**
      * gets a var for template
      *
-     * @return string|null
+     * @param string $var
+     * @return null|string
      */
     public function getTemplateVar($var) {
         if(strpos($var, ".")) {
@@ -481,7 +494,7 @@ class DBField extends gObject implements IDataBaseField
      */
     public function forDBQuery()
     {
-        return "'".convert::raw2sql($this->value)."'";
+        return $this->value === null ? "NULL" : "'".convert::raw2sql($this->value)."'";
     }
 
     /**
@@ -523,5 +536,21 @@ class DBField extends gObject implements IDataBaseField
         } else {
             return $newCasted->forTemplate();
         }
+    }
+
+    /**
+     * @param string $type
+     * @return bool
+     */
+    public static function isNullType($type) {
+        return strpos(strtolower($type), "null") !== false && strpos(strtolower($type), "not") === false;
+    }
+
+    /**
+     * @param string $type
+     * @return bool
+     */
+    public static function definesNullInfo($type) {
+        return strpos(strtolower($type), "null") !== false;
     }
 }

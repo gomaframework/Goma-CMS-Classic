@@ -35,8 +35,8 @@ class DataValidator
         if(!\ArrayLib::isAssocArray($requiredFields)) {
             throw new InvalidArgumentException("Required-Fields must be an assoc array. field => title");
         }
-		if (!is_subclass_of($model, ViewAccessableData::class)) {
-			throw new InvalidArgumentException('$model is not child of DataObject.');
+		if (!is_a($model, ViewAccessableData::class)) {
+			throw new InvalidArgumentException('$model is not an instance of ViewAccessableData.');
 		}
 		$this->model = $model;
 		$this->requiredFields = ArrayLib::map_key("strtolower", $requiredFields);
@@ -51,10 +51,6 @@ class DataValidator
         $exceptions = array();
 		foreach(
             array_map("strtolower", array_keys($this->model->ToArray())) as $field) {
-            if(isset($this->requiredFields[$field]) && !$this->model->{$field}) {
-                $requiredFields[] = $field;
-            }
-
             if(\gObject::method_exists($this->model, "validate" . $field)) {
                 try {
                     call_user_func_array(array($this->model, "validate" . $field), array());
@@ -65,6 +61,14 @@ class DataValidator
                 }
             }
 		}
+
+        foreach($this->requiredFields as $field => $key) {
+            if(!$this->model->{$field}) {
+                $requiredFields[] = $field;
+            }
+        }
+
+        $this->consolidateExceptions($exceptions, $requiredFields);
 	}
 
     /**
@@ -74,6 +78,10 @@ class DataValidator
      */
     protected function consolidateExceptions($exceptions, $requiredFields) {
         if(!$requiredFields) {
+            if(!$exceptions) {
+                return;
+            }
+
             throw new \FormMultiFieldInvalidDataException($exceptions);
         }
 
@@ -93,6 +101,8 @@ class DataValidator
         $exceptions = array_merge($exceptions,
             array_combine($requiredFields, array_fill(0, count($requiredFields), "")));
 
-        throw new \FormMultiFieldInvalidDataException($exceptions);
+        if(count($exceptions) > 0) {
+            throw new \FormMultiFieldInvalidDataException($exceptions);
+        }
     }
 }

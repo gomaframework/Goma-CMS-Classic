@@ -34,7 +34,7 @@ class RequestTest extends \GomaUnitTest {
      * tests method
      */
     public function testIsAjaxGetParam() {
-        $request = new \Request("get", "blub", array("ajax" => true));
+        $request = new \Request("get", "blub", array("ajaxfy" => true));
         $this->assertTrue($request->is_ajax());
     }
 
@@ -42,7 +42,7 @@ class RequestTest extends \GomaUnitTest {
      * tests method
      */
     public function testIsAjaxPostParam() {
-        $request = new \Request("get", "blub", array(), array("ajax" => true));
+        $request = new \Request("get", "blub", array(), array("ajaxfy" => true));
         $this->assertTrue($request->is_ajax());
     }
 }

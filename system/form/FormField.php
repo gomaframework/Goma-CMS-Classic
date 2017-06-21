@@ -190,14 +190,7 @@ class FormField extends AbstractFormComponent {
 
         if($this->template) {
             $this->container->append(
-                $this->templateView->customise(
-                    $info->ToRestArray()
-                )->customise(
-                    array(
-                        "model"    => $this->getModel(),
-                        "postname" => $this->PostName()
-                    )
-                )->renderWith($this->template)
+                $this->renderTemplate($info)
             );
         } else {
             // old way of doing it
@@ -232,6 +225,21 @@ class FormField extends AbstractFormComponent {
         if (PROFILE) Profiler::unmark("FormField::field");
 
         return $this->container;
+    }
+
+    /**
+     * @param FormFieldRenderData $info
+     * @return string
+     */
+    protected function renderTemplate($info) {
+        return $this->templateView->customise(
+            $info->ToRestArray()
+        )->customise(
+            array(
+                "model"    => $this->getModel(),
+                "postname" => $this->PostName()
+            )
+        )->renderWith($this->template);
     }
 
     /**

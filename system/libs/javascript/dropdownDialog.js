@@ -730,7 +730,6 @@ self.dropdownDialogs = [];
 			};
 			var o = $.extend(defaults, options);
 
-			var that = this;
 			var obj = {
 				instances: [],
 				hide: function() {

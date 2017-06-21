@@ -1,14 +1,12 @@
 <?php
+defined("IN_GOMA") or die();
 /**
- *@package goma framework
- *@link http://goma-cms.org
- *@license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
- *@author Goma-Team
+ * @package goma framework
+ * @link http://goma-cms.org
+ * @license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
+ * @author Goma-Team
  * last modified: 26.11.2014
  */
-
-// silence is golden ;)
-defined('IN_GOMA') OR die('<!-- restricted access -->');
 
 class ImageSQLField extends DBField {
     /**
@@ -24,6 +22,10 @@ class ImageSQLField extends DBField {
 
 	/**
 	 * generates a image from the image-uri
+	 * @param bool $absolute
+	 * @param string $html
+	 * @param string $style
+	 * @return string
 	 */
 	public function makeImage($absolute = false, $html = "", $style = "") {
 		$url = $this -> value;

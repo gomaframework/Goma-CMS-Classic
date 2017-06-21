@@ -72,13 +72,6 @@ class DropDown extends FormField {
 	public $keyField = "id";
 
 	/**
-	 * this field needs to have the full width.
-	 *
-	 * @var bool
-	 */
-	protected $fullSizedField = true;
-
-	/**
 	 * unique key for this field.
 	 *
 	 * @var string
@@ -169,7 +162,7 @@ class DropDown extends FormField {
 		}
 	}
 
-	/**
+    /**
 	 * @return array|string|null
 	 */
 	public function getModel()
@@ -400,7 +393,7 @@ class DropDown extends FormField {
 		$this->container->append(new HTMLNode("label", array("for" => $this->ID()), $this->title));
 
 		$this->container->append($this->input);
-		$this->container->append(new HTMLNode("div", array("class" => "widgetwrapper"), array($this->widget)));
+		$this->container->append(new HTMLNode("div", array("class" => "widgetwrapper input"), array($this->widget)));
 		$this->container->addClass("dropdownContainer");
 
 		if($this->errors) {
@@ -482,7 +475,7 @@ class DropDown extends FormField {
 	protected function getResultFromData($page, $dataSource) {
 		// generate paging-data
 		$start = ($page * 10) - 10;
-		$end = $start + 9;
+		$end = $start + 10;
 		$i = 0;
 		$left = ($page == 1) ? false : true;
 		$right = false;
@@ -571,7 +564,7 @@ class DropDown extends FormField {
 			}
 		}
 
-		throw new InvalidArgumentException("Option must have correct DataType: Array, Object or String.");
+		throw new InvalidArgumentException("Option must have correct DataType: Array, Object or String. Please verify if the correct showfield was set.");
 	}
 
 	/**

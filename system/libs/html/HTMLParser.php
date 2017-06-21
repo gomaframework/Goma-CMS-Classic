@@ -159,7 +159,7 @@ class HTMLParser extends gObject
      * @param string $beforeHref
      * @param string $afterHref
      * @param string $base
-     * @param string $root
+     * @param mixed|string $root
      * @param string $prependBase
      *
      * @return bool|string
@@ -174,15 +174,19 @@ class HTMLParser extends gObject
             }
         }
 
-        // check anchor
-        if (substr(strtolower($href), 0, 1) == "#") {
-            $attrs = 'data-anchor="' . substr($href, 1) . '"';
-            $href = ((URL . URLEND) != "/") ? (URL . URLEND . $href) : $href;
+        while(strpos($href, "//")) {
+            $href = str_replace("//", "/", $href);
         }
 
         // check ROOT_PATH
         if (substr(strtolower($href), 0, strlen($root)) == strtolower($root)) {
             $href = substr($href, strlen($root));
+        }
+
+        // check anchor
+        if (substr(strtolower($href), 0, 1) == "#") {
+            $attrs = 'data-anchor="' . substr($href, 1) . '"';
+            $href = ((URL . URLEND) != "/") ? (URL . URLEND . $href) : $href;
         }
 
         // check for existing files.

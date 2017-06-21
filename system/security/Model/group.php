@@ -17,6 +17,7 @@ defined('IN_GOMA') OR die();
  * @property    string groupnotification
  *
  * @method ManyMany_DataObjectSet permissions($filter = null, $sort = null)
+ * @method ManyMany_DataObjectSet users($filter = null, $sort = null)
  *
  * @package        Goma\Security\Users
  *
@@ -95,7 +96,7 @@ class Group extends DataObject implements HistoryData, PermProvider
         )));
 
         $form->addValidator(new RequiredFields(array("name")), "valdiator");
-        $form->addAction(new Button("cancel", lang("cancel", "cancel"), "LoadTreeItem(0);"));
+        $form->addAction(new CancelButton("cancel", lang("cancel")));
         $form->addAction(new FormAction("savegroup", lang("save", "Save"), null, array("green")));
 
     }

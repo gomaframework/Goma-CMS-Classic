@@ -11,14 +11,23 @@
  */
 class DateTimeField extends DateField
 {
+    /**
+     * @var string
+     */
     protected $format = DATE_FORMAT;
 
+    /**
+     * @return int
+     */
     public function result()
     {
-        $datetime = DateTime::createFromFormat($this->format, parent::result());
+        $datetime = new DateTimeSQLField("parse", parent::result(), array($this->format));
         return $datetime->getTimestamp();
     }
 
+    /**
+     * @return array
+     */
     protected function getDatePickerOptions()
     {
         $options = parent::getDatePickerOptions();

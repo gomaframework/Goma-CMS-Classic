@@ -313,13 +313,11 @@ div.adminPanel table, div.adminPanel td {
       }
 
       #userbar-langSelect {
-
         position: relative;
 
         > a {
           display: block;
-          padding: 0.75em;
-          padding-top: 0.56em;
+          padding: 0.56em 0.75em 0.75em;
         }
 
         > ul {
@@ -329,8 +327,7 @@ div.adminPanel table, div.adminPanel td {
           -webkit-overflow-scrolling: touch;
           overflow: auto;
 
-          margin: 0;
-          margin-top: -1px;
+          margin: -1px -20em 0 0;
           padding: @space-normal 0;
           width: 10em;
 
@@ -492,7 +489,7 @@ div.adminPanel table, div.adminPanel td {
   .adminContent {
     padding: 0.75em;
 
-    .header {
+    > .header {
       background: #eee;
       border-bottom: 1px solid #ccc;
       padding: .5em;
@@ -859,10 +856,9 @@ textarea, input[type=text], input[type=search], input[type=password] {
 }
 
 .form_field {
-  padding: 0.8em;
-  padding-bottom: 1em;
+  padding: 0.8em 0.8em 1em;
 
-  > label {
+  > label, .checkbox-wrapper > label {
     color: #000;
     font-weight: normal;
   }

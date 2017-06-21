@@ -16,7 +16,10 @@
             }
         });
         categoryView.find(" > .menu ul li a").click(function(){
-            $(window).scrollTop(scrollPos);
+            if(scrollPos != -1) {
+                $(window).scrollTop(scrollPos);
+            }
+
             categoryView.addClass("sidebar-hidden");
         });
         CallonDocumentClick(function(){

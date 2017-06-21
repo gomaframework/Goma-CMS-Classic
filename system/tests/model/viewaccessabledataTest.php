@@ -59,36 +59,86 @@ class ViewAccessableDataTest extends GomaUnitTest implements TestAble {
 	}
 
 	/**
-	 *
+	 * tests if getTemplateVar("this") returns print_r($data, true)
 	 */
-	public function testGetTemplateVar() {
+	public function testGetTemplateVarThisPrintsR() {
 		$data = new ViewAccessableData(array("blah" => "blub", "test" => $test = new TestClassWithForTemplate(), "std" => $std = new StdClass()));
 
 		$this->assertEqual($data->this(), $data);
-		$this->assertEqual($data->getTemplateVar("this"), $data);
+		$this->assertEqual($data->getTemplateVar("this"), print_r($data, true));
+	}
+
+	/**
+	 * tests if this.blah returns blub
+	 */
+	public function testGetTemplateVarString() {
+		$data = new ViewAccessableData(array("blah" => "blub", "test" => $test = new TestClassWithForTemplate(), "std" => $std = new StdClass()));
 		$this->assertEqual($data->getTemplateVar("this.blah"), "blub");
+	}
+
+
+	/**
+	 * tests if __toString is called.
+	 */
+	public function testGetTemplateVarToString() {
+		$data = new ViewAccessableData(array("blah" => "blub", "test" => $test = new TestClassWithForTemplateToString(), "std" => $std = new StdClass()));
+		$test->templateInfo = "blub123";
+		$this->assertEqual($data->getTemplateVar("test"), "blub123");
+	}
+
+	/**
+	 * tests if object with defined method forTemplate(), that that method is be called.
+	 * It tests also if getTemplateVar is called when remaining stuff is there and gets further information and can handle rest of query by itself.
+	 */
+	public function testGetTemplateVarCallsGetTemplateVarOnObject() {
+		$data = new ViewAccessableData(array("blah" => "blub",
+											 "test" => $test = new TestClassWithForTemplate(), "std" => $std = new StdClass()));
 
 		$test->templateInfo = "blub";
 		$this->assertEqual($data->getTemplateVar("test"), "blub");
-		$this->assertEqual($data->getTemplateVar("test.blah"), "blub");
+		$this->assertEqual($data->getTemplateVar("test.blah"), "blah");
 		$this->assertEqual($data->test, $test);
+	}
 
-		$this->assertEqual($data->getTemplateVar("std"), $std);
-		$this->assertEqual($data->getTemplateVar("std.blub"), $std);
+	/**
+	 * test if StdClass is converted to string with print_r by getTemplateVar.
+	 */
+	public function testGetStdFromTemplateVar() {
+		$data = new ViewAccessableData(array("blah" => "blub",
+											 "test" => $test = new TestClassWithForTemplate(), "std" => $std = new StdClass()));
+
+		$this->assertEqual($data->getTemplateVar("std"), print_r($std, true));
+		$this->assertEqual($data->getTemplateVar("std.blub"), print_r($std, true));
+	}
+
+	/**
+	 * test if StdClass is converted to string with print_r by getTemplateVar
+	 * if casting is set to Varchar.
+	 */
+	public function testGetStdFromTemplateVarWithCasting() {
+		$data = new ViewAccessableData(array("blah" => "blub",
+											 "test" => $test = new TestClassWithForTemplate(), "std" => $std = new StdClass()));
 
 		ViewAccessableData::$casting["std"] = "Varchar";
 
-		$this->assertEqual($data->getTemplateVar("std"), $std);
-		$this->assertEqual($data->getTemplateVar("std.blub"), $std);
+		$this->assertEqual($data->getTemplateVar("std"), print_r($std, true));
+		$this->assertEqual($data->getTemplateVar("std.blub"), print_r($std, true));
+	}
 
-		unset(ViewAccessableData::$casting["std"]);
+	/**
+	 * tests getTemplateVar with Recursive ViewAccessableData Objects if this is overwritten with customsed.
+	 * In that case this.test should be the test property on the submodel.
+	 */
+	public function testRecursiveGetTemplateVar() {
+		$data = new ViewAccessableData(array("blah" => "blub",
+											 "test" => $test = new TestClassWithForTemplate(), "std" => $std = new StdClass()));
 
 		$testModel = new ViewAccessableData(array(
 			"test" => 123
 		));
 
 		$data->customised["this"] = $testModel;
-		$this->assertEqual($data->getTemplateVar("this"), $testModel);
+		$this->assertEqual($data->getTemplateVar("this"), print_r($testModel, true));
 		$this->assertEqual($data->getTemplateVar("this.test"), $testModel->test);
 	}
 
@@ -256,7 +306,19 @@ class VMTestGeneration {
 class TestClassWithForTemplate {
 	public $templateInfo;
 
+	public function getTemplateVar($remaining) {
+		return $remaining;
+	}
+
 	public function forTemplate() {
+		return $this->templateInfo;
+	}
+}
+
+class TestClassWithForTemplateToString {
+	public $templateInfo;
+
+	public function __toString() {
 		return $this->templateInfo;
 	}
 }

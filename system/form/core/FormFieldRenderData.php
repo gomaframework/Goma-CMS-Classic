@@ -138,7 +138,7 @@ class FormFieldRenderData extends gObject implements IRestResponse {
      * @param string $type
      * @param string $id
      * @param string $divId
-     * @return FormFieldRenderData
+     * @return static
      */
     public static function create($name, $type, $id, $divId) {
         return new static($name, $type, $id, $divId);
