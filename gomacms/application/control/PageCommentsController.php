@@ -98,7 +98,8 @@ class PageCommentsControllerExtension extends ControllerExtension {
             $object->append($comments->customise(array(
                 "page"  => $this->getOwner()->modelInst(),
                 "form" => $form,
-                "namespace" => $this->getOwner()->namespace
+                "namespace" => $this->getOwner()->namespace,
+                "url" => ROOT_PATH . $this->getOwner()->getRequest()->url . URLEND
             ))->renderWith("comments/comments.html"));
         }
     }

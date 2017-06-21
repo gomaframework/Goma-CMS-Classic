@@ -54,8 +54,9 @@ class SettingsAdminCategories extends AbstractCategoryController {
     {
         parent::Init($request);
 
+        $settings = DataObject::get(newsettings::class, array("id" => 1))->first();
         $this->setModelInst(
-            DataObject::get("newsettings", array("id" => 1))->first()
+            $settings ? $settings : new Newsettings()
         );
 
         return $this;
