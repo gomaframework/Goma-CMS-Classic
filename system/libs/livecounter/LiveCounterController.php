@@ -17,7 +17,7 @@ class livecounterController extends Controller {
     );
 
     public function migrateStats() {
-        if(!Core::is_ajax()) {
+        if(!$this->request->is_ajax()) {
             exit;
         }
 

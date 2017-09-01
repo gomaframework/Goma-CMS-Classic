@@ -1350,8 +1350,8 @@ class GFS {
 
 class GFSException extends Exception {
 	protected $internalCode = ExceptionManager::GFSException;
-	public function __construct($m = "", $code = null, Exception $previous = null) {
-		parent::__construct($m, $code ? $code : $this->internalCode, $previous);
+	public function __construct($message = "", $code = null, Exception $previous = null) {
+		parent::__construct($message, $code ? $code : $this->internalCode, $previous);
 	}
 }
 class GFSVersionException extends GFSException {

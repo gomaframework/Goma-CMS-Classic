@@ -58,7 +58,7 @@ class TreeCallbackUrl extends RequestHandler {
 		$parent = $this->getParam("parent");
 		$renderer = GlobalSessionManager::globalSession()->get("tree_renderer_" . $this->getParam("renderer"));
 			
-		if(Core::is_ajax()) {
+		if($this->request->is_ajax()) {
 			
 			if(ClassInfo::exists($model) && gObject::method_exists($model, "build_tree")) {
 				$record = DataObject::get_by_id($model, $parent);

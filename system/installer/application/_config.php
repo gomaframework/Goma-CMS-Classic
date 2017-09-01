@@ -1,6 +1,6 @@
 <?php
 
-Core::addRules(array(
+Director::addRules(array(
 	"install//\$Action" => "InstallController",
 	""					=> "HomePageController"
 ));

@@ -72,4 +72,4 @@ class ExternalFormController extends RequestHandler {
 }
 
 
-Core::addRules(array('system/forms/$form!/$field!' => "ExternalFormController"), 50);
+Director::addRules(array('system/forms/$form!/$field!' => "ExternalFormController"), 50);

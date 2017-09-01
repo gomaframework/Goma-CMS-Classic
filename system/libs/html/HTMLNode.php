@@ -13,76 +13,54 @@ class HTMLNode extends gObject
 {
     /**
      * tag
-     *
-     * @name tag
-     * @access protected
      */
     protected $tag;
 
     /**
      * attributes
-     *
-     * @name attr
-     * @access protected
      */
     protected $attr;
 
     /**
      * content
      * this can be an array of arrays or objects or strings or can be a simple string
-     *
-     * @name content
-     * @access public
      * @var array
      */
     public $content;
 
     /**
      * css
-     *
-     * @name css
-     * @access protected
      */
     protected $css;
 
     /**
      * if a parent node exists this is a link to it
-     *
-     * @name parentNode
-     * @access public
      */
     public $parentNode;
 
     /**
      * this array contains all non-closing-tags
-     *
-     * @name non_closing_tags
-     * @access public
      */
     public static $non_closing_tags = array('input', 'img', 'embed', 'br');
 
     /**
      * these tags are inline-tags, so they don't need whitespace between the content
      *
-     * @name inline_tags
-     * @access public
      * @var array
      */
     public static $inline_tags = array("span", "label", "pre", "textarea", "a", "legend");
 
     /**
-     * @name __construct
-     * @access public
-     * @param string - tag
-     * @param array - attributes
-     * @param null|array|string|object - content
+     * @param string $tag
+     * @param array $attr
+     * @param null $content
      */
     public function __construct($tag, $attr = array(), $content = null)
     {
         $this->tag = trim(strtolower($tag));
 
-        if (is_string($attr)) {
-            throwError(6, 'PHP-Error', "HTMLNode::__construct: Second argument must be Array");
+        if (!is_array($attr)) {
+            throw new InvalidArgumentException("Argument 2 of HTMLNode must be array.");
         }
 
         if (isset($attr["style"])) {
@@ -105,12 +83,11 @@ class HTMLNode extends gObject
 
     /**
      * gets the content of the node as HTML
-     * if you give a argument, you can set html
+     * if $new is set, content of this node is set.
      *
-     * @name HTML
-     * @access public
-     * @param html - if you want to set it
-     * @param optional - string - whitespace
+     * @param string|null $new
+     * @param string|null $whitespace
+     * @return array|null|string
      */
     public function html($new = null, $whitespace = null)
     {
@@ -153,11 +130,9 @@ class HTMLNode extends gObject
     /**
      * gets the content of the node as text
      *
-     * if you give a argument, you can set text
+     * if $new is set, content is set
      *
-     * @name text
-     * @access public
-     * @param string $new if you want to set it.
+     * @param string $new new text-content
      * @return string
      */
     public function text($new = null)
@@ -181,10 +156,9 @@ class HTMLNode extends gObject
     }
 
     /**
-     * if this field is an textarea or an input you can set or get the value
+     * This is a special function which will get $value-Attribute for input-tags, otherwise htmlworks as html()
      *
-     * @name val
-     * @access public
+     * @param null $value
      * @return array|null|string
      */
     public function val($value = null)
@@ -207,8 +181,6 @@ class HTMLNode extends gObject
     /**
      * gets the parent node
      *
-     * @name parent
-     * @access public
      * @return HTMLNode|null
      */
     public function parent()
@@ -219,8 +191,6 @@ class HTMLNode extends gObject
     /**
      * next silbing
      *
-     * @name next
-     * @access public
      * @return HTMLNode|null
      */
     public function next()
@@ -237,10 +207,8 @@ class HTMLNode extends gObject
     }
 
     /**
-     * gets a note by its index
+     * gets a note at index
      *
-     * @name getNode
-     * @access public
      * @param int $index
      * @return string|HTMLNode|null
      */
@@ -255,9 +223,7 @@ class HTMLNode extends gObject
 
     /**
      * sets the parent Node
-     *
-     * @name setParentNode
-     * @access public
+     * @param HTMLNode $node
      */
     public function setParentNode($node)
     {
@@ -267,8 +233,6 @@ class HTMLNode extends gObject
     /**
      * gets the children of a node
      *
-     * @name children
-     * @access public
      * @return array
      */
     public function Children()
@@ -280,8 +244,6 @@ class HTMLNode extends gObject
      * sets or gets an attrbute
      * Please just edit the attributes on the Object instead of using this
      *
-     * @name attr
-     * @access public
      * @param name
      * @param value - optional
      * @return null|string
@@ -299,8 +261,7 @@ class HTMLNode extends gObject
     /**
      * removes an attribute
      *
-     * @name removeAttr
-     * @param string - name
+     * @param string $name
      * @return $this
      */
     public function removeAttr($name)
@@ -312,20 +273,18 @@ class HTMLNode extends gObject
     /**
      * sets or gets a css-attribute
      *
-     * @name css
-     * @access public
-     * @param string - name of the attrbiute
-     * @param string - if you want to set this value
+     * @param string $attributeName
+     * @param null $value
      * @return null|string
      */
-    public function css($name, $value = null)
+    public function css($attributeName, $value = null)
     {
         if ($value !== null) {
-            $this->css[$name] = $value;
+            $this->css[$attributeName] = $value;
 
             return $value;
-        } else if (isset($this->css[$name])) {
-            return $this->css[$name];
+        } else if (isset($this->css[$attributeName])) {
+            return $this->css[$attributeName];
         } else {
             return null;
         }
@@ -400,8 +359,6 @@ class HTMLNode extends gObject
     /**
      * removes a class
      *
-     * @name removeClass
-     * @access public
      * @return null
      */
     public function removeClass($class)
@@ -415,8 +372,6 @@ class HTMLNode extends gObject
     /**
      * checks if a class exists on this node
      *
-     * @name hasClass
-     * @access public
      * @return bool
      */
     public function hasClass($class)
@@ -433,9 +388,7 @@ class HTMLNode extends gObject
     /**
      * parses CSS or an array of key-value pairs
      *
-     * @name parseCSS
-     * @access public
-     * @param string|array - css
+     * @param string|array $css
      */
     public function parseCSS($css)
     {
@@ -460,8 +413,6 @@ class HTMLNode extends gObject
     /**
      * renders the attributes
      *
-     * @name    renderAttributes
-     * @access    protected
      * @return string
      */
     protected function renderAttributes()
@@ -520,8 +471,6 @@ class HTMLNode extends gObject
     /**
      * gets the current tag-name
      *
-     * @name getTag
-     * @access public
      * @return string
      */
     public function getTag()
@@ -530,10 +479,8 @@ class HTMLNode extends gObject
     }
 
     /**
-     * sets the current tag
+     * sets the tag
      *
-     * @name setTag
-     * @access public
      * @param string $tag
      */
     public function setTag($tag)
@@ -569,10 +516,8 @@ class HTMLNode extends gObject
     }
 
     /**
-     * to get this object as string, too
+     * returns string representation of HTMLNode, which is the same as calling render().
      *
-     * @name __toString
-     * @access public
      * @return string
      */
     public function __toString()
@@ -581,10 +526,8 @@ class HTMLNode extends gObject
     }
 
     /**
-     * to get this object as string for template
+     * returns template representation of this HTMLNode, which is the same as calling render().
      *
-     * @name forTemplate
-     * @access public
      * @return string
      */
     public function forTemplate()

@@ -105,5 +105,26 @@ abstract class GomaUnitTest extends \PHPUnit\Framework\TestCase implements TestA
 			));
 		}
 	}
+
+    /**
+     * checks syntax of php.
+     *
+     * @param string $code
+     * @return bool
+     */
+    protected function checkSyntax($code) {
+        $file = ROOT . CACHE_DIRECTORY . "syntax." . randomString(10) . ".php";
+        \FileSystem::write($file, $code);
+        exec("php -l {$file}", $output, $return);
+        return 0 === $return;
+    }
+
+    /**
+     * asserts syntax of php.
+     * @param string $code
+     */
+    protected function assertSyntax($code) {
+        $this->assertTrue($this->checkSyntax($code));
+    }
 }
 

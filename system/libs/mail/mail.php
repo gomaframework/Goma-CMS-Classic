@@ -143,7 +143,7 @@ class Mail
 
         $mail->Subject = $this->subject;
         $mail->Body = $this->body;
-
+        
         $this->addAddresses($this->address, $mail);
         $this->addBCC($mail);
 

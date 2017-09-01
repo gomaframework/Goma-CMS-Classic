@@ -56,6 +56,22 @@
   }
 }
 
+.category-view.category-view-count-1, .category-view.category-view-count-0 {
+  border-bottom:0;
+  > .menu {
+    display: none;
+  }
+  > .content {
+    border-left: 0;
+    overflow: visible;
+    padding: .5em 0;
+
+    > h2 {
+      display: none;
+    }
+  }
+}
+
 @media screen and (max-width: 37.5em) {
   .category-view.sidebar-hidden {
     > .menu {

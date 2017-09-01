@@ -102,7 +102,7 @@ interface IDataBaseField {
     public function toBool();
 
     /**
-     * to don't give errors for unknowen calls, should always give back raw-data
+     * to don't give errors for unknown calls, should always give back raw-data
      *
      *@name __call
      *@access public

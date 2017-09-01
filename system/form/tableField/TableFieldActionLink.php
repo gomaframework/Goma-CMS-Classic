@@ -1,6 +1,9 @@
 <?php
+defined('IN_GOMA') OR die('<!-- restricted access -->'); // silence is golden ;)
 /**
- * Table-Field plugin to create a link in the action-column with custom HTML between the a-tags.
+ * This component is creating a link in the Actions-Columns of each row in the TableField.
+ * It is based on the template form/tableField/actionLink.html
+ * $destination, $html, $titleAttribute and $classes are variables in the form.
  *
  * @package     Goma\Form-Framework\TableField
  *
@@ -9,9 +12,6 @@
  *
  * @version     1.0.2
  */
-
-defined('IN_GOMA') OR die('<!-- restricted access -->'); // silence is golden ;)
-
 class TableFieldActionLink implements TableField_ColumnProvider {
 
 	/**
@@ -24,7 +24,7 @@ class TableFieldActionLink implements TableField_ColumnProvider {
 	/**
 	 * @var string
 	 */
-	protected $inner;
+	protected $html;
 
 	/**
 	 * @var bool|mixed
@@ -34,7 +34,7 @@ class TableFieldActionLink implements TableField_ColumnProvider {
 	/**
 	 * @var null|string
 	 */
-	protected $title;
+	protected $titleAttribute;
 
 	/**
 	 * @var array
@@ -44,17 +44,20 @@ class TableFieldActionLink implements TableField_ColumnProvider {
 	/**
 	 * Constructor.
 	 *
-	 * @param   string $destination link-URL with params replaced by data of record
-	 * @param   string $inner HTML between a-tags
-	 * @param    string $title
-	 * @param   mixed $requirePerm how to check if permissions is required (callback, string, boolean)
-	 * @param array $classes
+	 * @param   string $destination href of the link. It is possible to use basic variables, which are replaced with model-values of the row.
+	 * @param   string $html HTML between the a-tags, it can be simple text as well as an icon
+	 * @param   string $titleAttribute  the title-attribute of the a-tag.
+	 * @param   callable|string|boolean $requirePerm
+     *          if this is callable, the method is called and only if it returns true the action will be added.
+     *          if this is a string, $record->can($requirePerm) will be called and only if it returns true, the action will be added.
+     *          if this is boolean or null, nothing happens.
+	 * @param array $classes css-classes
 	 */
-	public function __construct($destination, $inner, $title = null, $requirePerm = false, $classes = array()) {
+	public function __construct($destination, $html, $titleAttribute = null, $requirePerm = false, $classes = array()) {
 		$this->destination = $destination;
-		$this->inner = $inner;
+		$this->html = $html;
 		$this->requirePerm = $requirePerm;
-		$this->title = $title;
+		$this->titleAttribute = $titleAttribute;
 		$this->classes = $classes;
 	}
 	
@@ -118,7 +121,7 @@ class TableFieldActionLink implements TableField_ColumnProvider {
 	 * @return string - the HTML for the column 
 	 */
 	public function getColumnContent($tableField, $record, $columnName) {
-		if($this->requirePerm) {
+		if(is_string($this->requirePerm) || is_callable($this->requirePerm)) {
 			if(is_callable($this->requirePerm)) {
 				if(!call_user_func_array($this->requirePerm, array($tableField, $record)))
 					return;
@@ -131,7 +134,7 @@ class TableFieldActionLink implements TableField_ColumnProvider {
 		$data = $record;
 		
 		// format innerhtml
-		$format = str_replace('"', '\\"', $this->inner);
+		$format = str_replace('"', '\\"', $this->html);
 		$format = preg_replace_callback('/\{?\$([a-zA-Z0-9_][a-zA-Z0-9_\-\.]+)\.([a-zA-Z0-9_]+)\((.*?)\)}?/si', array("TableFieldDataColumns", "convert_vars"), $format);
 		$format = preg_replace_callback('/\$([a-zA-Z0-9_][a-zA-Z0-9_\.]+)/si', array("TableFieldDataColumns", "vars"), $format);
 		
@@ -144,13 +147,13 @@ class TableFieldActionLink implements TableField_ColumnProvider {
 		eval('$destination = "' . $formatDestination . '";');
 		
 		// format title
-		$formatTitle = str_replace('"', '\\"', $this->title);
+		$formatTitle = str_replace('"', '\\"', $this->titleAttribute);
 		$formatTitle = preg_replace_callback('/\{?\$([a-zA-Z0-9_][a-zA-Z0-9_\-\.]+)\.([a-zA-Z0-9_]+)\((.*?)\)}?/si', array("TableFieldDataColumns", "convert_vars"), $formatTitle);
 		$formatTitle = preg_replace_callback('/\$([a-zA-Z0-9_][a-zA-Z0-9_\.]+)/si', array("TableFieldDataColumns", "vars"), $formatTitle);
 		eval('$title = "' . $formatTitle . '";');
 
 		// format title
-		$formatInner = str_replace('"', '\\"', $this->inner);
+		$formatInner = str_replace('"', '\\"', $this->html);
 		$formatInner = preg_replace_callback('/\{?\$([a-zA-Z0-9_][a-zA-Z0-9_\-\.]+)\.([a-zA-Z0-9_]+)\((.*?)\)}?/si', array("TableFieldDataColumns", "convert_vars"), $formatInner);
 		$formatInner = preg_replace_callback('/\$([a-zA-Z0-9_][a-zA-Z0-9_\.]+)/si', array("TableFieldDataColumns", "vars"), $formatInner);
 		eval('$inner = "' . $formatInner . '";');
@@ -160,9 +163,9 @@ class TableFieldActionLink implements TableField_ColumnProvider {
 		/** @var string $destination */
 		$data->setField("destination", $destination);
 		/** @var string $inner */
-		$data->setField("inner", $inner);
+		$data->setField("html", $inner);
 		/** @var $title $title */
-		$data->setField("title", $title);
+		$data->setField("titleAttribute", $title);
 		$data->setField("classes", implode(" " , (array) $this->classes));
 		
 		return $data->renderWith("form/tableField/actionLink.html");

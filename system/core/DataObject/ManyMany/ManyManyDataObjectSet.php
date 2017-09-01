@@ -875,12 +875,14 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
     }
 
     /**
-     * handles unique relationships.
+     * prepares staging for unique relationships.
+     * it returns a list of objects, which have been added to the stage.
+     * Objects, which are only updated, are not returned.
+     *
      * @param array $updated
      * @return array
      */
     protected function prepareStageForWriting(&$updated) {
-        $staging = $this->staging->ToArray();
         if($this->getRelationShip()->getCascade() == DataObject::CASCADE_TYPE_UNIQUE) {
             $oldData = array_merge($this->staging->ToArray(), $this->updateFieldsStage->ToArray());
             $dataToWrite = $dataForRelationship = array();
@@ -911,6 +913,8 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
 
             return $dataForRelationship;
         } else {
+            // since the following stages are only stages, where the extra-fields changed we do not need to give back a copy.
+            $staging = $this->staging->ToArray();
             foreach($this->updateFieldsStage as $record) {
                 $updated[$record->versionid] = $record;
 
@@ -918,9 +922,8 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
                     $this->staging->add($record);
                 }
             }
+            return $staging;
         }
-
-        return $staging;
     }
 
     /**

@@ -198,7 +198,16 @@
 .FileUpload_left .icon.beforeDrop {
   background: #ddd;
 }
-
+.file-label.disabled {
+  cursor: text;
+}
+.FileUpload_right.disabled {
+  .button, a {
+    color: #555 !important;
+    text-decoration: none;
+    cursor: text;
+  }
+}
 .FileUpload_right, .FileUpload_left, .fileupload-advanced {
   .progressbar {
     margin: 0.25em -0.5em;
@@ -422,7 +431,7 @@
             color: #555;
           }
         }
-        > .image-preview-img {
+        .image-preview-img {
           display: none;
         }
       }

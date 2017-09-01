@@ -115,7 +115,7 @@ class TreeNode extends ArrayList {
 			return false;
 		}
 		
-		$this->nodeid = $nodeid;
+		$this->nodeid = preg_replace('/[^a-zA-Z0-9_\-]/', "_", $nodeid);
 		$this->recordid = $recordid;
 		$this->title = $title;
 		$this->treeclass = $class_name;

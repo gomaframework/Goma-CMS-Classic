@@ -106,7 +106,7 @@ class ModelWriterTests extends GomaUnitTest implements TestAble
     }
 
     /**
-     * tests write-method once.
+     * Tests if write-method fires the correct events always once.
      */
     public function testWrite() {
         $mockData = array("test" => 1);
@@ -122,20 +122,20 @@ class ModelWriterTests extends GomaUnitTest implements TestAble
         $writer = new ModelWriter($newDataObject, ModelRepository::COMMAND_TYPE_UPDATE, $mockObject, new MockDBRepository(), new MockDBWriter());
         ModelWriterTestExtensionForEvents::$checkLogic = true;
         ModelWriterTestExtensionForEvents::clear();
-        $this->assertEqual(ModelWriterTestExtensionForEvents::$onBeforeWriteFired, 0);
+        $this->assertEqual(0, ModelWriterTestExtensionForEvents::$onBeforeWriteFired);
         $writer->write();
 
-        $this->assertEqual($mockObject->onBeforeWriteFired, 0);
-        $this->assertEqual($mockObject->onAfterWriteFired, 0);
+        $this->assertEqual(0, $mockObject->onBeforeWriteFired);
+        $this->assertEqual(0, $mockObject->onAfterWriteFired);
 
-        $this->assertEqual($newDataObject->onBeforeWriteFired, 1);
-        $this->assertEqual($newDataObject->onAfterWriteFired, 1);
+        $this->assertEqual(1, $newDataObject->onBeforeWriteFired);
+        $this->assertEqual(1, $newDataObject->onAfterWriteFired);
 
         /** @var ModelWriterTestExtensionForEvents $extInstance */
-        $this->assertEqual(ModelWriterTestExtensionForEvents::$onBeforeWriteFired, 1);
-        $this->assertEqual(ModelWriterTestExtensionForEvents::$onAfterWriteFired, 1);
-        $this->assertEqual(ModelWriterTestExtensionForEvents::$onBeforeDBWriterFired, 1);
-        $this->assertEqual(ModelWriterTestExtensionForEvents::$gatherDataToWrite, 1);
+        $this->assertEqual(1, ModelWriterTestExtensionForEvents::$onBeforeWriteFired);
+        $this->assertEqual(1, ModelWriterTestExtensionForEvents::$onAfterWriteFired);
+        $this->assertEqual(1, ModelWriterTestExtensionForEvents::$onBeforeDBWriterFired);
+        $this->assertEqual(1, ModelWriterTestExtensionForEvents::$gatherDataToWrite);
     }
 
     /**
@@ -222,6 +222,8 @@ class MockUpdatableGObject extends gObject {
     public $checkLogic = false;
     protected $calledPermissions = array();
     public $validate = true;
+
+    static $history = false;
 
     public function can($permission) {
         $this->calledPermissions[] = strtolower($permission);

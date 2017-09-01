@@ -127,7 +127,9 @@ class FileUploadRenderData extends FormFieldRenderData {
                 "icon128" => $this->upload->getIcon(128),
                 "icon128_2x" => $this->upload->getIcon(128, true),
                 "icon" => $this->upload->getIcon(),
-                "hash"  => $this->upload->md5
+                "hash"  => $this->upload->md5,
+                "formattedSize" => $this->upload->formattedFileSize(),
+                "size"          => $this->upload->filesize()
             );
         } else {
             $data["upload"] = null;

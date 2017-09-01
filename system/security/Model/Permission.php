@@ -17,6 +17,7 @@
  * @property string name
  * @property int invert_groups
  * @property ManyMany_DataObjectSet groups
+ * @method ManyMany_DataObjectSet Groups($filter = null, $sort = null)
  */
 class Permission extends DataObject
 {
@@ -163,66 +164,22 @@ class Permission extends DataObject
      *
      * @param string $permissionCode
      * @return bool
+     * @deprecated user $user->hasPermission or $request->hasPermission instead
      */
     public static function check($permissionCode)
     {
-        $userId =  member::$loggedIn ? member::$loggedIn->id : 0;
-        $permissionCode = strtolower($permissionCode);
-
         if (!defined("SQL_INIT"))
             return true;
 
-        if (isset(self::$perm_cache[$userId][$permissionCode]))
-            return self::$perm_cache[$userId][$permissionCode];
-
-        if ($permissionCode != "superadmin" && self::check("superadmin")) {
-            return true;
+        if(Member::$loggedIn != null) {
+            return Member::$loggedIn->hasPermissions($permissionCode);
         }
 
         if (RegexpUtil::isNumber($permissionCode)) {
-            return self::right($permissionCode);
-        } else {
-            if (isset(self::$providedPermissions[$permissionCode])) {
-                /** @var Permission $data */
-                if ($data = DataObject::get_one("Permission", array("name" => array("LIKE", $permissionCode)))) {
-                    self::$perm_cache[$userId][$permissionCode] = $data->hasPermission();
-                    $data->forModel = "permission";
-                    if ($data->type != "groups") {
-                        $data->writeToDB(false, true, 2, false, false);
-                    }
-                    return self::$perm_cache[$userId][$permissionCode];
-                } else {
-
-                    if (isset(self::$providedPermissions[$permissionCode]["default"]["inherit"]) && strtolower(self::$providedPermissions[$permissionCode]["default"]["inherit"]) != $permissionCode) {
-                        if ($data = self::forceExisting(self::$providedPermissions[$permissionCode]["default"]["inherit"])) {
-                            $perm = clone $data;
-                            $perm->consolidate();
-                            $perm->id = 0;
-                            $perm->parentid = 0;
-                            $perm->name = $permissionCode;
-                            $data->forModel = "permission";
-                            self::$perm_cache[$userId][$permissionCode] = $perm->hasPermission();
-                            $perm->writeToDB(true, true, 2);
-                            return self::$perm_cache[$userId][$permissionCode];
-                        }
-                    }
-                    $perm = new Permission(array_merge(self::$providedPermissions[$permissionCode]["default"], array("name" => $permissionCode)));
-
-                    if (isset(self::$providedPermissions[$permissionCode]["default"]["type"]))
-                        $perm->setType(self::$providedPermissions[$permissionCode]["default"]["type"]);
-
-                    self::$perm_cache[$userId][$permissionCode] = $perm->hasPermission();
-                    $perm->writeToDB(true, true, 2, false, false);
-                    return self::$perm_cache[$userId][$permissionCode];
-                }
-            } else {
-                if (Member::Admin()) {
-                    return true; // soft allow
-                }
-
-                return false; // soft deny
-            }
+            return $permissionCode < 2;
         }
+
+        return false;
     }
 
     /**
@@ -467,40 +424,14 @@ class Permission extends DataObject
         $this->setField("type", $type);
     }
 
-    /**
-     * checks whether a user have the rights for an action
-     * @param int $needed rights
-     * @return bool
-     */
-    static function right($needed)
-    {
-        if (!defined("SQL_INIT"))
-            return true;
-
-        if ($needed < 2) {
-            return true;
-        }
-
-        if ($needed < 7) {
-            return (member::$groupType > 0);
-        }
-
-        if ($needed < 10) {
-            return (member::$groupType > 1);
-        }
-
-        if ($needed == 10) {
-            return Permission::check("superadmin");
-        }
-    }
-
 
     /**
      * checks if the current user has the permission to do this
      *
+     * @param User $user
      * @return bool
      */
-    public function hasPermission()
+    public function hasPermission($user = null)
     {
         if (!defined("SQL_INIT"))
             return true;
@@ -509,12 +440,20 @@ class Permission extends DataObject
             return true;
         }
 
+        if(!isset($user)) {
+            if(!isset(Member::$loggedIn)) {
+                return false;
+            }
+
+            $user = Member::$loggedIn;
+        }
+
         if ($this->type == "users") {
-            return (member::$groupType > 0);
+            return ($user->getGroupType() > 0);
         }
 
         if ($this->type == "admins") {
-            return (member::$groupType > 1);
+            return ($user->getGroupType() > 1);
         }
 
         if ($this->type == "password") {
@@ -524,13 +463,13 @@ class Permission extends DataObject
         if ($this->type == "groups") {
             $groups = $this->Groups()->fieldToArray("id");
             if ($this->invert_groups) {
-                if (count(array_intersect($groups, member::groupids())) > 0) {
+                if (count(array_intersect($groups, $user->groupIds())) > 0) {
                     return false;
                 } else {
                     return true;
                 }
             } else {
-                if (count(array_intersect($groups, member::groupids())) > 0) {
+                if (count(array_intersect($groups, $user->groupIds())) > 0) {
                     return true;
                 } else {
                     return false;

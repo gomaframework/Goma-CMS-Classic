@@ -139,13 +139,13 @@ class AuthenticationService extends gObject {
         if($userObject = $this->resolveUser($user, $pwd)) {
             if ($userObject->status == 1 || $userObject->status == $allowStatus) {
 
-                DefaultPermission::forceGroups($userObject);
+                DefaultPermission::forceGroupType($userObject);
 
                 $authentication = new UserAuthentication(array(
                     "token"  => isset($sessionId) ? $sessionId : GlobalSessionManager::globalSession()->getId(),
                     "userid" => $userObject->id
                 ));
-                Core::repository()->add($authentication, true);
+                $authentication->writeToDB(true, true);
 
                 $userObject->performLogin();
 

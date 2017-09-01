@@ -11,8 +11,8 @@ defined("IN_GOMA") OR die();
  *
  * @version    1.0
  */
-
-class HistoryWriter extends Extension {
+class HistoryWriter extends Extension
+{
 
     /**
      * indicates whether history is disabled.
@@ -22,14 +22,16 @@ class HistoryWriter extends Extension {
     /**
      * disables history until it is reenabled.
      */
-    public static function disableHistory() {
+    public static function disableHistory()
+    {
         self::$disabled = true;
     }
 
     /**
      * reenables history.
      */
-    public static function enableHistory() {
+    public static function enableHistory()
+    {
         self::$disabled = false;
     }
 
@@ -37,18 +39,19 @@ class HistoryWriter extends Extension {
     /**
      * called after write.
      */
-    public function onAfterWrite() {
+    public function onAfterWrite()
+    {
         /** @var ModelWriter $owner */
         $owner = $this->getOwner();
 
-        if (!self::$disabled && StaticsManager::getStatic($owner->getModel()->classname, "history")) {
+        if (!self::$disabled && StaticsManager::getStatic($owner->getModel()->classname, "history") !== false) {
 
             $command = $owner->getCommandType();
             $writeType = $owner->getWriteType();
 
             $history = History::push($owner->getModel()->classname, $owner->getOldId(), $owner->getModel()->versionid, $owner->getModel()->id, $command, $writeType);
 
-            if(gObject::method_exists($owner->getModel(), "historyCreated")) {
+            if (gObject::method_exists($owner->getModel(), "historyCreated")) {
                 $owner->getModel()->historyCreated($history, $owner);
             }
             $owner->getModel()->callExtending("historyCreated", $history, $owner);
@@ -57,4 +60,5 @@ class HistoryWriter extends Extension {
         unset($manipulation);
     }
 }
+
 gObject::extend("ModelWriter", "HistoryWriter");

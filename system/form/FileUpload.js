@@ -189,7 +189,7 @@ function FileUpload(form, field, formelement, url, size, types) {
 					$this.fieldElement.find(".upload-link").attr("href", data.file.path);
 				else
 					$this.fieldElement.find(".upload-link").removeAttr("href");
-				$this.fieldElement.find(".filename").html(data.file.name);
+				$this.fieldElement.find(".filename").html(data.file.name + " ("+data.file.formattedSize+")");
 				$this.destInput.val(data.file.realpath);
 				$this.fieldElement.find(".image-area").addClass("with-upload");
 

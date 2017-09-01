@@ -2,12 +2,12 @@
 defined("IN_GOMA") OR die();
 
 /**
- * Describe your class
+ * ChunkedUploadHandler allows to serve chunked uploads as implemented in ajaxupload.js.
  *
  * @package Goma
  *
  * @author Goma-Team
- * @copyright 2016 Goma-Team
+ * @copyright 2017 Goma-Team
  * @license GNU Lesser General Public License, version 3; see "LICENSE.txt"
  *
  * @version 1.0
@@ -37,6 +37,7 @@ class ChunkedUploadHandler {
 
     /**
      * chunked upload.
+     *
      * @param Request $request
      * @param string $name
      * @param string $key
@@ -52,7 +53,7 @@ class ChunkedUploadHandler {
         }
 
         foreach(array("x-file-name", "x-file-size", "content-range") as $header) {
-            if(!$request->getHeader($header)) {
+            if($request->getHeader($header) === null || $request->getHeader($header) === "") {
                 throw new BadRequestException("Header " . $header . " required");
             }
         }

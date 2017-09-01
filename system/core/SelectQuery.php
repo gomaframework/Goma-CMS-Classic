@@ -244,13 +244,13 @@ class SelectQuery {
 	}
 
 	/**
-	 * @param string $field
+	 * @param string|array $field
 	 * @param string|array $type
 	 * @param int $order
 	 * @return $this
 	 */
 	public function sort($field, $type = "ASC", $order = 0) {
-		if($field == "rand") {
+		if($this->isRand($field)) {
 			$this->orderByRand = true;
 			return $this;
 		}
@@ -317,6 +317,28 @@ class SelectQuery {
 
 		return $this;
 	}
+
+    /**
+     * @param string|array $field
+     * @return bool
+     */
+	protected function isRand($field) {
+	    if(is_array($field) && isset($field[0]) && count($field) == 1) {
+	        return $this->isRand($field[0]);
+        }
+
+        if(is_string($field)) {
+            if (strpos($field, "(") !== false) {
+                $field = substr($field, 0, strpos($field, "("));
+            }
+
+            if (strtolower(trim($field)) == "rand") {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 	/**
 	 * adds group-by
@@ -716,7 +738,7 @@ class SelectQuery {
 			$sql .= " ORDER BY ";
 			$i = 0;
 			if($this->orderByRand) {
-				$sql .= "RAND(), ";
+				$sql .= "RAND()";
 				$i++;
 			}
 

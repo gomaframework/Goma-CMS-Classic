@@ -292,6 +292,45 @@ class ViewAccessableDataTest extends GomaUnitTest implements TestAble {
 			"classname" => "VMTestGeneration"
 		)));
 	}
+
+    /**
+     * checks if isOffsetMethod returns false correctly for getActions.
+     *
+     * 1. Create ViewAccessableData $view
+     * 2. Assert that method_exists($view, "getActions") returns true
+     * 3. Assert that $view->isOffsetMethod("getactions") is false
+     */
+	public function testIsOffsetMethod() {
+        $view = new ViewAccessableData();
+
+        $this->assertTrue(method_exists($view, "getActions"));
+
+        $reflectionMethod = new ReflectionMethod(ViewAccessableData::class, "isOffsetMethod");
+        $reflectionMethod->setAccessible(true);
+        $this->assertFalse($reflectionMethod->invoke($view, "getActions"));
+    }
+
+    /**
+     * tests if getter are XSS-Protected.
+     *
+     * 1. Create TestViewClassMethod $test
+     * 2. Assert that $test->getTemplateVar("MyLittleXSSValue") is equal to htmlentities("<xss>")
+     */
+    public function testGetterXSSProtection() {
+        $test = new TestViewClassMethod();
+        $this->assertEqual(htmlentities("<xss>"), $test->getTemplateVar("MyLittleXSSValue"));
+    }
+
+    /**
+     * tests if getter are only xss-protected in templates
+     *
+     * 1. Create TestViewClassMethod $test
+     * 2. Assert that $test->MyLittleXSSValue is equal to "<xss>"
+     */
+    public function testGetterXSSProtectionOnlyTemplate() {
+        $test = new TestViewClassMethod();
+        $this->assertEqual("<xss>", $test->MyLittleXSSValue);
+    }
 }
 
 class VMTestGeneration {
@@ -336,6 +375,10 @@ class TestViewClassMethod extends ViewAccessableData {
 	public function getMyLittleTest() {
 		return "val";
 	}
+
+	public function myLittleXSSValue() {
+	    return "<xss>";
+    }
 }
 
 class TestViewClassExtendedProperty extends Extension {

@@ -837,20 +837,22 @@ class Resources extends gObject {
 		return CSSMin::minify($css);
 	}
 
-	/**
-	 * checks if a file exists
-	 * for optional further caching
-	 *
-	 */
+    /**
+     * checks if a file exists
+     * for optional further caching
+     * @param string $file
+     * @return bool
+     */
 	public static function file_exists($file) {
-
 		if (isset($_GET["flush"]) && self::$cacheUpdated === false) {
 			gObject::instance("Resources")->generateClassInfo();
 			ClassInfo::write();
 		}
 
 		if (defined("CLASS_INFO_LOADED")) {
-			if (!strpos($file, "../") && preg_match('/\.(js|css|html)$/i', $file) && (substr($file, 0, strlen(SYSTEM_TPL_PATH)) == SYSTEM_TPL_PATH || substr($file, 0, strlen(APPLICATION_TPL_PATH)) == APPLICATION_TPL_PATH)) {
+			if (!strpos($file, "../") && preg_match('/\.(js|css|html)$/i', $file) &&
+                (substr($file, 0, strlen(SYSTEM_TPL_PATH)) == SYSTEM_TPL_PATH ||
+                    substr($file, 0, strlen(APPLICATION_TPL_PATH)) == APPLICATION_TPL_PATH)) {
 				return isset(ClassInfo::$class_info["resources"]["files"][$file]);
 			}
 

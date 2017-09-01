@@ -113,20 +113,27 @@ class Request extends gObject {
      */
     protected $requestController;
 
-	/**
-	 * @param string $method
-	 * @param string $url
-	 * @param array $get_params
-	 * @param array $post_params
-	 * @param array $headers
-	 * @param string $serverName
-	 * @param int $serverPort
-	 * @param bool $isSSL
-	 * @param string $remoteAddr
-	 */
+    /**
+     * @var User|null
+     */
+    protected $user;
+
+    /**
+     * @param string $method
+     * @param string $url
+     * @param array $get_params
+     * @param array $post_params
+     * @param array $headers
+     * @param string $serverName
+     * @param int $serverPort
+     * @param bool $isSSL
+     * @param string $remoteAddr
+     * @param User|null $user
+     */
 	public function __construct(
 		$method, $url, $get_params = array(), $post_params = array(), $headers = array(),
-		$serverName = null, $serverPort = null, $isSSL = false, $remoteAddr = null
+		$serverName = null, $serverPort = null, $isSSL = false, $remoteAddr = null,
+        $user = null
 	) {
 		parent::__construct();
 
@@ -141,6 +148,7 @@ class Request extends gObject {
 		$this -> remoteAddr = isset($remoteAddr) ? $remoteAddr :
 			(isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : "");
 		$this -> isSSL = $isSSL;
+		$this->user = $user;
 	}
 
 	/**
@@ -665,4 +673,46 @@ class Request extends gObject {
 		$this->phpInputFile = $phpInputFile;
 		return $this;
 	}
+
+    /**
+     * returns full path with appended query-string.
+     * returns url in form: ROOT_PATH . BASE_SCRIPT . $this->url . URLEND . "?" . $this->queryString();
+     */
+	public function getFullPathWithQueryString() {
+        return ROOT_PATH . BASE_SCRIPT . $this->url . URLEND . "?" . $this->queryString();
+    }
+
+    /**
+     * @return null|User
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * @param null|User $user
+     * @return $this
+     */
+    public function setUser($user)
+    {
+        $this->user = $user;
+        return $this;
+    }
+
+    /**
+     * @param string|int $permission
+     * @return bool
+     */
+    public function userHasPermission($permission) {
+        if($this->getUser() != null) {
+            return $this->getUser()->hasPermissions($permission);
+        }
+
+        if(RegexpUtil::isNumber($permission)) {
+            return (int) $permission < 2;
+        }
+
+        return false;
+    }
 }

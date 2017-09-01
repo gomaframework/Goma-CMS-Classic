@@ -77,7 +77,8 @@ class ImageUploadFieldTest extends \GomaUnitTest
             $response = $field->handleRequest($request);
 
             $this->assertInstanceOf(\JSONResponseBody::class, $response->getBody());
-            $this->assertTrue(isset($response->getBody()->getBody()["error"]));
+            $body = $response->getBody()->getBody();
+            $this->assertTrue(isset($body["error"]));
             $this->assertEqual(\InvalidArgumentException::class, $response->getBody()->getBody()["class"]);
         } finally {
             if($imageModel) {
@@ -101,7 +102,8 @@ class ImageUploadFieldTest extends \GomaUnitTest
             $response = $field->handleRequest($request);
 
             $this->assertInstanceOf(\JSONResponseBody::class, $response->getBody());
-            $this->assertTrue(isset($response->getBody()->getBody()["error"]));
+            $body = $response->getBody()->getBody();
+            $this->assertTrue(isset($body["error"]));
             $this->assertEqual(\InvalidArgumentException::class, $response->getBody()->getBody()["class"]);
         } finally {
             if($imageModel) {
@@ -222,7 +224,8 @@ class ImageUploadFieldTest extends \GomaUnitTest
         $response = $field->handleRequest($request);
 
         $this->assertInstanceOf(\JSONResponseBody::class, $response->getBody());
-        $this->assertTrue(isset($response->getBody()->getBody()["error"]));
+        $body = $response->getBody()->getBody();
+        $this->assertTrue(isset($body["error"]));
         $this->assertEqual(\BadRequestException::class, $response->getBody()->getBody()["class"]);
     }
 
@@ -236,7 +239,8 @@ class ImageUploadFieldTest extends \GomaUnitTest
         $response = $field->handleRequest($request);
 
         $this->assertInstanceOf(\JSONResponseBody::class, $response->getBody());
-        $this->assertTrue(isset($response->getBody()->getBody()["error"]));
+        $body = $response->getBody()->getBody();
+        $this->assertTrue(isset($body["error"]));
         $this->assertEqual(\InvalidArgumentException::class, $response->getBody()->getBody()["class"]);
     }
 }

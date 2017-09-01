@@ -999,7 +999,7 @@ class StoreConnectionException extends Exception {
     /**
      * constructor.
      */
-    public function __construct($m = "", $code = ExceptionManager::STORE_CONNECTION_FAIL, Exception $previous = null) {
-        parent::__construct($m, $code, $previous);
+    public function __construct($message = "", $code = ExceptionManager::STORE_CONNECTION_FAIL, Exception $previous = null) {
+        parent::__construct($message, $code, $previous);
     }
 }

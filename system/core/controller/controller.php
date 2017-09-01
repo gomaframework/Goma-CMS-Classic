@@ -386,15 +386,13 @@ class Controller extends RequestHandler
     /**
      * generates a form
      *
-     * @name form
-     * @access public
      * @param string $name
      * @param ViewAccessableData|null $model
      * @param array $fields
      * @param bool $edit if calling getEditForm or getForm on model
      * @param string $submission
      * @param bool $disabled
-     * @return string
+     * @return GomaFormResponse
      */
     public function form($name = null, $model = null, $fields = array(), $edit = false, $submission = null, $disabled = false)
     {
@@ -806,28 +804,19 @@ class Controller extends RequestHandler
         self::$successCallback = $successCallback;
         self::$errorCallback = $errorCallback;
 
-        $data = $form->render();
-        $data->addRenderFunction(
-            function($responseString, $data){
-                /** @var GomaFormResponse $data */
-                if(!$data->isFullPage()) {
-                    if(isset($this->getRequest()->get_params["ajaxfy"])) {
-                        $data->setIsFullPage(true);
-                    }
-
-                    return $this->showWithDialog($responseString, lang("confirm", "Confirm..."));
-                }
-            });
+        $data = $form->renderWith(
+            "framework/dialog.html",
+            new ViewAccessableData(array("title" => lang("confirm", "Confirm..."))),
+            "content"
+        )->setIsFullPage(isset($this->getRequest()->get_params["ajaxfy"]));
         return $data;
     }
 
     private static $errorCallback;
     private static $successCallback;
 
-
     /**
      * @internal
-     * @return bool
      */
     public function _confirmSuccess() {
         return call_user_func_array(self::$successCallback, array());
@@ -835,10 +824,15 @@ class Controller extends RequestHandler
 
     /**
      * @internal
-     * @return bool
      */
     public function _confirmCancel() {
-        return self::$errorCallback ? call_user_func_array(self::$errorCallback, array()) : $this->redirectback();
+        if(self::$errorCallback) {
+            return call_user_func_array(self::$errorCallback, array());
+        } else if(!$this->request->is_ajax()) {
+            return $this->redirectback();
+        }
+
+        return AjaxResponse::create();
     }
 
     /**
@@ -900,37 +894,15 @@ class Controller extends RequestHandler
         self::$successPromptCallback = $successCallback;
         self::$errorCallback = $errorCallback;
 
-        $data = $form->render();
-        $data->addRenderFunction(
-            function($responseString, $data){
-                /** @var GomaFormResponse $data */
-                if(!$data->isFullPage()) {
-                    if(isset($this->getRequest()->get_params["ajaxfy"])) {
-                        $data->setIsFullPage(true);
-                    }
+        $response = $form
+            ->renderWith(
+                "framework/dialog.html",
+                new ViewAccessableData(array("title" => lang("prompt", "Insert Text..."))),
+                "content"
+            );
 
-                    return $this->showWithDialog($responseString, lang("prompt", "Insert Text..."));
-                }
-            });
-        return $data;
-    }
-
-    /**
-     * catches problem when $data is not a string.
-     *
-     * @param string|object $data
-     * @param string $title
-     * @return string
-     */
-    protected function showWithDialog($data, $title) {
-        if(!is_string($data)) {
-            return $data;
-        }
-
-        $view = new ViewAccessableData();
-        return $view->customise(
-            array("content" => $data, "title" => $title)
-        )->renderWith("framework/dialog.html");
+        $response->setIsFullPage(isset($this->getRequest()->get_params["ajaxfy"]));;
+        return $response;
     }
 
     /**

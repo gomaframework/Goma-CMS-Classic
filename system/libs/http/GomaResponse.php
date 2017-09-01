@@ -2,12 +2,22 @@
 defined("IN_GOMA") OR die();
 
 /**
- * Includes information how to treat this request.
+ * GomaResponse is the BaseClass of all Response-Objects. It handlers all response-specific parts like
+ * * status code
+ * * headers
+ * * body
+ *
+ * There is also the possibility to give parent controllers the information how to treat this request.
+ * * isFullPage defines, that this request should not be packed within other's template, since it is finalized
+ *
+ * There are some static functions to generate some usecases of GomaResponse, for example
+ * * redirect($url, $permanent = false) creates a redirect-response. permanent defines if 301 or 302
  *
  * @package Goma
  *
  * @author Goma-Team
  * @copyright 2016 Goma-Team
+ * @license GNU Lesser General Public License, version 3; see "LICENSE.txt"
  *
  * @version 1.0
  */
@@ -365,8 +375,13 @@ class GomaResponse extends gObject {
         $data = ob_get_contents();
         ob_end_clean();
 
-        if($data != null && !DEV_MODE) {
-            throw new LogicException("There should not be any output than body.");
+        if($data != null) {
+            $outputException = new OutputException("There should not be any output than body.", $data);
+            if(DEV_MODE) {
+                log_exception($outputException);
+            } else {
+                throw $outputException;
+            }
         }
 
         ob_start("ob_gzhandler");
@@ -413,6 +428,7 @@ class GomaResponse extends gObject {
     }
 
     /**
+     * @deprecated
      * @return bool
      */
     public function getShouldServe()
@@ -443,6 +459,9 @@ class GomaResponse extends gObject {
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getRawBody() {
         return $this->getBody()->getBody();
     }

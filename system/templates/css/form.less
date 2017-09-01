@@ -65,6 +65,10 @@ fieldset {
       border: 0;
     }
   }
+  .select-wrapper.disabled {
+    border: 0.063em solid #aaa;
+    background: #eee none;
+  }
   &.textarea, &.htmleditor, &.bbcodeeditor {
     textarea {
       max-width: 100%;
@@ -109,8 +113,13 @@ fieldset, fieldset.hidden {
   padding: 0;
 
   > legend {
-    max-width: 11em;
+    max-width: 12em;
     word-wrap: break-word;
+    word-break: break-all;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
     float: left;
     display: block;
     margin-top: 0.5em;
@@ -142,14 +151,19 @@ fieldset, fieldset.hidden {
     margin-left: 0;
   }
 }
+fieldset.form_field > .info_field {
+  margin-left: 0;
+}
 
 /* object radio button */
-.inputHolder fieldset > .form_field, fieldset .inputHolder {
+.inputHolder fieldset > .form_field, fieldset .form_field .inputHolder, fieldset .inputHolder {
   margin-left: 0 !important;
+  margin-top: 0;
 }
 
 .form_field .inputHolder {
-  margin-left: 18.5em;
+  margin-left: 17em;
+  margin-top: -2em;
 }
 
 .cke_browser_webkit {

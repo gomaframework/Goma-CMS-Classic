@@ -61,7 +61,7 @@ class ProfileController extends FrontedController {
 		Core::setTitle(lang("edit_profile"));
 
 		$controller = new EditProfileController();
-		$controller->setModelInst(member::$loggedIn);
+		$controller->setModelInst($this->request->getUser());
 		return $controller->handleRequest($this->request, true);
 	}
 

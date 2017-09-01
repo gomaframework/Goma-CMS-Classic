@@ -1,11 +1,13 @@
 <?php
+use Goma\Form\Exception\DuplicateActionException;
+
 defined("IN_GOMA") OR die();
 
 loadlang('form');
 
 require_once (FRAMEWORK_ROOT . "form/FormField.php");
 require_once (FRAMEWORK_ROOT . "libs/html/HTMLNode.php");
-require_once (FRAMEWORK_ROOT . "form/FormAction.php");
+require_once(FRAMEWORK_ROOT . "form/actions/FormAction.php");
 require_once (FRAMEWORK_ROOT . "form/Hiddenfield.php");
 
 /**
@@ -357,7 +359,7 @@ class Form extends AbstractFormComponentWithChildren {
 	 * @param string|ViewAccessableData $model
 	 * @param string $formName
 	 * @param string|null $inExpansion
-	 * @return GomaResponse
+	 * @return GomaFormResponse
 	 */
 	public function renderWith($view, $model = null, $formName = "form", $inExpansion = null) {
 		return GomaFormResponse::create(null, $this)->setRenderWith($view, $model, $formName, $inExpansion);
@@ -365,7 +367,7 @@ class Form extends AbstractFormComponentWithChildren {
 
 	/**
 	 * @param string $content
-	 * @return GomaResponse
+	 * @return GomaFormResponse
 	 */
 	public function renderPrependString($content) {
 		return GomaFormResponse::create(null, $this)->prependContent($content);
@@ -696,9 +698,75 @@ class Form extends AbstractFormComponentWithChildren {
 		return false;
 	}
 
-	/**
-	 * @return GomaFormResponse|string|mixed
-	 */
+    /**
+     * Submits the form with the post-parameters provided.
+     * This can be used to manually submit the form with some manual parameters.
+     *
+     * @param array $post_params
+     * @return Form|GomaFormResponse|mixed|string
+     */
+	public function submitWithPostParamsAndThrow($post_params) {
+	    $oldRequest = isset($this->request) ? clone $this->request : null;
+	    if(isset($this->request)) {
+	        $this->request->post_params = $post_params;
+        } else {
+	        $this->request = new Request("post", "", array(), $post_params);
+        }
+
+        try {
+	        if(!$this->session->hasKey(self::SESSION_PREFIX . "." . strtolower($this->name))) {
+	            $this->renderForm();
+            }
+
+            return $this->submitForm();
+        } finally {
+	        $this->request = $oldRequest;
+        }
+    }
+
+    /**
+     * Submits the form with given request-data.
+     * This will throw an exception if something did not work out.
+     *
+     * @param bool $validateUrl
+     * @return Form|GomaFormResponse|mixed|string
+     * @throws FormNotSubmittedException
+     */
+    protected function submitForm($validateUrl = false) {
+        /** @var Form $data */
+        $data = $this->session->get(self::SESSION_PREFIX . "." . strtolower($this->name));
+        if($validateUrl && $data->url != $this->url) {
+            throw new FormNotSubmittedException("Form not submitted due to url mismatch.");
+        }
+
+        $data->request = $this->request;
+        $data->submitRequest = $this->submitRequest;
+        $data->secretKey = $this->secretKey;
+        $data->state = $this->state;
+
+        $this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
+
+        $content = $data->handleSubmit();
+
+        /** @var Form|GomaFormResponse $content */
+        if(is_a($content, "Form")) {
+            $content = $this->handleNextForm($content->render());
+        } else if(is_a($content, "GomaFormResponse")) {
+            /** @var GomaFormResponse $content */
+            $content = $this->handleNextForm($content);
+        }
+
+        return $content;
+    }
+
+    /**
+     * This method is called when a submission was detected.
+     * It handles external field actions.
+     * It recreated the secret-key if was set, since this should only called once per request.
+     * It tries to submit the form with the submitForm-method and catches its exceptions.
+     *
+     * @return GomaFormResponse|mixed|string
+     */
 	public function trySubmit() {
 		foreach($this->request->post_params as $key => $value) {
 			if(preg_match("/^field_action_([a-zA-Z0-9_]+)_([a-zA-Z_0-9]+)$/", $key, $matches)) {
@@ -714,31 +782,7 @@ class Form extends AbstractFormComponentWithChildren {
 		}
 
 		try {
-			/** @var Form $data */
-			$data = $this->session->get(self::SESSION_PREFIX . "." . strtolower($this->name));
-			if($data->url != $this->url) {
-				throw new FormNotSubmittedException();
-			}
-
-			$data->request = $this->request;
-			$data->submitRequest = $this->submitRequest;
-			$data->secretKey = $this->secretKey;
-			$data->state = $this->state;
-
-			$this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
-
-
-            $content = $data->handleSubmit();
-
-			/** @var Form|GomaFormResponse $content */
-			if(is_a($content, "Form")) {
-				$content = $this->handleNextForm($content->render());
-			} else if(is_a($content, "GomaFormResponse")) {
-				/** @var GomaFormResponse $content */
-				$content = $this->handleNextForm($content);
-			}
-
-			return $content;
+			return $this->submitForm(true);
 		} catch(Exception $e) {
 			if (is_a($e, FormNotValidException::class)) {
 				/** @var FormNotValidException $e */
@@ -832,7 +876,6 @@ class Form extends AbstractFormComponentWithChildren {
 			));
 		}
 	}
-
 
 	/**
 	 * @param bool $validate if to validate result
@@ -1007,6 +1050,10 @@ class Form extends AbstractFormComponentWithChildren {
 	 * @param FormAction $action
 	 */
 	public function addAction($action) {
+	    if(isset($this->actions[$action->name])) {
+	        throw new DuplicateActionException("Action is already existing in form. Please call removeAction first.");
+        }
+
 		$action->setForm($this);
 		$this->actions[$action->name] = array(
 			"field" => $action,

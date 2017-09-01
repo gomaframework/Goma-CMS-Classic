@@ -40,7 +40,7 @@ class TreeServer extends RequestHandler {
 
 		GlobalSessionManager::globalSession()->set("treestatus_" . $name . "_" . $id, false);
 		if($this->getRequest()->is_ajax()) {
-			return ROOT_PATH . "treeserver/setExpanded/".$name."/".$id."/?redirect=".urlencode(Core::activeURL());
+			return ROOT_PATH . "treeserver/setExpanded/".$name."/".$id."/?redirect=".urlencode($this->getRedirectOrReferer());
 		} else {
 			return GomaResponse::redirect($this->getRequest()->get_params["redirect"]);
 		}
@@ -55,29 +55,46 @@ class TreeServer extends RequestHandler {
 
 		GlobalSessionManager::globalSession()->set("treestatus_" . $name . "_" . $id, true);
 		if($this->getRequest()->is_ajax()) {
-			return ROOT_PATH . "treeserver/setCollapsed/".$name."/".$id."/?redirect=".urlencode(Core::activeURL());;
+			return ROOT_PATH . "treeserver/setCollapsed/".$name."/".$id."/?redirect=".urlencode($this->getRedirectOrReferer());
 		} else {
 			return GomaResponse::redirect($this->getRequest()->get_params["redirect"]);
 		}
 	}
-	
+
+    /**
+     * returns prioritized urls, if set:
+     * 1. redirect
+     * 2. http_referer
+     * 3. full url
+     * @return string
+     */
+	protected function getRedirectOrReferer() {
+	    if($this->getParam("redirect")) {
+            $this->getParam("redirect");
+        }
+
+        if($this->request->getHeader("http_referer")) {
+            return $this->request->getHeader("http_referer");
+        }
+
+        return $this->request->getFullPathWithQueryString();
+    }
+
 	/**
 	 * gets a subtree
-	 *@name getSubtree
-	 *@access public
 	*/
 	public function getSubtree() {
 		$id = $this->getParam("id");
 		$name = $this->getParam("name");
 		$href = $this->getParam("href");
 		$getinactive = $this->getParam("getinactive");
-		if(Core::is_ajax()) {
+		if($this->request->is_ajax()) {
 			$this->setExpanded();
 			$data = gObject::instance($name)->renderTree($href, 0,$id, $getinactive);
 			return $data;
 		} else {
 			$this->setExpanded();
-			HTTPResponse::redirect($_GET["redirect"]);
+			return GomaResponse::redirect($this->getRedirectOrReferer());
 		}
 	}
 	

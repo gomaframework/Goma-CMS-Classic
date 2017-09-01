@@ -632,7 +632,7 @@ class ClassManifest {
 if(!function_exists("spl_autoload_register")) {
 	$GLOBALS["__autoload_stack"] = array();
 	function spl_autoload_register($callback, $throw = false, $preprend = false) {
-		if($prepend)
+		if($preprend)
 			$GLOBALS["__autoload_stack"] = array_merge(array($callback), $GLOBALS["__autoload_stack"]);
 		else
 			$GLOBALS["__autoload_stack"] = array_merge($GLOBALS["__autoload_stack"], array($callback));

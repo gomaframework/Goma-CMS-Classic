@@ -632,4 +632,34 @@ class ImageUploads extends Uploads {
             }
         }
     }
+
+    /**
+     * calculates if image in given format can be generated and this image
+     * has enough pixels to generate that format without upscaling.
+     * Examples:
+     *
+     * Original image: 1000 * 1000px, requirement is 1000 * 50 -> true
+     * Original image: 1000 * 200px, requirement is 1000 * 300 -> false
+     * Original image: 1000 * 200px, requirement is 500 * 150 -> true
+     * Original image: 200 * 1000px, requirement is 150 * 500 -> true
+     * Original image: 200 * 1000px, requirement is 201 * 500 -> false
+     *
+     * @param int $width
+     * @param int $height
+     * @return bool
+     */
+    public function hasMinimumImageSizeWithExactFormat($width, $height)
+    {
+        if($width > $this->width() || $height > $this->height()) {
+            return false;
+        }
+
+        $pot = $width / $this->width();
+        $heightAfterCalculate = $this->height() * $pot;
+
+        $potHeight = $height / $this->height();
+        $widthAfterCalculate = $this->width() * $potHeight;
+
+        return ($heightAfterCalculate >= $height || $widthAfterCalculate >= $width);
+    }
 }

@@ -79,7 +79,7 @@ class ModelInfoGenerator {
             // hack to not break current Goma-CMS Build
             if((
                     in_array($name, array("long", "order", "select", "where", "group", "bool", "int")) ||
-                    in_array($name, ViewAccessableData::$notViewableMethods) ||
+                    !ViewAccessableData::isViewableMethod($name) ||
                     !preg_match('/^[a-zA-Z_][a-zA-Z_0-9]+$/', $name)
                 )
                 &&

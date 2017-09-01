@@ -336,9 +336,6 @@ AjaxUpload.prototype = {
 
     /**
      * called when request succeeded
-     *
-     *@name _success
-     *@param response
      */
     _success: function(response, fileIndex, upload) {
         this.done(response, fileIndex, upload);
@@ -361,7 +358,6 @@ AjaxUpload.prototype = {
      * @param files
      */
     transferAjax: function(files) {
-        var _this = this;
         if(!this.multiple) {
             if(files.length > 1) {
                 this.errTooManyFiles();
@@ -401,15 +397,12 @@ AjaxUpload.prototype = {
 
     /**
      * generates the XML-HTTP-Request
-     *
-     *@name generateXHR
-     *@access public
      */
     generateXHR: function(i, file) {
         var _this = this;
 
         var customUrl = this.ajaxurl;
-        if(customUrl.indexOf("?") == -1) {
+        if(customUrl.indexOf("?") === -1) {
             customUrl += "?slice=" + randomString(10);
         } else {
             customUrl += "&slice=" + randomString(10);
@@ -703,6 +696,14 @@ slicedAjaxUpload.prototype = {
                 done: false
             });
         }
+
+        if(this._slices.length === 0) {
+            this._slices.push({
+                start: 0,
+                end: this.file.size,
+                done: false
+            });
+        }
     },
 
     initSliceMethod: function() {
@@ -788,7 +789,7 @@ slicedAjaxUpload.prototype = {
                 }
             }.bind(xhr);
 
-            var chunk = this._slices[next].start == 0 && this._slices[next].end == this.file.size ? this.file :
+            var chunk = this._slices[next].start === 0 && this._slices[next].end === this.file.size ? this.file :
                 this.file[this.slice_method](this._slices[next].start, this._slices[next].end);
 
             if (!this.usePut) {

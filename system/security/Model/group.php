@@ -25,7 +25,7 @@ defined('IN_GOMA') OR die();
  * @license        GNU Lesser General Public License, version 3; see "LICENSE.txt"
  * @version        1.2.2
  */
-class Group extends DataObject implements HistoryData, PermProvider
+class Group extends DataObject implements PermProvider
 {
     /**
      * name of this model
@@ -43,12 +43,11 @@ class Group extends DataObject implements HistoryData, PermProvider
      * @var array
      */
     static $db = array(
-        "name"              => 'varchar(100)',
-        "type"              => 'enum("0", "1", "2")',
-        "usergroup"         => "int(1)",
+        "name" => 'varchar(100)',
+        "type" => 'enum("0", "1", "2")',
+        "usergroup" => "int(1)",
         "groupnotification" => "varchar(200)"
     );
-
 
     /**
      * fields, whch are searchable
@@ -61,12 +60,16 @@ class Group extends DataObject implements HistoryData, PermProvider
      * belongs many-many
      */
     static $belongs_many_many = array(
-        "users"       => "user",
+        "users" => "user",
         "permissions" => "Permission"
     );
 
     static $index = array(
         "name" => true
+    );
+
+    static $default = array(
+        "type" => 1
     );
 
     /**
@@ -82,7 +85,8 @@ class Group extends DataObject implements HistoryData, PermProvider
     /**
      * generates the form to create a new group
      */
-    public function getForm(&$form) {
+    public function getForm(&$form)
+    {
         $form->add(new TabSet("tabs", array(
             new Tab("general", array(
                 new TextField("name", lang("name", "Name")),
@@ -192,55 +196,12 @@ class Group extends DataObject implements HistoryData, PermProvider
     {
         return array(
             "canManagePermissions" => array(
-                "title"    => '{$_lang_rights_manage}',
-                "default"  => array(
+                "title" => '{$_lang_rights_manage}',
+                "default" => array(
                     "type" => "admins"
                 ),
                 "category" => "ADMIN"
             )
         );
-    }
-
-    /**
-     * returns text what to show about the event
-     *
-     * @name generateHistoryData
-     * @access public
-     * @return array
-     */
-    public static function generateHistoryData($record)
-    {
-        if (!$record->record())
-            return false;
-
-        $relevant = true;
-
-        if (!$record->autor || $record->record()->name == "") {
-            $relevant = false;
-        }
-
-        switch ($record->action) {
-            case "update":
-            case "publish":
-                $lang = lang("h_group_update", '$user updated the group <a href="$groupUrl">$group</a>');
-                $icon = "system/images/icons/fatcow16/group_edit.png";
-                break;
-            case "insert":
-                $lang = lang("h_group_create", '$user created the group <a href="$groupUrl">$group</a>');
-                $icon = "system/images/icons/fatcow16/group_add.png";
-                break;
-            case "remove":
-                $lang = lang("h_user_remove", '$user removed the group $group');
-                $icon = "system/images/icons/fatcow16/group_delete.png";
-                break;
-            default:
-                $lang = "Unknowen event " . $record->action;
-                $icon = "system/images/icons/fatcow16/group_edit.png";
-        }
-
-        $lang = str_replace('$groupUrl', "admin/group/" . $record->record()->id . URLEND, $lang);
-        $lang = str_replace('$group', convert::Raw2text($record->record()->name), $lang);
-
-        return array("icon" => $icon, "text" => $lang, "relevant" => $relevant);
     }
 }

@@ -42,23 +42,16 @@ class HTMLParser extends gObject
         if ($includeResourcesInBody) {
             // we have everything a normal HTML Page should have.
             if (strpos($html, "</title>") && strpos($html, "</body>")) {
-
                 // replace css resources
                 $view = new ViewAccessableData();
                 if (strpos($html, "<base") === false) {
                     $view->base_uri = BASE_URI;
                 }
                 $view->resources = resources::get(true, false);
-                $html = str_replace('</title>', $view->renderWith("framework/resources-header.html"), $html);
+                $html = str_replace('</title>', '</title>' . $view->renderWith("framework/resources-header.html"), $html);
 
                 // replace js resources
                 $html = str_replace('</body>', "\n" . resources::get(false, true) . "\n	</body>", $html);
-            } else {
-                if (strpos($html, "<base")) {
-                    $html = '<meta charset="utf-8" />' . resources::get() . $html;
-                } else {
-                    $html = '<!DOCTYPE html><html><head><meta charset="utf-8" /><title></title><base href="' . BASE_URI . '" />' . "\n" . resources::get(true, false) . "\n</head><body>" . $html . "\n" . resources::get(false, true) . "</body></html>";
-                }
             }
         }
 

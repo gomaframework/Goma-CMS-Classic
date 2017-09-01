@@ -29,6 +29,7 @@ endlessScroller.prototype = {
     currentEndlessEndLoading: null,
     throttleTo: 10,
     throttleTime: null,
+    loading: null,
     checkForEndlessUpdate: function() {
         if(this.endlessElement == null) {
             console.log("Unable to find endless-element due to the fact it is null.");
@@ -59,6 +60,9 @@ endlessScroller.prototype = {
                         goma.ui.triggerContentLoaded();
 
                         setTimeout(this.checkForEndlessUpdate.bind(this), 250);
+                    }.bind(this))
+                    .fail(function(){
+                        this.currentEndlessEndLoading = null;
                     }.bind(this));
             }
             this.throttleTime = currentTime;
@@ -79,7 +83,7 @@ endlessScroller.prototype = {
         }
     },
     onError: function() {
-
+        this.checkForEndlessUpdate();
     },
     onStartLoading: function() {
         this.currentEndlessEndLoading.addClass("loading");

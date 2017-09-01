@@ -558,7 +558,7 @@ class Uploads extends DataObject {
         if($this->bool()) {
             return '<a href="'.$this->raw().'">' . $this->filename . '</a>';
         } else {
-            return null;
+            return "";
         }
     }
 
@@ -617,12 +617,21 @@ class Uploads extends DataObject {
     }
 
     /**
-     * gets the file-size nice written
+     * gets the formatted file-size
      *
      * @return string
      */
-    public function filesize() {
+    public function formattedFileSize() {
         return FileSizeFormatter::format_nice(filesize($this->realfile));
+    }
+
+    /**
+     * gets the file-size
+     *
+     * @return int
+     */
+    public function filesize() {
+        return filesize($this->realfile);
     }
 
     /**

@@ -539,17 +539,8 @@ class Core extends gObject {
 	}
 
 	/**
-	 * adds some rules to controller
-	 *@param array - rules
-	 *@param numeric - priority
-	 */
-	public static function addRules($rules, $priority = 50) {
-		Director::addRules($rules, $priority);
-	}
-
-	/**
 	 * checks if ajax
-	 *@return bool
+	 * @return bool
 	 */
 	public static function is_ajax() {
 		return (isset($_REQUEST['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == "XMLHttpRequest"));
@@ -577,23 +568,6 @@ class Core extends gObject {
 				}
 			}
 		}
-	}
-
-	/**
-	 * returns current active url
-	 *
-	 * @return string
-	 */
-	public static function activeURL() {
-		if(Core::is_ajax()) {
-			if(isset($_GET["redirect"])) {
-				return $_GET["redirect"];
-			} else if(isset($_SERVER["HTTP_REFERER"])) {
-				return $_SERVER["HTTP_REFERER"];
-			}
-		}
-
-		return $_SERVER["REQUEST_URI"];
 	}
 
 	/**
@@ -642,19 +616,4 @@ class Core extends gObject {
             exit($code);
         }
 	}
-}
-
-/**
- * shows an page with error details and nothing else
- * @param int $errcode
- * @param string $errname
- * @param string $errdetails
- * @param int $http_status
- * @param bool $throwDebug
- * @return null
- * @throws Exception
- */
-function throwerror($errcode, $errname, $errdetails, $http_status = 500, $throwDebug = true) {
-	HTTPResponse::setResHeader($http_status);
-	throw new Exception($errname . $errdetails, $errcode);
 }

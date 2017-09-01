@@ -159,6 +159,7 @@ function session_store_exists($key) {
  * url.
  *
  * @return string
+ * @deprecated
  */
 function getRedirect($parentDir = false, $controller = null) {
 	// AJAX Request
@@ -692,11 +693,10 @@ function Goma_ExceptionHandler($exception) {
 
 	log_exception($exception);
 
-	$details = $exception->getMessage() . "\n<br />"." in ".
-		$exception->getFile() . " on line ".$exception->getLine() . ".\n<br />\n<textarea style=\"width: 100%; height: 300px;\">" . $exception->getTraceAsString() . "</textarea>";
+	$details = getUserDetailsFromException($exception);
 	$current = $exception;
 	while($current = $current->getPrevious()) {
-		$details .= $current->getMessage() . "\n<br />\n<br />\n<textarea style=\"width: 100%; height: 300px;\">" . $current->getTraceAsString() . "</textarea>";
+		$details .= getUserDetailsFromException($current);
 	}
 
 	$content = file_get_contents(ROOT . "system/templates/framework/phperror.html");
@@ -717,6 +717,23 @@ function Goma_ExceptionHandler($exception) {
 	}
 
 	exit($exception->getCode() != 0 ? $exception->getCode() : 8);
+}
+
+/**
+ * @param Throwable $e
+ * @return string
+ */
+function getUserDetailsFromException($e) {
+    $trace = method_exists($e, "getTraceForUser") ? $e->getTraceForUser() : $e->getTraceAsString();
+    return getExceptionMessageOrClass($e) . "\n<br />\nin " . $e->getFile() . " on line ".$e->getLine() . "<br />\n<textarea style=\"width: 100%; height: 300px;\">" . $trace . "</textarea>";
+}
+
+/**
+ * @param Throwable $e
+ * @return string
+ */
+function getExceptionMessageOrClass($e) {
+    return $e->getMessage() ? $e->getMessage() : get_class($e) . ": " . $e->getCode();
 }
 
 /**
@@ -1259,10 +1276,10 @@ class SQLException extends GomaException {
 	/**
 	 * constructor.
 	 */
-	public function __construct($m = "", $code = null, Exception $previous = null) {
+	public function __construct($message = "", $code = null, Exception $previous = null) {
 		$sqlerr = SQL::errno() . ": " . sql::error() . "<br /><br />\n\n <strong>Query:</strong> <br />\n<code>" . sql::$last_query . "</code>\n";
-		$m = $sqlerr . "\n" . $m;
-		parent::__construct($m, $code, $previous);
+		$message = $sqlerr . "\n" . $message;
+		parent::__construct($message, $code, $previous);
 	}
 
 }
@@ -1344,14 +1361,14 @@ class PermissionException extends GomaException {
 
     /**
      * constructor.
-     * @param string $m
+     * @param string $message
      * @param int $code
      * @param string $missingPerm
      * @param Exception $previous
      */
-	public function __construct($m = null, $code = null, $missingPerm = null, Exception $previous = null) {
+	public function __construct($message = null, $code = null, $missingPerm = null, Exception $previous = null) {
         $this->missingPerm = $missingPerm;
-		parent::__construct(isset($m) ? $m : lang("less_rights"), $code, $previous);
+		parent::__construct(isset($message) ? $message : lang("less_rights"), $code, $previous);
 	}
 
     public function getMissingPerm() {
@@ -1370,8 +1387,8 @@ class PHPException extends GomaException {
 	/**
 	 * constructor.
 	 */
-	public function __construct($m = "PHP-Error", $code = null, Exception $previous = null) {
-		parent::__construct($m, $code, $previous);
+	public function __construct($message = "PHP-Error", $code = null, Exception $previous = null) {
+		parent::__construct($message, $code, $previous);
 	}
 }
 
@@ -1379,18 +1396,21 @@ class DBConnectError extends MySQLException {
 	/**
 	 * constructor.
 	 */
-	public function __construct($m = "DB-Connect-Error", $code = ExceptionManager::DB_CONNECT_ERROR, Exception $previous = null) {
-		parent::__construct($m, $code, $previous);
+	public function __construct($message = "DB-Connect-Error", $code = ExceptionManager::DB_CONNECT_ERROR, Exception $previous = null) {
+		parent::__construct($message, $code, $previous);
 	}
 
+	public function getTraceForUser() {
+	    return "";
+    }
 }
 
 class ServiceUnavailable extends GomaException {
 	/**
 	 * constructor.
 	 */
-	public function __construct($m = "Temporary Unavailable", $code = ExceptionManager::SERVICE_UNAVAILABLE, Exception $previous = null) {
-		parent::__construct($m, $code, $previous);
+	public function __construct($message = "Temporary Unavailable", $code = ExceptionManager::SERVICE_UNAVAILABLE, Exception $previous = null) {
+		parent::__construct($message, $code, $previous);
 	}
 
 	public function http_status() {
@@ -1403,11 +1423,11 @@ class InvalidStateException extends GomaException {
 	protected $standardCode = ExceptionManager::INVALID_STATE;
 	/**
 	 * constructor.
-	 * @param string $m
+	 * @param string $message
 	 * @param null $code
 	 * @param Exception $previous
 	 */
-	public function __construct($m = "Invalid State", $code = null, Exception $previous = null) {
-		parent::__construct($m, $code, $previous);
+	public function __construct($message = "Invalid State", $code = null, Exception $previous = null) {
+		parent::__construct($message, $code, $previous);
 	}
 }

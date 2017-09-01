@@ -36,12 +36,11 @@ multiFormFieldController.prototype = {
                     handle: ".part-sort-button",
                     placeholder: 'placeholder-multi-form-field-' + this.element.attr("id"),
                     revert: true,
-                    tolerance: 'pointer',
                     cancel: "a, img, .actions",
-                    start: function(event, ui) {
-                        $(".placeholder-multi-form-field-" + _this.element.attr("id"))
-                            .css({'width' : ui.item.width(), 'height': ui.item.height()})
-                            .attr("class", ui.item.attr("class") + " placeholder");
+                    sort: function(event, ui) {
+                        ui.placeholder
+                            .css({'width' : ui.helper.outerWidth(), 'height': ui.helper.outerHeight()})
+                            .addClass("placeholder");
                     },
                     update: function() {
                         this.updateOrder();

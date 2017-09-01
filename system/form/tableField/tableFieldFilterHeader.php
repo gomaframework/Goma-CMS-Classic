@@ -128,7 +128,9 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
             } else {
                 $field = new HTMLField("", "");
             }
-            $field->setForm($tableField->Form());
+
+            $form = $tableField->Form();
+            $field->setForm($form);
 
             $fields->push(array("field" => $field->exportFieldInfo()->ToRestArray(true), "name" => $columnField, "title" => $title));
         }

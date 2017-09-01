@@ -390,7 +390,7 @@ class tableField extends FormField {
 					if(preg_match('/DefineFragment\(([a-z0-9\-_]+)\)/i', $fragment, $matches)) {
 						// If we've already deferred this fragment, then we have a circular dependency
 						if(isset($fragmentDeferred[$k]) && $fragmentDeferred[$k] > 5) {
-							throwError(6, "Logical Exception", "Fragment ".$k." is a circular dependency.");
+						    throw new LogicException("Fragment ".$k." is a circular dependency.");
 						}
 						
 						// Otherwise we can push to the end of the content array
@@ -412,7 +412,9 @@ class tableField extends FormField {
 		// Check for any undefined fragments, and if so throw an exception
 		// While we're at it, trim whitespace off the elements
 		foreach($content as $k => $v) {
-			if(empty($fragmentsDefined[$k])) throwError(6, "Logical Error", "TableField HTML fragment ".$k." was gaving content, but not defined. Perhaps there is a supporting Tablefield component you need to add?");
+			if(empty($fragmentsDefined[$k])) {
+			    throw new LogicException("TableField HTML fragment ".$k." was gaving content, but not defined. Perhaps there is a supporting Tablefield component you need to add?");
+            }
 		}
 		
 		$total = $data->Count();

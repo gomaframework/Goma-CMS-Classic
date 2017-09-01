@@ -81,7 +81,9 @@ ImageUploadController.prototype = {
                     this.fieldElement.find(".crop-button").click();
                 }
                 this.initialUpdate = false;
-            }.bind(this));
+            }.bind(this)).fail(function(){
+                alert("Error loading image.");
+            });
         }
     },
 
@@ -106,6 +108,7 @@ ImageUploadController.prototype = {
                     this.field.upload.orgImageSize.width
                 ).done(deferred.resolve).fail(deferred.reject);
             }.bind(this);
+            image.onerror = deferred.reject;
             image.src = cropImage.src;
         } else {
             deferred.resolve();
@@ -116,7 +119,7 @@ ImageUploadController.prototype = {
 
     initCropArea: function(size, image, imageWidth) {
         if(this.initCropAreaDeferred != null) {
-            if(this.initCropAreaDeferred.state() !== "resolved") {
+            if(this.initCropAreaDeferred.state() === "pending") {
                 return this.initCropAreaDeferred.promise();
             }
         }
@@ -175,10 +178,15 @@ ImageUploadController.prototype = {
                 options.aspectRatio = this.aspectRatio;
             }
 
-            image.Jcrop(options, function () {
-                $this.jcropInstance = this;
-                $this.initCropAreaDeferred.resolve();
-            });
+            var img = new Image();
+            img.onload = function() {
+                image.Jcrop(options, function () {
+                    $this.jcropInstance = this;
+                    $this.initCropAreaDeferred.resolve();
+                });
+            };
+            img.onerror = this.initCropAreaDeferred.reject;
+            img.src = image.attr("src");
         }.bind(this));
 
         return this.initCropAreaDeferred.promise();
@@ -234,6 +242,9 @@ ImageUploadController.prototype = {
             });
 
             $this.initCropArea(size, $this.widget.find(".image img"), image.width);
+        };
+        image.onerror = function() {
+            alert("Error loading image.");
         };
 
         image.src = src;
@@ -339,8 +350,6 @@ ImageUploadController.prototype = {
             }
         }
 
-        console.log(useSource);
-
         if(!useSource) {
             // if saveCrop is fired a second time, while response is not here, yet, the new image has a sourceImage.
             this.field.upload.sourceImage = true;
@@ -370,6 +379,9 @@ ImageUploadController.prototype = {
                             "src": data.file.imageHeight400,
                             "data-retina": null
                         });
+                    };
+                    image.onerror = function() {
+                        alert("error loading image.");
                     };
                     image.src = data.file.imageHeight400;
                     $this.field.upload = data.file;

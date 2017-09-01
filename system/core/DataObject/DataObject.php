@@ -69,11 +69,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     static $default_sort = "id";
 
     /**
-     * enables or disabled history
-     */
-    static $history = true;
-
-    /**
      * prefix for table_name
      */
     public $prefix = "";
@@ -601,7 +596,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      */
     public function onAfterWrite($modelWriter)
     {
-        $this->callExtending("onBeforeWrite", $modelWriter);
+        $this->callExtending("onAfterWrite", $modelWriter);
     }
 
 
@@ -622,7 +617,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * @param array $manipulation
      * @param ManyMany_DataObjectSet $dataset
      * @param array $writeData
-     * @return mixed|void
+     * @return void
      */
     public function onBeforeManipulateManyMany(&$manipulation, $dataset, $writeData) {
 
@@ -678,7 +673,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     /**
      * writes changed data and throws exceptions.
      *
-     * @param bool $forceInsert
+     * @param bool $forceInsertNewRecord if to force "insert" method.
      * @param bool $forceWrite
      * @param int $snap_priority
      * @param bool $forcePublish
@@ -690,35 +685,35 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * @throws SQLException
      * @return void
      */
-    public function writeToDB($forceInsert = false, $forceWrite = false, $snap_priority = 2, $forcePublish = false, $history = true, $silent = false, $overrideCreated = false)
+    public function writeToDB($forceInsertNewRecord = false, $forceWrite = false, $snap_priority = 2, $forcePublish = false, $history = true, $silent = false, $overrideCreated = false)
     {
-        $this->writeToDBInRepo(Core::repository(), $forceInsert, $forceWrite, $snap_priority, $history, $silent, $overrideCreated);
+        $this->writeToDBInRepo(Core::repository(), $forceInsertNewRecord, $forceWrite, $snap_priority, $history, $silent, $overrideCreated);
     }
 
     /**
      * writes changed data and throws exceptions.
      *
      * @param IModelRepository $repository
-     * @param bool $forceInsert
+     * @param bool $forceInsertNewRecord if to force "insert" method.
      * @param bool $forceWrite
      * @param int $writeType
      * @param bool $history
      * @param bool $silent
      * @param bool $overrideCreated
      */
-    public function writeToDBInRepo($repository, $forceInsert = false, $forceWrite = false, $writeType =  IModelRepository::WRITE_TYPE_PUBLISH, $history = true, $silent = false, $overrideCreated = false) {
+    public function writeToDBInRepo($repository, $forceInsertNewRecord = false, $forceWrite = false, $writeType =  IModelRepository::WRITE_TYPE_PUBLISH, $history = true, $silent = false, $overrideCreated = false) {
         if(!$history) {
             HistoryWriter::disableHistory();
         }
 
         if($writeType >  IModelRepository::WRITE_TYPE_SAVE) {
-            if($forceInsert) {
+            if($forceInsertNewRecord) {
                 $repository->add($this, $forceWrite, $silent, $overrideCreated);
             } else {
                 $repository->write($this, $forceWrite, $silent, $overrideCreated);
             }
         } else {
-            if($forceInsert) {
+            if($forceInsertNewRecord) {
                 $repository->addState($this, $forceWrite, $silent, $overrideCreated);
             } else {
                 $repository->writeState($this, $forceWrite, $silent, $overrideCreated);

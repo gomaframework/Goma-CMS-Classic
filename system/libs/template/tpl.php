@@ -269,13 +269,15 @@ class tpl extends gObject
 
 	}
 
-	/**
-	 * @param string $tpl
-	 * @param array $replacement
-	 * @param string $tmpname
-	 * @param string|gObject $class
-	 * @return mixed
-	 */
+    /**
+     * @param string $tpl
+     * @param array $replacement
+     * @param string $tmpname
+     * @param string|gObject $class
+     * @return mixed
+     * @throws Exception
+     * @throws Throwable
+     */
 	public static function parser($tpl, $replacement = array(), $tmpname, $class)
 	{
 		if (PROFILE) Profiler::mark("tpl::parser");
@@ -305,7 +307,15 @@ class tpl extends gObject
 		ob_start();
 		echo $hash;
 		$filename = str_replace('//', '/', $filename);
-		include($filename);
+		try {
+            include($filename);
+        } catch (Throwable $e) {
+            ob_end_clean(); // clean contents
+            throw $e;
+        } catch (Exception $e) {
+            ob_end_clean(); // clean contents
+            throw $e;
+        }
 
 		$content = ob_get_contents(); // get contents
 
@@ -749,13 +759,12 @@ $data = array_pop($dataStack);
 		return '<?php echo $data->getTemplateVar(' . var_export($name, true) . '); ?>';
 	}
 
-	/**
-	 * renders IF-clauses
-	 *
-	 * @name renderIF
-	 * @access public
-	 * @return string
-	 */
+    /**
+     * renders IF-clauses
+     *
+     * @param array $matches
+     * @return string
+     */
 	public static function renderIF($matches)
 	{
 		$clause = $matches[1];
@@ -763,7 +772,7 @@ $data = array_pop($dataStack);
 		$clause = str_replace("=", '==', $clause);
 		$clause = str_replace("====", '==', $clause);
 		$clause = str_replace("!==", '!=', $clause);
-		$clause = preg_replace('/NOT/i', '!', $clause);
+		$clause = preg_replace('/NOT\s+/i', '!', $clause);
 
 		// second partse parts for just bool-values
 		$clauseparts = preg_split('/( or | and |\|\||&&)/i', $clause, -1, PREG_SPLIT_DELIM_CAPTURE);

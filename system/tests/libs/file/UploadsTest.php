@@ -268,30 +268,76 @@ class UploadsTest extends GomaUnitTest {
 		}
 	}
 
+    /**
+     * tests if getLinkingModels returns linked models correctly.
+     *
+     * 1. Adds a file to file archive, set to $file
+     * 2. Assert that $file->getLinkingModels->getDbDataSource() is of type UploadsBackTrackDataSource
+     * 3. Assert that $file->getLinkingModels->count() is equal to 0
+     * 4. Assert that $file->getLinkingModels()->getModelSource() is null
+     *
+     * 5. Create MockBackTrackModel with file $file, set to $model
+     * 6. Write this to DB.
+     *
+     * 7. Assert that $file->getLinkingModels->count() is equal to 1
+     * 8. Assert that $file->getLinkingModels()->first()->id is equal to $model->id
+     * 9. Assert that $file->getLinkingModels()->first()->classname is equal to $model->classname
+     *
+     * 10. Cleanup model and file
+     */
 	public function testBacktrack() {
-		if($file = Uploads::addFile("blub.jpg", $this->testfile, "testCollection", null, false)) {
+	    try {
+            if ($file = Uploads::addFile("blub.jpg", $this->testfile, "testCollection", null, false)) {
 
-			$this->assertIsA($file->getLinkingModels()->getDbDataSource(), UploadsBackTrackDataSource::class);
-			$this->assertEqual($file->getLinkingModels()->count(), 0);
-			$this->assertNull($file->getLinkingModels()->getModelSource());
+                $this->assertIsA($file->getLinkingModels()->getDbDataSource(), UploadsBackTrackDataSource::class);
+                $this->assertEqual($file->getLinkingModels()->count(), 0);
+                $this->assertNull($file->getLinkingModels()->getModelSource());
 
-			$model = new MockBacktrackModel(array(
-				"file" => $file
-			));
-			$model->writeToDB(false, true);
+                $model = new MockBacktrackModel(array(
+                    "file" => $file
+                ));
+                $model->writeToDB(false, true);
 
-			$this->assertEqual($file->getLinkingModels()->count(), 1);
+                $this->assertEqual($file->getLinkingModels()->count(), 1);
 
-			$linkingModel = $file->getLinkingModels()->first();
-			$this->assertEqual($linkingModel->id, $model->id);
-			$this->assertEqual($linkingModel->classname, $model->classname);
+                $linkingModel = $file->getLinkingModels()->first();
+                $this->assertEqual($linkingModel->id, $model->id);
+                $this->assertEqual($linkingModel->classname, $model->classname);
+            } else {
+                $this->assertFalse(true, "Could not add file to collection.");
+            }
+        } finally {
+	        if($model) {
+                $model->remove(true);
+            }
 
-			$model->remove(true);
-			$file->remove(true);
-		} else {
-			$this->assertFalse(true, "Could not add file to collection.");
-		}
+            if($file) {
+                $file->remove(true);
+            }
+        }
 	}
+
+    /**
+     * tests if __toString returns empty string if Uploads is empty.
+     *
+     * 1. Create Uploads Object, set to $uploads
+     * 2. Assert that (string) $uploads equals to ""
+     */
+	public function testToStringEmptyUploads() {
+	    $uploads = new Uploads();
+	    $this->assertEqual("", (string) $uploads);
+    }
+
+    /**
+     * tests if __toString returns link to path with title as filename if realfile is existing.
+     *
+     * 1. Create Uploads()array('path' => 'abc', 'filename' => '123.pdf', 'realfile' => ROOT . 'index.php')), set to $uploads
+     * 2. Assert that (string) $uploads equals to '<a href="Uploads/abc">123.pdf</a>'
+     */
+    public function testToString() {
+        $uploads = new Uploads(array('path' => 'abc', 'filename' => '123.pdf', 'realfile' => ROOT . 'index.php'));
+        $this->assertEqual("<a href=\"Uploads/abc\">123.pdf</a>", (string) $uploads);
+    }
 }
 
 class MockBacktrackModel extends DataObject {

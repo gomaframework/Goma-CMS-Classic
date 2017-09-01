@@ -60,17 +60,18 @@ class lost_passwordExtension extends ControllerExtension {
 
                 if(isset($this->request->get_params["deny"])) {
                     $data->generateCode(false, true);
-                    return lang("lp_deny_okay");
+                    $view = new ViewAccessableData();
+                    return $view->customise(array("form" => lang("lp_deny_okay")))->renderWith(self::LOST_PASSWORD_EDIT_PASSWORD);
                 }
 
-                return $this->getEditPasswordForm($data)->renderWith(new ViewAccessableData(), self::LOST_PASSWORD_EDIT_PASSWORD);
+                return $this->getEditPasswordForm($data)->renderWith(self::LOST_PASSWORD_EDIT_PASSWORD);
             } else {
                 $view = new ViewAccessableData();
                 return $view->customise(array("codeWrong" => true))->renderWith(self::LOST_PASSWORD_SENT);
             }
         }
 
-        return $this->getLostPwdForm()->renderWith(new ViewAccessableData(), self::LOST_PASSWORD_TPL);
+        return $this->getLostPwdForm()->renderWith(self::LOST_PASSWORD_TPL);
 
     }
 

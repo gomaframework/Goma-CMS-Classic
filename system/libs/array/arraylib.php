@@ -16,9 +16,8 @@ class ArrayLib
     /**
      * merges two array.
      *
-     * @name    merge
-     * @param    array1
-     * @param    array2
+     * @param array $array1
+     * @param array $array2
      * @return    array
      */
     public static function merge(array $array1, array $array2)
@@ -83,8 +82,6 @@ class ArrayLib
     /**
      * sets key and value to value.
      *
-     * @name    key_value
-     * @access    public
      * @param    array
      * @return array
      */
@@ -108,8 +105,6 @@ class ArrayLib
     /**
      * sets key and value from value where key is numeric
      *
-     * @name    key_value_for_id
-     * @access    public
      * @param    array
      * @return array
      */

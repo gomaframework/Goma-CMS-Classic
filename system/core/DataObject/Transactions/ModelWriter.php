@@ -425,7 +425,7 @@ class ModelWriter extends gObject {
 
         // find out if we should write data
         $changes = $this->checkForChanges();
-        if ($this->getCommandType() == ModelRepository::COMMAND_TYPE_INSERT || $changes || $this->isNotActiveRecord($this->model)) {
+        if ($this->getCommandType() == IModelRepository::COMMAND_TYPE_INSERT || $changes || $this->isNotActiveRecord($this->model)) {
             if ($changes || $this->writeType != IModelRepository::WRITE_TYPE_PUBLISH) {
                 $this->model->onBeforeDBWriter($this);
                 $this->callExtending("onBeforeDBWriter");
@@ -445,6 +445,10 @@ class ModelWriter extends gObject {
      * publish without writing.
      */
     public function publish() {
+        if($this->commandType != IModelRepository::COMMAND_TYPE_PUBLISH || $this->writeType != IModelRepository::WRITE_TYPE_PUBLISH) {
+            throw new InvalidArgumentException("Calling publish requires command and writeType publish.");
+        }
+
         $this->callPreflightEvents();
 
         $this->databaseWriter->publish();

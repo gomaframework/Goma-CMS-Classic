@@ -99,7 +99,7 @@ class GomaFormResponse extends GomaResponse {
     }
 
     /**
-     *
+     * renders form if required.
      */
     public function resolveForm() {
         if(!isset($this->renderedForm)) {
@@ -191,10 +191,19 @@ class GomaFormResponse extends GomaResponse {
     public function getBody()
     {
         if($this->isStringResponse()) {
-            $body = clone parent::getBody();
+            $body = parent::getBody();
             return $body->setBody($this->resolveRendering($body->getBody()));
         }
         return $this->renderedForm->getBody();
+    }
+
+    /**
+     * @return string
+     */
+    public function getRawBody() {
+        $this->resolveForm();
+
+        return parent::getBody()->getBody();
     }
 
     /**
@@ -416,10 +425,25 @@ class GomaFormResponse extends GomaResponse {
      */
     public function isFullPage()
     {
-        return !$this->isStringResponse() && Director::isResponseFullPage($this->renderedForm);
+        return is_bool($this->isFullPage) ? $this->isFullPage : (!$this->isStringResponse() && Director::isResponseFullPage($this->renderedForm));
     }
 
     /**
+     * Adds a render function to the form. It is used to transform string-bodies, if response from form is a string.
+     * Parameter 1 is the string-content
+     * Parameter 2 is this GomaFormResponse object.
+     * Return value should be transformed string body.
+     *
+     * For example:
+     *
+     * <code>
+     * $formResponse->addRenderFunction(function($content, $formResponse){
+     *      if(!$formResponse->isFullPage()) {
+     *          return '<div class="wrapper">' . $content . '</div>';
+     *      }
+     * });
+     * </code>
+     *
      * @param Callable $function
      * @return $this
      */

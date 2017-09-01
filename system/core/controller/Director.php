@@ -31,8 +31,8 @@ class Director extends gObject {
 
     /**
      * adds some rules to controller
-     *@param array $rules
-     *@param int $priority
+     * @param array $rules
+     * @param int $priority
      */
     public static function addRules($rules, $priority = 50) {
         self::$sortedRules = null;
@@ -64,7 +64,7 @@ class Director extends gObject {
      * @param bool $serve
      * @return GomaResponse|GomaResponseBody|string if serve is false else void
      */
-    public static function serve($output, $request = null, $serve = true) {
+    public static function serve($output, $request, $serve = true) {
         if(PROFILE)
             Profiler::unmark("render");
 
@@ -99,7 +99,7 @@ class Director extends gObject {
             $output->setStatus(HTTPResponse::gomaResponse()->getStatus());
 
             $output->setBody(
-                $output->getBody()->setIncludeResourcesInBody(!Core::is_ajax())
+                $output->getBody()->setIncludeResourcesInBody(!$request->is_ajax())
             );
         } else {
             $output->merge(HTTPResponse::gomaResponse());
@@ -224,7 +224,7 @@ class Director extends gObject {
      * @param array $headers
      * @return Request
      */
-    public static function createRequestWithData($url, $server, $get, $post, $files, $headers) {
+    public static function createRequestWithData($url, $server, $get, $post, $files, $headers, $user = null) {
         if(!isset($server["SERVER_NAME"], $server["SERVER_PORT"])) {
             throw new InvalidArgumentException("Server name and port are required.");
         }
@@ -253,7 +253,8 @@ class Director extends gObject {
             $server["SERVER_NAME"],
             $server["SERVER_PORT"],
             (isset($server["HTTPS"])) && $_SERVER["HTTPS"] != "off",
-            isset($server["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : ""
+            isset($server["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : "",
+            $user
         );
     }
 
@@ -270,7 +271,7 @@ class Director extends gObject {
 
         Core::callHook("getEnvironment", $server, $get, $post, $files, $headers);
 
-        return self::createRequestWithData($url, $server, $get, $post, $files, $headers);
+        return self::createRequestWithData($url, $server, $get, $post, $files, $headers, Member::$loggedIn);
     }
 
     /**

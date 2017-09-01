@@ -100,6 +100,22 @@ class GomaFormResponseTest extends GomaUnitTest {
         $response = new GomaFormResponse(null, $mock);
         $this->assertTrue($response->isFullPage());
     }
+
+    /**
+     * tests if raw body is not changed by render functions.
+     */
+    public function testRawBodyNotChangedByRenderFunction() {
+        $form = new \Form(new \Controller(), "abc");
+        $body = GomaFormResponse::create(null, $form);
+        $body->addRenderFunction(function($content, $formResponse){
+            return '<div class="wrapper">' . $content . '</div>';
+        });
+        $body->setBody(true);
+
+        $this->assertIdentical(true, $body->getRawBody());
+        $this->assertEqual('<div class="wrapper">1</div>', $body->getBody());
+        $this->assertIdentical(true, $body->getRawBody());
+    }
 }
 
 class FormMock {

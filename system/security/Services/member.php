@@ -34,11 +34,6 @@ class Member extends gObject {
 	public static $groupType = 0;
 
 	/**
-	 * set of groups of this user
-	 */
-	public static $groups = array();
-
-	/**
 	 * default-admin
 	 */
 	public static $default_admin;
@@ -47,6 +42,7 @@ class Member extends gObject {
 	 * object of logged in user
 	 *
 	 * @var User
+     * @internal try to use $request->getUser()
 	 */
 	public static $loggedIn;
 
@@ -91,16 +87,7 @@ class Member extends gObject {
 			self::$id = $user->id;
 			self::$nickname = $user->nickname;
 
-			self::$groups = DefaultPermission::forceGroups($user);
-
-			self::$groupType = self::$groups->first()->type;
-
-			// every group has at least the type 1, 0 is just for guests
-			if (self::$groupType == 0) {
-				self::$groupType = 1;
-				self::$groups->first()->type = 1;
-				self::$groups->first()->write(false, true, 2, false, false);
-			}
+			self::$groupType = DefaultPermission::forceGroupType($user);
 
 			self::$loggedIn = $user;
 
@@ -108,22 +95,9 @@ class Member extends gObject {
 		} else {
             self::$loggedIn = self::$id = self::$nickname = null;
             self::$groupType = 0;
-            self::$groups = array();
 		}
 
 		return false;
-	}
-
-	/**
-	 * returns the groupids of the groups of the user
-	 *
-	 * @return array
-	 */
-	public static function groupIDs() {
-		if(is_array(self::$groups)) {
-			return self::$groups;
-		}
-		return self::$groups->fieldToArray("id");
 	}
 
 	/**
@@ -230,8 +204,8 @@ class LoginInvalidException extends LogicException {
 	/**
 	 * constructor.
 	 */
-	public function __construct($m = "", $code = ExceptionManager::LOGIN_INVALID, Exception $previous = null) {
-		parent::__construct($m, $code, $previous);
+	public function __construct($message = "", $code = ExceptionManager::LOGIN_INVALID, Exception $previous = null) {
+		parent::__construct($message, $code, $previous);
 	}
 
 	/**
@@ -250,13 +224,13 @@ class LoginUserLockedException extends LogicException {
 
 	/**
 	 * constructor.
-	 * @param string $m
+	 * @param string $message
 	 * @param User|null $user
 	 * @param Exception|int $code
 	 * @param Exception $previous
 	 */
-	public function __construct($m = "", $user = null, $code = ExceptionManager::LOGIN_USER_LOCKED, Exception $previous = null) {
-		parent::__construct($m, $code, $previous);
+	public function __construct($message = "", $user = null, $code = ExceptionManager::LOGIN_USER_LOCKED, Exception $previous = null) {
+		parent::__construct($message, $code, $previous);
 
 		$this->user = $user;
 	}
@@ -285,14 +259,14 @@ class LoginUserMustUnlockException extends LogicException {
 
 	/**
 	 * constructor.
-	 * @param string $m
+	 * @param string $message
 	 * @param User|null $user
 	 * @param Exception|int $code
 	 * @param Exception $previous
 	 */
-	public function __construct($m = "", $user = null, $code = ExceptionManager::LOGIN_USER_MUST_UNLOCK, Exception $previous = null) {
+	public function __construct($message = "", $user = null, $code = ExceptionManager::LOGIN_USER_MUST_UNLOCK, Exception $previous = null) {
 		$this->user = $user;
-		parent::__construct($m, $code, $previous);
+		parent::__construct($message, $code, $previous);
 	}
 
 	/**

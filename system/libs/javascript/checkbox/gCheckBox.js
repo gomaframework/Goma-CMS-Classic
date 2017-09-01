@@ -234,7 +234,6 @@
 					});
 
 					$wrapper.on("keypress", function(e) {
-						alert(e.keyCode);
 						if(e.keyCode == 13){
 							switchValue();
 						} else if(e.keyCode == 37) {

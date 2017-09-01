@@ -38,7 +38,7 @@ class HasOneWriter extends Extension {
                         $record = DataObject::get_one($has_one[$key]->getTargetClass(), $this->getFilterForUnique($has_one[$key], $info));
                         if(!isset($record)) {
                             $record = $this->getRecordForUnique($has_one[$key], $data[$key], $info);
-                            $this->writeObject($record);
+                            $this->writeObject($record, true);
                         }
 
                         $data[$key . "id"] = $record->id;
@@ -138,8 +138,9 @@ class HasOneWriter extends Extension {
 
     /**
      * @param DataObject $record
+     * @param bool $force
      */
-    protected function writeObject($record) {
+    protected function writeObject($record, $force = false) {
         /** @var ModelWriter $owner */
         $owner = $this->getOwner();
 
@@ -150,7 +151,7 @@ class HasOneWriter extends Extension {
             $owner->getUpdateCreated(),
             $owner->getWriteType(),
             $owner->getDatabaseWriter(),
-            $owner->isForceWrite()
+            $force || $owner->isForceWrite()
         );
         $writer->write();
     }

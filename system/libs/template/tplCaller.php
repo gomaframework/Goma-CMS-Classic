@@ -168,8 +168,10 @@ class tplCaller extends gObject
             $tpl = tpl::getIncludeName($name, $this->dataobject);
         } else if (tpl::getFilename($this->subPath . "/" . $name, $this->dataobject, true)) {
             $tpl = tpl::getIncludeName($this->subPath . "/" . $name, $this->dataobject);
+        } else if (tpl::getFilename("/" . $this->tplBase . "/" . $name, $this->dataobject, true)) {
+            $tpl = tpl::getIncludeName("/" . $this->tplBase . "/" . $name, $this->dataobject);
         } else {
-            throwError(7, "Template-file missing", "Could not include Template-File '" . $name . "'");
+            throw new TemplateNotFoundException($name, "Template-File not found.");
         }
 
         $caller = clone $this;
@@ -279,9 +281,6 @@ class tplCaller extends gObject
 
     /**
      * gets the current theme
-     *
-     * @name getTheme
-     * @access public
      */
     public function getTheme()
     {

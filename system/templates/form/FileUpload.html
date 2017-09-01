@@ -1,4 +1,4 @@
-<label for="$id">$title</label>
+<label for="$id" class="file-label <% IF $disabled %>disabled <% END %>">$title</label>
 <div class="FileUpload_left" style="float: left;">
     <div class="icon drop-area" id="{$id}_upload">
         <% IF $upload %>
@@ -20,7 +20,7 @@
     <input name="{$postname}_file" id="{$id}_hidden"
            type="hidden" value="$upload.realpath" class="FileUploadValue"/>
 </div>
-<div class="FileUpload_right">
+<div class="FileUpload_right <% IF $disabled %>disabled <% END %>">
     <div class="wrapper show-on-js">
         <div class="actions fileupload-actions">
             <div class="progress_info"></div>

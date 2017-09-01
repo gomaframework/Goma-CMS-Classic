@@ -1,5 +1,8 @@
 <?php defined("IN_GOMA") OR die();
 
+
+// TODO: Parsing should support Escape method
+
 /**
  * this is a simple CSV-Parser and generator-class.
  *
@@ -19,6 +22,11 @@ class CSV extends gObject implements Iterator {
 	 * this var contains the data as an array.
 	 */
 	protected $csvarr = array();
+
+    /**
+     * @var bool
+     */
+	protected $useWindowsLineEnding = false;
 
 	/**
 	 * here you should give the object your raw csv-string.
@@ -42,6 +50,7 @@ class CSV extends gObject implements Iterator {
 	{
 		$str = $this->csv;
 		// we do not need \r
+        $this->useWindowsLineEnding = strpos($str, "\r\n") !== false;
 		$str = str_replace("\r\n", "\n", $str);
 		$rows = explode("\n", $str);
 		$i = 1;
@@ -49,8 +58,7 @@ class CSV extends gObject implements Iterator {
 			if (substr($row, -1) == ";") {
 				$row = substr($row, 0, -1);
 			}
-			$arr = explode(";", $row);
-
+			$arr = preg_split("#(?<!\\\)\;#", $row);
 
 			// validate
 			$fields = array();
@@ -58,12 +66,8 @@ class CSV extends gObject implements Iterator {
 			$b = 1; // counter for field-names
 
 			while ($a < count($arr)) {
-				$fields[$b] = $arr[$a];
-				if (substr($arr[$a], -1) == "\\") {
-					$fields[$b] = substr($arr[$a], 0, -1) . ";";
-					$a++;
-					$fields[$b] .= $arr[$a];
-				}
+				$fields[$b] = self::unescape($arr[$a]);
+
 				$a++;
 				$b++;
 			}
@@ -75,7 +79,7 @@ class CSV extends gObject implements Iterator {
 	/**
 	 * gets the field with index $field from the row with index $row.
 	 *
-	 * @param    int $row row
+	 * @param    int $row row is starting at 1.
 	 * @param    int $field field
 	 * @return bool
 	 */
@@ -88,15 +92,23 @@ class CSV extends gObject implements Iterator {
 	 * gets the array of a complete row of data.
 	 *
 	 * @param    int $row row
-	 * @return bool
+	 * @return   array|null
 	 */
 	public function getRow($row)
 	{
-		return isset($this->csvarr[$row]) ? $this->csvarr[$row] : false;
+        return isset($this->csvarr[$row]) ? $this->csvarr[$row] : null;
 	}
+
+    /**
+     * returns row-count of CSV.
+     */
+	public function count() {
+	    return count($this->csvarr);
+    }
 
 	/**
 	 * generates RAW-csv.
+     * To create windows line endings, set csv::useWindowsLineEndings to true.
 	 */
 	public function csv()
 	{
@@ -111,14 +123,20 @@ class CSV extends gObject implements Iterator {
 				}
 				$str .= CSV::escape($val);
 			}
-			$str .= "\n";
+
+            if($this->useWindowsLineEnding) {
+                $str .= "\r\n";
+            } else {
+                $str .= "\n";
+            }
 		}
 
 		return $str;
 	}
 
 	/**
-	 *
+	 * generates excel version. The cells are then formatted in excel-way.
+     * To create windows line endings, set csv::useWindowsLineEndings to true.
 	 */
 	public function toExcel() {
 		$str = "";
@@ -130,42 +148,73 @@ class CSV extends gObject implements Iterator {
 				} else {
 					$str .= ";";
 				}
-				$str .= CSV::escape($val);
+				$str .= CSV::escape($val, true);
 			}
-			$str .= "\n";
+
+			if($this->useWindowsLineEnding) {
+                $str .= "\r\n";
+            } else {
+                $str .= "\n";
+            }
 		}
 
 		return $str;
 	}
 
-	/**
-	 * escapes a string for csv. this is important, because sometimes there are semicolons in values.
-	 *
-	 * @param    string $str
-	 * @return mixed|string
-	 */
-	public static function escape($str)
+    /**
+     * gets an escapes string and converts it to an normal one.
+     * @param string $str
+     * @param null $isExcel
+     * @return string
+     */
+	public static function unescape($str, $isExcel = null) {
+        $str = str_replace("\\;", ";", $str);
+
+        // unescape tab characters
+        $str = preg_replace("/\\t/", "\t", $str);
+
+        // unescape new lines
+        $str = str_replace("\\r\\n", "\r\n", $str);
+        $str = str_replace("\\n", "\n", $str);
+
+        return $str;
+    }
+
+    /**
+     * escapes a string for csv. this is important, because sometimes there are semicolons in values.
+     *
+     * 
+     * @param    string $str
+     * @param bool $toExcel
+     * @return mixed|string
+     */
+	public static function escape($str, $toExcel = false)
 	{
 		$str = str_replace(";", "\\;", $str);
 		// escape tab characters
 		$str = preg_replace("/\t/", "\\t", $str);
 
 		// escape new lines
-		$str = preg_replace("/\r?\n/", "\\n", $str);
+		$str = str_replace("\n", "\\n", $str);
+        $str = str_replace("\r\n", "\\r\n", $str);
 
 		// convert 't' and 'f' to boolean values
 		if($str == 't') $str = 'TRUE';
 		if($str == 'f') $str = 'FALSE';
 
-		// force certain number/date formats to be imported as strings
-		if(preg_match("/^\+?\d{8,}$/", $str) || preg_match("/^\d{4}.\d{1,2}.\d{1,2}/", $str)) {
-			$str = "'$str";
-		}
+		if($toExcel) {
+            // force certain number/date formats to be imported as strings
+            if (preg_match("/^\+?\d{8,}$/", $str) || preg_match("/^\d{4}.\d{1,2}.\d{1,2}/", $str)) {
+                $str = "'$str";
+            }
 
-		// escape fields that include double quotes
-		if(strstr($str, '"')) $str = '"' . str_replace('"', '""', $str) . '"';
+            // escape fields that include double quotes
+            if (strstr($str, '"')) $str = '"' . str_replace('"', '""', $str) . '"';
+        }
 
-		$str = mb_convert_encoding($str, 'UTF-16LE', 'UTF-8');
+		if($toExcel) {
+            $str = mb_convert_encoding($str, 'UTF-16LE', 'UTF-8');
+        }
 
 		return $str;
 	}
@@ -246,6 +295,30 @@ class CSV extends gObject implements Iterator {
 		return $this->set($arr[0], $arr[1], $data);
 	}
 
+    /**
+     * @return array
+     */
+	public function toArray() {
+	    return $this->csvarr;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isUseWindowsLineEnding()
+    {
+        return $this->useWindowsLineEnding;
+    }
+
+    /**
+     * @param bool $useWindowsLineEnding
+     * @return $this
+     */
+    public function setUseWindowsLineEnding($useWindowsLineEnding)
+    {
+        $this->useWindowsLineEnding = $useWindowsLineEnding;
+        return $this;
+    }
 
 	/**
 	 * Iterator

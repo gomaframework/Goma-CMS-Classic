@@ -29,12 +29,6 @@ if (function_exists("ini_set")) {
 	}
 }
 
-if (ini_get('safe_mode')) {
-	define("IN_SAFE_MODE", true);
-} else {
-	define("IN_SAFE_MODE", false);
-}
-
 /* --- */
 
 // some loading

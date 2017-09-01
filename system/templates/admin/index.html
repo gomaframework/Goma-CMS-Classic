@@ -218,9 +218,6 @@
 									
 									<script type="text/javascript">
 										(function($){
-											var url = "api/stats/lastMonth";
-											
-
 											var options = {
 												xaxis: {
 													mode: "time",
@@ -285,54 +282,53 @@
 													
 													$("#plot-container").html('<span class="loading"><img src="system/images/16x16/loading.gif" alt="" /> '+lang("loading")+'</span>');
 													$("#statistics_range").html("");
-													
+
 													$.ajax({
 														url: currentURL,
 														type: 'post',
 														data: {page: page},
-														success: function(data) {
-															
-															var timePositionMiddle = (data.timePositionMiddle !== undefined) ? data.timePosition : true;
-															
-															visitors = [];
-															hits = [];
-															for(var i in data.data) {
-																var time;
-																if(timePositionMiddle) {
-																	time = (data.data[i].flotStart + data.data[i].flotEnd) / 2;
-																} else {
-																	time = data.data[i].flotStart;
-																}
-																
-																visitors.push([time, data.data[i].visitors]);
-																hits.push([time, data.data[i].hits]);
-															}
-															
-															$("#statistics_range").html(data.title);
-															
-															if(data.minTickSize !== undefined) {
-																options.xaxis.minTickSize = data.minTickSize;
-															} else {
-																options.xaxis.minTickSize = [4, "hour"];
-															}
-															
-															if(data.timeFormat !== undefined) {
-																options.xaxis.timeformat = options.tooltipOpts.xDateFormat = data.timeFormat;
-															} else {
-																options.xaxis.timeformat = options.tooltipOpts.xDateFormat = "%d.%m %H:%M";
-															}
-															
-															if(data.toolTipContent !== undefined) {
-																options.tooltipOpts.content = data.toolTipContent;
-															} else {
-																options.tooltipOpts.content = "<h4>%s %x</h4> %y";
-															}
-															
-															drawVisitPlot();
-															
-														},
 														silence: true
-													});
+													}).done(function(data) {
+
+                                                        var timePositionMiddle = (data.timePositionMiddle !== undefined) ? data.timePosition : true;
+
+                                                        visitors = [];
+                                                        hits = [];
+                                                        for(var i in data.data) {
+                                                            var time;
+                                                            if(timePositionMiddle) {
+                                                                time = (data.data[i].flotStart + data.data[i].flotEnd) / 2;
+                                                            } else {
+                                                                time = data.data[i].flotStart;
+                                                            }
+
+                                                            visitors.push([time, data.data[i].visitors]);
+                                                            hits.push([time, data.data[i].hits]);
+                                                        }
+
+                                                        $("#statistics_range").html(data.title);
+
+                                                        if(data.minTickSize !== undefined) {
+                                                            options.xaxis.minTickSize = data.minTickSize;
+                                                        } else {
+                                                            options.xaxis.minTickSize = [4, "hour"];
+                                                        }
+
+                                                        if(data.timeFormat !== undefined) {
+                                                            options.xaxis.timeformat = options.tooltipOpts.xDateFormat = data.timeFormat;
+                                                        } else {
+                                                            options.xaxis.timeformat = options.tooltipOpts.xDateFormat = "%d.%m %H:%M";
+                                                        }
+
+                                                        if(data.toolTipContent !== undefined) {
+                                                            options.tooltipOpts.content = data.toolTipContent;
+                                                        } else {
+                                                            options.tooltipOpts.content = "<h4>%s %x</h4> %y";
+                                                        }
+
+                                                        drawVisitPlot();
+
+                                                    });
 													
 													$("#plot-navigation #plot-arrow-next").removeClass("disabled");
 													if(page > 1) {

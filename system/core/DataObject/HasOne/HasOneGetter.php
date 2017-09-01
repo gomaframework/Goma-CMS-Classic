@@ -2,7 +2,28 @@
 defined("IN_GOMA") OR die();
 
 /**
- * Describe your class
+ * HasOneGetter-Extension for Goma Framework.
+ *
+ * Using HasOne for DataObjects:
+ * <code>
+ * class Model extends DataObject {
+ *     static $has_one = array(
+ *          "one" => "differentModelClass"
+ *     );
+ * }
+ *
+ * // create model
+ * $model = new Model();
+ * $model->one = new DifferentModelClass();
+ * $differentModelClass = $model->one;
+ *
+ * // write model
+ * $model->writeToDb();
+ *
+ * // query model
+ * $modelFromDb = DataObject::get_one(Model::class, array("id" => $model->id));
+ * $differentModel = $model->one; // will be of type DifferentModelClass.
+ * </code>
  *
  * @package Goma
  *

@@ -44,7 +44,9 @@ class TableField_FormAction extends FormAction {
         if(isset($js)) {
             $this->input->onclick = $js;
         }
-        $this->setForm($tableField->Form());
+
+        $form = $tableField->Form();
+        $this->setForm($form);
     }
 
     /**

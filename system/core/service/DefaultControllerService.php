@@ -300,15 +300,26 @@ class DefaultControllerService extends gObject {
     }
 
     /**
+     * Republishes last published version of record. This eliminates all active draft versions.
+     *
      * @param null|string|int $id
+     * @param bool $force
      * @return null
+     * @throws \PermissionException
      */
-    public function revertChanges($id = null) {
+    public function revertChanges($id = null, $force = false) {
         /** @var \Article $model */
         if($model = $this->getSingleModel($id)) {
+            /**
+             * Write-Permission required.
+             */
+            if(!$model->can("write") && !$force) {
+                throw new \PermissionException("Revert Changes expects at least write-permissions");
+            }
+
             // get published version
             $publishedVersion = \DataObject::get_by_id($model->classname, $model->id);
-            $this->save($publishedVersion, array());
+            $this->save($publishedVersion, array(), true);
 
             return $publishedVersion;
         }
@@ -317,9 +328,15 @@ class DefaultControllerService extends gObject {
     }
 
     /**
-     * unpublishes a record.
+     * Removes a record from the published state.
+     * This means it can be only accessed as draft, if model::$versions = true
+     * Accessing drafts can be achieved by:
+     * <code>
+     * $draft = DataObject::get_versioned(model::class, DataObject::VERSION_STATE, $filter)
+     * </code>
+     *
      * @param null|string|int $id
-     * @return bool|null
+     * @return bool
      * @throws \PermissionException
      */
     public function unpublish($id = null) {

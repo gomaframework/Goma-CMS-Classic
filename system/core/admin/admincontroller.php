@@ -175,9 +175,9 @@ class adminController extends Controller
     }
 
     /**
-     * flushes all log-files
+     * flushes all log-files. This method stops the session before flushing to prevent user-blocking.
      *
-     * @name flushLog
+     * @param int $count number of days log should be stored.
      * @return mixed|string
      */
     public function flushLog($count = 40) {
@@ -190,19 +190,20 @@ class adminController extends Controller
             // we delete all logs that are older than 30 days
             Core::CleanUpLog($count);
 
-            if (!Core::is_ajax()) {
+            if (!$this->getRequest()->is_ajax()) {
                 AddContent::addSuccess(lang("flush_log_success"));
                 return $this->redirectBack();
             } else {
-                HTTPResponse::setHeader("content-type", "text/x-json");
-                HTTPResponse::sendHeader();
+                $response = new GomaResponse();
+                $response->setHeader("content-type", "text/x-json");
 
                 Notification::notify($this->classname, lang("flush_log_success"), null, "PushNotification");
 
                 GlobalSessionManager::Init();
                 PushController::disablePush();
 
-                echo json_encode(1);
+                $response->setBody(new JSONResponseBody(1));
+                $response->output();
                 exit;
             }
         }
@@ -365,6 +366,11 @@ class adminController extends Controller
  */
 class admin extends ViewAccessableData implements PermProvider
 {
+    static $casting = array(
+        "updatables_json" => "HTMLText",
+        "updatables" => "HTMLText"
+    );
+
     /**
      * user-bar
      *
@@ -382,8 +388,7 @@ class admin extends ViewAccessableData implements PermProvider
     /**
      * history-url
      *
-     * @name historyURL
-     * @access public
+     * @return string
      */
     public function historyURL()
     {
@@ -434,7 +439,7 @@ class admin extends ViewAccessableData implements PermProvider
     /**
      * returns the URL for the view Website button
      *
-     * @name PreviewURL
+     * @return string
      */
     public function PreviewURL()
     {

@@ -29,8 +29,6 @@ Director::addRules(array(
 	'system/cron'					=> 'CronController',
 	'system/smtp'					=> 'SMTPConnector',
 	"system/livecounter"			=> 'liveCounterController',
-	'system/ajax//link/$id' 		=> 'ajaxlink',
-	'system/ajax//popup/$id' 		=> 'ajaxlink',
 	'system//ck_uploader'			=> 'CKEditorUploadsController',
 	'system//ck_imageuploader'		=> 'CKEditorUploadsController'
 ), 10);
@@ -38,7 +36,6 @@ Director::addRules(array(
 Director::addRules(array('system' => 'SystemController', ), 9);
 
 // gloader
-gloader::addLoadAble("dialog", "system/libs/javascript/bluebox.min.js", array("draggable"));
 gloader::addLoadAble("draggable", "system/libs/javascript/ui/draggable.js");
 gloader::addLoadAble("pageslider", "system/libs/javascript/slider.js");
 gloader::addLoadAble("dropable", "system/libs/javascript/ui/droppable.js");

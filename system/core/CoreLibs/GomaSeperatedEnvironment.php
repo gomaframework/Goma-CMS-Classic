@@ -69,7 +69,6 @@ class GomaSeperatedEnvironment {
 		"LOG_FOLDER",
 		"SYSTEM_TPL_PATH",
 		"APPLICATION_TPL_PATH",
-		"IN_SAFE_MODE",
 		"STATUS_ACTIVE",
 		"APPLICATION",
 		"CURRENT_PROJECT",

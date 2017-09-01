@@ -11,6 +11,7 @@ use FormField;
 use FormNotValidException;
 use FormValidator;
 use GlobalSessionManager;
+use Goma\Form\Exception\DuplicateActionException;
 use GomaUnitTest;
 use MockSessionManager;
 use RadioButton;
@@ -333,6 +334,9 @@ class FormTest extends GomaUnitTest implements TestAble {
 		$this->assertEqual($form->name(), "blah");
 	}
 
+    /**
+     * tests if removing an action works.
+     */
 	public function testAddRemoveAction() {
 		$action1 = new FormAction("action1");
 		$action2 = new FormAction("action2");
@@ -352,6 +356,15 @@ class FormTest extends GomaUnitTest implements TestAble {
 		$this->assertEqual($form->action1, null);
 	}
 
+    /**
+     * tests if adding duplicate actions is throwing an exception.
+     *
+     * 1. Create action1 with name action1
+     * 2. Create action2 with name action1
+     * 3. Create form with action2
+     * 4. Try to add action1 to form. Exception should be DuplicateActionException
+     * 5. Check if $form->action1 is equal to action2
+     */
 	public function testAddDuplicateAction() {
 		$action1 = new FormAction("action1");
 		$action2 = new FormAction("action1");
@@ -362,11 +375,17 @@ class FormTest extends GomaUnitTest implements TestAble {
 		$form = new Form(new Controller(), "BLAH", array(), array(
 			$action2
 		));
-		$form->addAction($action1);
 
-		$this->assertEqual($form->action1, $action1);
+		$this->assertThrows(function() use ($action1, $form) {
+            $form->addAction($action1);
+        }, DuplicateActionException::class);
+
+		$this->assertEqual($form->action1, $action2);
 	}
 
+    /**
+     * tests if form is preserving state-changed, which are made in submit functions.
+     */
 	public function testSwitchState() {
 		$form = new Form(new Controller(), "blub", array(), array(
 			new FormAction("test", "test", array($this, "manipulateState"))
@@ -388,6 +407,9 @@ class FormTest extends GomaUnitTest implements TestAble {
 		$form->state->blah = 321;
 	}
 
+    /**
+     * tests if changing the model while throwing an exception is saved back to the form.
+     */
 	public function testChangeModel() {
 		$form = new Form(new Controller(), "blub", array(), array(
 			new FormAction("test", "test")
@@ -446,5 +468,30 @@ class FormTest extends GomaUnitTest implements TestAble {
         $form->getModel()->test = 1;
         $this->assertEqual(1, $form->getModel()->test);
         throw new Exception("blub");
+    }
+
+    /**
+     * tests if submitting a form by calling submitForm is calling submit method.
+     *
+     * 1. Create form
+     * 2. Add action with callback to callSave, which returns 2
+     * 3. Assert that $form->submitWithPostParamsAndThrow(array("save" => "save")) is equal to 2
+     */
+    public function testSubmitFormIsCallingSubmit() {
+        $form = new Form(new Controller(), "form", array(new \HiddenField("data", "blah")));
+        $form->addAction(new FormAction("save", lang("save"), array($this, "callSave")));
+        $this->assertEqual(2, $form->submitWithPostParamsAndThrow(array("save" => "save", "data" => "blah")));
+    }
+
+    protected $calledSave = false;
+
+    /**
+     * helper function for testSubmitFormIsCallingSubmit
+     *
+     * @return 2
+     */
+    public function callSave() {
+        $this->calledSave = true;
+        return 2;
     }
 }

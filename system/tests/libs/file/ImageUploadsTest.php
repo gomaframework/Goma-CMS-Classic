@@ -145,4 +145,60 @@ class ImageUploadsTest extends GomaUnitTest
         $this->assertEqual($newUpload->thumbLeft, 25);
         $this->assertEqual($newUpload->thumbTop, 1 / 3 * 100);*/
     }
+
+    /**
+     * tests if hasMinimumImageSizeWithExactFormat is correctly determining if image has enough pixels for given format.
+     *
+     * Format options tested:
+     * Original image: 1000 * 1000px, requirement is 1000 * 50 -> Expected: true
+     * Original image: 1000 * 1000px, requirement is 1000 * 1000 -> Expected: true
+     * Original image: 1000 * 1000px, requirement is 500 * 500 -> Expected: true
+     * Original image: 1000 * 200px, requirement is 500 * 150 -> Expected: true
+     * Original image: 1000 * 200px, requirement is 1000 * 300 -> Expected: false
+     * Original image: 200 * 1000px, requirement is 150 * 500 -> Expected: true
+     * Original image: 200 * 1000px, requirement is 201 * 500 -> Expected: false
+     */
+    public function testhasMinimumImageSizeWithExactFormat() {
+        $imageUploads = new ImageUploads(array(
+            "width" => 1000,
+            "height" => 1000
+        ));
+        $this->assertTrue($imageUploads->hasMinimumImageSizeWithExactFormat(1000, 50));
+
+        $imageUploads = new ImageUploads(array(
+            "width" => 1000,
+            "height" => 1000
+        ));
+        $this->assertTrue($imageUploads->hasMinimumImageSizeWithExactFormat(1000, 1000));
+
+        $imageUploads = new ImageUploads(array(
+            "width" => 1000,
+            "height" => 1000
+        ));
+        $this->assertTrue($imageUploads->hasMinimumImageSizeWithExactFormat(500, 500));
+
+        $imageUploads = new ImageUploads(array(
+            "width" => 1000,
+            "height" => 200
+        ));
+        $this->assertTrue($imageUploads->hasMinimumImageSizeWithExactFormat(500, 150));
+
+        $imageUploads = new ImageUploads(array(
+            "width" => 1000,
+            "height" => 200
+        ));
+        $this->assertFalse($imageUploads->hasMinimumImageSizeWithExactFormat(1000, 300));
+
+        $imageUploads = new ImageUploads(array(
+            "width" => 200,
+            "height" => 1000
+        ));
+        $this->assertTrue($imageUploads->hasMinimumImageSizeWithExactFormat(150, 500));
+
+        $imageUploads = new ImageUploads(array(
+            "width" => 200,
+            "height" => 1000
+        ));
+        $this->assertFalse($imageUploads->hasMinimumImageSizeWithExactFormat(201, 500));
+    }
 }

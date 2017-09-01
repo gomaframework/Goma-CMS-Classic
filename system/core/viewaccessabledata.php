@@ -23,6 +23,13 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 	 */
 	static $default_casting = "HTMLText";
 
+    /**
+     * default datatype for getters.
+     *
+     * @var string
+     */
+	static $default_getter_casting = "varchar";
+
 	/**
 	 * set of fields with cast-type as value.
 	 *
@@ -84,12 +91,24 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 	 *
 	 * @var array
 	 */
-	public static $notViewableMethods = array("getdata", "get_versioned", "getform", "geteditform", "getactions", "getwholedata", "set_many_many", "get_has_one", "get_many", "get", "setfield", "setwholedata", "write", "writerecord", "__construct", "method_exists", "callmethodbyrecord", "getmanymany", "gethasmany", "search", "where", "fields", "getoffset", "getversion", "_get", "getobject", "versioned");
+	private static $notViewableMethods = array("getdata", "get_versioned", "getform", "geteditform", "getactions", "getwholedata", "set_many_many", "get_has_one", "get_many", "get", "setfield", "setwholedata", "write", "writerecord", "__construct", "method_exists", "callmethodbyrecord", "getmanymany", "gethasmany", "search", "where", "fields", "getoffset", "getversion", "_get", "getobject", "versioned");
 
 	/**
 	 * a list of methods can't be called as getters. this is for internal usage.
 	 */
 	public static $notCallableGetters = array("valid", "current", "rewind", "next", "key", "duplicate", "reset", "__construct");
+
+    /**
+     * @param string $method
+     * @return bool
+     */
+    public static function isViewableMethod($method) {
+        if(isset(self::$notViewableMethods[0])) {
+            self::$notViewableMethods = ArrayLib::key_value(self::$notViewableMethods);
+        }
+
+        return !isset(self::$notViewableMethods[$method]);
+    }
 
 	//!Init
 	/**
@@ -471,9 +490,8 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
      * @return bool
      */
 	protected function isOffsetMethod($name) {
-		return (!in_array("get" . $name, self::$notViewableMethods) && gObject::method_exists($this->classname, "get" . $name));
+		return (self::isViewableMethod("get" . $name) && gObject::method_exists($this->classname, "get" . $name));
 	}
-
 
     /**
      * calls an offset method.
@@ -742,8 +760,6 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 		$currentvar = trim(strtolower($currentvar));
 		$data = $this->getOffset($currentvar, array());
 
-		$casting = $this->casting();
-
 		if(is_object($data)) {
 			if(trim($remaining) != "" && method_exists($data, "getTemplateVar")) {
 				return $data->getTemplateVar($remaining);
@@ -756,12 +772,8 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 			}
 		}
 
-		if(isset($casting[$currentvar])) {
-			$object = $this->makeObject($currentvar, $data);
-			return $remaining == "" ? $object->forTemplate() : $object->getTemplateVar($remaining);
-		}
-
-		return $data;
+        $object = $this->makeObject($currentvar, $data);
+        return $remaining == "" ? $object->forTemplate() : $object->getTemplateVar($remaining);
 	}
 
 	//!Attribute-Object-Generation
@@ -822,7 +834,27 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
         $casting = $this->casting();
 
         $field = trim(strtolower($field));
-        return isset($casting[$field]) ? $casting[$field] : StaticsManager::getStatic($this->classname, "default_casting");
+        return isset($casting[$field]) ? $casting[$field] : $this->defaultCastingForField($field);
+    }
+
+    /**
+     * Default-Casting for getters or others.
+     *
+     * @param string $field low field name
+     * @return mixed
+     */
+    protected function defaultCastingForField($field) {
+        if(
+            $field != "baseclass"
+            && !isset($this->customised[$field]) &&
+            (
+                (!in_array($field, self::$notCallableGetters) && gObject::method_exists($this->classname, $field))
+                || $this->isOffsetMethod($field)
+            )) {
+            return StaticsManager::getStatic($this->classname, "default_getter_casting");
+        }
+
+        return StaticsManager::getStatic($this->classname, "default_casting");
     }
 
     /**
@@ -937,7 +969,7 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 	 * @return bool
 	 */
 	public function isSetMethod($offset) {
-		return (self::method_exists($this, "set" . $offset) && !in_array(strtolower("set" . $offset), self::$notViewableMethods));
+		return (self::method_exists($this, "set" . $offset) && self::isViewableMethod($offset));
 	}
 
 	/**

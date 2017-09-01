@@ -26,4 +26,89 @@ class SelectQueryTest extends GomaUnitTest implements TestAble {
 
         echo $query->build();*/
     }
+
+    /**
+     * test order by rand
+     */
+    public function testOrderByRand() {
+        $query = new SelectQuery("user");
+        $query->sort("rand()");
+        $this->assertEqual(
+            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            $query->build()
+        );
+    }
+
+    /**
+     * test order by rand
+     */
+    public function testOrderByRANDUpperCase() {
+        $query = new SelectQuery("user");
+        $query->sort("RAND()");
+        $this->assertEqual(
+            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            $query->build()
+        );
+    }
+
+    /**
+     * test order by rand
+     */
+    public function testOrderByRandWithoutBracketsUpper() {
+        $query = new SelectQuery("user");
+        $query->sort("RAND");
+        $this->assertEqual(
+            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            $query->build()
+        );
+    }
+
+    /**
+     * test order by rand
+     */
+    public function testOrderByRandWithoutBrackets() {
+        $query = new SelectQuery("user");
+        $query->sort("rand");
+        $this->assertEqual(
+            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            $query->build()
+        );
+    }
+
+    /**
+     * test order by rand with array
+     */
+    public function testOrderByRandArray() {
+        $query = new SelectQuery("user");
+        $query->sort(array("rand"));
+        $this->assertEqual(
+            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            $query->build()
+        );
+    }
+
+    /**
+     * test order by rand with array
+     */
+    public function testOrderByRandArrayWithBrackets() {
+        $query = new SelectQuery("user");
+        $query->sort(array("rand()"));
+        $this->assertEqual(
+            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            $query->build()
+        );
+    }
+
+    /**
+     * test order by rand with array and different column
+     */
+    public function testOrderByRandArrayWithBracketsAndDifferent() {
+        $query = new SelectQuery("user");
+        $query->sort(array("rand()"));
+        $query->sort("id", "desc");
+        $this->assertEqual(
+            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND(),id DESC",
+            $query->build()
+        );
+    }
 }
