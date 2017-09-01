@@ -88,7 +88,7 @@ class BoxesController extends FrontedController {
     {
         $boxes = new Boxes(array(
             "seiteid" => $this->getParam("pid"),
-            "sort"    => (isset($this->getRequest()->get_params["insertafter"])) ? ++$this->getRequest()->get_params["insertafter"] : 1000
+            "sort"    => (isset($this->getRequest()->get_params["insertafter"])) ? $this->getRequest()->get_params["insertafter"] + 1 : 1000
         ));
 
         return $this->form("add", $boxes);
@@ -233,7 +233,7 @@ class BoxesController extends FrontedController {
 
             return $response;
         } catch(Exception $e) {
-            $response->exec(new Dialog($e->getMessage(), lang("error"), 5));
+            $response->exec('alert('.var_export(getUserDetailsFromException($e)).')');
 
             return $response;
         }

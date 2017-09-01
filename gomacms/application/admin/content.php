@@ -188,7 +188,7 @@ class contentAdmin extends LeftAndMain {
         if($model = $this->getSingleModel()) {
             try {
                 $model->unpublish();
-                if (Core::is_ajax()) {
+                if ($this->request->is_ajax()) {
                     $response = new AjaxResponse();
                     Notification::notify("pages", lang("unpublish_success", "The site was successfully unpublished."), lang("unpublished"));
                     $response->exec("reloadTree(); $('.form_field_unpublish').remove();");
@@ -200,7 +200,7 @@ class contentAdmin extends LeftAndMain {
                     return $this->redirectBack();
                 }
             } catch(Exception $e) {
-                if (Core::is_ajax()) {
+                if ($this->request->is_ajax()) {
                     $response = new AjaxResponse();
                     $response->exec('alert(' . $e->getMessage() . ');');
 

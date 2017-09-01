@@ -55,9 +55,8 @@ class FrontedController extends Controller
         return Core::$title . TITLE_SEPERATOR . Core::getCMSVar("ptitle");
     }
 
-    /**
-     * meta-data
-     */
+
+    //region: meta-data
     /**
      * own css-code
      *
@@ -65,8 +64,10 @@ class FrontedController extends Controller
      */
     public function own_css()
     {
-        return settingsController::get('css_standard');
+        return strip_tags(settingsController::get('css_standard'));
     }
+
+    //endregion
 
     /**
      * fronted-bar for admins

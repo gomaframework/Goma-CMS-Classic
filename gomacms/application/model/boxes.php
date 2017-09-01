@@ -274,6 +274,10 @@ class Box extends Boxes {
 	 */
 	public $prefix = "Box_";
 
+	static $casting = array(
+	    "content" => "HTMLText"
+    );
+
 	/**
 	 * get Edit-form
 	 * @name getEditForm
@@ -380,6 +384,10 @@ class boxpage extends Page {
 	 * pretty nice icon for that
 	 */
 	public static $icon = "system/images/icons/fatcow-icons/16x16/layout_content.png";
+
+	static $casting = array(
+	    "boxes" => "HTMLText"
+    );
 
 	/**
 	 * gets a object of this record with id and versionid set to 0

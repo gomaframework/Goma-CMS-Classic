@@ -51,7 +51,7 @@ class contentControllerTest extends GomaUnitTest
     }
 
     /**
-     *
+     * Tests if password form is correctly shown for password-protected pages as well as content is shown when password is inserted.
      */
     public function testPasswordTwice() {
         $request = new Request("get", "");

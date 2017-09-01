@@ -8,7 +8,8 @@
   *	@author 	Goma-Team
   * @Version 	1.2.9
 */
-class Newsettings extends DataObject implements HistoryData {
+class Newsettings extends DataObject
+{
 	/**
 	 * name of this dataobject
 	*/
@@ -134,20 +135,5 @@ class Newsettings extends DataObject implements HistoryData {
 				"inherit"		=> "ADMIN"
 			)
 		);
-	}
-
-	/**
-	 * returns text what to show about the event
-	 *
-	 * @param Newsettings $record
-	 * @return array
-	 */
-	public static function generateHistoryData($record) {
-		
-		$lang = lang("h_settings", '$user updated the <a href="$url">settings</a>.');
-		$icon = "system/images/icons/fatcow16/setting_tools.png";
-		$lang = str_replace('$url', "admin/settings" . URLEND, $lang);
-		
-		return array("icon" => $icon, "text" => $lang, "relevant" => true);
 	}
 }

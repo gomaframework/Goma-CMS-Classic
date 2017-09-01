@@ -26,7 +26,7 @@
  * @method HasMany_DataObjectSet children($filter = null, $sort = null)
  */
 
-class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
+class Pages extends DataObject implements PermProvider, Notifier {
     /**
      * name
      */
@@ -152,6 +152,10 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
      * parent-resolver for this class.
      */
     private $parentResolver;
+
+    static $casting = array(
+        "content" => "content"
+    );
 
     //!Getters and Setters
 
@@ -304,8 +308,6 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
     /**
      * returns the representation of this record
      *
-     * @name generateResprensentation
-     * @access public
      * @return string
      */
     public function generateRepresentation($link = false) {
@@ -1126,63 +1128,6 @@ class Pages extends DataObject implements PermProvider, HistoryData, Notifier {
             return $nodes;
 
         }
-    }
-
-    /**
-     * returns text what to show about the event
-     *
-     * @param History $record
-     * @return array
-     */
-    public static function generateHistoryData($record) {
-        $compared = false;
-        $relevant = true;
-
-        switch($record->action) {
-            case IModelRepository::COMMAND_TYPE_UPDATE:
-            case "update":
-                if($record->writeType == IModelRepository::WRITE_TYPE_PUBLISH) {
-                    $lang = lang("gomacms.h_pages_updatepublish", '$user updated and published the page <a href="$pageUrl">$page</a>');
-                    $icon = "system/images/icons/fatcow16/page_white_get.png";
-                    $compared = true;
-                } else {
-                    $lang = lang("gomacms.h_pages_update", '$user updated the page <a href="$pageUrl">$page</a>');
-                    $icon = "system/images/icons/fatcow16/page_white_edit.png";
-                    $compared = true;
-                }
-                break;
-            case IModelRepository::COMMAND_TYPE_INSERT:
-            case "insert":
-                $lang = lang("gomacms.h_pages_create", '$user created the page <a href="$pageUrl">$page</a>');
-                $icon = "system/images/icons/fatcow16/page_white_add.png";
-                break;
-            case IModelRepository::COMMAND_TYPE_PUBLISH:
-            case "publish":
-                $lang = lang("gomacms.h_pages_publish", '$user published the page <a href="$pageUrl">$page</a>');
-                $icon = "system/images/icons/fatcow16/page_white_get.png";
-                $compared = true;
-                break;
-            case IModelRepository::COMMAND_TYPE_DELETE:
-            case "remove":
-                $lang = lang("gomacms.h_pages_remove", '$user removed the page <a href="$pageUrl">$page</a>');
-                $icon = "system/images/icons/fatcow16/page_white_delete.png";
-                $record->setField("newversion", $record->oldversionid);
-                break;
-            case IModelRepository::COMMAND_TYPE_UNPUBLISH:
-            case "unpublish":
-                $lang = lang("gomacms.h_pages_unpublish", '$user unpublished the page <a href="$pageUrl">$page</a>');
-                $icon = "system/images/icons/fatcow16/page_white_edit.png";
-                break;
-            default:
-                $lang = "unknown event " . $record->action;
-                $icon = "system/images/icons/fatcow16/page_white_edit.png";
-                break;
-        }
-
-        $lang = str_replace('$pageUrl', "admin/content/record/" . $record->newversion()->id . "/edit" . URLEND, $lang);
-        $lang = str_replace('$page', convert::Raw2text($record->newversion()->title), $lang);
-
-        return array("icon" => $icon, "text" => $lang, "versioned" => true, "compared" => $compared, "editurl" => "admin/content/record/" . $record->newversion()->id . "/edit" . URLEND, "relevant" => $relevant);
     }
 
     /**
