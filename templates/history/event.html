@@ -1,0 +1,36 @@
+<% IF $canSeeEvent %>
+    <% IF $first %>
+        <div class="event first $EventClass">
+	<% ELSE %>
+	    <div class="event $EventClass">
+    <% END %>
+            <% IF $content.count() == 1 %>
+            <img src="$content.first.icon" data-retina="$retinaIcon" alt="" />
+            <% ELSE %>
+            <img src="{APPLICATION}/icons/files_multiple.png" data-retina="$retinaIcon" alt="" />
+            <% END %>
+        <div class="date">$created.ago(false)</div>
+            <% IF $content.count() > 1 %>
+        <div class="multichangetopic">$_lang_soredi.h_rma_multiplechanges<br></div>
+            <% END %>
+        <% CONTROL content() as $item %>
+            <% IF $content.count() > 1 %>
+            <div class="multichangecontainer">
+                <img src="$item.icon" data-retina="$retinaIcon" data-multi="1" alt="" />
+                <% END %>
+                <p>$item.text</p>
+                <div class="version">
+                    <% IF $isversioned AND $namespace %>
+                    <a rel="dropdownDialog[left]" href="$namespace/restoreVersion/{$dbobject}/{$oldversionid}{URLEND}?redirect={$editurl.url()}" class="button">{$_lang_undo}</a>
+                    <% END %>
+                    <% IF $compared AND $namespace %>
+                    <a rel="dropdownDialog[left]" href="$namespace/compareVersion/{$dbobject}/{$oldversionid}/{$newversionid}{URLEND}?redirect={$_SERVER_REDIRECT.url()}" class="button">{$_lang_compare}</a>
+                    <% END %>
+                </div>
+                <% IF $content.count() > 1 %>
+            </div>
+            <% END %>
+            <div class="clear"></div>
+        <% ENDCONTROL %>
+	</div>
+<% END %>
