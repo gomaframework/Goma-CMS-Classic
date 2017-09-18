@@ -4,24 +4,41 @@
 		<base href="{BASE_URI}" />
 		<title><% title() %> {TITLE_SEPERATOR} {$_cms_ptitle}</title>
 		<% headerHTML() %>
-		
+
 		<% INCLUDE_CSS_MAIN "jqueryui/theme.css" %>
 		<% INCLUDE_CSS_MAIN "style.css" %>
 		<% INCLUDE_CSS_MAIN "typography.css" %>
-		
+
 		<style type="text/css">
 			{$own_css}
 		</style>
+
+		<!-- Piwik -->
+		<script type="text/javascript">
+			var _paq = _paq || [];
+			/* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+				var u="//piwik.goma-cms.org/";
+				_paq.push(['setTrackerUrl', u+'piwik.php']);
+				_paq.push(['setSiteId', '1']);
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<!-- End Piwik Code -->
+
 	</head>
 	<body>
 		<div id="document">
 			<% INCLUDE "frontedbar.html" %>
-		
+
 			<div id="header">
 				<div class="content_wrapper">
 					<div class="quickLinks">
 						<% IF login() %>
-							<a class="user" href="profile/">$loggedInUser.image.setSize(16, 16)  <strong>{$_cms_user}</strong></a> | 
+							<a class="user" href="profile/">$loggedInUser.image.setSize(16, 16)  <strong>{$_cms_user}</strong></a> |
 							<a href="#" onclick="$('#loginFormGlobe').submit();return false;">{$_lang_logout}</a>
 							<form method="post" id="loginFormGlobe" action="{BASE_SCRIPT}profile/logout">
 								<input type="hidden" name="logout" value="1" />
@@ -35,7 +52,7 @@
 							|
 							<a href="profile/register">{$_lang_register}</a>
 						<% END %>
-						
+
 					</div>
 					<div class="clear"></div>
 					<div id="navi">
@@ -44,19 +61,19 @@
 								<li>
 									<a href="{$mainbar.url}" class="{$mainbar.LinkClass}">$mainbar.mainbartitle.text()</a>
 								</li>
-							<% ENDCONTROL %>	
+							<% ENDCONTROL %>
 						</ul>
 					</div>
 					<h3><a href="./">{$_cms_title}</a></h3>
 				</div>
-				
+
 			</div>
-			
-			
+
+
 			<div id="content">
 				<div class="content_wrapper">
-					
-					
+
+
 					<div id="breadcrumb">
 						<form id="search" method="get" action="search/">
 							<input class="input" type="search" name="q" placeholder="<% lang('search') %>" />
@@ -69,25 +86,25 @@
 							<% ENDCONTROL %>
 						</div>
 					</div>
-					
-					
+
+
 					$addcontent
-					
+
 					<div id="prependedContent">
 						<% echo PrependedContent() %>
 					</div>
-					
+
 					$content
-					
+
 					<div id="appendedContent">
 						<% echo AppendedContent() %>
 					</div>
-					
+
 					<div class="clear"></div>
-					
+
 				</div>
 			</div>
-			
+
 			<div id="footer">
 				<div class="content_wrapper">
 					<div class="branding">
@@ -95,6 +112,7 @@
 					</div>
 					<div class="quickLinks">
 						<a href="impressum/">{$_lang_imprint}</a>
+						<a href="datenschutz/">{$_lang_privacy}</a>
 						<a href="kontakt/">{$_lang_contact}</a>
 					</div>
 				</div>
