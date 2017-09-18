@@ -61,6 +61,7 @@ $lang = array(
 	"str"                                          	=> "Stra&szlig;e",
 	"ort"                                          	=> "Ort",
 	"imprint"                                      	=> "Impressum",
+	"privacy"																				=> "Datenschutz",
 	"contact"                                      	=> "Kontakt",
 	"user_groups"									=> "Benutzer & Gruppen",
 	"users"											=> "Benutzer",
