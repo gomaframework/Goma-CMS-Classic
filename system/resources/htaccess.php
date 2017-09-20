@@ -12,11 +12,14 @@ defined('IN_GOMA') OR die('<!-- restricted access -->');
 $serverconfig = 'RewriteEngine on
 
 RewriteBase ' . ROOT_PATH . '
-	
+
+# ignore .well-known folder (used by letsencrypt)
+RewriteRule .well-known/acme-challenge/* - [END]
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_URI} !^/system/application.php
 RewriteRule (.*) system/application.php [QSA]
-	
+
 <IfModule mod_expires.c>
 	ExpiresActive On
 	ExpiresByType image/jpg "access 1 year"
@@ -30,7 +33,7 @@ RewriteRule (.*) system/application.php [QSA]
 	ExpiresByType image/x-icon "access 1 year"
 	ExpiresDefault "access 2 days"
 </IfModule>
-	
+
 <IfModule mod_headers.c>
 	<FilesMatch ".(jpg|jpeg|png|gif)$">
 		Header set Cache-Control "max-age=31536000, public"
@@ -38,7 +41,7 @@ RewriteRule (.*) system/application.php [QSA]
 	<FilesMatch ".(js|css|swf|pdf|ico)$">
 		Header set Cache-Control "max-age=2678400, public"
 	</FilesMatch>
-	
+
 	Header set Connection keep-alive
 </IfModule>
 
@@ -55,6 +58,6 @@ AddEncoding deflate .gdf
 	order allow,deny
 	deny from all
 </files>
-	
+
 ErrorDocument 404 '.ROOT_PATH .'system/application.php
 ErrorDocument 500 '.ROOT_PATH .'system/templates/framework/500.html';
