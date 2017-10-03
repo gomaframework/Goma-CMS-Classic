@@ -107,7 +107,7 @@ class CKEditorUploadsController extends RequestHandler {
                 return $this->respondToUpload(false, "", "", lang("files.upload_failure"));
             }
 
-        } catch(LogicException $e) {
+        } catch(Exception $e) {
             return $this->respondToUpload(false, "", "", $e->getMessage());
         }
     }
@@ -162,9 +162,7 @@ class CKEditorUploadsController extends RequestHandler {
      * @return string
      */
     protected function respondToUpload($uploaded, $path, $filename, $error) {
-        if(!isset($_GET["CKEditorFuncNum"])) {
-            HTTPResponse::setHeader("content-type", "application/json");
-
+        if(!isset($this->request->get_params["ckeditorfuncnum"])) {
             $response = array(
                 "uploaded" => (int) $uploaded
             );
@@ -180,9 +178,9 @@ class CKEditorUploadsController extends RequestHandler {
                 );
             }
 
-            return json_encode($response);
+            return new JSONResponseBody($response);
         } else {
-            return '<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction('.addSlashes($_GET['CKEditorFuncNum']).',
+            return '<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction('.addSlashes($this->request->get_params['ckeditorfuncnum']).',
             '.var_export($path, true).', '.var_export($error, true).');</script>';
         }
     }

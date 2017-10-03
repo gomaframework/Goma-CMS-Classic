@@ -368,7 +368,8 @@ class admin extends ViewAccessableData implements PermProvider
 {
     static $casting = array(
         "updatables_json" => "HTMLText",
-        "updatables" => "HTMLText"
+        "updatables" => "HTMLText",
+        "addcontent" => "HTMLText"
     );
 
     /**

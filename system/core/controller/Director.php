@@ -62,7 +62,7 @@ class Director extends gObject {
      * @param $output
      * @param Request $request
      * @param bool $serve
-     * @return GomaResponse|GomaResponseBody|string if serve is false else void
+     * @return GomaResponse|null if serve is false GomaResponse
      */
     public static function serve($output, $request, $serve = true) {
         if(PROFILE)
@@ -88,10 +88,6 @@ class Director extends gObject {
         if(PROFILE)
             Profiler::unmark("serve");
 
-        if(!$serve) {
-            return $output;
-        }
-
         Core::callHook("onBeforeServe", $output, $request);
 
         if(!is_a($output, "GomaResponse")) {
@@ -103,6 +99,10 @@ class Director extends gObject {
             );
         } else {
             $output->merge(HTTPResponse::gomaResponse());
+        }
+
+        if(!$serve) {
+            return $output;
         }
 
         $output->output();
@@ -222,6 +222,7 @@ class Director extends gObject {
      * @param array $post
      * @param array $files
      * @param array $headers
+     * @param User|null $user
      * @return Request
      */
     public static function createRequestWithData($url, $server, $get, $post, $files, $headers, $user = null) {
@@ -271,7 +272,8 @@ class Director extends gObject {
 
         Core::callHook("getEnvironment", $server, $get, $post, $files, $headers);
 
-        return self::createRequestWithData($url, $server, $get, $post, $files, $headers, Member::$loggedIn);
+        return self::createRequestWithData($url, $server, $get, $post, $files, $headers,
+            class_exists("Member") ? Member::$loggedIn : null);
     }
 
     /**
@@ -286,6 +288,10 @@ class Director extends gObject {
         if(PROFILE)
             Profiler::mark("render");
 
+        if(!is_string($url)) {
+            throw new InvalidArgumentException("\$url must be string for Director::direct. For Requests use Director::directRequest");
+        }
+
         $request = self::createRequestFromEnvironment($url);
 
         return self::directRequest($request, $serve);
@@ -294,7 +300,7 @@ class Director extends gObject {
     /**
      * @param Request $request
      * @param bool $serve
-     * @return false|null|string|void
+     * @return GomaResponse|null
      * @throws DataNotFoundException
      * @throws Exception
      */

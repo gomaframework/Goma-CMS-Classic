@@ -290,8 +290,7 @@ class Dev extends RequestHandler {
                 return $return;
             }
 
-			FileSystem::sendFile($file, null, $this->request);
-			exit;
+			return FileSystem::sendFile($file, null, $this->request);
 		}
 
 		return false;

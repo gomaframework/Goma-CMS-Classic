@@ -494,4 +494,62 @@ class FormTest extends GomaUnitTest implements TestAble {
         $this->calledSave = true;
         return 2;
     }
+
+    /**
+     * tests if form is throwing an exception with a message which contains "url", when url mismatch.
+     *
+     * 1. Create form $form
+     * 2. Set url to "url"
+     * 3. Render Form and response
+     * 4. Set url to "url2"
+     * 5. Call $form->submitForm(true) and catch exception
+     * 6. Assert that exception is FormNotSubmittedException
+     * 7. Assert that exception message contains url
+     */
+    public function testsubmitFormUrlMismatch() {
+        $form = new Form(new Controller(), "name");
+        $form->url = "url";
+        $form->render()->render();
+
+        $form->url = "url2";
+        $exc = null;
+        try {
+            $method = new \ReflectionMethod(Form::class, "submitForm");
+            $method->setAccessible(true);
+            $method->invoke($form, true);
+        } catch (Exception $e) {
+            $exc = $e;
+        }
+        $this->assertInstanceOf(\FormNotSubmittedException::class, $exc);
+        $this->assertRegExp("/url/", $exc->getMessage());
+    }
+
+    /**
+     * tests if form is not throwing an exception with a message which contains "url", when url mismatch.
+     *
+     * 1. Create form $form
+     * 2. Set url to "url"
+     * 3. Render Form and response
+     * 4. Set url to "url"
+     * 5. Call $form->>submitForm(true) and catch exception
+     * 6. Assert that exception is FormNotSubmittedException
+     * 7. Assert that exception message *not* contains url
+     */
+    public function testsubmitFormUrlMatch() {
+        $form = new Form(new Controller(), "name");
+        $form->url = "url";
+        $form->render()->render();
+
+        $form->url = "url";
+        $exc = null;
+        try {
+            $method = new \ReflectionMethod(Form::class, "submitForm");
+            $method->setAccessible(true);
+            $method->invoke($form, true);
+        } catch (Exception $e) {
+            $exc = $e;
+        }
+        $this->assertInstanceOf(\FormNotSubmittedException::class, $exc);
+        $this->assertFalse(!!preg_match('/url/', $exc->getMessage()));
+    }
 }

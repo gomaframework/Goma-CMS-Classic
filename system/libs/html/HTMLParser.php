@@ -35,7 +35,10 @@ class HTMLParser extends gObject
         if (PROFILE) Profiler::mark("HTMLParser::parseHTML");
 
         if ($parseLinksAndScripts) {
-            $html = self::findScripts($html);
+            if($includeResourcesInBody && strpos($html, "</title>") && strpos($html, "</body>")) {
+                $html = self::findScripts($html);
+            }
+
             $html = self::process_links($html);
         }
 
