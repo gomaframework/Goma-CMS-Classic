@@ -93,8 +93,8 @@ define('STATUS_MAINTANANCE', 2);
 define('STATUS_DISABLED', 0);
 
 // version
-define("GOMA_VERSION", "2.0RC6");
-define("BUILD_VERSION", "124");
+define("GOMA_VERSION", "2.0RC7");
+define("BUILD_VERSION", "130");
 
 chdir(ROOT);
 

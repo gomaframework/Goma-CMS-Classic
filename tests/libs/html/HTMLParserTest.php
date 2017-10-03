@@ -84,4 +84,27 @@ class HTMLParserTests extends GomaUnitTest {
 		}
 	}
 
+    /**
+     * tests if HTMLParser is preserving scripts when no body exists.
+     */
+	public function testScriptRemovingWithoutBody() {
+	    $html = "<script type=\"text/javascript\">var a = b;</script>";
+	    $this->assertEqual($html, HTMLParser::parseHTML($html));
+    }
+
+    /**
+     * tests if HTMLParser is removing scripts from body when it exists.
+     */
+    public function testScriptRemovingWithBody() {
+        $html = "<html><head><title></title></head><body><script type=\"text/javascript\">var a = b;</script></body></html>";
+        $this->assertFalse(strpos(HTMLParser::parseHTML($html), "var a = b;"));
+    }
+
+    /**
+     * tests if HTMLParser is not removing scripts from body when it exists and $includeResourcesInBody = false;
+     */
+    public function testScriptRemovingWithBodyIncludeInBodyIsFalse() {
+        $html = "<html><head><title></title></head><body><script type=\"text/javascript\">var a = b;</script></body></html>";
+        $this->assertTrue(!!strpos(HTMLParser::parseHTML($html, true, false), "var a = b;"));
+    }
 }

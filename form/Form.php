@@ -544,15 +544,15 @@ class Form extends AbstractFormComponentWithChildren {
 		return $response;
 	}
 
-	/**
-	 * @param string $field
-	 * @param null|string $default
-	 * @return string
-	 */
-	protected function getTitleForFieldOrDefault($field, $default = null) {
-		return $this->$field ? $this->$field->getTitle() :
-			(isset($default) ? $default : $field);
-	}
+    /**
+     * @param string $field
+     * @param null|string $default
+     * @return string
+     */
+    protected function getTitleForFieldOrDefault($field, $default = null) {
+        return is_a($this->$field, AbstractFormComponent::class) ? $this->$field->getTitle() :
+            (isset($default) ? $default : $field);
+    }
 
 	/**
 	 * @param array $errors
