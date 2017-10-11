@@ -31,7 +31,7 @@ function ImageUploadController(field, updateUrl, options) {
 
     this.aspectRatio = field.aspect;
 
-    if(typeof options == "object") {
+    if(typeof options === "object") {
         for(var i in options) {
             if(options.hasOwnProperty(i)) {
                 this[i] = options[i];
@@ -51,6 +51,8 @@ function ImageUploadController(field, updateUrl, options) {
         }
     }.bind(this));
 
+    $(window).resize(this.updateFactorsBasedOnHTML.bind(this));
+
     return this;
 }
 
@@ -60,12 +62,26 @@ ImageUploadController.prototype = {
     internalWidth: null,
     internalHeight: null,
     jcropInstance: null,
-    factor: 1,
+    factorX: 1,
+    factorY: 1,
+
+    /**
+     * aspect ratio x to y
+     */
     aspectRatio: null,
     internalSize: null,
     saveCropTimeout: null,
     initialUpdate: true,
     initCropAreaDeferred: null,
+
+    factoredAspectRatio: function() {
+        if(this.aspectRatio == null) {
+            return null;
+        }
+
+        console.log(this.factorX / this.factorY * this.aspectRatio);
+        return this.factorX / this.factorY * this.aspectRatio;
+    },
 
     updateCropArea: function(data) {
         if(data === null || !data.status) {
@@ -104,11 +120,13 @@ ImageUploadController.prototype = {
                         width: this.fieldElement.find(".crop-wrapper > img").width(),
                         height: this.fieldElement.find(".crop-wrapper > img").height()
                     },
-                    this.fieldElement.find(".crop-wrapper > img"),
-                    this.field.upload.orgImageSize.width
+                    this.fieldElement.find(".crop-wrapper > img")
                 ).done(deferred.resolve).fail(deferred.reject);
             }.bind(this);
-            image.onerror = deferred.reject;
+            image.onerror = function() {
+                console.log(arguments);
+                deferred.reject();
+            };
             image.src = cropImage.src;
         } else {
             deferred.resolve();
@@ -117,7 +135,35 @@ ImageUploadController.prototype = {
         return deferred.promise();
     },
 
-    initCropArea: function(size, image, imageWidth) {
+    /**
+     * updates factorX and Y based on new HTML image size after window resize.
+     */
+    updateFactorsBasedOnHTML: function() {
+        if(this.fieldElement.find(".crop-wrapper > img").length > 0 && this.field.upload != null) {
+            this.setFactors({
+                width: this.fieldElement.find(".crop-wrapper > img").width(),
+                height: this.fieldElement.find(".crop-wrapper > img").height()
+            }, {
+                width: this.field.upload.orgImageSize.width,
+                height: this.field.upload.orgImageSize.height
+            });
+        }
+    },
+
+    /**
+     * updates factorX and factorY property.
+     *
+     * @param size size of HTML image
+     * @param imageSize size of real image
+     */
+    setFactors: function(size, imageSize) {
+        this.factorX = size.width / imageSize.width;
+        this.factorY = size.height / imageSize.height;
+
+        console.log && console.log({x: this.factorX, y: this.factorY});
+    },
+
+    initCropArea: function(size, image) {
         if(this.initCropAreaDeferred != null) {
             if(this.initCropAreaDeferred.state() === "pending") {
                 return this.initCropAreaDeferred.promise();
@@ -127,7 +173,7 @@ ImageUploadController.prototype = {
         this.initCropAreaDeferred = $.Deferred();
 
         this.safeDestoryCrop().done(function() {
-            this.fieldElement.find(".crop-wrapper").css("height", size.height + "px");10
+            this.fieldElement.find(".crop-wrapper").css("height", size.height + "px");
 
             var $this = this,
                 options = {
@@ -136,7 +182,7 @@ ImageUploadController.prototype = {
                     onChange: $this.updateCoords.bind($this),
                     onSelect: $this.updateCoords.bind($this),
                     onRelease: function() {
-                        if($this.aspectRatio != null) {
+                        if($this.factoredAspectRatio() !== null) {
                             $this.jcropInstance.setSelect($this.setSelectForAspect(size));
                         }
                     }
@@ -144,15 +190,15 @@ ImageUploadController.prototype = {
 
             this.internalSize = size;
 
-            $this.factor = size.width / imageWidth;
-
             var upload = $this.field.upload, thumbSelectionW = size.width, thumbSelectionH = size.height, y = 0, x = 0;
 
-            if (this.aspectRatio != null) {
-                options.aspectRatio = this.aspectRatio;
+            this.updateFactorsBasedOnHTML();
+
+            if (this.factoredAspectRatio() !== null) {
+                options.aspectRatio = this.factoredAspectRatio();
             }
 
-            if (upload.thumbLeft != 50 || upload.thumbTop != 50 || upload.thumbWidth != 100 || upload.thumbHeight != 100) {
+            if (upload.thumbLeft !== 50 || upload.thumbTop !== 50 || upload.thumbWidth !== 100 || upload.thumbHeight !== 100) {
                 thumbSelectionW = upload.thumbWidth / 100 * size.width;
                 thumbSelectionH = upload.thumbHeight / 100 * size.height;
                 y = (size.height - thumbSelectionH) * upload.thumbTop / 100;
@@ -167,15 +213,9 @@ ImageUploadController.prototype = {
                     w: thumbSelectionW,
                     x: x,
                     y: y
-                });
-            } else
-
-            if (this.aspectRatio != null && thumbSelectionW / thumbSelectionH != this.aspectRatio) {
+                }, false);
+            } else if (this.factoredAspectRatio() !== null && thumbSelectionW / thumbSelectionH !== this.factoredAspectRatio()) {
                 options.setSelect = this.setSelectForAspect(size);
-            }
-
-            if(this.aspectRatio != null) {
-                options.aspectRatio = this.aspectRatio;
             }
 
             var img = new Image();
@@ -192,14 +232,23 @@ ImageUploadController.prototype = {
         return this.initCropAreaDeferred.promise();
     },
 
+    /**
+     * automatically determines correct position of crop controls for aspect ratio.
+     *
+     * @param size
+     * @returns {[null,null,null,null]}
+     */
     setSelectForAspect: function(size) {
         var thumbSelectionW = size.width, thumbSelectionH = size.height, y = 0, x = 0;
-        if (thumbSelectionW / thumbSelectionH > this.aspectRatio) {
-            x = (size.width - thumbSelectionH * this.aspectRatio) / 2;
-            thumbSelectionW = thumbSelectionH * this.aspectRatio;
-        } else {
-            y = (size.height - size.width / this.aspectRatio) / 2;
-            thumbSelectionH = size.width / this.aspectRatio;
+        if(thumbSelectionW / thumbSelectionH !== this.factoredAspectRatio()) {
+            console.log("not in aspect");
+            if (thumbSelectionW / thumbSelectionH > this.factoredAspectRatio()) {
+                x = (size.width - thumbSelectionH * this.factoredAspectRatio()) / 2;
+                thumbSelectionW = thumbSelectionH * this.factoredAspectRatio();
+            } else {
+                y = (size.height - size.width / this.factoredAspectRatio()) / 2;
+                thumbSelectionH = size.width / this.factoredAspectRatio();
+            }
         }
 
         this.updateCoords({
@@ -207,7 +256,7 @@ ImageUploadController.prototype = {
             w: thumbSelectionW,
             x: x,
             y: y
-        });
+        }, false);
 
         return [
             x, y, x + thumbSelectionW, y + thumbSelectionH
@@ -281,11 +330,18 @@ ImageUploadController.prototype = {
         }
     },
 
-    updateCoords: function(data) {
-        this.internalHeight = data.h / this.factor;
-        this.internalWidth = data.w  / this.factor;
-        this.internalLeft = data.x  / this.factor;
-        this.internalTop = data.y  / this.factor;
+    /**
+     * Update internal coordinates and saves to server if save is not false.
+     * @param data Coordinates: h, w, x, y based on HTML image
+     * @param save set to false to not save to server. Default: true
+     */
+    updateCoords: function(data, save) {
+        console.log(data);
+
+        this.internalHeight = data.h / this.factorY;
+        this.internalWidth = data.w  / this.factorX;
+        this.internalLeft = data.x  / this.factorX;
+        this.internalTop = data.y  / this.factorY;
 
         this.fieldElement.find(".ThumbLeftValue").val(this.internalLeft);
         this.fieldElement.find(".ThumbTopValue").val(this.internalTop);
@@ -304,9 +360,11 @@ ImageUploadController.prototype = {
                 Math.min(Math.max(this.internalTop / (this.field.upload.orgImageSize.height - this.internalHeight) * 100, 0), 100) : 50;
         }
 
-        clearTimeout(this.saveCropTimeout);
-        if(this.fieldElement.find(".crop-button").length > 0) {
-            this.saveCropTimeout = setTimeout(this.saveCrop.bind(this, true), 200);
+        if(save !== false) {
+            clearTimeout(this.saveCropTimeout);
+            if (this.fieldElement.find(".crop-button").length > 0) {
+                this.saveCropTimeout = setTimeout(this.saveCrop.bind(this, true), 200);
+            }
         }
     },
 
@@ -325,7 +383,7 @@ ImageUploadController.prototype = {
             this.jcropInstance = null;
             setTimeout(deferred.resolve, 100);
         } else {
-            setTimeout(deferred.resolve(), 10);
+            setTimeout(deferred.resolve, 10);
         }
 
         return deferred.promise();
@@ -355,6 +413,8 @@ ImageUploadController.prototype = {
             this.field.upload.sourceImage = true;
         }
 
+        console.log(this);
+
         $.ajax({
             url: this.updateUrl,
             type: "post",
@@ -379,9 +439,6 @@ ImageUploadController.prototype = {
                             "src": data.file.imageHeight400,
                             "data-retina": null
                         });
-                    };
-                    image.onerror = function() {
-                        alert("error loading image.");
                     };
                     image.src = data.file.imageHeight400;
                     $this.field.upload = data.file;

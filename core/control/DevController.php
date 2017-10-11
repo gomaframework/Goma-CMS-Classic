@@ -45,7 +45,7 @@ class Dev extends RequestHandler {
 	 */
 	public static function redirectToDev() {
 		if(GlobalSessionManager::globalSession() == null) {
-			ClassManifest::tryToInclude("SessionManager", "system/security/SessionManager.php");
+			ClassManifest::tryToInclude("SessionManager", "system/security/Services/SessionManager.php");
 			GlobalSessionManager::__setSession(SessionManager::startWithIdAndName(null));
 		}
 

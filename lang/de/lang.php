@@ -571,6 +571,7 @@ $lang = array(
 	"h_all_events"			=> "Alle Datenquellen",
 	"h_relevant"			=> "Wichtige",
 	"h_all"					=> "Alle Ereignisse",
+    "h_multiplechanges"     => 'Es gab mehrere Änderungen:',
 
 	"older"					=> "Ältere Einträge",
 	"newer"					=> "Neuere Einträge",

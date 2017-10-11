@@ -102,25 +102,23 @@ class adminController extends Controller
     /**
      * hands the control to admin-controller
      *
-     * @name handleItem
-     * @access public
      * @return mixed
      */
     public function handleItem()
     {
-        if (!Permission::check("ADMIN")) {
+        if (!$this->request->userHasPermission("ADMIN")) {
             return null;
         }
 
         $class = str_replace("-", "\\", $this->request->getParam("item")) . "admin";
 
-        if (ClassInfo::exists($class)) {
-            /** @var RequestHandler $controller */
+        if (ClassInfo::exists($class) && ClassManifest::isOfType($class, adminItem::class)) {
+            /** @var adminItem $controller */
             $controller = new $class;
 
             Core::$favicon = ClassInfo::getClassIcon($class);
 
-            if (Permission::check($controller->rights)) {
+            if ($this->request->userHasPermission($controller->rights)) {
                 self::$activeController = $controller;
 
                 return $controller->handleRequest($this->request);
@@ -141,8 +139,6 @@ class adminController extends Controller
     /**
      * returns title, alias for title
      *
-     * @name adminTitle
-     * @access public
      * @return string
      */
     final public function adminTitle()
@@ -153,8 +149,6 @@ class adminController extends Controller
     /**
      * returns the URL for the View Website-Button
      *
-     * @name PreviewURL
-     * @access public
      * @return string
      */
     public function PreviewURL()
@@ -183,7 +177,7 @@ class adminController extends Controller
     public function flushLog($count = 40) {
         $count = $this->getParam("count") ? $this->getParam("count") : $count;
 
-        if (Permission::check("superadmin")) {
+        if ($this->request->userHasPermission("superadmin")) {
             PushController::enablePush();
             GlobalSessionManager::globalSession()->stopSession();
             ignore_user_abort(true);
@@ -231,11 +225,12 @@ class adminController extends Controller
         }
 
         $admin = new Admin();
+        $admin->currentUser = $this->request->getUser();
         $prepared = $admin->customise(array(
             "content" => Director::getStringFromResponse($content)
         ));
 
-        if (!Permission::check("ADMIN")) {
+        if (!$this->request->userHasPermission("ADMIN")) {
             $newContent = $prepared->renderWith("admin/index_not_permitted.html");
         } else {
             $newContent = $prepared->renderWith("admin/index.html");
@@ -249,12 +244,11 @@ class adminController extends Controller
     /**
      * loads content and then loads page
      *
-     * @name index
      * @return bool|string
      */
     public function index()
     {
-        if (Permission::check("ADMIN")) {
+        if ($this->request->userHasPermission("ADMIN")) {
 
             if (isset($this->getRequest()->get_params["flush"])) {
                 Core::deleteCache(true);
@@ -276,7 +270,7 @@ class adminController extends Controller
     public function handleUpdate()
     {
 
-        if (Permission::check("superadmin")) {
+        if ($this->request->userHasPermission("superadmin")) {
             $controller = new UpdateController();
             self::$activeController = $controller;
 
@@ -295,7 +289,7 @@ class adminController extends Controller
      */
     public function history()
     {
-        if (Permission::check("ADMIN")) {
+        if ($this->request->userHasPermission("ADMIN")) {
             $controller = new HistoryController();
 
             return $controller->handleRequest($this->request, true);
@@ -351,215 +345,5 @@ class adminController extends Controller
                 "position" => "left"
             )
         );
-    }
-}
-
-/**
- * The base model for the admin-panel.
- *
- * @package     Goma\Core\Admin
- *
- * @license     GNU Lesser General Public License, version 3; see "LICENSE.txt"
- * @author      Goma-Team
- *
- * @version     1.5
- */
-class admin extends ViewAccessableData implements PermProvider
-{
-    static $casting = array(
-        "updatables_json" => "HTMLText",
-        "updatables" => "HTMLText",
-        "addcontent" => "HTMLText"
-    );
-
-    /**
-     * user-bar
-     *
-     * @return array|string
-     */
-    public function userbar()
-    {
-        $userbar = new HTMLNode("div");
-        $this->callExtending("userbar");
-        adminController::activeController()->userbar($userbar);
-
-        return $userbar->html();
-    }
-
-    /**
-     * history-url
-     *
-     * @return string
-     */
-    public function historyURL()
-    {
-        return adminController::activeController()->historyURL();
-    }
-
-    public function TooManyLogs()
-    {
-        if (file_exists(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log")) {
-            $count = count(scandir(ROOT . CURRENT_PROJECT . "/" . LOG_FOLDER . "/log"));
-            if ($count > 45) {
-                return $count;
-            }
-
-            return false;
-        }
-
-        return false;
-    }
-
-    /**
-     * returns title
-     */
-    public function title()
-    {
-        $adminTitle = adminController::activeController()->Title();
-        if ($adminTitle) {
-            if (Core::$title)
-                return $adminTitle . " / " . Core::$title;
-
-            return $adminTitle;
-        }
-
-        if (Core::$title)
-            return Core::$title;
-
-        return false;
-    }
-
-    /**
-     * returns content-classes
-     */
-    public function content_class()
-    {
-        return adminController::activeController()->ContentClass();
-    }
-
-    /**
-     * returns the URL for the view Website button
-     *
-     * @return string
-     */
-    public function PreviewURL()
-    {
-        return adminController::activeController()->PreviewURL();
-    }
-
-    /**
-     * provies all permissions of this dataobject
-     */
-    public function providePerms()
-    {
-        return array(
-            "ADMIN"         => array(
-                "title"       => '{$_lang_administration}',
-                'default'     => array(
-                    "type" => "admins"
-                ),
-                "description" => '{$_lang_permission_administration}'
-            ),
-            "ADMIN_HISTORY" => array(
-                "title"    => '{$_lang_history}',
-                "default"  => array(
-                    "type" => "admins"
-                ),
-                "category" => "ADMIN"
-            )
-        );
-    }
-
-    /**
-     * gets data fpr available points
-     *
-     * @return DataSet
-     */
-    public function this()
-    {
-
-        $data = new DataSet();
-        foreach (ClassInfo::getChildren("adminitem") as $child) {
-            $class = new $child;
-            if ($class->text) {
-                if (Permission::check($class->rights) && $class->visible()) {
-                    if (adminController::activeController()->classname == $child)
-                        $active = true;
-                    else
-                        $active = false;
-
-                    $data->push(array('text'   => parse_lang($class->text),
-                                      'uname'  => str_replace("\\", "-", substr($class->classname, 0, -5)),
-                                      'sort'   => StaticsManager::getStatic($class, "sort", true),
-                                      "active" => $active,
-                                      "icon"   => ClassInfo::getClassIcon($class->classname)));
-                }
-            }
-        }
-        $data->sort("sort", "DESC");
-
-        return $data;
-    }
-
-    /**
-     * gets addcontent
-     *
-     * @return string
-     */
-    public function getAddContent()
-    {
-        return addcontent::get();
-    }
-
-    /**
-     * lost_password
-     *
-     * @name getLost_password
-     * @access public
-     */
-    public function getLost_password()
-    {
-        $profile = new ProfileController();
-        return $profile->lost_password();
-    }
-
-    /**
-     * returns a list of installed software at a given maximum number
-     *
-     * @return ViewAccessableData
-     */
-    public function Software($number = 7)
-    {
-        return G_SoftwareType::listAllSoftware();
-    }
-
-    /**
-     * returns if store is available
-     *
-     * @return bool
-     */
-    public function isStoreAvailable()
-    {
-        return G_SoftwareType::isStoreAvailable();
-    }
-
-    /**
-     * returns updatable packages
-     *
-     * @return DataSet
-     */
-    public function getUpdatables()
-    {
-        return new DataSet(G_SoftwareType::listUpdatablePackages());
-    }
-
-    /**
-     * returns updatables as json
-     *
-     * @return string
-     */
-    public function getUpdatables_JSON()
-    {
-        return json_encode(G_SoftwareType::listUpdatablePackages());
     }
 }

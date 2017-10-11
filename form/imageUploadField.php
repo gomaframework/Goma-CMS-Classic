@@ -25,15 +25,8 @@ class ImageUploadField extends FileUpload
 	/**
 	 * @var array
 	 */
-	public $url_handlers = array(
-		"getResizeUrls/\$height"	=> "getResizeUrls"
-	);
-
-	/**
-	 * @var array
-	 */
 	public $allowed_actions = array(
-		"setCropInfo", "getResizeUrls"
+		"setCropInfo"
 	);
 
 	/**
@@ -218,28 +211,6 @@ class ImageUploadField extends FileUpload
 		}
 
 		return parent::handleException($e);
-	}
-
-	/**
-	 * gets resize-urls.
-	 */
-	public function getResizeUrls() {
-		if($this->getParam("height") < 1) {
-			throw new InvalidArgumentException();
-		}
-
-		if(!$this->getModel()) {
-			return new JSONResponseBody(null);
-		}
-		/** @var ImageUploads $image */
-		$image = $this->getModel();
-		$data = array(
-			"url" => $image->getResizeUrl(null, $this->getParam("height")),
-			"sourceUrl" => $image->sourceImage ? $image->sourceImage->getResizeUrl(null, $this->getParam("height")) :
-				$image->getResizeUrl(null, $this->getParam("height"))
-		);
-
-		return new JSONResponseBody($data);
 	}
 
 	/**

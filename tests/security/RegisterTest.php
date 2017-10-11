@@ -19,6 +19,24 @@ class RegisterTest extends GomaUnitTest {
      */
     public $name = "Register";
 
+    public static $userData = array(
+        "nickname" => "myname",
+        "name" => "test",
+        "email" => "__test__@ibpg.eu",
+        "password" => "1234",
+        "repeat" => "1234"
+    );
+
+    /**
+     * Tests if registration works.
+     *
+     * 1. Disable RegisterExtension
+     * 2. Disable Email validation
+     * 3. Load Register Form
+     * 4. Remove user __test__@ibpg.eu if exists
+     * 5. Create user by simulating request
+     * 6. Assert that user exists
+     */
     public function testForms() {
         RegisterExtension::$enabled = false;
         RegisterExtension::$validateMail = false;
@@ -43,16 +61,11 @@ class RegisterTest extends GomaUnitTest {
             $user->remove(true);
         }
 
-        $request = new Request("post", "register", array(), array(
-            "nickname" => "myname",
+        $request = new Request("post", "register", array(), array_merge(self::$userData, array(
             "form_submit_" . $form->getForm()->getName() => 1,
             "secret_" . $form->getForm()->ID() => $form->getForm()->getSecretKey(),
-            "name" => "test",
-            "email" => "__test__@ibpg.eu",
-            "password" => "1234",
-            "repeat" => "1234",
             "submit" => 1
-        ));
+        )));
         $form = $controller->handleRequest($request);
         $this->assertNotEqual("", $form->render());
 

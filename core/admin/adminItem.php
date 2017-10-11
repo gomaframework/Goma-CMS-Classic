@@ -16,6 +16,8 @@ class adminItem extends AdminController implements PermProvider {
 	*/
 	public $sort = 0;
 
+    public $rights = "admin";
+
 	/**
 	 * allowed_actions
 	*/
@@ -84,9 +86,11 @@ class adminItem extends AdminController implements PermProvider {
     }
 
     /**
-	 * if is visible
-	*/
-	public function visible()
+     * if is visible
+     * @param User $user
+     * @return bool
+     */
+	public function visible($user)
 	{
 		return true;
 	}

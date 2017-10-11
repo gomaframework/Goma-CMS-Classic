@@ -1080,7 +1080,6 @@ class Form extends AbstractFormComponentWithChildren {
 	/**
 	 * adds a validator
 	 *
-	 * @deprecated
 	 * @param FormValidator $validator
 	 * @param string $name
 	 */
