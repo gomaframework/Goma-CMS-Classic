@@ -266,6 +266,67 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
     }
 
     /**
+     * tests if sort can be overridden.
+     *
+     * 1. gets one object
+     * 2. checks if twos are not in order. else succeed.
+     * 3. sort by two
+     * 4. check if they are in order.
+     *
+     * @throws DataObjectSetCommitException
+     */
+    public function testSortOverride() {
+        /** @var ManyManyTestObjectOne $firstOne */
+        $firstOne = DataObject::get_one("ManyManyTestObjectOne");
+        if($this->checkForInOrder($firstOne->twos())) {
+            $this->assertTrue(true);
+            return;
+        }
+
+        $this->assertTrue($this->checkForInOrder($firstOne->twos(array(), array("two", "ASC"))));
+    }
+
+    /**
+     * tests helper method "inOrder".
+     */
+    public function testCheckForInOrder() {
+        $this->assertTrue($this->checkForInOrder(array(
+            new ManyManyTestObjectTwo(array("two" => "two_1")),
+            new ManyManyTestObjectTwo(array("two" => "two_2")),
+            new ManyManyTestObjectTwo(array("two" => "two_3")),
+        )));
+    }
+
+    /**
+     * tests helper method "inOrder".
+     */
+    public function testCheckForInOrderNegative() {
+        $this->assertFalse($this->checkForInOrder(array(
+            new ManyManyTestObjectTwo(array("two" => "two_2")),
+            new ManyManyTestObjectTwo(array("two" => "two_1")),
+            new ManyManyTestObjectTwo(array("two" => "two_3")),
+        )));
+    }
+
+    /**
+     * @param DataObjectSet $twos
+     * @return bool
+     */
+    protected function checkForInOrder($twos) {
+        $order = -1;
+        /** @var ManyManyTestObjectTwo $two */
+        foreach($twos as $two) {
+            if($order < (int) substr($two->two, 4)) {
+                $order = (int) substr($two->two, 4);
+            } else {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * tests if filter API is working as expected
      */
     public function testFilter() {

@@ -577,6 +577,7 @@ $lang = array(
 	"h_all"					=> "all events",
 	"h_all_events"			=> "all sources",
 	"h_relevant"			=> "important",
+    "h_multiplechanges"     => 'There were multiple changes:',
 
 	"older"					=> "older entries",
 	"newer"					=> "newer entries",
@@ -598,7 +599,7 @@ $lang = array(
 
 	"error_disk_space"		=> "There's not enough disk space on the webserver available.",
 
-	"help"					=> "help",
+	"help"					=> "Help",
 	"video"					=> "video",
 	"help_article"			=> "help-article",
 

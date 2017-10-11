@@ -11,7 +11,7 @@
             <% END %>
         <div class="date">$created.ago(false)</div>
             <% IF $content.count() > 1 %>
-        <div class="multichangetopic">$_lang_soredi.h_rma_multiplechanges<br></div>
+        <div class="multichangetopic">$_lang.h_multiplechanges<br></div>
             <% END %>
         <% CONTROL content() as $item %>
             <% IF $content.count() > 1 %>

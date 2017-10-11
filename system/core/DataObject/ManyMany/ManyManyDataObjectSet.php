@@ -686,7 +686,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             }
         } else {
             if(is_array($sort)) {
-                $sort = array_merge($this->getManyManySort(), $sort);
+                $sort = array_merge($sort, $this->getManyManySort());
             } else {
                 $sort = $this->getManyManySort($sort);
             }

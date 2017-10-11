@@ -74,29 +74,30 @@ class HTMLText extends Varchar {
             if(preg_match('/^\.?\/?Uploads\/([a-zA-Z0-9_\-\.]+)\/([a-zA-Z0-9_\-\.]+)\/([a-zA-Z0-9_\-\.]+)\/?(index\.[a-zA-Z0-9_]+)?$/Ui', $machingSrcAttribute, $params)) {
                 if($sizes = self::matchSizes($matches[0][$k])) {
                     // generate information for resizing and caching of it
-                    $width = isset($sizes["width"]) ? $sizes["width"] : null;
-                    $height = isset($sizes["height"]) ? $sizes["height"] : null;
+                    $width = isset($sizes["width"]) && $sizes["width"] != -1 ? $sizes["width"] : null;
+                    $height = isset($sizes["height"]) && $sizes["height"] != -1 ? $sizes["height"] : null;
 
-                    $wString = $width ?: 0;
-                    $hString = $height ?: 0;
+                    if(isset($width) || isset($height)) {
+                        $wString = $width ?: 0;
+                        $hString = $height ?: 0;
 
-                    $cache = new Cacher(md5("upload_" . $machingSrcAttribute . $wString . "_" . $hString));
-
-                    if(false) {//$cache->checkValid()) {
-                        $value = str_replace($machingSrcAttribute, $cache->getData(), $value);
-                    } else {
-                        /** @var ImageUploads $upload */
-                        $upload = DataObject::get_one("ImageUploads", array("path" => $params[1] . "/" . $params[2] . "/" . $params[3]));
-                        // generate new URLs for Resizing
-                        if($upload && $replace = $this->generateResizeUrls($upload, $height, $width)) {
-                            if(substr($replace, -1) == "/") {
-                                $cache->write($replace, 60);
-                            } else {
-                                $cache->write($replace, 86400);
-                            }
-                            $value = str_replace($machingSrcAttribute, $replace, $value);
+                        $cache = new Cacher(md5("upload_" . $machingSrcAttribute . $wString . "_" . $hString));
+                        if ($cache->checkValid()) {
+                            $value = str_replace($machingSrcAttribute, $cache->getData(), $value);
                         } else {
-                            $cache->write($machingSrcAttribute, 86400);
+                            /** @var ImageUploads $upload */
+                            $upload = DataObject::get_one("ImageUploads", array("path" => $params[1] . "/" . $params[2] . "/" . $params[3]));
+                            // generate new URLs for Resizing
+                            if ($upload && $replace = $this->generateResizeUrls($upload, $height, $width)) {
+                                if (substr($replace, -1) == "/") {
+                                    $cache->write($replace, 60);
+                                } else {
+                                    $cache->write($replace, 86400);
+                                }
+                                $value = str_replace($machingSrcAttribute, $replace, $value);
+                            } else {
+                                $cache->write($machingSrcAttribute, 86400);
+                            }
                         }
                     }
                 }

@@ -321,6 +321,7 @@ class History extends DataObject
 
     /**
      * returns the id of the new version
+     *
      * @return string
      */
     public function newversionid()

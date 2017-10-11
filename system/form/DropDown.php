@@ -627,7 +627,7 @@ class DropDown extends FormField {
 
 		$arr = $data["data"];
 
-		$value = ($this->multiselect) ? array_values($this->dataset) : array($this->getKeyFromKey($this->getModel()));
+		$value = ($this->multiselect) ? array_values((array) $this->dataset) : array($this->getKeyFromKey($this->getModel()));
 
 		if(count($value) == 0 || $value[0] === null) {
 			$value = array();
