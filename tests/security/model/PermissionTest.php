@@ -21,4 +21,13 @@ class PermissionTest extends GomaUnitTest {
         $this->assertInstanceOf(Permission::class, $permission);
         $this->assertNotEqual(0, $permission->id);
     }
+
+    /**
+     * tests for persistence when double calling of superadmin.
+     */
+    public function testNoDoubleSuperAdmin() {
+        $permission1 = Permission::forceExisting("superadmin");
+        $permission2 = Permission::forceExisting("superadmin");
+        $this->assertEqual($permission1->id, $permission2->id);
+    }
 }

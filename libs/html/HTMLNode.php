@@ -13,13 +13,17 @@ class HTMLNode extends gObject
 {
     /**
      * tag
+     *
+     * @var string
      */
     protected $tag;
 
     /**
      * attributes
+     *
+     * @var array
      */
-    protected $attr;
+    protected $attr = array();
 
     /**
      * content
@@ -57,19 +61,16 @@ class HTMLNode extends gObject
      */
     public function __construct($tag, $attr = array(), $content = null)
     {
+        parent::__construct();
+
         $this->tag = trim(strtolower($tag));
 
         if (!is_array($attr)) {
             throw new InvalidArgumentException("Argument 2 of HTMLNode must be array.");
         }
 
-        if (isset($attr["style"])) {
-            $style = $attr["style"];
-            $this->parseCSS($style);
-            unset($attr["style"]);
-            $this->attr = $attr;
-        } else {
-            $this->attr = $attr;
+        foreach($attr as $currentAttribute => $value) {
+            $this->attr($currentAttribute, $value);
         }
 
         if (is_array($content)) {
@@ -165,7 +166,7 @@ class HTMLNode extends gObject
     {
         if ($value !== null) {
             if ($this->tag == "input") {
-                return $this->value = convert::raw2xml($value);
+                return $this->value = $value;
             } else {
                 return $this->html(convert::raw2xml($value));
             }
@@ -241,7 +242,7 @@ class HTMLNode extends gObject
     }
 
     /**
-     * sets or gets an attrbute
+     * sets or gets an attribute
      * Please just edit the attributes on the Object instead of using this
      *
      * @param name
@@ -252,6 +253,7 @@ class HTMLNode extends gObject
     {
         if ($value !== null) {
             $this->__set($name, $value);
+
             return $this;
         }
 
@@ -349,6 +351,7 @@ class HTMLNode extends gObject
     /**
      * adds a class to this node
      *
+     * @param string $class
      * @return null
      */
     public function addClass($class)
@@ -423,13 +426,14 @@ class HTMLNode extends gObject
             foreach ($this->css as $key => $value) {
                 $style .= "" . $key . ":" . $value . ";";
             }
-            $this->attr["style"] = $style;
+            $this->attr["style"] = convert::raw2text($style);
         }
+
         foreach ($this->attr as $name => $value) {
             if (RegexpUtil::isNumber($name)) {
-                $attr .= $value . "=\"" . $value . "\" ";
+                $attr .= $value . "=\"" . convert::raw2text($value) . "\" ";
             } else {
-                $attr .= $name . "=\"" . $value . "\" ";
+                $attr .= $name . "=\"" . convert::raw2text($value)  . "\" ";
             }
         }
 
@@ -491,15 +495,29 @@ class HTMLNode extends gObject
     /**
      * attributes with overloading
      */
-
     public function __get($name)
     {
         return isset($this->attr[$name]) ? $this->attr[$name] : null;
     }
 
+    /**
+     * @param string $name
+     * @param string $value
+     * @return bool
+     */
     public function __set($name, $value)
     {
-        $this->attr[$name] = $value;
+        if($name == "class") {
+            if(strpos($value, "\\")) {
+                throw new InvalidArgumentException("Attribute class should not have backslashes in its value.");
+            }
+        }
+
+        if($name == "css") {
+            $this->parseCSS($value);
+        } else {
+            $this->attr[$name] = $value;
+        }
 
         return true;
     }

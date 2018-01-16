@@ -52,7 +52,6 @@ class ExternalFormController extends RequestHandler {
                 $oldControllerRequest = $formInstance->controller->getRequest();
 
                 $formInstance->setRequest($this->request);
-                $formInstance->post = $this->request->post_params;
                 $formInstance->controller->setRequest($this->request);
 
                 $data = $formInstance->$field->handleRequest($this->request, true);

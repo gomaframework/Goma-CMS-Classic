@@ -143,7 +143,7 @@ class Mail
 
         $mail->Subject = $this->subject;
         $mail->Body = $this->body;
-        
+
         $this->addAddresses($this->address, $mail);
         $this->addBCC($mail);
 
@@ -205,9 +205,11 @@ class Mail
      * @param PHPMailer $mailer
      */
     protected function addBCC($mailer) {
-        foreach (self::parseAddress($this->bcc) as $addAddr) {
-            if (is_array($addAddr)) {
-                $mailer->addBCC($addAddr[0], $addAddr[1]);
+        if($this->bcc) {
+            foreach (self::parseAddress($this->bcc) as $addAddr) {
+                if (is_array($addAddr)) {
+                    $mailer->addBCC($addAddr[0], $addAddr[1]);
+                }
             }
         }
     }
@@ -219,18 +221,30 @@ class Mail
      * @param PHPMailer $mailer
      */
     protected function addCC($mailer) {
-        foreach (self::parseAddress($this->cc) as $addAddr) {
-            if (is_array($addAddr)) {
-                $mailer->addCC($addAddr[0], $addAddr[1]);
+        if($this->cc) {
+            foreach (self::parseAddress($this->cc) as $addAddr) {
+                if (is_array($addAddr)) {
+                    $mailer->addCC($addAddr[0], $addAddr[1]);
+                }
             }
         }
     }
 
     /**
      * parses address for PHP-Mailer.
+     * @param array|string $address
+     * @return array
      */
     public static function parseAddress($address)
     {
+        if(is_array($address)) {
+            if(ArrayLib::isAssocArray($address)) {
+                return self::parseAddressArray($address);
+            } else {
+                $address = implode(",", $address);
+            }
+        }
+
         $parts = explode(",", $address);
         $mails = array();
 
@@ -242,7 +256,23 @@ class Mail
     }
 
     /**
-     * parses name for E-Mail-Address.
+     * parses an address array in form of address => title.
+     *
+     * @param array $addresses
+     * @return array
+     */
+    protected static function parseAddressArray($addresses) {
+        $mails = array();
+
+        foreach ($addresses as $currentAddress => $name) {
+            $mails[] = self::parseSingleAddress($currentAddress . "<".$name.">");
+        }
+
+        return $mails;
+    }
+
+    /**
+     * parses name for email-address.
      */
     public static function parseSingleAddress($address)
     {

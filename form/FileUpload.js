@@ -147,6 +147,8 @@ function FileUpload(form, field, formelement, url, size, types) {
 		},
 
 		updateFile: function(data) {
+            $this.form.setLeaveCheck(true);
+
 			if(data == null) {
 				$this.formelement.find("input.FileUploadValue").val("");
 				$($this.fieldElement).find(".img img").attr({

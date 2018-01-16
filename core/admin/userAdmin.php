@@ -69,12 +69,12 @@ class userAdmin extends adminItem {
 			"image" => '$image.setSize(50, 50)'
 		));
 		$config->removeComponent($config->getComponentByType("TableFieldToolbarHeader"));
-		$config->addComponent(new TableFieldActionLink(	$this->namespace . '/toggleLock/$id' . URLEND . '?redirect=' . urlencode($this->getRedirect($this)),
+		$config->addComponent(new TableFieldActionLink(	$this->namespace . '/toggleLock/$id' . URLEND . '?redirect=' . urlencode(ROOT_PATH . $this->namespace . URLEND),
 														'<i class="fa fa-lock"></i>',
 														lang("lock"), 
 														array($this, "checkForUnlock"),
 			array("button button-clear yellow")));
-		$config->addComponent(new TableFieldActionLink(	$this->namespace . '/toggleLock/$id' . URLEND . '?redirect=' . urlencode($this->getRedirect($this)),
+		$config->addComponent(new TableFieldActionLink(	$this->namespace . '/toggleLock/$id' . URLEND . '?redirect=' . urlencode(ROOT_PATH . $this->namespace . URLEND),
 														'<i class="fa fa-unlock"></i>',
 														lang("unlock"), 
 														array($this, "checkForLock"),
@@ -134,17 +134,17 @@ class userAdmin extends adminItem {
 			/** @var User $user */
 			if($user = DataObject::get_by_id("user", $this->getParam("id"))) {
 				if($user->status == 1) {
-					if($this->confirm(lang("user_lock_q"), lang("yes"), null, $user)) {
-						$user->status = 2;
-						$user->writeToDB();
-						return $this->actionComplete("lock_user", $user);
-					}
+				    return $this->confirmByForm(lang("user_lock_q"), function() use($user) {
+                        $user->status = 2;
+                        $user->writeToDB();
+                        return $this->actionComplete("lock_user", $user);
+                    }, null, null, $user->generateRepresentation(true));
 				} else {
-					if($this->confirm(lang("user_unlock_q"), lang("yes"), null, $user)) {
-						$user->status = 1;
-						$user->writeToDB();
-						return $this->actionComplete("unlock_user", $user);
-					}
+                    return $this->confirmByForm(lang("user_unlock_q"), function() use($user) {
+                        $user->status = 1;
+                        $user->writeToDB();
+                        return $this->actionComplete("lock_user", $user);
+                    }, null, null, $user->generateRepresentation(true));
 				}
 			}
 		}

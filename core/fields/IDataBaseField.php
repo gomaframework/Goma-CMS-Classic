@@ -8,35 +8,39 @@
  */
 interface IDataBaseField {
     /**
-     * constructor
+     * constructor of each IDataBaseField.
+     * The constructor should validate the field and throw exception if not valid.
+     * If name and value is null, no validation should be done since this is the standard indexer process of ClassInfo.
+     *
+     * @param string $name
+     * @param mixed$value
+     * @param array $args
      */
     public function __construct($name, $value, $args = array());
 
     /**
      * set the value of the field
-     *
-     *@name setValue
+     * @param mixed $value
+     * @return
      */
     public function setValue($value);
 
     /**
      * gets the value of the field
-     *
-     *@name getValue
+     * @return mixed
      */
     public function getValue();
 
     /**
      * sets the name of the field
-     *
-     *@name setName
+     * @param $name
+     * @return
      */
     public function setName($name);
 
     /**
      * gets the name of the field
-     *
-     *@name getName
+     * @return string
      */
     public function getName();
 
@@ -44,51 +48,36 @@ interface IDataBaseField {
      * gets the raw-data of the field
      * should be give back the same as getValue
      *
-     *@name raw
+     * @return mixed
      */
     public function raw();
 
     /**
      * generates the default form-field for this field
      *
-     *@name formfield
-     *@access public
-     *@param string - title
+     * @param string $title
      */
     public function formfield($title = null);
 
     /**
      * search-field for searching
      *
-     *@name searchfield
-     *@access public
-     *@param string - title
+     * @param string $title
      */
     public function searchfield($title = null);
 
     /**
-     * this function uses more than one convert-method
-     *
-     *@name convertMulti
-     *@access public
-     *@param array - methods
-     */
-    public function convertMulti($methods);
-
-    /**
      * gets the field-type for the database, for example if you want to have the type varchar instead of the name of this class
      *
-     *@name getFieldType
-     *@access public
+     * @param array $args
+     * @param null|bool $allowNull bool if null type is defined (e.g. NOT NULL or NULL), otherwise null
+     * @return string|null
      */
-    static public function getFieldType($args = array());
+    static public function getFieldType($args = array(), $allowNull = null);
 
     /**
      * toString-Method
      * should call default-convert
-     *
-     *@name __toString
-     *@access public
      */
     public function __toString();
 
@@ -96,26 +85,27 @@ interface IDataBaseField {
      * bool - for IF in template
      * should give back if the value of this field represents a false or true
      *
-     *@name toBool
-     *@access public
+     * @return bool
      */
     public function toBool();
 
     /**
      * to don't give errors for unknown calls, should always give back raw-data
-     *
-     *@name __call
-     *@access public
+     * @param string $name
+     * @param array $args
+     * @return
      */
     public function __call($name, $args);
 
     /**
      * bool, like toBool
+     * @return bool
      */
     public function bool();
 
     /**
-     * returns datatype for view
+     * returns string representation of this field for the view
+     * @return string
      */
     public function forTemplate();
 }

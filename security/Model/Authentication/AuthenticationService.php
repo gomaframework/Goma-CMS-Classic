@@ -157,7 +157,7 @@ class AuthenticationService extends gObject {
             }
         }
 
-        throw new LoginInvalidException();
+        throw new LoginInvalidException("Login was not found.");
     }
 
     /**

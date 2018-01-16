@@ -605,13 +605,7 @@ class ModelManyManyRelationShipInfo extends ModelRelationShipInfo {
 
         $extraFields = $this->extraFields;
         foreach($extraFields as $field => $type) {
-            if ($casting = DBField::parseCasting($type)) {
-                $newType = call_user_func_array(array($casting["class"], "getFieldType"),
-                    (isset($casting["args"])) ? $casting["args"] : array());
-                if ($newType != "") {
-                    $extraFields[$field] = $newType;
-                }
-            }
+            $extraFields[$field] = DBField::getDBFieldTypeForCasting($type);
         }
 
         return array_merge($fields, $extraFields);

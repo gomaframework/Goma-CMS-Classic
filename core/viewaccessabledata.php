@@ -21,14 +21,14 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 	 *
 	 * @var string
 	 */
-	static $default_casting = "HTMLText";
+	static $default_casting = DBField::class;
 
     /**
      * default datatype for getters.
      *
      * @var string
      */
-	static $default_getter_casting = "varchar";
+	static $default_getter_casting = Varchar::class;
 
 	/**
 	 * set of fields with cast-type as value.

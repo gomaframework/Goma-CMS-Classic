@@ -766,7 +766,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     }
 
     /**
-     * adds a filter
+     * Adds an additional filter to the current filter. The conjunction will be AND.
      *
      * @param
      * @param
@@ -776,10 +776,28 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     {
         $filter = call_user_func_array(array("DataSet", "getFilterFromArgs"), func_get_args());
 
-        if (isset($filter)) {
-            $this->filter = array_merge((array)$this->filter, (array)$filter);
+        if ($filter) {
+            $this->filter = $this->filter ? array($this->filter, $filter) : $filter;
             $this->clearCache();
         }
+
+        return $this;
+    }
+
+    /**
+     * Adds an additional filter to the current filter. The conjunction will be OR.
+     *
+     * @return $this
+     */
+    public function addORCondition()
+    {
+        $filter = call_user_func_array(array("DataSet", "getFilterFromArgs"), func_get_args());
+
+        if ($filter) {
+            $this->filter = $this->filter ? array($this->filter, "OR", $filter) : $filter;
+            $this->clearCache();
+        }
+
         return $this;
     }
 
@@ -1870,11 +1888,16 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
      */
     public function pickRandomly($n)
     {
-        $set = new ArrayList();
-        $probability = 1 / $this->countWholeSet() * $n;
         if ($this->staging->count() == $this->countWholeSet()) {
             return $this->staging->pickRandomly($n);
         }
+
+        $set = new ArrayList();
+        if($this->countWholeSet() == 0) {
+            return $set;
+        }
+
+        $probability = 1 / $this->countWholeSet() * $n;
         foreach ($this->staging as $record) {
             if ($set->count() < $n && rand(0, 1) < $probability) {
                 $set->add($record);
@@ -1890,7 +1913,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
              */
             $poolProbability = ($n - $set->count()) / $this->countWholeSet() * self::POOL_PROP_SIZE;
             $subQuery = $this->dbDataSource()->buildExtendedQuery($this->version, array_merge(
-                $this->getFilterForQuery(),
+                (array) $this->getFilterForQuery(),
                 array(" RAND() < {$poolProbability} ")
             ), array("RAND()"), array(), $this->getJoinForQuery(), true);
 

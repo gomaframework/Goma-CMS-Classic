@@ -31,17 +31,18 @@ endlessScroller.prototype = {
     throttleTime: null,
     loading: null,
     checkForEndlessUpdate: function() {
-        if(this.endlessElement == null) {
+        if(this.endlessElement === null) {
             console.log("Unable to find endless-element due to the fact it is null.");
             return;
         }
 
         var endLessEnd = is_string(this.endlessElement) ? this.baseElement.find(this.endlessElement) : $(this.endlessElement);
-        if(endLessEnd.length == 0 || this.currentEndlessEndLoading != null)
+        if(endLessEnd.length === 0 || this.currentEndlessEndLoading !== null) {
             return;
+        }
 
         var currentTime = new Date().getTime();
-        if(this.throttleTime == null || currentTime - this.throttleTime > this.throttleTo) {
+        if(this.throttleTime === null || currentTime - this.throttleTime > this.throttleTo) {
             var scroll = this.scrollElement.scrollTop();
             var offset = endLessEnd.offset();
             var scrollHeight = this.scrollElement.height();
@@ -74,7 +75,7 @@ endlessScroller.prototype = {
         });
     },
     insertData: function(data) {
-        if(this.urlWrapperElement != null) {
+        if(this.urlWrapperElement !== null) {
             var node = $("<div></div>").append(data);
 
             this.currentEndlessEndLoading.replaceWith(node.find(this.urlWrapperElement).html());

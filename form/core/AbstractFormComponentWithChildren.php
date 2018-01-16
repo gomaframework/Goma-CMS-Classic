@@ -362,7 +362,7 @@ abstract class AbstractFormComponentWithChildren extends AbstractFormComponent {
     protected function buildUrlFromRequest() {
         $url = str_replace('"', '', ROOT_PATH . BASE_SCRIPT . $this->getRequest()->url . URLEND);
         $url = $url == "//" ? "/" : $url;
-        if($this->getRequest()->get_params) {
+        if(count($this->getRequest()->get_params) > 0) {
             $url .= "?";
             foreach ($this->getRequest()->get_params as $key => $value) {
                 $url .= urlencode($key) . "=" . urlencode($value) . "&";

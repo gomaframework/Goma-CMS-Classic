@@ -8,7 +8,7 @@
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  */
 
-class HTMLFieldTest extends GomaUnitTest implements TestAble {
+class HTMLTextTest extends GomaUnitTest implements TestAble {
     /**
      * area
      */

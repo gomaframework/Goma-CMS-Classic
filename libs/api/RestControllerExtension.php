@@ -17,7 +17,9 @@ class RestControllerExtension extends Extension {
      * @param mixed $content
      */
     public function handleOutput(&$content) {
-        $content = new JSONResponseBody($content);
+        if(is_array($content) || is_string($content)) {
+            $content = new JSONResponseBody($content);
+        }
     }
 
     /**
@@ -25,7 +27,7 @@ class RestControllerExtension extends Extension {
      * @param string|null $content
      * @return string
      */
-    public function handleException($e, $content) {
+    public function handleException($e, &$content) {
         $response = new GomaResponse();
         if(gObject::method_exists($e, "http_status")) {
             $response->setStatus($e->http_status());

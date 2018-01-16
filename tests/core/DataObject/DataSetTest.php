@@ -594,4 +594,12 @@ class DataSetTests extends GomaUnitTest {
 
         $this->assertEqual(4, $set->countWholeSet());
     }
+
+    /**
+     * Tests if getFilterFromArgs returns the same string if string was given.
+     */
+    public function testgetFilterFromArgsString() {
+        $str = "a = 1 OR b = 1";
+        $this->assertEqual($str, DataSet::getFilterFromArgs($str));
+    }
 }

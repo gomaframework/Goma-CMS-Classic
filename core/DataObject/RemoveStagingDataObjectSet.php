@@ -114,8 +114,9 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
     {
         parent::writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, $exceptions, $errorRecords);
 
-        if(!isset($options["callRemove"]) || $options["callRemove"] === true)
+        if(!isset($options["callRemove"]) || $options["callRemove"] === true) {
             $this->commitRemoveStaging($repository, $forceWrite, $snap_priority);
+        }
     }
 
     /**

@@ -8,13 +8,14 @@
  */
 class DateTimeSQLField extends DBField {
 
-	/**
-	 * gets the field-type
-	 *
-	 * @param array $args
-	 * @return string
-	 */
-	static public function getFieldType($args = array()) {
+    /**
+     * gets the field-type
+     *
+     * @param array $args
+     * @param null $allowNull
+     * @return string
+     */
+	static public function getFieldType($args = array(), $allowNull = null) {
 		return "int(30) NULL";
 	}
 

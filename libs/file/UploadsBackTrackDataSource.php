@@ -270,18 +270,22 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
             if(!ClassManifest::isOfType($model, Uploads::class)) {
                 if (isset(ClassInfo::$class_info[$model]["has_one"])) {
                     /** @var ModelHasOneRelationshipInfo $relationShip */
-                    foreach (gObject::instance($model)->hasOne() as $relationShip) {
-                        if (ClassManifest::isOfType($relationShip->getTargetClass(), $class)) {
-                            $models[$model][$relationShip->getRelationShipName()] = "1";
+                    if($hasOne = gObject::instance($model)->hasOne()) {
+                        foreach ($hasOne as $relationShip) {
+                            if (ClassManifest::isOfType($relationShip->getTargetClass(), $class)) {
+                                $models[$model][$relationShip->getRelationShipName()] = "1";
+                            }
                         }
                     }
                 }
 
                 if (isset(ClassInfo::$class_info[$model]["many_many"])) {
                     /** @var ModelManyManyRelationShipInfo $relationShip */
-                    foreach (gObject::instance($model)->ManyManyRelationships() as $relationShip) {
-                        if (ClassManifest::isOfType($relationShip->getTargetClass(), $class)) {
-                            $models[$model][$relationShip->getRelationShipName()] = "n";
+                    if($manyMany = gObject::instance($model)->ManyManyRelationships()) {
+                        foreach ($manyMany as $relationShip) {
+                            if (ClassManifest::isOfType($relationShip->getTargetClass(), $class)) {
+                                $models[$model][$relationShip->getRelationShipName()] = "n";
+                            }
                         }
                     }
                 }

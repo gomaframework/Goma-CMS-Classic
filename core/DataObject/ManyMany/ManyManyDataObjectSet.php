@@ -759,25 +759,36 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
      */
     public function commitRemoveStaging($repository, $forceWrite = false, $snap_priority = 2)
     {
-        $versionQuery = new SelectQuery($this->relationShip->getTargetBaseTableName(), array("id"), array(
-            "recordid" => $this->removeStaging->fieldToArray("recordid")
-        ));
+        if($this->removeStaging->count() > 0) {
+            $versionQuery = new SelectQuery(
+                $this->relationShip->getTargetBaseTableName(), array("id"), array(
+                    "recordid" => $this->removeStaging->fieldToArray("recordid")
+                )
+            );
 
-        $manipulation[self::MANIPULATION_DELETE_SPECIFIC] = array(
-            "command"		=> "delete",
-            "table_name"	=> $this->relationShip->getTableName(),
-            "where"			=> " {$this->relationShip->getTargetField()} IN (".$versionQuery->build().") "
-        );
+            $manipulation[self::MANIPULATION_DELETE_SPECIFIC] = array(
+                "command" => "delete",
+                "table_name" => $this->relationShip->getTableName(),
+                "where" => " {$this->relationShip->getTargetField()} IN (".$versionQuery->build().") "
+            );
 
-        if($this->relationShip->isBidirectional()) {
-            $manipulation[self::MANIPULATION_DELETE_SPECIFIC]["where"] .= " OR {$this->relationShip->getOwnerField()} IN (".$versionQuery->build().") ";
-        }
+            if ($this->relationShip->isBidirectional()) {
+                $manipulation[self::MANIPULATION_DELETE_SPECIFIC]["where"] .= " OR {$this->relationShip->getOwnerField()} IN (".$versionQuery->build().") ";
+            }
 
-        $insertedRelationships = array();
-        $this->dbDataSource()->onBeforeManipulateManyMany($manipulation, $this, $insertedRelationships);
-        $this->modelSource()->callExtending("onBeforeManipulateManyMany", $manipulation, $this, $insertedRelationships);
-        if(!$this->dbDataSource()->manipulate($manipulation)) {
-            throw new LogicException("Could not manipulate Database. Manipulation corrupted. <pre>" . print_r($manipulation, true) . "</pre>");
+            $insertedRelationships = array();
+            $this->dbDataSource()->onBeforeManipulateManyMany($manipulation, $this, $insertedRelationships);
+            $this->modelSource()->callExtending(
+                "onBeforeManipulateManyMany",
+                $manipulation,
+                $this,
+                $insertedRelationships
+            );
+            if (!$this->dbDataSource()->manipulate($manipulation)) {
+                throw new LogicException(
+                    "Could not manipulate Database. Manipulation corrupted. <pre>".print_r($manipulation, true)."</pre>"
+                );
+            }
         }
 
         $this->dbDataSource()->clearCache();

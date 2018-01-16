@@ -20,21 +20,42 @@ class HTMLParserTests extends GomaUnitTest {
 	*/
 	public $name = "HTMLParser";
 
+    /**
+     * tests if process_links ignores link with //domain
+     */
+	public function testParseDoubleSlashOmitProtocol() {
+	    $this->assertNull(
+            HTMLParser::parseLink("//192.168.2.1", "", "", "index.php/", ROOT_PATH)
+        );
+    }
+
+    /**
+     * tests if process_links ignores link with custom url scheme
+     */
+    public function testCustomURLScheme() {
+        $this->assertNull(
+            HTMLParser::parseLink("paperscan://192.168.2.1", "", "", "index.php/", ROOT_PATH)
+        );
+    }
+
 	/**
 	 * parse link unit-tests.
 	*/
 	public function testParseLink() {
-		$this->unitParseLink("ftp://192.168.2.1", false, "index.php/");
-		$this->unitParseLink("http://192.168.2.1", false, "index.php/");
-		$this->unitParseLink("https://192.168.2.1", false, "index.php/");
-		$this->unitParseLink("javascript:192.168.2.1", false, "index.php/");
-		$this->unitParseLink("mailto:daniel@ibpg.eu", false, "index.php/");
+        $this->unitParseLink("//192.168.2.1", null, "index.php/");
+        $this->unitParseLink("paperscan://192.168.2.1", null, "index.php/");
 
-		$this->unitParseLink("FTP://192.168.2.1", false, "index.php/");
-		$this->unitParseLink("HtTP://192.168.2.1", false, "index.php/");
-		$this->unitParseLink("hTTPs://192.168.2.1", false, "index.php/");
-		$this->unitParseLink("JaVaScRiPt:192.168.2.1", false, "index.php/");
-		$this->unitParseLink("MaIlTo:daniel@ibpg.eu", false, "index.php/");
+		$this->unitParseLink("ftp://192.168.2.1", null, "index.php/");
+		$this->unitParseLink("http://192.168.2.1", null, "index.php/");
+		$this->unitParseLink("https://192.168.2.1", null, "index.php/");
+		$this->unitParseLink("javascript:192.168.2.1", null, "index.php/");
+		$this->unitParseLink("mailto:daniel@ibpg.eu", null, "index.php/");
+
+		$this->unitParseLink("FTP://192.168.2.1", null, "index.php/");
+		$this->unitParseLink("HtTP://192.168.2.1", null, "index.php/");
+		$this->unitParseLink("hTTPs://192.168.2.1", null, "index.php/");
+		$this->unitParseLink("JaVaScRiPt:192.168.2.1", null, "index.php/");
+		$this->unitParseLink("MaIlTo:daniel@ibpg.eu", null, "index.php/");
 
 		$this->unitParseLink("index.php", '"index.php"');
 
@@ -47,7 +68,7 @@ class HTMLParserTests extends GomaUnitTest {
 	}
 
 	public function unitParseLink($url, $expected, $base = BASE_SCRIPT, $root = ROOT_PATH) {
-		$this->assertEqual($expected, trim(HTMLParser::parseLink($url, "", "", $base, $root)), $url);
+		$this->assertEqual($expected, HTMLParser::parseLink($url, "", "", $base, $root), $url);
 	}
 
 	public function testProcessLinks() {

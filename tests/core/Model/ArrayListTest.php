@@ -276,12 +276,33 @@ class ArrayListTest extends GomaUnitTest
         }
     }
 
+    /**
+     * tests item matches filter true.
+     */
     public function testItemMatches() {
         $this->assertTrue(ArrayList::itemMatchesFilter($this->nik, array(
             "name" => "Nik"
         )));
+    }
+
+    /**
+     * tests item matches filter false.
+     */
+    public function testItemDoesNotMatch() {
         $this->assertFalse(ArrayList::itemMatchesFilter($this->patrick, array(
             "name" => "Nik"
+        )));
+    }
+
+    /**
+     * tests if both items matches filter conjuncted with OR.
+     */
+    public function testItemMatchesFilterOr() {
+        $this->assertTrue(ArrayList::itemMatchesFilter($this->nik, array(
+            array( "name" => "Nik"), "OR", array("name" => "Patrick")
+        )));
+        $this->assertTrue(ArrayList::itemMatchesFilter($this->patrick, array(
+            array( "name" => "Nik"), "OR", array("name" => "Patrick")
         )));
     }
 

@@ -221,7 +221,6 @@ $lang = array(
 	"phone"                                         => "Phone",
 	"settings_normal"                               => "General settings",
 	"web_description"                               => "description of your page for search engines to summarize the content for the user.",
-	"site_keywords"									=> "Keywords of the site",
 	"site_description"								=> "Description of the site",
 	"every"                                         => "every",
 	"captcha"                                       => "Security-code",
@@ -243,6 +242,7 @@ $lang = array(
 	// lost password lanuages (lp_)
 	'lp_key_not_right'								=> "You're code is wrong!",
 	'lost_password'									=> "Forgot password",
+    "set_password"                                  => "Set password",
 	'lp_edit_pass'									=> "Edit password",
 	'lp_email_or_user'								=> "Username or email",
 	'lp_submit'										=> "Send",
@@ -419,6 +419,8 @@ $lang = array(
 	"published_site"								=> "published page",
 	"draft"											=> "draft",
 	"draft_save"									=> "save draft",
+    "SAVE_BOX"										=> "Save box",
+    "reverted"										=> "Reverted",
 	"save_publish"									=> "save & publish",
 	"draft_delete"									=> "delete draft",
 	"current_state"									=> "Current State",
@@ -697,5 +699,9 @@ $lang = array(
 
 	"apply"	=> "apply",
 
-	"uploads_manage"	=> "Manage attachements"
+	"uploads_manage"	=> "Manage attachements",
+
+
+    "your_new_user_account" => "A new user has been created for you",
+    "welcome_new_user" => "Welcome! Please set your password to get started."
 );

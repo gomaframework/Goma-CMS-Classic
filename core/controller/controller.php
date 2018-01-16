@@ -456,18 +456,18 @@ class Controller extends RequestHandler
 
     /**
      * edit-function
-     *
      * @return GomaFormResponse|string
+     * @throws PermissionException
      */
     public function edit()
     {
         /** @var DataObject $model */
         if($model = $this->getSingleModel()) {
             if (!$model->can("Write")) {
-                if ($this->showWithoutRight()) {
+                if ($this->showWithoutRight($model)) {
                     $disabled = true;
                 } else {
-                    return $this->actionComplete("less_rights");
+                    throw new PermissionException();
                 }
             } else {
                 $disabled = false;
@@ -478,23 +478,24 @@ class Controller extends RequestHandler
     }
 
     /**
+     * @param ViewAccessableData $model
      * @return bool
      */
-    protected function showWithoutRight() {
+    protected function showWithoutRight($model) {
         return StaticsManager::getStatic($this->classname, "showWithoutRight", true) || StaticsManager::getStatic($this->modelInst(), "showWithoutRight", true);
     }
 
     /**
      * delete-function
      * this delete-function also implements ajax-functions
-     *
      * @return bool|string
+     * @throws PermissionException
      */
     public function delete()
     {
         if($model = $this->getSingleModel()) {
-            if(!$model->can("Delete")) {
-                return $this->actionComplete("less_rights");
+            if(!$model->can("Delete", $this->getRequest())) {
+                throw new PermissionException();
             }
 
             $description = $this->generateRepresentation($model);

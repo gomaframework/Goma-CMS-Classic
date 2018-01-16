@@ -17,7 +17,7 @@ class HTMLParser extends gObject
      * allowed prefixes for links in goma that never are checked for BASE_SCRIPT.
      */
     static $allowedPrefixes = array(
-        "ftp:", "http:", "https:", "javascript:", "mailto:"
+        "javascript:", "mailto:"
     );
 
 
@@ -149,7 +149,14 @@ class HTMLParser extends gObject
     /**
      * parses an url and generates a new string with the link, some code before, then some maybe
      * generated attributes and some code after.
+     * It basically is parsing the following:
+     * - do not change anything if URL is fully qualified with known protocol or prefix.
      *
+     * if not fully qualified:
+     * - remove double slahes
+     * - remove $root if existing
+     * - fix for anchors since goma is using base uri
+     * - prepend BASE_URI if it does not link to a specific existing file
      * 
      * @param string $href link
      * @param string $beforeHref
@@ -158,15 +165,21 @@ class HTMLParser extends gObject
      * @param mixed|string $root
      * @param string $prependBase
      *
-     * @return bool|string
+     * @return null|string
      */
     public static function parseLink($href, $beforeHref, $afterHref, $base = BASE_SCRIPT, $root = ROOT_PATH, $prependBase = "")
     {
         $attrs = "";
+
+        // check for url in format //www.google.de
+        if(preg_match('/^[a-zA-Z0-9\-]*:?\/\//', $href)) {
+            return null;
+        }
+
         // check for prefixes.
         foreach (self::$allowedPrefixes as $prefix) {
             if (substr(strtolower($href), 0, strlen($prefix)) == $prefix) {
-                return false;
+                return null;
             }
         }
 

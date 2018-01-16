@@ -1,9 +1,10 @@
 .category-view {
   border-bottom: 1px solid #ddd;
+  display: flex;
+  flex-direction: row;
 
   > .menu {
-    float: left;
-    width: 10em;
+    flex: 0 0 10em;
     padding: 1em;
     border-right: 1px solid #ddd;
     margin-right: -1px;
@@ -39,9 +40,10 @@
   }
 
   > .content {
+    flex: 1 1 auto;
+    overflow: hidden;
     padding: .5em;
     border-left: 1px solid #ddd;
-    overflow: auto;
 
     > h2 {
       padding-left: .25em;
@@ -53,6 +55,10 @@
         margin: -.75em -.33em -.33em;
       }
     }
+  }
+  > .clear {
+    clear: none;
+    display: none;
   }
 }
 
@@ -76,15 +82,16 @@
   .category-view.sidebar-hidden {
     > .menu {
       position: relative;
-      width: .75em;
+      flex-basis: 1em;
+      padding-right: 1.5em;
       .menu-wrapper {
         display: none;
       }
       .mobile-bar {
         position: fixed;
+        height: 100%;
         font-size: 1.5em;
         display: block;
-        padding-bottom: 10em;
         cursor: pointer;
       }
     }

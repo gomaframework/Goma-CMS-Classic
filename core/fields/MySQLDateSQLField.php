@@ -10,9 +10,11 @@ class MySQLDateSQLField extends DBField {
 
     /**
      * gets the field-type
+     * @param array $args
+     * @param null $allowNull
      * @return string
      */
-    static function getFieldType($args = array()) {
+    static function getFieldType($args = array(), $allowNull = null) {
         return "Date";
     }
 

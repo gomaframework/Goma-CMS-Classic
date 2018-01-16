@@ -143,7 +143,7 @@ class ManyManyDropDown extends MultiSelectDropDown
 			}
 		}
 		$left = ($page > 1);
-		$right = (ceil($data->count() / 10) > $page);
+		$right = (ceil($data->countWholeSet() / 10) > $page);
 		return array(
 			"data" => $arr,
 			"left" => $left,

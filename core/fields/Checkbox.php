@@ -24,10 +24,12 @@ class CheckBoxSQLField extends DBField {
     /**
      * gets the field-type
      *
+     * @param array $args
+     * @param null $allowNull
      * @return string
      */
-    static public function getFieldType($args = array()) {
-        return 'enum("0","1")';
+    static public function getFieldType($args = array(), $allowNull = null) {
+        return 'enum("0","1") NOT NULL';
     }
 
     /**

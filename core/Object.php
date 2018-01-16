@@ -125,6 +125,7 @@ abstract class gObject
 
     /**
      * Checks if $class has $method.
+     * Attention: __toString and other magic methods are *not* supported. Use native method_exists instead.
      *
      * @param mixed $class Object or name of the class.
      * @param string $method Name of the method.

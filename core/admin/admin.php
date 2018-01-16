@@ -15,9 +15,9 @@ defined("IN_GOMA") or die();
 class admin extends ViewAccessableData implements PermProvider
 {
     static $casting = array(
-        "updatables_json" => "HTMLText",
-        "updatables" => "HTMLText",
-        "addcontent" => "HTMLText"
+        "updatables_json" => DBField::class,
+        "updatables" => DBField::class,
+        "addcontent" => DBField::class
     );
 
     /**

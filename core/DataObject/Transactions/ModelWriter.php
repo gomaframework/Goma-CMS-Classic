@@ -277,7 +277,7 @@ class ModelWriter extends gObject {
             $this->data = $this->model->toArray();
         }
 
-        $this->callExtending("gatherDataToWrite");
+        $this->callModelExtending("gatherDataToWrite");
     }
 
     /**
@@ -389,19 +389,25 @@ class ModelWriter extends gObject {
             }
 
             $changed = false;
-            $this->callExtending("extendHasChanged", $changed);
+            $this->callModelExtending("extendHasChanged", $changed);
 
-            // has-one
-            if ($has_one = $this->model->hasOne()) {
-                if($this->checkForChangeInRelationship(array_keys($has_one), false, "DataObject")) {
-                    return true;
+            if(!$changed) {
+                // has-one
+                if ($has_one = $this->model->hasOne()) {
+                    if ($this->checkForChangeInRelationship(array_keys($has_one), false, "DataObject")) {
+                        return true;
+                    }
                 }
-            }
 
-            // many-many
-            if ($relationShips = $this->model->ManyManyRelationships()) {
-                if($this->checkForChangeInRelationship(array_keys($relationShips), true, "ManyMany_DataObjectSet")) {
-                    return true;
+                // many-many
+                if ($relationShips = $this->model->ManyManyRelationships()) {
+                    if ($this->checkForChangeInRelationship(
+                        array_keys($relationShips),
+                        true,
+                        "ManyMany_DataObjectSet"
+                    )) {
+                        return true;
+                    }
                 }
             }
 
@@ -415,6 +421,12 @@ class ModelWriter extends gObject {
      * writes generated data to DataBase.
      */
     public function write() {
+        if($this->getCommandType() != IModelRepository::COMMAND_TYPE_PUBLISH &&
+            $this->getCommandType() != IModelRepository::COMMAND_TYPE_INSERT &&
+            $this->getCommandType() != IModelRepository::COMMAND_TYPE_UPDATE) {
+            throw new InvalidArgumentException("Calling write requires command type publish, insert or update.");
+        }
+
         $this->callPreflightEvents();
 
         $this->gatherDataToWrite();
@@ -427,8 +439,7 @@ class ModelWriter extends gObject {
         $changes = $this->checkForChanges();
         if ($this->getCommandType() == IModelRepository::COMMAND_TYPE_INSERT || $changes || $this->isNotActiveRecord($this->model)) {
             if ($changes || $this->writeType != IModelRepository::WRITE_TYPE_PUBLISH) {
-                $this->model->onBeforeDBWriter($this);
-                $this->callExtending("onBeforeDBWriter");
+                $this->callModelExtending("onBeforeDBWriter");
 
                 $this->updateStatusFields();
 
@@ -462,8 +473,11 @@ class ModelWriter extends gObject {
     protected function callPreflightEvents() {
         DataObjectQuery::clearCache();
 
-        $this->model->onBeforeWrite($this);
-        $this->callExtending("onBeforeWrite");
+        $this->callModelExtending("onBeforeWrite");
+
+        if($this->getCommandType() == IModelRepository::COMMAND_TYPE_PUBLISH || $this->getWriteType() == IModelRepository::WRITE_TYPE_PUBLISH) {
+            $this->callModelExtending("onBeforePublish");
+        }
     }
 
     /**
@@ -472,9 +486,11 @@ class ModelWriter extends gObject {
     protected function callPostFlightEvents() {
         $this->model->queryVersion = $this->writeType > 1 ? DataObject::VERSION_PUBLISHED : DataObject::VERSION_STATE;
 
-        $this->callExtending("onAfterWrite");
-        $this->model->onAfterWrite($this);
-        $this->model->callExtending("onAfterWrite");
+        $this->callModelExtending("onAfterWrite");
+
+        if($this->getCommandType() == IModelRepository::COMMAND_TYPE_PUBLISH || $this->getWriteType() == IModelRepository::WRITE_TYPE_PUBLISH) {
+            $this->callModelExtending("onAfterPublish");
+        }
     }
 
     /**
@@ -532,5 +548,45 @@ class ModelWriter extends gObject {
     public function isForceWrite()
     {
         return $this->forceWrite;
+    }
+
+    /**
+     * @param string $method
+     * @param null $p1
+     * @param null $p2
+     * @param null $p3
+     * @param null $p4
+     * @param null $p5
+     * @param null $p6
+     * @param null $p7
+     * @param null $p8
+     * @return array
+     */
+    public function callModelExtending(
+        $method,
+        &$p1 = null,
+        &$p2 = null,
+        &$p3 = null,
+        &$p4 = null,
+        &$p5 = null,
+        &$p6 = null,
+        &$p7 = null,
+        &$p8 = null
+    ) {
+        if($this->model && gObject::method_exists($this->model, $method)) {
+            call_user_func_array(array($this->model, $method), array($this, &$p1, &$p2, &$p3, &$p4, &$p5, &$p6, &$p7));
+        }
+
+        return $this->callExtending(
+            $method,
+            $p1,
+            $p2,
+            $p3,
+            $p4,
+            $p5,
+            $p6,
+            $p7,
+            $p8
+        );
     }
 }

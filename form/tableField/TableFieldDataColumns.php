@@ -163,13 +163,14 @@ class TableFieldDataColumns implements TableField_ColumnProvider
 		return $value;
 	}
 
-	/**
-	 * returns the attributes of the given column to the given record
-	 *
-	 * @name getColumnAttributes
-	 * @access public
-	 * @return array
-	 */
+    /**
+     * returns the attributes of the given column to the given record
+     *
+     * @param TableField $tableField
+     * @param string $columnName
+     * @param DataObject $record
+     * @return array
+     */
 	public function getColumnAttributes($tableField, $columnName, $record)
 	{
 		return array("class" => "col-" . preg_replace('/[^\w]/', '-', $columnName));

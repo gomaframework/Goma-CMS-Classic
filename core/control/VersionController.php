@@ -13,6 +13,7 @@ defined("IN_GOMA") OR die();
  *
  * @author Goma Team
  * @copyright 2017 Goma Team
+ * @license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
  *
  * @version 1.0
  */
@@ -61,24 +62,36 @@ class VersionController extends Controller {
             "versionid" => $this->getParam("id")
         ))->first()) {
             $controller = \ControllerResolver::instanceForModel($version);
-            $response = $controller->handleRequest($this->request);
+            return $this->serveControllerAndAddVersionInfo($controller, $model, $version);
+        }
+    }
 
-            if(!\Director::isResponseFullPage($response)) {
-                $view = new \ViewAccessableData(array(
-                    "content"   => \Director::getStringFromResponse($response),
-                    "namespace" => $this->namespace,
-                    "model"     => $model,
-                    "version"   => $version,
-                    "number"    => $model->versions(array(
+    /**
+     * @param Controller $controller
+     * @param DataObject $model
+     * @param DataObject $version
+     * @return \GomaResponse|\GomaResponseBody|mixed|string
+     */
+    protected function serveControllerAndAddVersionInfo($controller, $model, $version) {
+        $response = $controller->handleRequest($this->request, true);
+
+        if(!\Director::isResponseFullPage($response)) {
+            $view = new \ViewAccessableData(array(
+                "content"   => \Director::getStringFromResponse($response),
+                "namespace" => $this->namespace,
+                "model"     => $model,
+                "version"   => $version,
+                "number"    => $model->versions(array(
                         "versionid" => array("<", $this->getParam("id"))
                     ))->count() + 1
-                ));
-                return \Director::setStringToResponse($response, $view->renderWith(
-                    "versions/versionHeader.html"
-                ));
-            }
-
-            return $response;
+            ));
+            $response = \Director::setStringToResponse($response, $view->renderWith(
+                "versions/versionHeader.html"
+            ));
+            $controller->subController = false;
+            return $controller->__output($response);
         }
+
+        return $response;
     }
 }

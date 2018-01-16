@@ -45,7 +45,7 @@ class Tab extends FieldSet
     {
         $node = parent::createNode();
         $node->setTag("h2");
-        $node->html(strtoupper(substr($this->title, 0, 1)) . substr($this->title, 1));
+        $node->html(strtoupper(mb_strcut($this->title, 0, 1)) . mb_strcut($this->title, 1));
         return $node;
     }
 

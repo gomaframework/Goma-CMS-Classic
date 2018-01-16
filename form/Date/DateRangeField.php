@@ -50,4 +50,30 @@ class DateRangeField extends DateField {
 
         return $options;
     }
+
+    /**
+     * @return array
+     * @throws FormInvalidDataException
+     */
+    public function result()
+    {
+        $this->validate($this->getModel());
+
+        $value = $this->getModel();
+        if(strpos($value, " - ")) {
+            $parts = explode(" - ", $value);
+
+            if (count($parts) == 2) {
+                $ts1 = strtotime($parts[0]);
+                $ts2 = strtotime($parts[1]);
+
+                $dateTime1 = new DateTimeSQLField("parse", $ts1, array($this->format));
+                $dateTime2 = new DateTimeSQLField("parse", $ts2, array($this->format));
+
+                return array($dateTime1->getTimestamp(), $dateTime2->getTimestamp());
+            }
+        }
+
+        throw new FormInvalidDataException($this->name, lang("no_valid_date", "No valid date."));
+    }
 }
