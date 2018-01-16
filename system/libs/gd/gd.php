@@ -174,7 +174,7 @@ class GD extends \gObject
 
             // fix for some devices
             // see http://stackoverflow.com/questions/29301931/php-getimagesize-mixes-up-width-and-height
-            if($exif = exif_read_data($this->pic)) {
+            if($exif = @exif_read_data($this->pic)) {
                 if (!empty($exif['Orientation'])) {
                     switch ($exif['Orientation']) {
                         case 8:

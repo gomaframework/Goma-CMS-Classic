@@ -9,7 +9,7 @@
  */
 
 
-class ProfileControllerTest extends GomaUnitTest
+class ProfileControllerTest extends \Goma\Test\GomaUnitTestWithAdmin
 {
     /**
      * area
@@ -21,16 +21,41 @@ class ProfileControllerTest extends GomaUnitTest
      */
     public $name = "ProfileController";
 
-    public function testLogin() {
-        $profileController = new ProfileController();
-        $request = new Request("post", "");
-        $profileController->Init($request);
+    /**
+     * tests if login page shows login if logged out.
+     */
+    public function testLoginPageShowsForm() {
+        try {
+            $current = Member::$loggedIn;
+            Member::InitUser(null);
 
-        $response = $profileController->login();
-        if(member::login()) {
-            $this->assertIsA($response, "GomaResponse");
-        } else {
+            $profileController = new ProfileController();
+            $request = new Request("post", "");
+            $profileController->Init($request);
+
+            $response = $profileController->login();
             $this->assertIsA($response, "string");
+        } finally {
+            Member::InitUser($current);
+        }
+    }
+
+    /**
+     * tests if login page redirects logged in users.
+     */
+    public function testLoginPageRedirectsForLoggedIn() {
+        try {
+            $current = Member::$loggedIn;
+            Member::InitUser($this->adminUser);
+
+            $profileController = new ProfileController();
+            $request = new Request("post", "");
+            $profileController->Init($request);
+
+            $response = $profileController->login();
+            $this->assertIsA($response, "GomaResponse");
+        } finally {
+            Member::InitUser($current);
         }
     }
 }

@@ -3,21 +3,19 @@
  * timezone-field
  */
 class TimeZone extends DBField {
+
     /**
-     * gets the field-type
-     *
-     *@name getFieldType
-     *@access public
+     * @param array $args
+     * @param null $allowNull
+     * @return string
      */
-    static public function getFieldType($args = array()) {
+    static public function getFieldType($args = array(), $allowNull = null) {
         return 'enum("'.implode('","', i18n::$timezones).'")';
     }
 
     /**
-     * generatesa a numeric field
-     *@name formfield
-     *@access public
-     *@param string - title
+     * @param null $title
+     * @return Select
      */
     public function formfield($title = null)
     {

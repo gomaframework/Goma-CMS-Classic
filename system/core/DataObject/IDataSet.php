@@ -39,13 +39,20 @@ interface IDataSet extends Countable {
     public function filter();
 
     /**
-     * same parameters as filter, but we add it to current set with and.
+     * Adds an additional filter to the current filter. The conjunction will be AND.
      *
      * @param array|string ...
      * @param string ...
      * @return $this
      */
     public function addFilter();
+
+    /**
+     * Adds an additional filter to the current filter. The conjunction will be OR.
+     *
+     * @return $this
+     */
+    public function addORCondition();
 
     /**
      * @example $list->sort('Name'); // default ASC sorting

@@ -154,7 +154,7 @@ class History extends DataObject
      */
     public function canSeeEvent()
     {
-        if ($this->historyData() !== false && call_user_func_array(array($this->dbobject, "canViewHistory"), array($this))) {
+        if ($this->historyData() && call_user_func_array(array($this->dbobject, "canViewHistory"), array($this))) {
             return true;
         }
         return false;
@@ -171,22 +171,23 @@ class History extends DataObject
         if ($data = $this->historyData()) {
             return new DataSet($data);
         }
-        return false;
+
+        return null;
     }
 
     /**
      * returns the icon for a history-element
      * makes $content in template available or $object->content
      *
-     * @return bool|string
+     * @return null|string
      */
     public function getIcon()
     {
-        if ($data = $this->historyData()) {
+        if ($data = $this->historyData() && isset($data["icon"])) {
             return ClassInfo::findFile($data["icon"], $this->dbobject);
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -253,7 +254,7 @@ class History extends DataObject
      */
     public function getRetinaIcon()
     {
-        if ($data = $this->historyData()) {
+        if ($data = $this->historyData() && isset($data["icon"])) {
             $icon = ClassInfo::findFile($data["icon"], $this->dbobject);
             $retinaPath = substr($icon, 0, strrpos($icon, ".")) . "@2x" . substr($icon, strrpos($icon, "."));
             if (file_exists($retinaPath))
@@ -262,20 +263,21 @@ class History extends DataObject
             return $icon;
         }
 
-        return false;
+        return null;
     }
 
     /**
      * gets history-data
      *
      * @name historyData
-     * @return bool|mixed
+     * @return array|null
      */
     public function historyData()
     {
         if (isset($this->historyData)) {
             return $this->historyData;
         }
+
         $classname = "historyData_" . $this->dbobject;
         if (ClassInfo::exists($classname)) {
             if (gObject::method_exists($classname, "generateHistoryDataExtended")) {
@@ -295,10 +297,10 @@ class History extends DataObject
                 $this->historyData = $data;
                 return $data;
             } else {
-                return false;
+                return null;
             }
         }
-        return false;
+        return null;
     }
 
     /**

@@ -195,7 +195,6 @@ $lang = array(
 	"cache_del_info"								=> "Der Cache ist ein Zwischenspeicher, um die Geschwindigkeit zu optimieren.",
 	"login"                                        	=> "Anmeldung" ,
 	/* infos */
-	"usergroups_info"								=> "<h3>Willkommen</h3>Hier k&ouml;nnen Sie Benutzer und Gruppen verwalten. W&auml;hlen Sie im Baum, was Sie bearbeiten möchten.",
 	"email_info"									=> "Mehrere Adressen mit Komma trennen",
 	"email_correct_info"							=> "Die E-Mail-Adresse muss richtig sein und Ihnen gehören.",
 	'dragndrop_info'								=> "Ziehen Sie die Elemente, um sie zu sortieren.",
@@ -218,9 +217,7 @@ $lang = array(
 	"SITE_ACTIVE"                                   => "Normal",
 	"phone"                                         => "Telefon",
 	"settings_normal"                               => "Allgemeine Einstellungen",
-	"keywords"                                      => "Website-Schlagwörter",
 	"web_description"                               => "Website-Beschreibung",
-	"site_keywords"									=> "Schlagwörter dieser Seite",
 	"site_description"								=> "Beschreibung dieser Seite",
 	"every"                                         => "Alle",
 	"captcha"                                       => "Sicherheitscode",
@@ -241,6 +238,7 @@ $lang = array(
 	// lost password lanuages (lp_)
 	'lp_key_not_right'								=> "Ihr Sicherheitsschl&uuml;ssel ist falsch oder abgelaufen.",
 	'lost_password'									=> "Passwort vergessen",
+	"set_password"                                  => "Passwort festlegen",
 	'lp_edit_pass'									=> "Passwort &auml;ndern",
 	'lp_email_or_user'								=> "E-Mail-Adresse oder Benutzername",
 	'lp_submit'										=> "Absenden",
@@ -684,5 +682,8 @@ $lang = array(
 	"leave_page_upload_confirm"	=> "Ein Upload läuft, soll dieser abgebrochen werden?",
 	"apply"			=> "Anwenden",
 
-	"uploads_manage"	=> "Dateien verwalten"
+	"uploads_manage"	=> "Dateien verwalten",
+
+    "your_new_user_account" => "Es wurde für Sie ein Benutzer angelegt",
+    "welcome_new_user" => "Herzlich Willkommen. Bitte legen Sie ihr Passwort fest, um fortzufahren."
 );

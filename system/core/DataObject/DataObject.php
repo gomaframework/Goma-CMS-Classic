@@ -119,7 +119,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * @return DataObject
      */
     public static function getModelDataSource($class) {
-        return !ClassInfo::isAbstract($class) ? gObject::instance($class) : null;
+        return !ClassInfo::isAbstract($class) ? static::instance($class) : null;
     }
 
     /**
@@ -127,7 +127,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * @return DataObject
      */
     public static function getDbDataSource($class) {
-        return !ClassInfo::isAbstract($class) ?  gObject::instance($class) : null;
+        return !ClassInfo::isAbstract($class) ?  static::instance($class) : null;
     }
 
     /**
@@ -387,13 +387,12 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
 
     /**
      * checks if one of the given permissions is allowed for the current user.
+     * Note: If current user is a superadmin, this *always* returns true. You should not use this for logical checks then.
      *
      * @param string|array $permissions name(s) of permission
-     * @param DataObject $record optional
      * @return bool
      */
-    public function can($permissions, $record = null) {
-
+    public function can($permissions) {
         if ($this->classname != "permission") {
             if (Permission::check("superadmin")) {
                 return true;
@@ -404,25 +403,24 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
             $permissions = array($permissions);
         }
 
-        $usedRecord = isset($record) ? $record : $this;
         foreach($permissions as $perm) {
             $perm = strtolower($perm);
-            $can = false;
+            $allowed = false;
 
             if (isset(Permission::$providedPermissions[$this->baseClass . "::" . $perm])) {
-                $can = Permission::check($this->baseClass . "::" . $perm);
+                $allowed = Permission::check($this->baseClass . "::" . $perm);
             }
 
             if (gObject::method_exists($this->classname, "can" . $perm)) {
-                $c = call_user_func_array(array($this, "can" . $perm), array($usedRecord));
-                if (is_bool($c)) {
-                    $can = $c;
+                $temporaryAllowedByMethod = call_user_func_array(array($this, "can" . $perm), array());
+                if (is_bool($temporaryAllowedByMethod)) {
+                    $allowed = $temporaryAllowedByMethod;
                 }
             }
 
-            $this->callExtending("can" . $perm, $can, $usedRecord);
+            $this->callExtending("can" . $perm, $allowed);
 
-            if ($can === true) {
+            if ($allowed === true) {
                 return true;
             }
         }
@@ -451,36 +449,34 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     }
 
     /**
-     * @param DataObject $row
      * @param string $name
      * @return bool
      */
-    protected function checkPermission($row, $name) {
+    protected function checkPermission($name) {
         $provided = $this->providePerms();
         if (count($provided) == 1) {
             $keys = array_keys($provided);
 
-            if (Permission::check($keys[0]))
+            if (Permission::check($keys[0])) {
                 return true;
+            }
         } else if (count($provided) > 1) {
             foreach($provided as $key => $arr)
             {
                 if (preg_match("/all$/i", $key))
                 {
-                    if (Permission::check($key))
+                    if (Permission::check($key)) {
                         return true;
+                    }
                 }
 
                 if (preg_match("/".preg_quote($name, "/")."/i", $key))
                 {
-                    if (Permission::check($key))
+                    if (Permission::check($key)) {
                         return true;
+                    }
                 }
             }
-        }
-
-        if (is_object($row) && $row->admin_rights) {
-            return Permission::check($row->admin_rights);
         }
 
         if ($this->admin_rights) {
@@ -493,70 +489,48 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     /**
      * returns if a given record can be written to db
      *
-     * @param  DataObject|null $row
      * @return bool
      */
-    public function canWrite($row)
+    public function canWrite()
     {
-        return $this->checkPermission($row, "write");
+        return $this->checkPermission("write");
     }
 
     /**
      * returns if a given record can deleted in database
      *
-     * @param DataObject $row
      * @return bool
      */
-    public function canDelete($row)
+    public function canDelete()
     {
-        return $this->checkPermission($row, "delete");
+        return $this->checkPermission("delete");
     }
 
     /**
      * returns if a given record can be inserted in database
      *
-     * @param DataObject $row
      * @return bool
      */
-    public function canInsert($row)
+    public function canInsert()
     {
-        return $this->checkPermission($row, "insert");
-    }
-
-    /**
-     * gets the writeaccess
-     *
-     * @return bool
-     */
-    public function getWriteAccess()
-    {
-        if (!self::Versioned($this->classname) && $this->can("Write")) {
-            return true;
-        } else if ($this->can("Publish")) {
-            return true;
-        } else if ($this->can("Delete")) {
-            return true;
-        }
-
-        return false;
+        return $this->checkPermission("insert");
     }
 
     /**
      * returns if publish-right is available
      *
-     * @param DataObject $record
      * @return bool
      */
-    public function canPublish($record) {
+    public function canPublish() {
         if(self::Versioned($this->classname)) {
-            return $this->checkPermission($record, "publish");
+            return $this->checkPermission( "publish");
         }
 
-        return $record->id == 0 ? $this->canInsert($record) : $this->canWrite($record);
+        return $this->id == 0 ? $this->canInsert() : $this->canWrite();
     }
 
     /**
-     *
+     * @param array $manipulation
      */
     public function onBeforeRemove(&$manipulation)
     {
@@ -599,16 +573,26 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         $this->callExtending("onAfterWrite", $modelWriter);
     }
 
+    /**
+     * will be called after publish
+     *
+     * @param ModelWriter $modelWriter
+     */
+    public function onAfterPublish($modelWriter)
+    {
+        $this->callExtending("onAfterPublish", $modelWriter);
+    }
 
     /**
      * before manipulating the data
      *
+     * @param ModelWriter $modelWriter
      * @param array $manipulation
      * @param string $job
      */
-    public function onBeforeManipulate(&$manipulation, $job)
+    public function onBeforeManipulate($modelWriter, &$manipulation, $job)
     {
-
+        $this->callExtending("onBeforeManipulate", $modelWriter,  $manipulation, $job);
     }
 
     /**
@@ -619,23 +603,27 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * @param array $writeData
      * @return void
      */
-    public function onBeforeManipulateManyMany(&$manipulation, $dataset, $writeData) {
-
+    public function onBeforeManipulateManyMany(&$manipulation, $dataset, $writeData)
+    {
+        $this->callExtending("onBeforeManipulateManyMany",  $manipulation, $dataset, $writeData);
     }
 
     /**
      * before updating data-tables to write data
+     * @param ModelWriter $modelWriter
      * @param iDataBaseWriter $iDataBaseWriter
      */
-    public function onBeforeWriteData($iDataBaseWriter) {
-
+    public function onBeforeWriteData($modelWriter, $iDataBaseWriter)
+    {
+        $this->callExtending("onBeforeWriteData", $modelWriter,  $iDataBaseWriter);
     }
 
     /**
      * is called before unpublish
      */
-    public function onBeforeUnPublish() {
-        $this->callExtending("onBeforUnPublish");
+    public function onBeforeUnPublish()
+    {
+        $this->callExtending("onBeforeUnPublish");
     }
 
     /**
@@ -643,7 +631,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * @param ModelWriter $modelWriter
      */
     public function onBeforePublish($modelWriter) {
-        $this->callExtending("onBeforPublish", $modelWriter);
+        $this->callExtending("onBeforePublish", $modelWriter);
     }
 
     /**
@@ -776,12 +764,18 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         $this->onBeforeUnPublish();
         $this->callExtending("OnBeforeUnPublish");
 
-        $b = "unpublish";
-        $this->onBeforeManipulate($manipulation, $b);
-        $b = "unpublish";
-        $this->callExtending("onBeforeManipulate", $manipulation, $b);
+        $writer = new ModelWriter($this, IModelRepository::COMMAND_TYPE_UNPUBLISH, $this, Core::repository());
+        
+        $job = "unpublish";
+        $this->onBeforeManipulate(
+            $writer,
+            $manipulation,
+            $job
+        );
 
         if (SQL::manipulate($manipulation)) {
+            $this->publishedid = 0;
+            $this->original["publishedid"] = 0;
             if (StaticsManager::getStatic($this->classname, "history") && $history) {
                 History::push($this->classname, $this->versionid, $this->versionid, $this->id, IModelRepository::COMMAND_TYPE_UNPUBLISH);
             }
@@ -902,8 +896,14 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
 
         $this->clearCache();
 
+        $writer = new ModelWriter($this, IModelRepository::COMMAND_TYPE_DELETE, $this, Core::repository());
+
         $this->onBeforeRemove($manipulation);
         $this->callExtending("onBeforeRemove", $manipulation);
+
+        $job = "delete";
+        $this->onBeforeManipulate($this, $manipulation, $job);
+
         if (SQL::manipulate($manipulation)) {
             if (StaticsManager::getStatic($this->classname, "history") && $history) {
                 History::push($this->classname, $this->versionid, 0, $this->id, "remove");
@@ -2162,14 +2162,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         if ($this->Table()) {
             // get correct SQL-Types for Goma-Field-Types
             foreach($db_fields as $field => $type) {
-                if (isset($casting[strtolower($field)])) {
-                    if ($casting[strtolower($field)] = DBField::parseCasting($casting[strtolower($field)])) {
-
-                        $type = call_user_func_array(array($casting[strtolower($field)]["class"], "getFieldType"), (isset($casting[strtolower($field)]["args"])) ? $casting[strtolower($field)]["args"] : array());
-                        if ($type != "")
-                            $db_fields[$field] = $type;
-                    }
-                }
+                $db_fields[$field] = DBField::getDBFieldTypeForCasting(isset($casting[strtolower($field)]) ? $casting[strtolower($field)] : $type);
             }
 
             $defaults = $this->defaults;

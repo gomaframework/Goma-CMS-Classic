@@ -31,6 +31,10 @@ var initAjaxSubmitbutton = function(id, divId, formObject, field, url, appendix)
      * @returns {*}
      */
     field.doSubmit = function() {
+        if(button.prop("disabled")) {
+            return $.Deferred().reject().promise();
+        }
+
         button.css("display", "none");
         container.append("<img src=\"system/images/16x16/loading.gif\" alt=\"loading...\" class=\"loading\" />");
         $("body").css("cursor", "wait");

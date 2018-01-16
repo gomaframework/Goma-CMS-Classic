@@ -45,7 +45,8 @@ class liveCounter_live extends DataObject {
         "recordid" 	    => false,
         "autorid" 		=> false,
         "editorid"		=> false,
-        "phpsessid"		=> "INDEX"
+        "phpsessid"		=> "INDEX",
+        "ip"            => "INDEX"
     );
 
     static $search_fields = false;

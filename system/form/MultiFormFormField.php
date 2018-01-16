@@ -120,7 +120,7 @@ class MultiFormFormField extends ClusterFormField {
             }
         }
 
-        if(is_a($this->getModel(), ISortableDataObjectSet::class) && $this->getRequest()->post_params) {
+        if(is_a($this->getModel(), ISortableDataObjectSet::class) && count($this->getRequest()->post_params) > 0) {
             $keyField = $this->modelKeyField;
             $postData = $this->getRequest()->post_params;
             $parent = $this->getParent();
@@ -240,8 +240,8 @@ class MultiFormFormField extends ClusterFormField {
                     $fieldA != null && $fieldA->argumentResult($infoA);
                     $fieldB != null && $fieldB->argumentResult($infoB);
                     throw new LogicException("Sort-Information not available. Query for: {$a->{$keyField}}: $hasFieldA, " .
-                    " {$b->{$keyField}}: $hasFieldB | Data for: " . print_r($sortInfo, true) . " A: " . print_r($infoA, true) .
-                    "B: " . print_r($infoB, true));
+                        " {$b->{$keyField}}: $hasFieldB | Data for: " . print_r($sortInfo, true) . " A: " . print_r($infoA, true) .
+                        "B: " . print_r($infoB, true));
                 }
             });
         }
@@ -270,6 +270,15 @@ class MultiFormFormField extends ClusterFormField {
         parent::addRenderData($info, $notifyField);
 
         $info->addJSFile("system/libs/javascript/jquery-touch-punch.js");
+    }
+
+    /**
+     *
+     */
+    public function JS() {
+        if($this->addedNewField || $this->loadedFromSession) {
+            return 'form.setLeaveCheck(true);';
+        }
     }
 
     /**

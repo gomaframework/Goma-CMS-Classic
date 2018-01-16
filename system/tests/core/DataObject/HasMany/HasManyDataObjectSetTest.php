@@ -221,8 +221,8 @@ class HasManyDataObjectSetTest extends GomaUnitTest implements TestAble
             }
         }
     }
-    
-     /**
+
+    /**
      *
      */
     public function testCreateHasManyAndWriteRemove() {
@@ -241,7 +241,7 @@ class HasManyDataObjectSetTest extends GomaUnitTest implements TestAble
             /** @var MockHasManyClass $hasManyFromDB */
             $hasManyFromDB = \DataObject::get_one(MockHasManyClass::class, array("id" => $hasMany->id));
             $this->assertEqual($a, $hasManyFromDB->many()->count());
-            
+
             $removed = null;
             /** @var MockHasOneClass $one */
             foreach($hasManyFromDB->many() as $one) {
@@ -253,7 +253,7 @@ class HasManyDataObjectSetTest extends GomaUnitTest implements TestAble
                 }
             }
             $hasManyFromDB->many()->commitStaging(false, true);
-            
+
             $this->assertEqual($a - 1, $hasManyFromDB->many()->count());
             $this->assertNull($removed->one);
         } finally {
@@ -270,6 +270,16 @@ class HasManyDataObjectSetTest extends GomaUnitTest implements TestAble
         }
     }
 
+    /**
+     * tests if cloning a HasMany-OBject does not have impact on it's related object
+     * and if related object is changed, both objects are changed.
+     *
+     * 1. Create MockHasManyClass with $a MockHasOneClass in relationship "many"
+     * 2. Check if hasMany Object from DB has exactly $a objects in relationship many()
+     * 3. Clone backward relationship
+     *
+     * TODO: More Documentation
+     */
     public function testHasManyGetConverted() {
         try {
             $hasMany = new MockHasManyClass();
@@ -294,6 +304,7 @@ class HasManyDataObjectSetTest extends GomaUnitTest implements TestAble
             /** @var MockHasOneClass $one */
             foreach($hasManyFromDB->many() as $one) {
                 if($i == 0) {
+                    $this->assertNotEqual($hasManyFromDB, $one->one);
                     $hasManyFromDBWithBlah = clone $hasManyFromDB;
                     $hasManyFromDBWithBlah->blah = 1;
                     $this->assertEqual(1, $one->one->blah);
@@ -311,6 +322,96 @@ class HasManyDataObjectSetTest extends GomaUnitTest implements TestAble
                 }
 
                 $hasMany->remove(true);
+            }
+        }
+    }
+
+    /**
+     * tests if custom filter in SQL is possible with HasMany_DataObjectSet.
+     *
+     * 1. Create MockHasManyClass with 5 MockHasOneClass in relationship "many"
+     * 2. Create one MockHasOneClass $mockHasOne and write to DB .
+     * 3. Get HasManyClass from DB, set filter to custom SQL 1 = 1
+     * 4. Assert that there are objects gotten from DB and are exactly 5.
+     * 5. Assert that $mockHasOne is not in relationship.
+     */
+    public function testHasManyDataObjectSetWithCustomFilterSQL() {
+        try {
+            $hasMany = new MockHasManyClass();
+            $this->assertInstanceOf(MockHasManyClass::class, $hasMany);
+            $this->assertInstanceOf(HasMany_DataObjectSet::class, $hasMany->many());
+
+            $a = 5;
+            for ($i = 0; $i < $a; $i++) {
+                $hasMany->many()->add(new MockHasOneClass());
+            }
+
+            $hasMany->writeToDB(false, true);
+
+            $mockHasOne = new MockHasOneClass();
+            $mockHasOne->override = true;
+            $mockHasOne->writeToDB(false, true);
+
+            /** @var MockHasManyClass $hasManyFromDB */
+            $hasManyFromDB = \DataObject::get_one(MockHasManyClass::class, array("id" => $hasMany->id));
+            $hasManyFromDB->many()->filter("1 = 1");
+            $this->assertEqual($a, $hasManyFromDB->many()->count());
+            $this->assertNull($hasManyFromDB->many()->find("id", $mockHasOne->id));
+        } finally {
+            if($hasMany) {
+                foreach($hasMany->many() as $one) {
+                    $one->remove(true);
+                }
+
+                $hasMany->remove(true);
+            }
+
+            if($mockHasOne) {
+                $mockHasOne->remove(true);
+            }
+        }
+    }
+
+    /**
+     * tests if custom filter in SQL is possible with HasMany_DataObjectSet.
+     *
+     * 1. Create MockHasManyClass with 5 MockHasOneClass in relationship "many"
+     * 2. Create one MockHasOneClass $mockHasOne and write to DB .
+     * 3. Get HasManyClass from DB, set filter to custom SQL 1 = 0
+     * 4. Assert that there are objects gotten from DB and are exactly 0.
+     */
+    public function testHasManyDataObjectSetWithCustomFilterSQLNoObjects() {
+        try {
+            $hasMany = new MockHasManyClass();
+            $this->assertInstanceOf(MockHasManyClass::class, $hasMany);
+            $this->assertInstanceOf(HasMany_DataObjectSet::class, $hasMany->many());
+
+            $a = 5;
+            for ($i = 0; $i < $a; $i++) {
+                $hasMany->many()->add(new MockHasOneClass());
+            }
+
+            $hasMany->writeToDB(false, true);
+
+            $mockHasOne = new MockHasOneClass();
+            $mockHasOne->override = true;
+            $mockHasOne->writeToDB(false, true);
+
+            /** @var MockHasManyClass $hasManyFromDB */
+            $hasManyFromDB = \DataObject::get_one(MockHasManyClass::class, array("id" => $hasMany->id));
+            $hasManyFromDB->many()->filter("1 = 0");
+            $this->assertEqual(0, $hasManyFromDB->many()->count());
+        } finally {
+            if($hasMany) {
+                foreach($hasMany->many() as $one) {
+                    $one->remove(true);
+                }
+
+                $hasMany->remove(true);
+            }
+
+            if($mockHasOne) {
+                $mockHasOne->remove(true);
             }
         }
     }

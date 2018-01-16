@@ -464,7 +464,7 @@ class tplCaller extends gObject
      */
     public function login()
     {
-        return member::login();
+        return isset(Member::$loggedIn);
     }
 
     /**
@@ -472,7 +472,7 @@ class tplCaller extends gObject
      */
     public function logout()
     {
-        return member::logout();
+        return !isset(Member::$loggedIn);
     }
 
     /**

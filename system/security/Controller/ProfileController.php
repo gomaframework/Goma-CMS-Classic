@@ -47,12 +47,17 @@ class ProfileController extends FrontedController {
 	 */
 	public $model = "user";
 
+    /**
+     * @var array
+     */
+	public static $ssoDomains = array();
+
 	/**
 	 * shows the edit-screen
 	 * @return string
 	 */
 	public function edit() {
-		if(!Member::login()) {
+		if(!isset(Member::$loggedIn)) {
 			return GomaResponse::redirect(BASE_URI . "profile/login/?redirect=".urlencode(ROOT_PATH . BASE_SCRIPT . "profile/edit/")."");
 		}
 
@@ -61,7 +66,7 @@ class ProfileController extends FrontedController {
 		Core::setTitle(lang("edit_profile"));
 
 		$controller = new EditProfileController();
-		$controller->setModelInst($this->request->getUser());
+		$controller->setModelInst(Member::$loggedIn);
 		return $controller->handleRequest($this->request, true);
 	}
 
@@ -118,12 +123,12 @@ class ProfileController extends FrontedController {
 		Core::setTitle(lang("login"), "profile/login/");
 
 		// if login and a user want's to login as someone else, we should log him out
-		if(member::login() && isset($this->getRequest()->post_params["pwd"]))
+		if(isset(Member::$loggedIn) && isset($this->getRequest()->post_params["pwd"]))
 		{
 			AuthenticationService::sharedInstance()->doLogout();
 			// if a user goes to login and is logged in, we redirect him home
-		} else if(member::login()) {
-			return GomaResponse::redirect($this->getRedirect($this));
+		} else if(isset(Member::$loggedIn)) {
+			return GomaResponse::redirect($this->getLoginRedirect());
 		}
 
 		// if no login and pwd and username isset, we login
@@ -131,7 +136,7 @@ class ProfileController extends FrontedController {
 		{
 			if(member::doLogin($this->getRequest()->post_params["user"], $this->getRequest()->post_params["pwd"]))
 			{
-				return GomaResponse::redirect(getRedirect(true));
+				return GomaResponse::redirect($this->getLoginRedirect());
 			}
 		}
 
@@ -139,6 +144,29 @@ class ProfileController extends FrontedController {
 
 		return tpl::render("profile/login.html");
 	}
+
+    /**
+     * gets login redirect.
+     */
+	protected function getLoginRedirect() {
+        if(isset($this->request->get_params["redirect"])) {
+            $domains = self::$ssoDomains;
+            $domains[] = $this->request->getServerName();
+            foreach($domains as $domain) {
+                if(isURLFromServer($this->request->get_params["redirect"], $domain)) {
+                    if(isset($this->request->get_params["sessionparam"]) && is_string($this->request->get_params["sessionparam"])) {
+                        $redirect = self::addParamToUrl($this->request->get_params["redirect"], $this->request->get_params["sessionparam"], livecounter::getUserIdentifier());
+                    } else {
+                        $redirect = $this->request->get_params["redirect"];
+                    }
+
+                    return htmlentities($redirect, ENT_COMPAT, "UTF-8", false);
+                }
+            }
+        }
+
+        return ROOT_PATH;
+    }
 
 	/**
 	 * switch-lang view

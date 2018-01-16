@@ -447,78 +447,113 @@ class SQL
      * @param array $where
      * @param bool $includeWhere
      * @param array $DBFields to set field tables if you have various multi-table-fields
-     * @param array $colidingFields coliding fields
+     * @param array $collidingFields coliding fields
      * @return string
      */
-    static function extractToWhere($where, $includeWhere = true, $DBFields = array(), $colidingFields = array())
+    public static function extractToWhere($where, $includeWhere = true, $DBFields = array(), $collidingFields = array())
     {
         // WHERE
         $sql = "";
         if (is_array($where) && count($where) > 0) {
-            $i = 0;
-            $a = 0; // check for multiple AND, OR, and so on in a row
+            $conjunction = "";
+            $firstQuery = true;
+            $whereAdded = !$includeWhere;
+            $currentQuery = "";
+            $skipConjunctionCheck = false;
             foreach ($where as $field => $value) {
+                $sql = self::addQueryPart($sql, $currentQuery, $conjunction, $firstQuery, $whereAdded);
+                $currentQuery = "";
 
-                if ($i == 0) {
-                    $i++;
-                    if ($includeWhere) {
-                        $sql .= " WHERE ";
-                        $includeWhere = false;
-                    }
-                } else if ($a == 0) {
+                if(!$skipConjunctionCheck) {
                     if (RegexpUtil::isNumber($field) && ($value == "OR" || $value == "||")) {
-                        $a++;
-                        $sql .= " OR ";
+                        $conjunction = " OR ";
+                        $skipConjunctionCheck = true;
                         continue;
                     } else {
-                        $a++;
-                        $sql .= " AND ";
+                        $conjunction = " AND ";
                     }
+                } else {
+                    $skipConjunctionCheck = false;
                 }
 
-                // patch for sub-queries
-                $a = 0;
+                // support for subqueries
                 $field = trim($field);
-                if (preg_match('/^[0-9]+$/', $field)) {
+                if (RegexpUtil::isNumber($field)) {
                     if (is_array($value)) {
-                        $sql .= " ( " . self::extractToWhere($value, false, $DBFields, $colidingFields) . " ) ";
+                        $subQuery = self::extractToWhere($value, false, $DBFields, $collidingFields);
+                        if($subQuery) {
+                            $currentQuery = "(".$subQuery.")";
+                        }
                     } else if (is_string($value)) {
-                        $sql .= " ( " . $value . " ) ";
+                        $currentQuery = " ( ".$value." ) ";
                     }
                     continue;
                 }
 
-                // patch for coliding fields
-                if (!isset($DBFields[$field]) && isset($colidingFields[$field]) && count($colidingFields[$field]) > 0) {
-                    $sql .= " ( ";
+                // patch for colliding fields
+                if (!isset($DBFields[$field]) && isset($collidingFields[$field]) && count(
+                        $collidingFields[$field]
+                    ) > 0) {
+                    $currentQuery .= " ( ";
 
                     $b = 0;
 
-                    foreach ($colidingFields[$field] as $alias) {
-                        if ($b == 0)
+                    foreach ($collidingFields[$field] as $alias) {
+                        if ($b == 0) {
                             $b++;
-                        else
-                            $sql .= " OR ";
-                        $sql .= "(" . $alias . "." . $field . " IS NOT NULL AND ";
-                        $sql .= self::parseValue($alias . "." . $field, $value);
-                        $sql .= ")";
+                        } else {
+                            $currentQuery .= " OR ";
+                        }
+                        $currentQuery .= "(".$alias.".".$field." IS NOT NULL AND ";
+                        $currentQuery .= self::parseValue($alias.".".$field, $value);
+                        $currentQuery .= ")";
                     }
-                    $sql .= " ) ";
+                    $currentQuery .= " ) ";
                     continue;
                 }
 
                 if (isset($DBFields[$field])) {
-                    $field = $DBFields[$field][0] . "." . $DBFields[$field][1];
+                    $field = $DBFields[$field][0].".".$DBFields[$field][1];
                 }
 
-                $sql .= self::parseValue($field, $value);
+                $currentQuery = self::parseValue($field, $value);
             }
+            $sql = self::addQueryPart($sql, $currentQuery, $conjunction, $firstQuery, $whereAdded);
         } else if (is_string($where)) {
-            if ($includeWhere)
+            if ($includeWhere) {
                 $sql .= " WHERE ";
+            }
 
             $sql .= $where;
         }
+
+        return $sql;
+    }
+
+    /**
+     * @param string $sql
+     * @param string $currentQuery
+     * @param string $conjunction
+     * @param bool $firstQuery
+     * @param bool $whereAdded
+     * @return string
+     */
+    protected static function addQueryPart($sql, $currentQuery, $conjunction, &$firstQuery, &$whereAdded) {
+        if(trim($currentQuery)) {
+            if(!$whereAdded) {
+                $sql .= " WHERE ";
+                $whereAdded = true;
+            }
+
+            if($firstQuery) {
+                $firstQuery = false;
+            } else {
+                $sql .= $conjunction;
+            }
+
+            $sql .= $currentQuery;
+        }
+
         return $sql;
     }
 

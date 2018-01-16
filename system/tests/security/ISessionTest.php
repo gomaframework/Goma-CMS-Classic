@@ -7,8 +7,6 @@
  * @author		Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  */
-
-
 class ISessionTests {
 
     /**

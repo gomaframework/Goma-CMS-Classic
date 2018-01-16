@@ -126,55 +126,53 @@ class User extends DataObject implements PermProvider
 
     /**
      * returns true if you can write
-     * @param User $data
      * @return bool
      */
-
-    public function canWrite($data)
+    public function canWrite()
     {
-        if ($data["id"] == member::$id)
-            return true;
-
-        if (member::$loggedIn->groupadmin) {
-            if ($data->groups()->count() == 0) {
-                return false;
+        if(Member::$loggedIn !== null) {
+            if ($this->id == Member::$loggedIn->id) {
+                return true;
             }
 
-            foreach ($data->groups() as $group) {
-                if (member::$loggedIn->groups(array("id" => $group->id))->Count() == 0) {
+            if (Member::$loggedIn->groupadmin) {
+                if ($this->groups()->count() == 0) {
                     return false;
                 }
-            }
 
-            return true;
+                foreach ($this->groups() as $group) {
+                    if (Member::$loggedIn->groups(array("id" => $group->id))->Count() == 0) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
         }
 
         return Permission::check("USERS_MANAGE");
     }
 
     /**
-     * @param User $record
      * @return bool
      */
-    public function canPublish($record)
+    public function canPublish()
     {
-        return $this->canWrite($record);
+        return $this->canWrite();
     }
 
     /**
-     * @param DataObject $data
      * @return bool
      */
-    public function canDelete($data)
+    public function canDelete()
     {
         return Permission::check("USERS_MANAGE");
     }
 
     /**
-     * @param DataObject $data
      * @return bool
      */
-    public function canInsert($data)
+    public function canInsert()
     {
         return true;
     }
@@ -220,7 +218,7 @@ class User extends DataObject implements PermProvider
             $form->add(new CheckBox("groupAdmin", lang("groupAdmin")));
         }
 
-        if (!member::login()) {
+        if (!isset(Member::$loggedIn)) {
             $code = RegisterExtension::$registerCode;
             if ($code != "") {
                 $general->add(new TextField("code", lang("register_code", "Code")));
@@ -349,6 +347,24 @@ class User extends DataObject implements PermProvider
                 }
             }
         }
+    }
+
+    /**
+     * send notification mail for new users.
+     * @param Request $request
+     * @throws InvalidStateException
+     */
+    public function sendNotificationMail($request) {
+        if(!$this->code && !$this->code_has_sent) {
+            throw new InvalidStateException("Code not generated or marked as sent. Call \$user->generateCode(true) before calling sendNotificationMail.");
+        }
+
+        $mail = new Mail("noreply@" . $request->getServerName());
+        $mail->sendHTML($this->email, lang("group_user_changed"),
+            $this->customise(array(
+                "setPasswordLink" => BASE_URI . BASE_SCRIPT . "profile/lost_password/?code=" . $this->code
+            ))->renderWith("mail/newUserNotification.html")
+        );
     }
 
     /**

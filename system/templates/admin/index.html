@@ -8,7 +8,6 @@
 		<% INCLUDE_CSS_MAIN "jqueryui/theme.css" %>
 		<% INCLUDE_CSS_MAIN "notifications.css" %>
 		<% INCLUDE_CSS_MAIN "font-awsome/font-awesome.css" %>
-		<% gload("helpbox") %>
 		<% INCLUDE_JS_MAIN "admin.js" %>
 		
 		<% INCLUDE_JS "apps/AddonStoreClient.js" %>
@@ -77,10 +76,6 @@
 											{$_cms_ptitle}
 										</a>-->
 										<a id="visit_webpage" href="{$previewURL}">{$_cms_title} - <span class="flex"><% lang("preview_website", "Preview Website") %> </span> <i class="fa fa-angle-right fa-2x"></i></a>
-									</div>
-									
-									<div class="help" id="help-button">
-										<a href="#"><i class="fa fa-question-circle fa-2x"></i></a>
 									</div>
 									
 									<div id="userbar-langSelect">
@@ -387,7 +382,7 @@
 
 												
 												$("#plot-navigation a.stat.active").click();
-												
+
 												goma.ui.addFlexBox($("#history > div"));
 											});
 											

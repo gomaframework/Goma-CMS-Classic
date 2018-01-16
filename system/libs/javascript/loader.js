@@ -116,7 +116,11 @@ var json_regexp = /^\(?\{/,
                                 opts.scrollElement = $(this);
                             } else if ($(this).attr("data-scroll-element") && $($(this).attr("data-scroll-element")).length > 0) {
                                 opts.scrollElement = $($(this).attr("data-scroll-element"));
-                            }
+                            } else if($(this).parents(".goma-flex-box").length > 0) {
+                                opts.scrollElement = $(this).parents(".goma-flex-box").eq(0);
+							}
+
+                            console.log(opts);
 
                             if ($(this).attr("data-wrapper")) {
                                 opts.urlWrapperElement = $(this).attr("data-wrapper");
@@ -155,6 +159,10 @@ var json_regexp = /^\(?\{/,
 					throw new Error("inline-elements are not allowed for flex-boxing.");
 					return false;
 				}
+
+				if(!$container.hasClass("goma-flex-box")) {
+                    $container.addClass("goma-flex-box");
+                }
 
 				var scroll = $container.scrollTop();
 
@@ -1238,35 +1246,44 @@ if (window.loader === undefined) {
 		return new Array(multiplier + 1).join(input);
 	}
 
-	var scrollToHash = function (hash) {
-		var scrollPosition,
-			hashJqueryById = $("#" + hash);
-		if (hashJqueryById.length > 0) {
-			scrollPosition = hashJqueryById.offset().top;
-		} else if ($("a[name="+hash+"]").length > 0) {
-			scrollPosition = $("a[name="+hash+"]").offset().top;
-		} else {
-			scrollPosition = 0;
-		}
+    var scrollToHash = function (hash, recalculate) {
+        var scrollPosition,
+            hashJqueryById = $("#" + hash);
+        if (hashJqueryById.length > 0) {
+            scrollPosition = hashJqueryById.offset().top - 10;
+        } else if ($("a[name="+hash+"]").length > 0) {
+            scrollPosition = $("a[name="+hash+"]").offset().top - 10;
+        } else {
+            scrollPosition = 0;
+        }
 
-		scrollPosition = Math.round(scrollPosition);
+        scrollPosition = Math.round(Math.max(0, scrollPosition));
 
-		if (scrollPosition != 0 && $("#frontedbar").length == 1) {
-			scrollPosition -= $("#frontedbar").height();
-		}
+        var stuckElements = $(".is_stuck.goma_is_fixed");
+        if(stuckElements.length > 0) {
+            stuckElements.each(function(){
+                scrollPosition -= $(this).outerHeight(false);
+            });
+        }
 
-		if (scrollPosition != 0 && $("#head").length == 1) {
-			scrollPosition -= $("#head").height();
-		}
+        if(recalculate !== undefined) {
+            if(recalculate < scrollPosition) {
+                return;
+            }
+        }
 
-		var scroll = $(window).scrollTop();
-		window.location.hash = hash;
-		$(window).scrollTop(scroll);
+        var scroll = $(window).scrollTop();
+        window.location.hash = hash;
+        $(window).scrollTop(scroll);
 
-		$("html, body").animate({
-			"scrollTop": scrollPosition
-		}, 200);
-	};
+        $("html, body").animate({
+            "scrollTop": scrollPosition
+        }, 200, "swing", function(){
+            if(recalculate === undefined) {
+                scrollToHash(hash, scrollPosition);
+            }
+        });
+    };
 
 	var now = function () {
 		return Math.round(+new Date()/1000);

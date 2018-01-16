@@ -3,6 +3,11 @@
 /**
  * Every value of an field can used as object if you call doObject($offset)
  * This Object has some very cool methods to convert the field
+ *
+ * @author Goma-Team
+ * @copyright 2017 Goma-Team
+ * @license GNU Lesser General Public License, version 3; see "LICENSE.txt"
+ * @package		Goma\Core
  */
 class DBField extends gObject implements IDataBaseField
 {
@@ -174,31 +179,14 @@ class DBField extends gObject implements IDataBaseField
     }
 
     /**
-     * this function uses more than one convert-method
-     * @param array $methods
-     * @return mixed
-     */
-    public function convertMulti($methods)
-    {
-        $new = clone $this;
-        foreach($methods as $method)
-        {
-            if(gObject::method_exists($new, $method))
-            {
-                $new->setValue($new->$method());
-            }
-        }
-        return $new->getValue();
-    }
-
-    /**
      * gets the field-type
      *
      * @param array $args
-     * @return string
+     * @param bool|null defined if null type is defined in original type definition
+     * @return string|null
      */
-    static public function getFieldType($args = array()) {
-        return "";
+    static public function getFieldType($args = array(), $allowNull = null) {
+        return null;
     }
 
     /**
@@ -301,7 +289,46 @@ class DBField extends gObject implements IDataBaseField
     }
 
     /**
-     * parses casting-args and gives back the result
+     * converts defined field type to DB field type to use in SQL class for requireTable.
+     * @param string $fieldType
+     * @return string
+     */
+    public static function getDBFieldTypeForCasting($fieldType) {
+        if($parsedCasting = self::parseCasting($fieldType)) {
+            $newType = call_user_func_array(
+                array($parsedCasting["class"], "getFieldType"),
+                (isset($parsedCasting["args"])) ?
+                    array(
+                        $parsedCasting["args"],
+                        self::getNullDefinitionBoolNull($fieldType)
+                    ) :
+                    array(
+                        array(),
+                        self::getNullDefinitionBoolNull($fieldType)
+                    )
+            );
+
+            if ($newType != "") {
+                if (!self::definesNullInfo($newType)) {
+                    return $newType . " " . self::getNullDefinitionString($fieldType);
+                } else {
+                    return $newType;
+                }
+            }
+        }
+
+        return $fieldType;
+    }
+
+    /**
+     * parses casting-args and gives back the result.
+     * returns null if casting can't be determined.
+     *
+     * returns array if casting has been determined
+     * result array has the following keys:
+     * * class - class name of casting class
+     * * args - array of arguments for casting class
+     * * method - method to be used to convert
      *
      * @param string $casting
      * @return array|null
@@ -339,10 +366,6 @@ class DBField extends gObject implements IDataBaseField
             $data["args"] = $args;
         }
 
-        if(ClassInfo::hasInterface($name, "DefaultConvert")) {
-            $data["convert"] = true;
-        }
-
         if(isset($method)) {
             $data["method"] = $method;
         }
@@ -373,11 +396,17 @@ class DBField extends gObject implements IDataBaseField
 
         if(strpos($casting, "(")) {
             $name = trim(substr($casting, 0, strpos($casting, "(")));
-            if(preg_match('/\(([^\(\)]+)\)?/', $casting, $matches)) {
-                $args = $matches[1];
-                $args = eval('return array('.$args.');');
+            if(preg_match('/\((.+)\)/', $casting, $matches)) {
+                $argString = $matches[1];
+                if($json = json_decode("[".fixJSON($argString)."]", true)) {
+                    $args = $json;
+                } else {
+                    throw new InvalidArgumentException("Could not parse casting arguments for " . $casting);
+                }
             }
             unset($matches);
+        } else if(self::definesNullInfo($casting) && preg_match('/^\s*([0-9a-zA-Z_]+)\s*(not)?\s*null\s*$/i', $casting, $matches)) {
+            $name = $matches[1];
         } else {
             $name = trim($casting);
         }
@@ -543,7 +572,13 @@ class DBField extends gObject implements IDataBaseField
      * @return bool
      */
     public static function isNullType($type) {
-        return strpos(strtolower($type), "null") !== false && strpos(strtolower($type), "not") === false;
+        if(self::definesNullInfo($type)) {
+            $trimmed = strtolower(trim($type));
+            $lastInfo = trim(substr($trimmed, 0, strlen($trimmed) - 4));
+            return substr(trim(strtolower($lastInfo)), -3) != "not";
+        }
+
+        return false;
     }
 
     /**
@@ -551,6 +586,36 @@ class DBField extends gObject implements IDataBaseField
      * @return bool
      */
     public static function definesNullInfo($type) {
-        return strpos(strtolower($type), "null") !== false;
+        return substr(trim(strtolower($type)), -4) == "null";
+    }
+
+    /**
+     * returns null if no null definition.
+     * bool if null is defined.
+     *
+     * @param $type
+     * @return bool|null
+     */
+    static function getNullDefinitionBoolNull($type) {
+        if(self::definesNullInfo($type)) {
+            return self::isNullType($type);
+        }
+
+        return null;
+    }
+
+    /**
+     * returns "" for no null definition.
+     * NOT NULL or NULL for definition.
+     *
+     * @param $type
+     * @return bool|null
+     */
+    static function getNullDefinitionString($type) {
+        if(self::definesNullInfo($type)) {
+            return self::isNullType($type) ? "NULL" : "NOT NULL";
+        }
+
+        return "";
     }
 }

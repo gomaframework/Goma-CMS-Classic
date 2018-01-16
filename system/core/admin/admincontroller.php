@@ -106,7 +106,7 @@ class adminController extends Controller
      */
     public function handleItem()
     {
-        if (!$this->request->userHasPermission("ADMIN")) {
+        if (!Permission::check("ADMIN")) {
             return null;
         }
 
@@ -118,7 +118,7 @@ class adminController extends Controller
 
             Core::$favicon = ClassInfo::getClassIcon($class);
 
-            if ($this->request->userHasPermission($controller->rights)) {
+            if (Permission::check($controller->rights)) {
                 self::$activeController = $controller;
 
                 return $controller->handleRequest($this->request);
@@ -177,7 +177,7 @@ class adminController extends Controller
     public function flushLog($count = 40) {
         $count = $this->getParam("count") ? $this->getParam("count") : $count;
 
-        if ($this->request->userHasPermission("superadmin")) {
+        if (Permission::check("superadmin")) {
             PushController::enablePush();
             GlobalSessionManager::globalSession()->stopSession();
             ignore_user_abort(true);
@@ -218,19 +218,13 @@ class adminController extends Controller
             return parent::__output($content);
         }
 
-        if (Permission::check("ADMIN")) {
-            $data = $this->helpData();
-            $data["#help-button a"] = lang("HELP.HELP");
-            Resources::addJS("addHelp(" . json_encode($data) . ");");
-        }
-
         $admin = new Admin();
-        $admin->currentUser = $this->request->getUser();
+        $admin->currentUser = Member::$loggedIn;
         $prepared = $admin->customise(array(
             "content" => Director::getStringFromResponse($content)
         ));
 
-        if (!$this->request->userHasPermission("ADMIN")) {
+        if (!Permission::check("ADMIN")) {
             $newContent = $prepared->renderWith("admin/index_not_permitted.html");
         } else {
             $newContent = $prepared->renderWith("admin/index.html");
@@ -248,7 +242,7 @@ class adminController extends Controller
      */
     public function index()
     {
-        if ($this->request->userHasPermission("ADMIN")) {
+        if (Permission::check("ADMIN")) {
 
             if (isset($this->getRequest()->get_params["flush"])) {
                 Core::deleteCache(true);
@@ -270,7 +264,7 @@ class adminController extends Controller
     public function handleUpdate()
     {
 
-        if ($this->request->userHasPermission("superadmin")) {
+        if (Permission::check("superadmin")) {
             $controller = new UpdateController();
             self::$activeController = $controller;
 
@@ -289,7 +283,7 @@ class adminController extends Controller
      */
     public function history()
     {
-        if ($this->request->userHasPermission("ADMIN")) {
+        if (Permission::check("ADMIN")) {
             $controller = new HistoryController();
 
             return $controller->handleRequest($this->request, true);
@@ -329,21 +323,5 @@ class adminController extends Controller
     public function historyURL()
     {
         return "admin/history";
-    }
-
-    /**
-     * help-texts.
-     */
-    public function helpData()
-    {
-        return array(
-            "#navi-toggle span span" => array(
-                "text" => lang("HELP.SHOW-MENU")
-            ),
-            "#history"          => array(
-                "text"     => lang("HELP.HISTORY"),
-                "position" => "left"
-            )
-        );
     }
 }

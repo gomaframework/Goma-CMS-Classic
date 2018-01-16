@@ -200,14 +200,16 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
      * @throws PermissionException
      */
     public function commitRemoveStaging($repository, $forceWrite = false, $snap_priority = 2) {
-        /** @var DataObject $item */
-        foreach ($this->removeStaging as $item) {
-            if($this->relationShipInfo()->shouldRemoveData()) {
-                $item->remove($forceWrite);
-            } else {
-                $item->{$this->relationShipField} = 0;
-                $item->setField($this->relationShipInfo()->getInverse(), null);
-                $item->writeToDBInRepo($repository, false, $forceWrite, $snap_priority);
+        if($this->removeStaging->count() > 0) {
+            /** @var DataObject $item */
+            foreach ($this->removeStaging as $item) {
+                if ($this->relationShipInfo()->shouldRemoveData()) {
+                    $item->remove($forceWrite);
+                } else {
+                    $item->{$this->relationShipField} = 0;
+                    $item->setField($this->relationShipInfo()->getInverse(), null);
+                    $item->writeToDBInRepo($repository, false, $forceWrite, $snap_priority);
+                }
             }
         }
     }
@@ -220,7 +222,7 @@ class HasMany_DataObjectSet extends RemoveStagingDataObjectSet {
         $filter = parent::getFilterForQuery();
 
         if(($id = $this->getRelationID()) !== null) {
-            $filter[$this->relationShipField] = $id;
+            $filter = array($filter, array($this->relationShipField  => $id));
         } else {
             throw new InvalidArgumentException("HasMany_DataObjectSet needs relationship-info for query.");
         }

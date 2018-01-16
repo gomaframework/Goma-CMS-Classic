@@ -71,7 +71,7 @@ class RegisterExtension extends ControllerExtension
 		Core::addBreadCrumb(lang("register"), "profile/register/");
 
 		// check if logged in
-		if (member::login()) {
+		if (isset(Member::$loggedIn)) {
 			return GomaResponse::redirect(BASE_URI);
 		} else if (isset($this->getRequest()->get_params["activate"])) {
 			/** @var User $data */
@@ -114,7 +114,7 @@ class RegisterExtension extends ControllerExtension
 	 */
 	public function resendActivation()
 	{
-		if ($this->getParam("email") && !member::login()) {
+		if ($this->getParam("email") && !isset(Member::$loggedIn)) {
 			/** @var User $user */
 			$user = DataObject::get_one("user", array("email" => $this->getParam("email")));
 			if ($user && $user->status != 1) {
@@ -189,7 +189,7 @@ class RegisterExtension extends ControllerExtension
 	public function activate()
 	{
 		if (!Permission::check("USERS_MANAGE")) {
-			member::redirectToLogin();
+		    return GomaResponse::redirect($this->getOwner()->namespace . "/login" . URLEND . "?redirect=" . urlencode($this->getOwner()->namespace));
 		}
 
 		if (isset($this->getRequest()->get_params["activate"]) &&

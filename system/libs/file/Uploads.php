@@ -464,6 +464,13 @@ class Uploads extends DataObject {
     }
 
     /**
+     * @return null|string
+     */
+    public function forTemplate() {
+        return $this->__toString();
+    }
+
+    /**
      * generates identifier for collection
      *
      * @return string

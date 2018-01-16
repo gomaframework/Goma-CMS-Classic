@@ -127,13 +127,29 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     }
 
     /**
+     * Adds an additional filter to the current filter. The conjunction will be AND.
+     *
      * @return $this
      */
     public function addFilter()
     {
         $filter = call_user_func_array(array("DataSet", "getFilterFromArgs"), func_get_args());
 
-        $this->filter = array_merge((array) $this->filter, (array) $filter);
+        $this->filter = $this->filter ? array($this->filter, $filter) : $filter;
+        $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
+        return $this;
+    }
+
+    /**
+     * Adds an additional filter to the current filter. The conjunction will be AND.
+     *
+     * @return $this
+     */
+    public function addORCondition()
+    {
+        $filter = call_user_func_array(array("DataSet", "getFilterFromArgs"), func_get_args());
+
+        $this->filter = $this->filter ? array($this->filter, "OR", $filter) : $filter;
         $this->updateSet($this->filter, $this->page, $this->perPage, $this->isGroupedBy);
         return $this;
     }

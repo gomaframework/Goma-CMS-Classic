@@ -36,7 +36,7 @@ class FormRequestExtension extends Extension {
      */
     public function onBeforeHandleAction($action, &$content, &$handleWithMethod) {
         if($request = $this->getOwner()->getRequest()) {
-            $params = array_values($request->params);
+            $params = array_values($request->params->getArrayCopy());
 
             $parts = $request->getUrlParts();
             if (isset($params[0]) && $params[0] == "forms" && ((isset($params[1]) && $params[1] == "form") || $parts[0] == "form")) {
@@ -86,7 +86,7 @@ class FormRequestExtension extends Extension {
      */
     public function extendHasAction($action, &$hasAction) {
         if($request = $this->getOwner()->getRequest()) {
-            $params = array_values($request->params);
+            $params = array_values($request->params->getArrayCopy());
 
             $parts = $request->getUrlParts();
             if (isset($params[0]) && $params[0] == "forms" && ((isset($params[1]) && $params[1] == "form") || $parts[0] == "form")) {

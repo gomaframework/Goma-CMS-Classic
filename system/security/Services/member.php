@@ -8,8 +8,6 @@
  *
  * @author		Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
- *
- * @version		1.4
  */
 class Member extends gObject {
 	/**
@@ -23,18 +21,21 @@ class Member extends gObject {
 	public static $id;
 
 	/**
-	 * nickname of the user logged in
-	 */
-	public static $nickname;
-
-	/**
 	 * this var reflects the status of the highest group in which the user is
-	 *@var int
 	 */
 	public static $groupType = 0;
 
 	/**
-	 * default-admin
+	 * default-admin can be used to force a user account with admin permissions and these credentials.
+     * for example:
+     *
+     * <code>
+     * array(
+     *      "nickname" 	=> "admin",
+     *      "password"	=> "1234"
+     * );
+     * </code>
+     *
 	 */
 	public static $default_admin;
 
@@ -42,7 +43,6 @@ class Member extends gObject {
 	 * object of logged in user
 	 *
 	 * @var User
-     * @internal try to use $request->getUser()
 	 */
 	public static $loggedIn;
 
@@ -76,7 +76,7 @@ class Member extends gObject {
 	public static function InitUser($user) {
 		if($user) {
             if(!$user->id) {
-                throw new InvalidArgumentException();
+                throw new InvalidArgumentException("Parameter \$user of Member::InitUser must be a written user or null.");
             }
 
 			if ($user["timezone"]) {
@@ -85,7 +85,6 @@ class Member extends gObject {
 			}
 
 			self::$id = $user->id;
-			self::$nickname = $user->nickname;
 
 			self::$groupType = DefaultPermission::forceGroupType($user);
 
@@ -93,40 +92,11 @@ class Member extends gObject {
 
 			return true;
 		} else {
-            self::$loggedIn = self::$id = self::$nickname = null;
+            self::$loggedIn = self::$id = null;
             self::$groupType = 0;
 		}
 
 		return false;
-	}
-
-	/**
-	 * returns if the user is logged in
-	 *
-	 * @return bool
-	 */
-	public static function login() {
-		return (self::$groupType > 0);
-	}
-
-	/**
-	 * returns if the user is an admin
-	 *
-	 * @return bool
-	 */
-	public static function admin() {
-		return (self::$groupType == 2);
-	}
-
-	/**
-	 * checks if an user have the rights
-	 *
-	 *@param string|number $name if numeric: the rights from 1 - 10, if string: the advanced rights
-	 *@return bool
-	 */
-	static function right($name)
-	{
-		return Permission::check($name);
 	}
 
 	/**
@@ -162,127 +132,5 @@ class Member extends gObject {
 		}
 
 		return false;
-	}
-
-	/**
-	 * require login
-	 * @deprecated
-	 * @param string|null $lang
-	 * @return bool
-	 */
-	public static function require_login($lang = null) {
-		if(!self::login()) {
-			AddContent::addNotice(isset($lang) ? $lang : lang("require_login"));
-			self::redirectToLogin();
-		}
-		return true;
-	}
-
-	public static function redirectToLogin() {
-		HTTPResponse::redirect(ROOT_PATH . BASE_SCRIPT . "profile/login/?redirect=" . $_SERVER["REQUEST_URI"]);
-		exit;
-	}
-
-	/**
-	 * unique identifier of this user.
-	 */
-	public static function uniqueID() {
-		if(GlobalSessionManager::globalSession()->hasKey("uniqueID")) {
-			return GlobalSessionManager::globalSession()->get("uniqueID");
-		} else {
-			if(self::$loggedIn) {
-				GlobalSessionManager::globalSession()->set("uniqueID", self::$loggedIn->uniqueID());
-			} else {
-				GlobalSessionManager::globalSession()->set("uniqueID", md5(randomString(20)));
-			}
-			return GlobalSessionManager::globalSession()->get("uniqueID");
-		}
-	}
-}
-
-class LoginInvalidException extends LogicException {
-	/**
-	 * constructor.
-	 */
-	public function __construct($message = "", $code = ExceptionManager::LOGIN_INVALID, Exception $previous = null) {
-		parent::__construct($message, $code, $previous);
-	}
-
-	/**
-	 * correct status.
-	 *
-	 * @return int
-	 */
-	public function http_status() {
-		return 403;
-	}
-}
-
-class LoginUserLockedException extends LogicException {
-
-	protected $user;
-
-	/**
-	 * constructor.
-	 * @param string $message
-	 * @param User|null $user
-	 * @param Exception|int $code
-	 * @param Exception $previous
-	 */
-	public function __construct($message = "", $user = null, $code = ExceptionManager::LOGIN_USER_LOCKED, Exception $previous = null) {
-		parent::__construct($message, $code, $previous);
-
-		$this->user = $user;
-	}
-
-	/**
-	 * correct status.
-	 *
-	 * @return int
-	 */
-	public function http_status() {
-		return 403;
-	}
-
-	/**
-	 * @return null|User
-	 */
-	public function getUser()
-	{
-		return $this->user;
-	}
-}
-
-class LoginUserMustUnlockException extends LogicException {
-
-	protected $user;
-
-	/**
-	 * constructor.
-	 * @param string $message
-	 * @param User|null $user
-	 * @param Exception|int $code
-	 * @param Exception $previous
-	 */
-	public function __construct($message = "", $user = null, $code = ExceptionManager::LOGIN_USER_MUST_UNLOCK, Exception $previous = null) {
-		$this->user = $user;
-		parent::__construct($message, $code, $previous);
-	}
-
-	/**
-	 * correct status.
-	 *
-	 * @return int
-	 */
-	public function http_status() {
-		return 403;
-	}
-
-	/**
-	 * @return null|User
-	 */
-	public function getUser()
-	{
-		return $this->user;
 	}
 }

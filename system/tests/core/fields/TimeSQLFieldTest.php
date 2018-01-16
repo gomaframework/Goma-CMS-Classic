@@ -8,13 +8,11 @@ defined("IN_GOMA") OR die();
 /**
  * TimeSQLField.
  *
- * @package vorort.news
+ * @package Goma
  *
  * @author Goma-Team
  * @copyright 2017 Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
- *
- * @version 1.0
  */
 class TimeSQLFieldTest extends GomaUnitTest {
     /**

@@ -56,7 +56,7 @@ class PushController extends Controller {
 
 	protected static function initJS() {
 		self::$hasBeenInited = true;
-		Resources::addData("goma.Pusher.init('" . self::$key . "');var uniqueID = " . var_export(member::uniqueID(), true) . ";");
+		Resources::addData("goma.Pusher.init('" . self::$key . "');var uniqueID = " . var_export(self::uniqueUserSessionID(), true) . ";");
 
 		Resources::add("notifications.css", "css");
 		gloader::load("pusher");
@@ -83,28 +83,26 @@ class PushController extends Controller {
 	*/
 	static function triggerToUser($event, $data) {
 		if(isset(self::$pusher)) {
-			return self::$pusher->trigger("private-" . member::uniqueID(), $event, $data);
+			return self::$pusher->trigger("private-" . self::uniqueUserSessionID(), $event, $data);
 		} else {
 			return false;
 		}
 	}
 
-	/**
+    /**
 	 * make auth
-	 *
-	 * @name auth
-	 * @access public
+     *
 	 * @return string
 	 */
 	public function auth() {
-		if(isset($_POST['channel_name']) && preg_match('/^presence\-/', $_POST['channel_name']) && member::login()) {
-			if(self::$pusher && isset($_POST['socket_id'])) {
-				echo self::$pusher->presence_auth($_POST['channel_name'], $_POST['socket_id'], member::$loggedIn->id, member::$loggedIn->toArray());
+		if(isset($this->request->post_params['channel_name']) && preg_match('/^presence\-/', $this->request->post_params['channel_name']) && isset(Member::$loggedIn)) {
+			if(self::$pusher && isset($this->request->post_params['socket_id'])) {
+				echo self::$pusher->presence_auth($this->request->post_params['channel_name'], $this->request->post_params['socket_id'], member::$loggedIn->id, member::$loggedIn->toArray());
 				exit;
 			}
-		} else if(isset($_POST['channel_name']) && preg_match('/^private\-/', $_POST['channel_name'])) {
-			if(self::$pusher && isset($_POST['socket_id']) && $_POST["channel_name"] == "private-" . member::uniqueID()) {
-				echo self::$pusher->socket_auth($_POST['channel_name'], $_POST['socket_id']);
+		} else if(isset($this->request->post_params['channel_name']) && preg_match('/^private\-/', $this->request->post_params['channel_name'])) {
+			if(self::$pusher && isset($this->request->post_params['socket_id']) && $this->request->post_params["channel_name"] == "private-" . self::uniqueUserSessionID()) {
+				echo self::$pusher->socket_auth($this->request->post_params['channel_name'], $this->request->post_params['socket_id']);
 				exit;
 			}
 		}
@@ -112,4 +110,21 @@ class PushController extends Controller {
 		header('', true, 403);
 		return "Forbidden";
 	}
+
+    /**
+     * unique identifier of this user.
+     */
+    public static function uniqueUserSessionID()
+    {
+        if (GlobalSessionManager::globalSession()->hasKey("uniqueID")) {
+            return GlobalSessionManager::globalSession()->get("uniqueID");
+        } else {
+            if (Member::$loggedIn) {
+                GlobalSessionManager::globalSession()->set("uniqueID", Member::$loggedIn->uniqueID());
+            } else {
+                GlobalSessionManager::globalSession()->set("uniqueID", md5(randomString(20)));
+            }
+            return GlobalSessionManager::globalSession()->get("uniqueID");
+        }
+    }
 }

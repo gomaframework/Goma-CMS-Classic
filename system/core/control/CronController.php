@@ -13,8 +13,11 @@
 class CronController extends RequestHandler {
     /**
      * cron.
+     * @param $request
+     * @param bool $subController
+     * @return false|null|string|void
      */
-    public function handleRequest() {
+    public function handleRequest($request, $subController = false) {
         self::handleCron();
     }
 

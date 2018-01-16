@@ -25,10 +25,8 @@ class ManyManyModelWriter extends Extension {
 
     /**
      * called when data was written so we have new versionid, but transaction is still on stage.
-     *
-     * @param array $manipulation
      */
-    public function onBeforeWriteData(&$manipulation) {
+    public function onBeforeWriteData() {
         $data = $this->getOwner()->getData();
 
         $many_many = $this->getOwner()->getModel()->ManyManyRelationships();

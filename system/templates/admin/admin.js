@@ -50,29 +50,6 @@ $(function() {
 		$(this).parent().find("ul").clearQueue().stop().slideToggle(100);
 		return false;
 	});
-	
-	if(getCookie("help") != 1) {
-		$("#help-button").removeClass("active");
-		hideHelp();
-	} else {
-		$("#help-button").addClass("active");
-		setTimeout(function(){
-			showHelp();
-		}, 500);
-	}
-	
-	$("#help-button").click(function(){
-		if($(this).hasClass("active")) {
-			hideHelp();
-			setCookie("help", 2, 365);
-		} else {
-			showHelp();
-			setCookie("help", 1, 365);
-		}
-		$(this).toggleClass("active");
-		
-		return false;
-	});
 
 	if($("#flush-log-recommend").length == 1) {
 		$("#flush-log-recommend").remove();

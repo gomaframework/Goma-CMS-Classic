@@ -1125,11 +1125,12 @@ function parseUrl() {
 		define('ROOT_PATH', getRootPath());
 
 		// generate BASE_URI
-		$http = (isset($_SERVER["HTTPS"])) && $_SERVER["HTTPS"] != "off" ? "https" : "http";
+		$http = (isset($_SERVER["HTTP_X_FORWARDED_PROTO"]) && strtolower($_SERVER["HTTP_X_FORWARDED_PROTO"]) == "https")
+        || ((isset($_SERVER["HTTPS"])) && $_SERVER["HTTPS"] != "off") ? "https" : "http";
 		$port = $_SERVER["SERVER_PORT"];
 		if ($http == "http" && $port == 80) {
 			$port = "";
-		} else if ($http == "https" && $port == 443) {
+		} else if ($http == "https" && $port == 443 || ($port == 80 && isset($_SERVER["HTTP_X_FORWARDED_PROTO"]))) {
 			$port = "";
 		} else {
 			$port = ":" . $port;
@@ -1269,6 +1270,26 @@ function isDevModeCLI() {
 	$args = getCommandLineArgs();
 
 	return isset($args["--dev"]);
+}
+
+function fixJSON($json) {
+    $regex = <<<'REGEX'
+~
+    "[^"\\]*(?:\\.|[^"\\]*)*"
+    (*SKIP)(*F)
+  | '([^'\\]*(?:\\.|[^'\\]*)*)'
+~x
+REGEX;
+
+    return preg_replace_callback($regex, function($matches) {
+        return '"' . preg_replace('~\\\\.(*SKIP)(*F)|"~', '\\"', $matches[1]) . '"';
+    }, $json);
+}
+
+if(!function_exists("mb_strcut")) {
+    function mb_strcut() {
+        return call_user_func_array("substr", func_get_args());
+    }
 }
 
 class SQLException extends GomaException {

@@ -43,7 +43,7 @@ class lost_passwordExtension extends ControllerExtension {
     {
         Core::setTitle(lang("lost_password", "lost password"));
         Core::addBreadCrumb(lang("lost_password", "lost password"), URL . URLEND);
-        if(member::login())
+        if(isset(Member::$loggedIn))
         {
             return ViewAccessableData::instance()
                 ->customise(array("form" => lang("lp_know_password", "You know your password, else you would not be logged in!")))
@@ -64,7 +64,7 @@ class lost_passwordExtension extends ControllerExtension {
                     return $view->customise(array("form" => lang("lp_deny_okay")))->renderWith(self::LOST_PASSWORD_EDIT_PASSWORD);
                 }
 
-                return $this->getEditPasswordForm($data)->renderWith(self::LOST_PASSWORD_EDIT_PASSWORD);
+                return $this->getEditPasswordForm($data)->renderWith(self::LOST_PASSWORD_EDIT_PASSWORD, $data);
             } else {
                 $view = new ViewAccessableData();
                 return $view->customise(array("codeWrong" => true))->renderWith(self::LOST_PASSWORD_SENT);

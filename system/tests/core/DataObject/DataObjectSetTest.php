@@ -929,6 +929,56 @@ class DataObjectSetTests extends GomaUnitTest
     }
 
     /**
+     * @testdox tests if addFilter is appending to filter with AND conjunction.
+     */
+    public function testAddFilterIsAppendingWithAND() {
+        $set = new DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $set->add($this->janine);
+        $set->add($this->daniel);
+        $set->add($this->patrick);
+
+        $this->assertEqual(3, $set->count());
+        $this->assertEqual($this->janine, $set->first());
+        $this->assertEqual($this->patrick, $set->last());
+
+        $set->addFilter(array(
+            "age" => "19"
+        ));
+        $this->assertEqual(1, $set->count());
+        $set->addFilter(array(
+            "gender" => "W", "OR", "age" => 11
+        ));
+        $this->assertEqual(0, $set->count());
+    }
+
+    /**
+     * @testdox tests if addFilter is appending to filter with OR conjunction.
+     */
+    public function testAddOrCondition() {
+        $set = new DataObjectSet();
+        $set->setFetchMode(DataObjectSet::FETCH_MODE_CREATE_NEW);
+
+        $set->add($this->janine);
+        $set->add($this->daniel);
+        $set->add($this->patrick);
+
+        $this->assertEqual(3, $set->count());
+        $this->assertEqual($this->janine, $set->first());
+        $this->assertEqual($this->patrick, $set->last());
+
+        $set->addFilter(array(
+            "age" => 20
+        ));
+        $this->assertEqual(1, $set->count());
+        $set->addORCondition(array(
+            "age" => 19
+        ));
+        $this->assertEqual(2, $set->count());
+    }
+
+    /**
      * @testdox tests if sorted pagination with mixed data works
      */
     public function testSortWithMixedDataObjectSet() {

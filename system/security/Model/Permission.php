@@ -160,11 +160,10 @@ class Permission extends DataObject
     }
 
     /**
-     * checks if the user has the given permission
+     * checks if current user defined in Member::$loggedIn has given permission.
      *
      * @param string $permissionCode
      * @return bool
-     * @deprecated user $user->hasPermission or $request->hasPermission instead
      */
     public static function check($permissionCode)
     {
@@ -279,11 +278,14 @@ class Permission extends DataObject
 
     /**
      * on before manipulate
+     * @param ModelWriter $modelWriter
      * @param array $manipulation
      * @param string $job
      */
-    public function onBeforeManipulate(&$manipulation, $job)
+    public function onBeforeManipulate($modelWriter, &$manipulation, $job)
     {
+        parent::onBeforeManipulate($modelWriter, $manipulation, $job);
+
         if ($this->id != 0 && $job == "write") {
             $subversions = $this->getAllChildVersionIDs();
             if (count($subversions) > 0) {
@@ -348,11 +350,13 @@ class Permission extends DataObject
      * @param array $manipulation
      * @param ManyMany_DataObjectSet $dataset
      * @param array $writeData
-     * @access public
      * @return mixed|void
+     * @access public
      */
     public function onBeforeManipulateManyMany(&$manipulation, $dataset, $writeData)
     {
+        parent::onBeforeManipulateManyMany($manipulation, $dataset, $writeData);
+
         $ownValue = $dataset->getRelationOwnValue();
         $relationShip = $dataset->getRelationShip();
 

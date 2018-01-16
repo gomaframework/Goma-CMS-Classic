@@ -66,11 +66,11 @@ class i18n extends gObject {
 	/**
 	 * inits i18n
 	 *
-	 *@param string - to init special lang
+	 * @param string $language which language to initialize
 	 */
 	public static function Init($language) {
 		if(!self::LangExists($language)) {
-			throw new InvalidArgumentException("Language not found.");
+			throw new InvalidArgumentException("Language $language not found.");
 		}
 
 		if(PROFILE)
@@ -235,6 +235,7 @@ class i18n extends gObject {
 	/**
 	 * lists all languages
 	 *
+     * @return array[]
 	 */
 	public static function listLangs() {
 		if(PROFILE)

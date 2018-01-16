@@ -84,7 +84,7 @@ class ClassManifest {
                 $namespace = "";
             }
 
-			if(ClassInfo::$interfaces[$class]) {
+			if(isset(ClassInfo::$interfaces[$class]) && ClassInfo::$interfaces[$class]) {
 				eval($namespace . 'interface '.$class.' extends '.ClassInfo::$interfaces[$class].' {}');
 			} else {
 				eval($namespace . 'interface '.$class.' {}');

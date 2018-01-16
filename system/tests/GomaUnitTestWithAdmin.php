@@ -19,6 +19,11 @@ class GomaUnitTestWithAdmin extends \GomaUnitTest
      */
     protected $adminUser = null;
 
+    /**
+     * @var string
+     */
+    protected $password;
+
     public function setUp() {
         if($group = DataObject::get_one("group", array(
             "permissions" => array(
@@ -28,7 +33,7 @@ class GomaUnitTestWithAdmin extends \GomaUnitTest
             $this->adminUser = new User();
             $this->adminUser->nickname = "admintest@vorort.news";
             $this->adminUser->email = $this->adminUser->nickname;
-            $this->adminUser->password = randomString(10);
+            $this->adminUser->password = $this->password = randomString(10);
             $this->adminUser->name = "MyAdmin";
             $this->adminUser->writeToDB(false, true);
 

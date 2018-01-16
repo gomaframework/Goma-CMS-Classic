@@ -12,11 +12,11 @@ class ImageSQLField extends DBField {
     /**
      * gets the field-type
      *
-     * @name getFieldType
-     * @access public
+     * @param array $args
+     * @param null $allowNull
      * @return string
      */
-	static public function getFieldType($args = array()) {
+	static public function getFieldType($args = array(), $allowNull = null) {
 		return "varchar(200)";
 	}
 

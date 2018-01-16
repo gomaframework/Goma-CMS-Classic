@@ -24,12 +24,14 @@ resizableTextarea.prototype = {
     },
     resize: function() {
         var oldHeight = this.text.style.height;
+        $(this.text).parent().css("height", $(this.text).parent().height());
         this.text.style.height = "auto";
         if(this.text.scrollHeight > 0) {
-            this.text.style.height = this.text.scrollHeight + "px";
+            this.text.style.height = this.text.scrollHeight + 16 + "px";
         } else {
             this.text.style.height = oldHeight;
         }
+        $(this.text).parent().css("height", "");
     },
     delayedResize: function() {
         window.setTimeout(this.resize.bind(this), 0);

@@ -84,6 +84,11 @@ class ModelWriterTests extends GomaUnitTest implements TestAble
         )));
     }
 
+    /**
+     * @param $mockData
+     * @param $newData
+     * @return mixed
+     */
     protected function unitTestChanged($mockData, $newData) {
         $mockObject = new MockUpdatableGObject();
         $mockObject->data = $mockData;
@@ -109,33 +114,45 @@ class ModelWriterTests extends GomaUnitTest implements TestAble
      * Tests if write-method fires the correct events always once.
      */
     public function testWrite() {
-        $mockData = array("test" => 1);
-        $newData = array("test" => 2);
-        $mockObject = new MockUpdatableGObject();
-        $mockObject->checkLogic = true;
-        $mockObject->data = $mockData;
+        try {
+            ModelWriterTestExtensionForEvents::$checkLogic = true;
 
-        $newDataObject = new MockUpdatableGObject();
-        $mockObject->checkLogic = false;
-        $newDataObject->data = $newData;
+            $mockData = array("test" => 1);
+            $newData = array("test" => 2);
+            $mockObject = new MockUpdatableGObject();
+            $mockObject->checkLogic = true;
+            $mockObject->data = $mockData;
 
-        $writer = new ModelWriter($newDataObject, ModelRepository::COMMAND_TYPE_UPDATE, $mockObject, new MockDBRepository(), new MockDBWriter());
-        ModelWriterTestExtensionForEvents::$checkLogic = true;
-        ModelWriterTestExtensionForEvents::clear();
-        $this->assertEqual(0, ModelWriterTestExtensionForEvents::$onBeforeWriteFired);
-        $writer->write();
+            $newDataObject = new MockUpdatableGObject();
+            $mockObject->checkLogic = false;
+            $newDataObject->data = $newData;
 
-        $this->assertEqual(0, $mockObject->onBeforeWriteFired);
-        $this->assertEqual(0, $mockObject->onAfterWriteFired);
+            $writer = new ModelWriter(
+                $newDataObject,
+                ModelRepository::COMMAND_TYPE_UPDATE,
+                $mockObject,
+                new MockDBRepository(),
+                new MockDBWriter()
+            );
+            ModelWriterTestExtensionForEvents::$checkLogic = true;
+            ModelWriterTestExtensionForEvents::clear();
+            $this->assertEqual(0, ModelWriterTestExtensionForEvents::$onBeforeWriteFired);
+            $writer->write();
 
-        $this->assertEqual(1, $newDataObject->onBeforeWriteFired);
-        $this->assertEqual(1, $newDataObject->onAfterWriteFired);
+            $this->assertEqual(0, $mockObject->onBeforeWriteFired);
+            $this->assertEqual(0, $mockObject->onAfterWriteFired);
 
-        /** @var ModelWriterTestExtensionForEvents $extInstance */
-        $this->assertEqual(1, ModelWriterTestExtensionForEvents::$onBeforeWriteFired);
-        $this->assertEqual(1, ModelWriterTestExtensionForEvents::$onAfterWriteFired);
-        $this->assertEqual(1, ModelWriterTestExtensionForEvents::$onBeforeDBWriterFired);
-        $this->assertEqual(1, ModelWriterTestExtensionForEvents::$gatherDataToWrite);
+            $this->assertEqual(1, $newDataObject->onBeforeWriteFired);
+            $this->assertEqual(1, $newDataObject->onAfterWriteFired);
+
+            /** @var ModelWriterTestExtensionForEvents $extInstance */
+            $this->assertEqual(1, ModelWriterTestExtensionForEvents::$onBeforeWriteFired);
+            $this->assertEqual(1, ModelWriterTestExtensionForEvents::$onAfterWriteFired);
+            $this->assertEqual(1, ModelWriterTestExtensionForEvents::$onBeforeDBWriterFired);
+            $this->assertEqual(1, ModelWriterTestExtensionForEvents::$gatherDataToWrite);
+        } finally {
+            ModelWriterTestExtensionForEvents::$checkLogic = false;
+        }
     }
 
     /**
@@ -208,6 +225,58 @@ class ModelWriterTests extends GomaUnitTest implements TestAble
 
         return $model->getCalledPermissions();
     }
+
+    /**
+     * tests if events for update are fired in order like defined at https://confluence.goma-cms.org/display/GOMA/Model+Events.
+     * writeType = publish.
+     *
+     * 1. onBeforeWrite
+     * 2. onBeforePublish
+     * 3. onAfterWrite
+     * 4. onAfterPublish
+     */
+    public function testEventsForUpdatePublish() {
+        $model = new MockUpdatableGObject();
+        $model->data = array("a" => "b");
+        $modelWriter = new ModelWriter($model, IModelRepository::COMMAND_TYPE_UPDATE, null, new MockDBRepository(), new MockDBWriter());
+        $modelWriter->write();
+
+        $this->assertEqual(1, $model->onBeforeWriteFired);
+        $this->assertEqual(1, $model->onBeforePublishFired);
+        $this->assertEqual(1, $model->onAfterWriteFired);
+        $this->assertEqual(1, $model->onAfterPublishFired);
+    }
+
+    /**
+     * tests if events for update are fired in order like defined at https://confluence.goma-cms.org/display/GOMA/Model+Events.
+     * writeType = write.
+     *
+     * 1. onBeforeWrite
+     * 2. onAfterWrite
+     */
+    public function testEventsForUpdateState() {
+        $model = new MockUpdatableGObject();
+        $model->data = array("a" => "b");
+        $modelWriter = new ModelWriter($model, IModelRepository::COMMAND_TYPE_UPDATE, null, new MockDBRepository(), new MockDBWriter());
+        $modelWriter->setWriteType(IModelRepository::WRITE_TYPE_SAVE);
+        $modelWriter->write();
+
+        $this->assertEqual(1, $model->onBeforeWriteFired);
+        $this->assertEqual(0, $model->onBeforePublishFired);
+        $this->assertEqual(1, $model->onAfterWriteFired);
+        $this->assertEqual(0, $model->onAfterPublishFired);
+    }
+
+    /**
+     * tests if callModelExtending passes variables by reference.
+     */
+    public function testCallModelExtendingReference() {
+        $model = new MockUpdatableGObject();
+        $modelWriter = new ModelWriter($model, IModelRepository::COMMAND_TYPE_UPDATE, null, new MockDBRepository(), new MockDBWriter());
+        $var = "abc";
+        $modelWriter->callModelExtending("changeVar", $var);
+        $this->assertTrue($var);
+    }
 }
 
 class MockUpdatableGObject extends gObject {
@@ -218,7 +287,9 @@ class MockUpdatableGObject extends gObject {
     public $versionid = 1;
     public $id = 1;
     public $onBeforeWriteFired = 0;
+    public $onBeforePublishFired = 0;
     public $onAfterWriteFired = 0;
+    public $onAfterPublishFired = 0;
     public $checkLogic = false;
     protected $calledPermissions = array();
     public $validate = true;
@@ -261,12 +332,37 @@ class MockUpdatableGObject extends gObject {
         $this->onAfterWriteFired++;
     }
 
+    public function onBeforePublish() {
+        if($this->onBeforeWriteFired == $this->onBeforePublishFired) {
+            throw new LogicException("OnBeforeWrite must be fired before onBeforePublish");
+        }
+
+        $this->onBeforePublishFired++;
+    }
+
+    public function onAfterPublish() {
+        if($this->checkLogic && $this->onAfterWriteFired == $this->onAfterPublishFired) {
+            throw new LogicException("onAfterWrite must be fired before onAfterPublish");
+        }
+        $this->onAfterPublishFired++;
+    }
+
     public function workWithExtensionInstance($extensionClassName, $callback) {
         
     }
 
     public function __call($key, $val) {
         return array();
+    }
+
+    /**
+     * for reference test.
+     *
+     * @param ModelWriter $modelWriter
+     * @param bool $blub
+     */
+    public function changeVar($modelWriter, &$blub) {
+        $blub = true;
     }
 }
 

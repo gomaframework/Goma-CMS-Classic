@@ -23,13 +23,19 @@ class adminControllerTest extends GomaUnitTestWithAdmin
      */
     public function testHandleItem()
     {
-        TestHandleItemAdmin::$handled = false;
-        $request = new \Request("get", substr(str_replace("\\", "-", TestHandleItemAdmin::class), 0, -5));
-        $request->setUser($this->adminUser);
-        $adminController = new AdminController();
-        $adminController->handleRequest($request);
+        try {
+            $currentMember = \Member::$loggedIn;
+            \Member::InitUser($this->adminUser);
 
-        $this->assertTrue(TestHandleItemAdmin::$handled);
+            TestHandleItemAdmin::$handled = false;
+            $request = new \Request("get", substr(str_replace("\\", "-", TestHandleItemAdmin::class), 0, -5));
+            $adminController = new AdminController();
+            $adminController->handleRequest($request);
+
+            $this->assertTrue(TestHandleItemAdmin::$handled);
+        } finally {
+            \Member::InitUser($currentMember);
+        }
     }
 }
 

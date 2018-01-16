@@ -57,7 +57,8 @@ abstract class AbstractCategoryController extends \Controller {
                 "content"       => \Director::getStringFromResponse($content),
                 "namespace"     => $this->namespace,
                 "currentAction" => $this->currentAction,
-                "activeTitle"   => $this->getExtendedCategories()[$this->currentAction],
+                "activeTitle"   => isset($this->getExtendedCategories()[$this->currentAction]) ?
+                    $this->getExtendedCategories()[$this->currentAction] : null,
                 "cid"           => randomString(5)
             ));
             return parent::__output(

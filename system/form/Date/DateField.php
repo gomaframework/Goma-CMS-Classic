@@ -21,7 +21,12 @@ class DateField extends FormField
 	 */
 	protected $showClear = true;
 
-	/**
+    /**
+     * @var array
+     */
+    protected $between;
+
+    /**
 	 * generates this field.
 	 *
 	 * @name    __construct
@@ -91,29 +96,28 @@ class DateField extends FormField
 	 * @throws FormInvalidDataException
 	 */
 	protected function validateTimestamp($timestamp) {
-		$between = array_values($this->between);
+	    if(is_array($this->between)) {
+            $between = array_values($this->between);
 
-		if (!preg_match("/^[0-9]+$/", trim($between[0]))) {
-			$start = strtotime($between[0]);
-		} else {
-			$start = $between[0];
-		}
+            if (!preg_match("/^[0-9]+$/", trim($between[0]))) {
+                $start = strtotime($between[0]);
+            } else {
+                $start = $between[0];
+            }
 
-		if (!preg_match("/^[0-9]+$/", trim($between[1]))) {
-			$end = strtotime($between[1]);
-		} else {
-			$end = $between[1];
-		}
+            if (!preg_match("/^[0-9]+$/", trim($between[1]))) {
+                $end = strtotime($between[1]);
+            } else {
+                $end = $between[1];
+            }
 
-		if(
-			((!isset($between[2]) || $between[2] === false) && ($start >= $timestamp || $timestamp >= $end)) ||
-			(isset($between[2]) && $between[2] === true && ($start > $timestamp && $timestamp > $end))
-		) {
-			$err = lang("date_not_in_range", "The given time is not between the range \$start and \$end.");
-			$err = str_replace('$start', date(DATE_FORMAT_DATE, $start), $err);
-			$err = str_replace('$end', date(DATE_FORMAT_DATE, $end), $err);
-			throw new FormInvalidDataException($this->name, $err);
-		}
+            if (((!isset($between[2]) || $between[2] === false) && ($start >= $timestamp || $timestamp >= $end)) || (isset($between[2]) && $between[2] === true && ($start > $timestamp && $timestamp > $end))) {
+                $err = lang("date_not_in_range", "The given time is not between the range \$start and \$end.");
+                $err = str_replace('$start', date(DATE_FORMAT_DATE, $start), $err);
+                $err = str_replace('$end', date(DATE_FORMAT_DATE, $end), $err);
+                throw new FormInvalidDataException($this->name, $err);
+            }
+        }
 	}
 
 	/**
@@ -306,6 +310,7 @@ class DateField extends FormField
 	public function result()
 	{
 		$this->validate(parent::result());
+
 		$datetime = new DateTimeSQLField("parse", parent::result(), array($this->format));
 		return $datetime->getTimestamp() === null ? null : date($this->format, $datetime->getTimestamp());
 	}

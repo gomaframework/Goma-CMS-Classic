@@ -222,12 +222,11 @@ class Director extends gObject {
      * @param array $post
      * @param array $files
      * @param array $headers
-     * @param User|null $user
      * @return Request
      */
-    public static function createRequestWithData($url, $server, $get, $post, $files, $headers, $user = null) {
-        if(!isset($server["SERVER_NAME"], $server["SERVER_PORT"])) {
-            throw new InvalidArgumentException("Server name and port are required.");
+    public static function createRequestWithData($url, $server, $get, $post, $files, $headers) {
+        if(!isset($server["SERVER_NAME"], $server["SERVER_PORT"], $server["REQUEST_METHOD"])) {
+            throw new InvalidArgumentException("Request Method, Server name and port are required.");
         }
 
         // we will merge $_POST with $_FILES, but before we validate $_FILES
@@ -251,11 +250,10 @@ class Director extends gObject {
             $get,
             array_merge((array)$post, (array)$files),
             $headers,
-            $server["SERVER_NAME"],
-            $server["SERVER_PORT"],
+            isset($server["SERVER_NAME"]) ? $server["SERVER_NAME"] : null,
+            isset($server["SERVER_PORT"]) ? $server["SERVER_PORT"] : null,
             (isset($server["HTTPS"])) && $_SERVER["HTTPS"] != "off",
-            isset($server["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : "",
-            $user
+            isset($server["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : ""
         );
     }
 
@@ -272,8 +270,7 @@ class Director extends gObject {
 
         Core::callHook("getEnvironment", $server, $get, $post, $files, $headers);
 
-        return self::createRequestWithData($url, $server, $get, $post, $files, $headers,
-            class_exists("Member") ? Member::$loggedIn : null);
+        return self::createRequestWithData($url, $server, $get, $post, $files, $headers);
     }
 
     /**

@@ -36,31 +36,32 @@ class HistoryController extends Controller
     /**
      * renders the history for given filter
      *
-     * @name renderHistory
-     * @access public
+     * @param DataObjectSet|array $filter
+     * @param string $namespace
      * @return bool|string
      */
     public static function renderHistory($filter, $namespace = null)
     {
-        if (isset($filter["dbobject"])) {
-            $dbObjectFilter = array();
-            foreach ((array)$filter["dbobject"] as $class) {
-                $dbObjectFilter = array_merge($dbObjectFilter, array($class), ClassInfo::getChildren($class));
-            }
-            $filter["dbobject"] = array_intersect(ArrayLib::key_value($dbObjectFilter), History::supportHistoryView());
-            if (count($filter["dbobject"]) == 0) {
-                return false;
-            }
-        } else {
-            $filter["dbobject"] = History::supportHistoryView();
-        }
-        foreach ($filter["dbobject"] as $key => $value) {
-            $filter["dbobject"][$key] = str_replace("historydata_", "", $value);
-        }
-        if (!is_a($filter, "DataObjectSet")) {
-            $data = DataObject::get("History", $filter);
-        } else {
+        if (is_a($filter, "DataObjectSet")) {
             $data = $filter;
+        } else {
+            if (isset($filter["dbobject"])) {
+                $dbObjectFilter = array();
+                foreach ((array)$filter["dbobject"] as $class) {
+                    $dbObjectFilter = array_merge($dbObjectFilter, array($class), ClassInfo::getChildren($class));
+                }
+                $filter["dbobject"] = array_intersect(ArrayLib::key_value($dbObjectFilter), History::supportHistoryView());
+                if (count($filter["dbobject"]) == 0) {
+                    return false;
+                }
+            } else {
+                $filter["dbobject"] = History::supportHistoryView();
+            }
+            foreach ($filter["dbobject"] as $key => $value) {
+                $filter["dbobject"][$key] = str_replace("historydata_", "", $value);
+            }
+
+            $data = DataObject::get("History", $filter);
         }
 
         $id = "history_" . md5(var_export($filter, true));
@@ -123,7 +124,7 @@ class HistoryController extends Controller
     {
         if (ClassInfo::exists($this->getParam("class"))) {
             if ($data = DataObject::get_one($this->getParam("class"), array("versionid" => $this->getParam("id")))) {
-                if ($data->canWrite($data) || $data->canPublish($data)) {
+                if ($data->canWrite() || $data->canPublish()) {
                     return true;
                 }
             } else {
@@ -138,12 +139,13 @@ class HistoryController extends Controller
      * you can compare a version if you are author or publisher
      *
      * @name canCompareVersion
+     * @return bool
      */
     public function canCompareVersion()
     {
         if (ClassInfo::exists($this->getParam("class"))) {
             if ($data = DataObject::get_one($this->getParam("class"), array("versionid" => $this->getParam("nid")))) {
-                if ($data->canWrite($data) || $data->canPublish($data)) {
+                if ($data->canWrite() || $data->canPublish()) {
                     return true;
                 }
             } else {
@@ -158,11 +160,12 @@ class HistoryController extends Controller
      * restores a version
      *
      * @name restoreVersion
+     * @return ControllerRedirectResponse|string
      */
     public function restoreVersion()
     {
         $version = DataObject::get_one($this->getParam("class"), array("versionid" => $this->getParam("id")));
-        if ($version->canWrite($version) || $version->canPublish($version)) {
+        if ($version->canWrite() || $version->canPublish()) {
 
             $description = $version->generateRepresentation(true);
             if (isset($description)) {
@@ -175,14 +178,15 @@ class HistoryController extends Controller
                 $description .= " " . $version->last_modified()->ago();
             }
 
-            if ($this->confirm(lang("restore_confirm"), null, null, $description)) {
-                if ($version->canWrite($version)) {
+            return $this->confirmByForm(lang("restore_confirm"), function() use($version) {
+                if ($version->canWrite()) {
                     $version->writeToDB(false, true, 1);
                 } else {
                     $version->writeToDB(false, true, 2);
                 }
+
                 return $this->redirectBack();
-            }
+            }, null, null, $description);
         } else {
             return lang("less_rights");
         }

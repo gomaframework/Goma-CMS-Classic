@@ -1,24 +1,22 @@
-<% INCLUDE_CSS "history.css" %>
-<% INCLUDE_JS "history.js" %>
-<script type="text/javascript">
-    bindHistory($("#{$id}"), $filter);
-</script>
+<% INCLUDE_CSS "history.less" %>
 <% activatePagination($_GET_page, 10) %>
-<div id="$id" class="history scrollable all">
-    <% IF isPageBefore() %>
-    <a href="<% addParamToURL($_SERVER_REAL_REQUEST_URI, " page", PageBefore()) %>" class="newer">{$_lang_newer}</a>
-    <% END %>
+
+<div id="$id" class="endless-wrapper history scrollable all" data-wrapper=".history">
     <% IF $this %>
+
     <% CONTROL this() %>
     <% INCLUDE("event.html", $this) %>
     <% ENDCONTROL %>
+
     <% ELSE %>
     <div class="no_entries">
         {$_lang_no_result}
     </div>
     <% END %>
+
     <% IF isNextPage() %>
-    <a id="{$id}_link" href="<% addParamToURL($_SERVER_REAL_REQUEST_URI, " page", NextPage()) %>"
-    class="older">{$_lang_older}</a>
+        <div data-url="<% addParamToURL($_SERVER_REAL_REQUEST_URI, "page", NextPage()) %>" class="endless-end show-on-js">
+            <i class="fa fa-refresh fa-spin fa-fw" aria-hidden="true"></i>
+        </div>
     <% END %>
 </div>

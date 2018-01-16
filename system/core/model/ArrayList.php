@@ -358,76 +358,86 @@ class ArrayList extends ViewAccessableData implements Countable {
 	 * @return bool
 	 */
 	static function itemMatchesFilter($item, $filter) {
-		$filterResult = true;
-		$filtered = 0;
+        $filterResult = true;
+        $filtered = 0;
 
-		foreach($filter as $column => $value) {
-			if(is_string($value) && strtolower($value) === "or") {
-				if($filtered > 0 && $filterResult) {
-					return true;
-				}
+        foreach ($filter as $column => $value) {
+            if (is_string($value) && strtolower($value) === "or") {
+                if ($filtered > 0 && $filterResult) {
+                    return true;
+                }
 
-				$filterResult = true;
-				$filtered = 0;
-			} else {
-				$columnProp = self::getItemProp($item, $column);
-				if (!is_array($value)) {
-					if ($columnProp != $value) {
-						$filterResult = false;
-					}
-				} else if (isset($value[0], $value[1]) && count($value) == 2 && ($value[0] == "LIKE" || $value[0] == ">" || $value[0] == "<" || $value[0] == "!=" || $value[0] == "<=" || $value[0] == ">=" || $value[0] == "<>")) {
-					switch ($value[0]) {
-						case "LIKE":
-							$value[1] = preg_quote($value[1], "/");
-							$value[1] = str_replace('%', '.*', $value[1]);
-							$value[1] = str_replace('_', '.', $value[1]);
-							$value[1] = str_replace('\\.*', "%", $value[1]);
-							$value[1] = str_replace('\\.', "_", $value[1]);
+                $filterResult = true;
+                $filtered = 0;
+            } else {
+                $columnProp = self::getItemProp($item, $column);
+                if (!is_array($value)) {
+                    if ($columnProp != $value) {
+                        $filterResult = false;
+                    }
+                } else if (isset($value[0], $value[1]) && count(
+                        $value
+                    ) == 2 && ($value[0] == "LIKE" || $value[0] == ">" || $value[0] == "<" || $value[0] == "!=" || $value[0] == "<=" || $value[0] == ">=" || $value[0] == "<>")) {
+                    switch ($value[0]) {
+                        case "LIKE":
+                            $value[1] = preg_quote($value[1], "/");
+                            $value[1] = str_replace('%', '.*', $value[1]);
+                            $value[1] = str_replace('_', '.', $value[1]);
+                            $value[1] = str_replace('\\.*', "%", $value[1]);
+                            $value[1] = str_replace('\\.', "_", $value[1]);
 
-							if (!preg_match("/" . $value[1] . "/i", $columnProp))
-								$filterResult = false;
-							break;
-						case "<":
-							if (strcmp($value[1], $columnProp) == 0)
-								$filterResult = false;
+                            if (!preg_match("/".$value[1]."/i", $columnProp)) {
+                                $filterResult = false;
+                            }
 
-						case "<=":
-							if (strcmp($value[1], $columnProp) == -1)
-								$filterResult = false;
-							break;
-						case ">":
-							if (strcmp($value[1], $columnProp) == 0)
-								$filterResult = false;
-						case ">=":
-							if (strcmp($value[1], $columnProp) == 1)
-								$filterResult = false;
-							break;
-						case "<>":
-						case "!=":
-							if ($value[1] == $columnProp)
-								$filterResult = false;
-							break;
-					}
-				} else {
-					if (isset($value[0])) {
-						$found = false;
-						foreach ($value as $data) {
-							if ($columnProp == $data) {
-								$found = true;
-							}
-						}
+                            break;
+                        case "<":
+                            if (strcmp($value[1], $columnProp) == 0) {
+                                $filterResult = false;
+                            }
 
-						if (!$found)
-							$filterResult = false;
-					} else if ($value && !self::itemMatchesFilter($item, $value)) {
-						$filterResult = false;
-					}
-				}
-				$filtered++;
-			}
-		}
+                        case "<=":
+                            if (strcmp($value[1], $columnProp) == -1) {
+                                $filterResult = false;
+                            }
+                            break;
+                        case ">":
+                            if (strcmp($value[1], $columnProp) == 0) {
+                                $filterResult = false;
+                            }
+                        case ">=":
+                            if (strcmp($value[1], $columnProp) == 1) {
+                                $filterResult = false;
+                            }
+                            break;
+                        case "<>":
+                        case "!=":
+                            if ($value[1] == $columnProp) {
+                                $filterResult = false;
+                            }
+                            break;
+                    }
+                } else {
+                    if (isset($value[0])) {
+                        $found = false;
+                        foreach ($value as $data) {
+                            if ($columnProp == $data) {
+                                $found = true;
+                            }
+                        }
 
-		return $filterResult && ($filtered > 0 || count($filter) == 0);
+                        if (!$found) {
+                            $filterResult = false;
+                        }
+                    } else if ($value && !self::itemMatchesFilter($item, $value)) {
+                        $filterResult = false;
+                    }
+                }
+                $filtered++;
+            }
+        }
+
+        return $filterResult && ($filtered > 0 || count($filter) == 0);
 	}
 
 	/**

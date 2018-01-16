@@ -41,7 +41,6 @@ class MySQLWriterImplementation implements iDataBaseWriter {
 
         $manipulation = array();
 
-        $this->model()->callExtending("afterInsertBaseClassAndGetVersionId", $data, $manipulation);
         $this->writer->callExtending("afterInsertBaseClassAndGetVersionId", $data, $manipulation);
 
         // generate manipulation for each table.
@@ -53,18 +52,11 @@ class MySQLWriterImplementation implements iDataBaseWriter {
             }
         }
 
-        // fire events!
-        $this->model()->onBeforeWriteData($this);
-        $this->model()->callExtending("onBeforeWriteData");
-
-        $b = "write";
-        $this->model()->onBeforeManipulate($manipulation, $b);
-        $this->model()->callExtending("onBeforeManipulate", $manipulation, $b);
-        $this->writer->callExtending("onBeforeWriteData", $manipulation);
+        $this->writer->callModelExtending("onBeforeManipulate", $manipulation, $b, $this);
+        $this->writer->callModelExtending("onBeforeWriteData", $manipulation, $b, $this);
 
         // fire manipulation to DataBase
         if (SQL::manipulate($manipulation)) {
-
             $this->updateStateTable();
 
             $this->checkForAndCleanUpDataTable();
@@ -78,9 +70,6 @@ class MySQLWriterImplementation implements iDataBaseWriter {
      */
     public function publish()
     {
-        $this->writer->callExtending("onBeforePublish");
-        $this->model()->onBeforePublish($this->writer);
-
         $this->insertIntoStateTable(array(
             "id"            => $this->recordid(),
             "publishedid"   => $this->model()->versionid,
@@ -136,9 +125,7 @@ class MySQLWriterImplementation implements iDataBaseWriter {
             }
 
             $oldId = $this->writer->getOldId();
-            $this->model()->callExtending("deleteOldVersions", $manipulation, $oldId);
-            $oldId = $this->writer->getOldId();
-            $this->writer->callExtending("deleteOldVersions", $manipulation, $oldId);
+            $this->writer->callModelExtending("deleteOldVersions", $manipulation, $oldId);
 
             SQL::manipulate($manipulation);
         }
@@ -330,8 +317,7 @@ class MySQLWriterImplementation implements iDataBaseWriter {
         }
 
         $b = "write_state";
-        $this->model()->onBeforeManipulate($manipulation, $b);
-        $this->model()->callExtending("onBeforeManipulate", $manipulation, $b);
+        $this->writer->callModelExtending("onBeforeManipulate", $manipulation, $b);
 
         if(!SQL::manipulate($manipulation)) {
             throw new SQLException("Could not insert into state table.");
