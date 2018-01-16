@@ -46,8 +46,6 @@ class ContentController extends FrontedController
         '$Action//$id/$otherid' => '$Action'
     );
 
-    static $activeNodes = array();
-
     static $enableBacktracking = true;
 
     static $less_vars = "default.less";
@@ -68,9 +66,6 @@ class ContentController extends FrontedController
      */
     public function pagetitle()
     {
-        // mark this id as active in mainbar
-        array_push(self::$activeids, $this->modelInst()->id);
-
         if ($this->modelInst()->meta_description) {
             Core::setHeader("description", $this->modelInst()->meta_description);
         }
@@ -190,7 +185,7 @@ class ContentController extends FrontedController
             }
         }
 
-        array_push(self::$activeNodes, $this->modelInst()->id);
+        array_push(self::$activeids, $this->modelInst()->id);
 
         if ($content === null && $action != "" && $this->subPage != null) {
             $content = ControllerResolver::instanceForModel($this->subPage)->handleRequest($this->request, $this->isSubController());
