@@ -20,7 +20,7 @@ class ImageUploadsController extends UploadsController {
 	 *@name handlers
 	 *@access public
 	 */
-	public $url_handlers = array(
+	static $url_handlers = array(
 		"setWidth/\$width" 					=> "setWidth",
 		"setHeight/\$height"				=> "setHeight",
 		"setSize/\$width/\$height"			=> "setSize",
@@ -33,7 +33,7 @@ class ImageUploadsController extends UploadsController {
 	 * allowed actions
 	 */
 
-	public $allowed_actions = array(
+	static $allowed_actions = array(
 		"setWidth" 			=> "->checkImagePerms",
 		"setHeight"			=> "->checkImagePerms",
 		"setSize"			=> "->checkImagePerms",

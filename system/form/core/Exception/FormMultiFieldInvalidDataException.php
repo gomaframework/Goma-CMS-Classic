@@ -49,6 +49,6 @@ class FormMultiFieldInvalidDataException extends GomaException
      */
     public function getFieldsMessage()
     {
-        return implode(", ", $this->fieldsMessages);
+        return implode(", ", array_filter($this->fieldsMessages, function($val) { return !!trim($val); }));
     }
 }

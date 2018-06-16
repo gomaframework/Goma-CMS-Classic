@@ -14,11 +14,12 @@ defined("IN_GOMA") OR die();
  * @version 1.0
  */
 abstract class AbstractCategoryController extends \Controller {
+
     /**
      * @var array
      */
-    public $url_handlers = array(
-        "\$Action" => "\$Action"
+    static $url_handlers = array(
+        "\$Segment!" => "handleSegment"
     );
 
     /**
@@ -76,9 +77,21 @@ abstract class AbstractCategoryController extends \Controller {
     {
         $categories = $this->getExtendedCategories();
         foreach($categories as $method => $category) {
-            if($this->checkPermission($method)) {
+            if($this->checkPermission($method, $this->classname)) {
                 return $this->handleAction($method);
             }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return mixed|null
+     */
+    public function handleSegment() {
+        $segment = $this->getParam("segment");
+        if($segment && isset($this->getExtendedCategories()[$segment]) && $this->hasAction($segment, $this->classname)) {
+            return $this->handleAction($segment);
         }
 
         return null;
@@ -155,8 +168,8 @@ abstract class AbstractCategoryController extends \Controller {
     protected function getCategorySet() {
         $set = new \DataSet();
         foreach($this->getExtendedCategories() as $method => $category) {
-            if($method != "index" && !$this->hasAction($method)) {
-                throw new \InvalidArgumentException("Action $method does not exist.");
+            if($method != "index" && !$this->hasAction($method, $this->classname)) {
+                throw new \InvalidArgumentException("Action $method does not exist or is disallowed.");
             }
 
             $redirect = $this->getRedirectAppendix();

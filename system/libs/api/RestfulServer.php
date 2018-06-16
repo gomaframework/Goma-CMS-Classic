@@ -18,11 +18,11 @@ StaticsManager::AddSaveVar("RestfulServer", "api_accesses");
 
 class RestfulServer extends RequestHandler
 {
-		public $url_handlers = array(
+		static $url_handlers = array(
 			'$ClassName!/$ID/$Relation'	=> "handleWithDataType"
 		);
 		
-		public $allowed_actions = array(
+		static $allowed_actions = array(
 			"handleWithDataType"
 		);
 		

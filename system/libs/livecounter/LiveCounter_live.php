@@ -22,8 +22,7 @@ class liveCounter_live extends DataObject {
         'phpsessid' 	=> 'varchar(800)',
         "browser"		=> "varchar(200)",
         "ip"			=> "varchar(200)",
-        "hitcount"		=> "int(10)",
-        "user"          => "int(10)"
+        "hitcount"		=> "int(10)"
     );
 
     /**

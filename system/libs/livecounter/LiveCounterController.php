@@ -12,8 +12,8 @@ class livecounterController extends Controller {
     /**
      * allowed actions.
      */
-    public $allowed_actions = array(
-        "migrateStats"
+    static $url_handlers = array(
+        "migrateStats" => "migrateStats"
     );
 
     public function migrateStats() {

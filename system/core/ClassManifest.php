@@ -1,7 +1,8 @@
 <?php defined("IN_GOMA") OR die();
 
 /**
- * This class generates the class manifest.
+ * This class generates the class manifest as well provides methods to identify relationship of classes and
+ * its names.
  *
  * @author		Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
@@ -185,7 +186,11 @@ class ClassManifest {
     }
 
     /**
-     * @param $class
+     * Resolves qualified class name out of string.
+     * It converts - to backslash.
+     * It removed leading and trailing backslash.
+     *
+     * @param string|object $class
      * @return string
      */
     public static function resolveClassName($class) {
@@ -201,6 +206,10 @@ class ClassManifest {
             $class = strtolower(trim($class));
         }
 
+        if(strpos($class, "-")) {
+            $class = str_replace("-", "\\", $class);
+        }
+
         if(substr($class, -1) == "\\") {
             $class = substr($class, 0, -1);
         }
@@ -211,6 +220,17 @@ class ClassManifest {
 
         return $class;
 	}
+
+    /**
+     * gets class name, which can be used in urls or css class names.
+     * It gets full qualified class name via resolveClassName and replaces all backslashes with minuses.
+     *
+     * @param string|object $class
+     * @return mixed
+     */
+    public static function getUrlClassName($class) {
+        return str_replace("\\", "-", self::resolveClassName($class));
+    }
 
     /**
      * Generates the class-manifest for a given directory.
@@ -340,7 +360,7 @@ class ClassManifest {
             return $namespace . $resolvedClassName;
         }
 
-        if(substr($className, 0, 1) == "\\") {
+        if(substr(trim($className), 0, 1) == "\\") {
             return $resolvedClassName;
         }
 
@@ -625,7 +645,6 @@ class ClassManifest {
 	public static function addUnitTest () {
 		self::$class_alias["unittestcase"] = gObject::class;
 	}
-
 }
 
 // fallback

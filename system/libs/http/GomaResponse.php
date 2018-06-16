@@ -392,9 +392,12 @@ class GomaResponse extends gObject {
         ob_end_flush();
     }
 
+    /**
+     * Adds resources to header.
+     */
     protected function addResourcesToHeaders() {
         if(class_exists("Resources", false)) {
-            $data = Resources::get(true, true, true);
+            $data = Resources::get(false, true, true, true);
             $this->setHeader("X-JavaScript-Load", implode(";", $data["js"]));
             $this->setHeader("X-CSS-Load", implode(";", $data["css"]));
         }

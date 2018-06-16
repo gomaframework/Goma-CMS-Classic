@@ -12,15 +12,12 @@
 class UpdateController extends adminController {
     /**
      * allowed actions
-     *
-     *@name allowed_actions
-     *@access public
      */
-    public $allowed_actions = array(
-        "installUpdate",
-        "showInfo",
-        "upload",
-        "showPackageInfo"
+    static $url_handlers = array(
+        "installUpdate" => "installUpdate",
+        "showInfo" => "showInfo",
+        "upload" => "upload",
+        "showPackageInfo" => "showPackageInfo"
     );
 
     /**

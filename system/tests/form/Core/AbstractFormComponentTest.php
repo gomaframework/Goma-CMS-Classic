@@ -185,6 +185,58 @@ class AbstractFormComponentTest extends GomaUnitTest {
         $this->assertEqual($data["test"], 123);
         $this->assertEqual($data->test, 123);
     }
+
+    /**
+     * tests if getting result if disabled returns model.
+     * 1. Set $val to "value1"
+     * 2. Create formField with name "test" and $val
+     * 3. Disable field
+     * 4. Assert that argumentResult adds "test" => $val1
+     */
+    public function testGetResultDisabledField() {
+        $val = "value1";
+        $formField = new MockAbstractFormComponentImpl("test", "value1");
+        $formField->disable();
+        $result = array();
+        $formField->argumentResult($result);
+        $this->assertEqual(array("test" => $val), $result);
+    }
+
+    /**
+     * tests if getting result if disabled returns model form parent model.
+     * 1. Set $val to "value1"
+     * 2. Create ViewAccessableData $model with test => $val
+     * 3. Create Form $form, set Model to $model
+     * 4. Add formField to $form with name "test" and $val
+     * 5. Disable field
+     * 6. Assert that gatherResultForSubmit(false) returns "test" => $val1
+     * 7. Assert that gatherResultForSubmit(true) returns "test" => $val1
+     */
+    public function testGetResultWithFormDisabledField() {
+        $val = "value1";
+        $model = new ViewAccessableData(array(
+            "test" => $val
+        ));
+        $form = new Form(new Controller(), "test");
+        $form->setModel($model);
+        $form->add($formField = new MockAbstractFormComponentImpl("test"));
+        $formField->disable();
+        $this->assertEqual(array("test" => $val), $form->gatherResultForSubmit(false));
+        $this->assertEqual(array("test" => $val), $form->gatherResultForSubmit(true));
+    }
+
+    /**
+     * tests that post-data can change value of FormComponent.
+     */
+    public function testPostChangesValue() {
+        $form = new Form(new Controller(), "test");
+        $request = new Request("post", "", array(), array("test" => 1234));
+        $form->setRequest($request);
+        $form->add($hidden = new MockAbstractFormComponentImpl("test", "123"));
+        $result = array();
+        $hidden->argumentResult($result);
+        $this->assertEqual(array("test" => "1234"), $result);
+    }
 }
 
 class MockAbstractFormComponentImpl extends AbstractFormComponent {

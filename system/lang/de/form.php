@@ -23,7 +23,11 @@ $form_lang = array(
 	"not_saved_yet"				=> "Ihre Legitimierung für diese Aktion ist ausgelaufen. Bitte wiederholen Sie die Aktion.",
 
 	"tablefield.reset"			=> "Zurücksetzen",
-	"tablefield.filterBy"		=> "Suche nach "
+	"tablefield.filterBy"		=> "Suche nach ",
+
+    "select_x"                  => "%label% auswählen",
+
+    "dropdown_add_input"        => "\$input hinzufügen",
 );
 foreach($form_lang as $key => $value)
 {

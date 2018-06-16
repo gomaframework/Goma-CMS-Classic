@@ -1,0 +1,25 @@
+<% INCLUDE_JS "system/libs/thirdparty/selectize/dist/js/standalone/selectize.js" %>
+<% INCLUDE_JS "system/libs/thirdparty/selectize/infinite-scroll-plugin/selectize.infinite-scroll.js" %>
+<% INCLUDE_CSS "system/libs/thirdparty/selectize/dist/less/selectize.less" %>
+<% INCLUDE_CSS "system/libs/thirdparty/selectize/dist/less/selectize.default.less" %>
+<% INCLUDE_JS "system/form/Dropdown/ExtendedDropdown.js" %>
+
+<script type="text/javascript">
+    $(function(){
+        new goma.form.ExtendedDropdown($formVar, {$formVar}.findFieldByName("$name"));
+    });
+</script>
+
+<% IF $title %>
+<label for="$id">$title</label>
+<% END %>
+
+<div class="input">
+    <select id="$id" name="$PostName[]" placeholder="$placeholder.text()">
+        <% IF $selectedItems %>
+        <% CONTROL selectedItems() as $item %>
+        <option value="$item.valueRepresentation" selected>$item.inputRepresentation</option>
+        <% ENDCONTROL %>
+        <% END %>
+    </select>
+</div>

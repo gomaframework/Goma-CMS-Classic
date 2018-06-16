@@ -405,8 +405,9 @@ var LaM_type_timeout;
 		setTimeout(function(){
 			goma.ui.ajax(undefined, {
 				beforeSend: function() {
-					if(typeof HistoryLib.push == "function")
-						HistoryLib.push($this.attr("href"));
+					if(typeof HistoryLib.push === "function") {
+                        HistoryLib.push($this.attr("href"));
+                    }
 				},
 				url: $this.attr("href"),
 				data: {"ajaxfy": true}
@@ -430,7 +431,7 @@ var LaM_type_timeout;
 	};
 
     goma.ui.onProgress(function(percent){
-        if(percent == 100) {
+        if(percent === 100) {
             setTimeout(function(){
                 $("td.left").removeClass("active");
                 $("table.leftandmaintable").removeClass("left-active");

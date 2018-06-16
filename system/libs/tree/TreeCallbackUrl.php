@@ -11,7 +11,7 @@ class TreeCallbackUrl extends RequestHandler {
 	/**
 	 * url-handler.
 	*/
-	public $url_handlers = array(
+	static $url_handlers = array(
 		"model/\$model!/\$parent!/\$renderer!"	=> "handleByModel",
 		"key/\$key!/\$renderer!"					=> "handleByKey"
 	);
@@ -19,7 +19,7 @@ class TreeCallbackUrl extends RequestHandler {
 	/**
 	 * allow all actions. Permissions are implemented within the methods.
 	*/
-	public $allowed_actions = array(
+	static $allowed_actions = array(
 		"handleByModel",
 		"handleByKey"
 	);

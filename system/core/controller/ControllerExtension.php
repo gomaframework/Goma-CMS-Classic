@@ -14,12 +14,12 @@ abstract class ControllerExtension extends Controller implements ExtensionModel 
     /**
      * works the same as on {@link requestHandler}
      */
-    public $url_handlers = array();
+    static $url_handlers = array();
 
     /**
      * works the same as on {@link requestHandler}
      */
-    public $allowed_actions = array();
+    static $allowed_actions = array();
 
     /**
      * the owner-class
@@ -59,21 +59,5 @@ abstract class ControllerExtension extends Controller implements ExtensionModel 
     public function getOwner()
     {
         return $this->owner;
-    }
-
-    /**
-     * gets the url handlers
-     */
-    public function url_handlers()
-    {
-        return $this->url_handlers;
-    }
-
-    /**
-     * gets the allowed_actions
-     */
-    public function allowed_actions()
-    {
-        return $this->allowed_actions;
     }
 }

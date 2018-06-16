@@ -1,7 +1,11 @@
 <?php defined("IN_GOMA") OR die();
 
 /**
- * Select.
+ * Select field.
+ * By default, it uses selectize to render the form.
+ * JavaScript API is same as radioButton JS API and defined in radioButton.js.
+ * Selectize can be disabled by calling disableSelectize().
+ * Attention: If options shall be selected on javascript runtime, you have to disable selectize.
  *
  * @author Goma-Team
  * @license GNU Lesser General Public License, version 3; see "LICENSE.txt"
@@ -10,6 +14,24 @@
  */
 class Select extends RadioButton
 {
+    /**
+     * @var bool
+     */
+    protected $allowSelectize = true;
+
+    /**
+     * creates field.
+     * @param null $name
+     * @param null $title
+     * @param array $options
+     * @param null $selected
+     * @param null $form
+     * @return static
+     */
+    public static function create($name = null, $title = null, $options = array(), $selected = null, $form = null) {
+        return new static($name, $title, $options, $selected, $form);
+    }
+
     /**
      * @param string $name
      * @param string $value
@@ -65,6 +87,11 @@ class Select extends RadioButton
      */
     public function field($info)
     {
+        $info->addJSFile("system/form/select.js");
+        $info->addJSFile("system/libs/thirdparty/selectize/dist/js/standalone/selectize.js");
+        $info->addCSSFile("system/libs/thirdparty/selectize/dist/less/selectize.less");
+        $info->addCSSFile("system/libs/thirdparty/selectize/dist/less/selectize.default.less");
+
         $container = parent::field($info);
 
         $node = $container->getNode(1);
@@ -76,7 +103,20 @@ class Select extends RadioButton
             $node->attr("disabled", "disabled");
         }
 
-        $wrapper = new HTMLNode("span", array("class" => "select-wrapper input"));
+        if($this->placeholder) {
+            $node->placeholder = $this->placeholder;
+            if(!$this->getModel()) {
+                $node->prepend(
+                    '<option hidden selected="selected" value="">'.convert::raw2text($this->placeholder).'</option>'
+                );
+            }
+        }
+
+        if($this->allowSelectize()) {
+            $this->container->addClass("allowSelectize");
+        }
+
+        $wrapper = new HTMLNode("div", array("class" => "select-wrapper non-selectize input"));
         if ($this->isDisabled()) {
             $wrapper->addClass("disabled");
         }
@@ -85,5 +125,38 @@ class Select extends RadioButton
         $container->content[1] = $wrapper;
 
         return $container;
+    }
+
+    /**
+     * determines if selectize is allowed or not.
+     *
+     * @return bool
+     */
+    protected function allowSelectize() {
+        return $this->allowSelectize && count($this->disabledNodes) == 0;
+    }
+
+    /**
+     * disables selectize.
+     */
+    public function disableSelectize() {
+        $this->allowSelectize = false;
+        return $this;
+    }
+
+    /**
+     * reenables selectize. it will also be disabled if there are disabled options.
+     */
+    public function reenableSelectize() {
+        $this->allowSelectize = true;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function js()
+    {
+        return "new goma.form.Select(form, field);";
     }
 }

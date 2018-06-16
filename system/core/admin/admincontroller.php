@@ -16,28 +16,25 @@ class adminController extends Controller
      * current title
      */
     static $title;
-
+    static $less_vars = "admin.less";
     /**
      * object of current admin-view
      */
     protected static $activeController;
-
     /**
      * some default url-handlers for this controller
      */
-    public $url_handlers = array(
+    static $url_handlers = array(
         "switchlang"              => "switchlang",
         "update"                  => "handleUpdate",
         "flushLog"                => "flushLog",
         "history"                 => "history",
-        "admincontroller:\$item!" => "handleItem"
+        "admincontroller:\$item!" => "handleItem",
     );
-
     /**
      * we allow those actions
      */
-    public $allowed_actions = array("handleItem", "switchlang", "handleUpdate", "flushLog", "history");
-
+    static $allowed_actions = array("handleItem", "switchlang", "handleUpdate", "flushLog", "history");
     /**
      * this var contains the templatefile
      * the str {admintpl} will be replaced with the current admintpl
@@ -45,25 +42,12 @@ class adminController extends Controller
      * @var string
      */
     public $template = "admin/index.html";
-
     /**
      * tpl-vars
      */
     public $tplVars = array(
-        "BASEURI" => BASE_URI
+        "BASEURI" => BASE_URI,
     );
-
-    static $less_vars = "admin.less";
-
-    /**
-     * returns current controller
-     *
-     * @return adminController
-     */
-    static function activeController()
-    {
-        return (self::$activeController) ? self::$activeController : new adminController;
-    }
 
     /**
      * @param null $service
@@ -76,6 +60,16 @@ class adminController extends Controller
         Resources::addData("goma.ENV.is_backend = true;");
         defined("IS_BACKEND") OR define("IS_BACKEND", true);
         Core::setHeader("robots", "noindex, nofollow");
+    }
+
+    /**
+     * returns current controller
+     *
+     * @return adminController
+     */
+    static function activeController()
+    {
+        return (self::$activeController) ? self::$activeController : new adminController;
     }
 
     /**
@@ -103,6 +97,7 @@ class adminController extends Controller
      * hands the control to admin-controller
      *
      * @return mixed
+     * @throws Exception
      */
     public function handleItem()
     {
@@ -110,20 +105,35 @@ class adminController extends Controller
             return null;
         }
 
-        $class = str_replace("-", "\\", $this->request->getParam("item")) . "admin";
-
-        if (ClassInfo::exists($class) && ClassManifest::isOfType($class, adminItem::class)) {
+        if ($class = $this->findAdminItemClassByName($this->request->getParam("item"))) {
             /** @var adminItem $controller */
             $controller = new $class;
 
             Core::$favicon = ClassInfo::getClassIcon($class);
 
-            if (Permission::check($controller->rights)) {
+            if (Permission::check(StaticsManager::getStatic($class, "rights", true))) {
                 self::$activeController = $controller;
 
                 return $controller->handleRequest($this->request);
             }
         }
+    }
+
+    /**
+     * @param string $name
+     * @return null|string
+     */
+    protected function findAdminItemClassByName($name) {
+        $className = ClassManifest::resolveClassName($name);
+        if(ClassInfo::exists($className) && ClassManifest::isOfType($className, adminItem::class)) {
+            return $className;
+        }
+
+        if(ClassInfo::exists($className . "admin") && ClassManifest::isOfType($className . "admin", adminItem::class)) {
+            return $className . "admin";
+        }
+
+        return null;
     }
 
     /**
@@ -174,7 +184,8 @@ class adminController extends Controller
      * @param int $count number of days log should be stored.
      * @return mixed|string
      */
-    public function flushLog($count = 40) {
+    public function flushLog($count = 40)
+    {
         $count = $this->getParam("count") ? $this->getParam("count") : $count;
 
         if (Permission::check("superadmin")) {
@@ -186,6 +197,7 @@ class adminController extends Controller
 
             if (!$this->getRequest()->is_ajax()) {
                 AddContent::addSuccess(lang("flush_log_success"));
+
                 return $this->redirectBack();
             } else {
                 $response = new GomaResponse();
@@ -214,15 +226,16 @@ class adminController extends Controller
     public function __output($content)
     {
         Core::setHeader("robots", "noindex,nofollow");
-        if(!$this->isManagingController($content) || $this->getRequest()->is_ajax()) {
+        if (!$this->isManagingController($content) || $this->getRequest()->is_ajax()) {
             return parent::__output($content);
         }
 
         $admin = new Admin();
-        $admin->currentUser = Member::$loggedIn;
-        $prepared = $admin->customise(array(
-            "content" => Director::getStringFromResponse($content)
-        ));
+        $prepared = $admin->customise(
+            array(
+                "content" => Director::getStringFromResponse($content),
+            )
+        );
 
         if (!Permission::check("ADMIN")) {
             $newContent = $prepared->renderWith("admin/index_not_permitted.html");
@@ -239,6 +252,7 @@ class adminController extends Controller
      * loads content and then loads page
      *
      * @return bool|string
+     * @throws SQLException
      */
     public function index()
     {
@@ -280,6 +294,7 @@ class adminController extends Controller
      * history
      *
      * @return bool|string
+     * @throws Exception
      */
     public function history()
     {

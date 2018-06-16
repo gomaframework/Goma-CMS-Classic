@@ -22,10 +22,10 @@ class HTMLParser extends gObject
 
 
     /**
-     * parses HTML-code for links and scripts to get all inline scripts
+     * adds Resources to HTML and replaces existing links and scripts with base-url if required.
      * into files and all links working.
      *
-     * @param $html
+     * @param string $html
      * @param bool $parseLinksAndScripts
      * @param bool $includeResourcesInBody
      * @return string
@@ -35,26 +35,30 @@ class HTMLParser extends gObject
         if (PROFILE) Profiler::mark("HTMLParser::parseHTML");
 
         if ($parseLinksAndScripts) {
-            if($includeResourcesInBody && strpos($html, "</title>") && strpos($html, "</body>")) {
-                $html = self::findScripts($html);
-            }
-
+            $html = self::replaceScripts($html);
             $html = self::process_links($html);
         }
 
-        if ($includeResourcesInBody) {
-            // we have everything a normal HTML Page should have.
-            if (strpos($html, "</title>") && strpos($html, "</body>")) {
-                // replace css resources
-                $view = new ViewAccessableData();
-                if (strpos($html, "<base") === false) {
-                    $view->base_uri = BASE_URI;
-                }
-                $view->resources = resources::get(true, false);
-                $html = str_replace('</title>', '</title>' . $view->renderWith("framework/resources-header.html"), $html);
+        if($includeResourcesInBody) {
+            // replace css resources
+            $view = new ViewAccessableData();
+            if (strpos($html, "<base") === false) {
+                $view->base_uri = BASE_URI;
+            }
+            $view->resources = resources::get(true, false, true, false);
 
+            if (strpos($html, "</title>") !== false) {
+                $html = str_replace('</title>', '</title>'.$view->renderWith("framework/resources-header.html"), $html);
+            } else {
+                $html = $view->renderWith("framework/resources-header.html").$html;
+            }
+
+            $resources = resources::get(true, false, false, true);
+            if (strpos($html, "</body>") !== false) {
                 // replace js resources
-                $html = str_replace('</body>', "\n" . resources::get(false, true) . "\n	</body>", $html);
+                $html = str_replace('</body>', "\n".$resources."\n	</body>", $html);
+            } else {
+                $html = $html.$resources;
             }
         }
 
@@ -66,10 +70,10 @@ class HTMLParser extends gObject
     /**
      * finds all javascripts and packs them into its own files.
      *
-     * @name findScripts
-     * @return mixed
+     * @param string $html
+     * @return string
      */
-    public static function findScripts($html)
+    public static function replaceScripts($html)
     {
         preg_match_all('/\<\!\-\-(.*)\-\-\>/Usi', $html, $comments);
         foreach ($comments[1] as $k => $v) {
@@ -80,15 +84,17 @@ class HTMLParser extends gObject
         preg_match_all('/\<script[^\>]*type\=\"text\/javascript\"[^\>]*\>(.*)\<\/script\s*\>/Usi', $html, $no_tags);
         foreach ($no_tags[1] as $key => $js) {
             if (!empty($js)) {
-                $html = str_replace($no_tags[0][$key], self::js($js), $html);
+                $html = str_replace($no_tags[0][$key], "", $html);
+                Resources::addJS($js,  "scripts");
             }
         }
 
         // find scripts with src.
         preg_match_all('/\<script[^\>]*src="(.+)"[^>]*\>(.*)\<\/script\s*\>/Usi', $html, $no_tags);
         foreach ($no_tags[1] as $key => $js) {
-            if (!empty($js) && file_exists(ROOT . $js)) {
-                $html = str_replace($no_tags[0][$key], self::jsFile(ROOT . $js), $html);
+            if (trim($js) != "" && file_exists(ROOT . $js)) {
+                Resources::add(ROOT . $js, "js", "tpl");
+                $html = str_replace($no_tags[0][$key], "", $html);
             }
         }
 
@@ -212,191 +218,5 @@ class HTMLParser extends gObject
         $newlink = $beforeHref . trim('"' . $href . '" ' . $attrs) . $afterHref;
 
         return $newlink;
-    }
-
-    /**
-     * jshandler.
-     *
-     * @name    jsFile
-     * @return    string
-     */
-    static function jsFile($file)
-    {
-        Resources::add($file, "js", "tpl");
-    }
-
-    /**
-     * jshandler.
-     *
-     * @name    js
-     * @return    string
-     */
-    static function js($js)
-    {
-        Resources::addJS($js, "scripts");
-    }
-
-    /**
-     * csshandler
-     *
-     * @name    css
-     * @return    string
-     */
-    static function css($css)
-    {
-        $name = "hash." . md5($css) . ".css";
-        $file = CACHE_DIRECTORY . "/" . $name;
-        if (file_exists($file)) {
-            return '<link rel="stylesheet" href="' . $file . '" type="text/css" />';
-        } else {
-            if ($h = fopen($file, 'w')) {
-                fwrite($h, $css);
-                fclose($h);
-
-                return '<link rel="stylesheet" href="' . $file . '" type="text/css" />';
-            } else {
-                fclose($h);
-
-                return "";
-            }
-        }
-    }
-
-    /**
-     * lists all words in a given HTML-Code
-     *
-     * @name listWords
-     * @access public
-     * @return array
-     */
-    static function list_words($orghtml)
-    {
-        // replace img-tags with alt-attribute
-        $html = preg_replace('/\<img[^\/\>]+alt="([^"]+)"[^\/\>]+\/\>/', '$1', $orghtml);
-
-        $text = html_entity_decode(strip_tags($html));
-
-        $words = preg_split("/[\s\W]/", $text, -1, PREG_SPLIT_NO_EMPTY);
-
-        return $words;
-    }
-
-
-    /**
-     * lists all words in a given HTML-Code
-     *
-     * @name listWordsInTag
-     * @access public
-     */
-    static function list_words_in_tag($orghtml, $tag)
-    {
-        // replace img-tags with alt-attribute
-        preg_match_all('/\<' . preg_quote($tag, "/") . '[^\>]*\>(.*)\<\/' . preg_quote($tag, "/") . '\s*\>/Usi', $orghtml, $matches);
-        $words = array();
-        foreach ($matches[1] as $text) {
-            $words += self::list_words($text);
-        }
-
-        return $words;
-    }
-
-    /**
-     * Rates a word in the given context
-     * Returnvalues can be between 0 and 3
-     *
-     * @access public
-     * @return int - result
-     */
-
-    public function rate_word($word, $context)
-    {
-        if (empty($word) || empty($context))
-            return 0;
-
-        $value = self::count_word($word, $context);
-        $div = $value;
-
-        $count = self::count_words_in_important_sentences($word, $context);
-        $value += $count[0];
-        $value += $count[1];
-        $value += self::count_title_word($word, $context);
-
-        return $value / $div;
-    }
-
-    /**
-     * Count words in context
-     *
-     * @access public
-     * @return int
-     * */
-
-
-    public function count_word($word, $context)
-    {
-        $count = preg_split($word, $context, -1);
-        $count = sizeof($count);
-
-        if (!($count <= 0))
-            $count--;
-
-        return $count;
-    }
-
-    /**
-     * Count words in titles
-     *
-     * @access public
-     * @return int
-     * */
-
-    public function count_title_word($word, $context)
-    {
-        $title = preq_split("\<h(1|2|3|4|5|6)\>", $context, -1);
-        if (sizeof($title < 2))
-            return 0;
-        $count_title = 0;
-
-        foreach ($title as $element) {
-            $count_title += count(preg_split($word, $element, -1));
-        }
-
-        return $count_title - 1;
-    }
-
-    /**
-     * Count words in questions and exclamations
-     *
-     * @access public
-     * @return int
-     * */
-
-    public function count_words_in_important_sentences($word, $context)
-    {
-        $questions = preg_split('?', $context, -1);
-        $count_excl = 0;
-        $count_quest = 0;
-
-        foreach ($questions as $element) {
-            if (strpos($element, '.') !== false) {
-                $split = preg_split('.', $element, -1);
-                $element = $split[sizeof($split) - 1];
-
-                if (strpos($element, '!') !== false) {
-                    $split = preg_split('!', $element, -1);
-                    $count_excl += sizeof($split) - 1;
-                    $element = $split[sizeof($split) - 1];
-                }
-            }
-
-            $tmp = preg_split($word, $context, -1);
-            $count_quest += sizeof($tmp) - 1;
-        }
-
-        $count = array();
-        $count[] = $count_quest;
-        $count[] = $count_excl;
-
-        return $count;
     }
 }

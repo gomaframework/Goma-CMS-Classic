@@ -231,14 +231,16 @@ abstract class AbstractFormComponent extends RequestHandler {
      */
     public function externalURL()
     {
-        if($this->namespace)
+        if($this->namespace) {
             return $this->namespace;
+        }
 
         return $this->form()->externalURL() . "/" . $this->name;
     }
 
     /**
      * this function returns the result of this field
+     * it needs to ensure correct behaviour in the isDisabled() state
      *
      * @return mixed
      */
@@ -247,6 +249,8 @@ abstract class AbstractFormComponent extends RequestHandler {
     }
 
     /**
+     * adds to result regardless if disabled or not.
+     * Disabled is handled in result().
      * @var array $result
      */
     public function argumentResult(&$result) {
@@ -261,7 +265,7 @@ abstract class AbstractFormComponent extends RequestHandler {
     public function ID()
     {
         $formId = $this->parent ? $this->form()->getName() : "";
-        return "form_field_" . $this->classname . "_" . $formId . "_" . $this->name;
+        return "form_field_" . str_replace("\\", "_", $this->classname) . "_" . $formId . "_" . $this->name;
     }
 
     /**
@@ -326,14 +330,6 @@ abstract class AbstractFormComponent extends RequestHandler {
     }
 
     /**
-     * @return array|string
-     */
-    public function getResult()
-    {
-        return $this->result;
-    }
-
-    /**
      * @return Request|null
      */
     public function getRequest()
@@ -384,6 +380,10 @@ abstract class AbstractFormComponent extends RequestHandler {
         try {
             if($this->parent) {
                 $this->parent->registerRendered($info->getName());
+            }
+
+            if($this->parent) {
+                $info->setExternalUrl($this->externalURL());
             }
 
             $this->callExtending("beforeRender", $info);

@@ -93,10 +93,11 @@ class ControllerTest extends GomaUnitTest {
 		$this->assertEqual($controller->modelInst()->DataClass(), "admin");
 	}
 
-	/**
-	 * @param $controller
-	 * @return mixed
-	 */
+    /**
+     * @param $controller
+     * @return mixed
+     * @throws \ReflectionException
+     */
 	public function unitTestGetSingleModel($controller) {
 		$reflectionMethod = new ReflectionMethod("controller", "getSingleModel");
 		$reflectionMethod->setAccessible(true);
@@ -298,8 +299,8 @@ class TestIndexCountController extends Controller {
 }
 
 class TestControllerForRequestController extends \RequestHandler {
-    public $allowed_actions = array(
-        "test"
+    static $url_handlers = array(
+        "test" => "test"
     );
     public function index() {
         $controller = new TestSubControllerForRequestController();

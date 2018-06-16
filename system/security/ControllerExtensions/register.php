@@ -47,8 +47,10 @@ class RegisterExtension extends ControllerExtension
 	 * @name allowed_actions
 	 * @access public
 	 */
-	public $allowed_actions = array(
-		"register", "resendActivation", "activate"
+	static $url_handlers = array(
+		"register" => "register",
+        "resendActivation" => "resendActivation",
+        "activate" => "activate"
 	);
 
 	/**

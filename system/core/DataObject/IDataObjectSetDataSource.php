@@ -87,14 +87,6 @@ interface IDataObjectSetDataSource {
     public function baseTable();
 
     /**
-     * @param array $manipulation
-     * @param ManyMany_DataObjectSet $set
-     * @param array $writeData array of versionid => boolean
-     * @return mixed
-     */
-    public function onBeforeManipulateManyMany(&$manipulation, $set, $writeData);
-
-    /**
      * @return void
      */
     public function clearCache();
@@ -146,5 +138,4 @@ interface IDataObjectSetModelSource {
      * @return string
      */
     public function DataClass();
-    public function callExtending($method, &$p1 = null, &$p2 = null, &$p3 = null, &$p4 = null, &$p5 = null, &$p6 = null, &$p7 = null);
 }

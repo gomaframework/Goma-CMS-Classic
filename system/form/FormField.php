@@ -27,7 +27,7 @@ class FormField extends AbstractFormComponent {
     /**
      * @var array
      */
-    public $url_handlers = array(
+    static $url_handlers = array(
         '$Action//$id/$otherid' => '$Action'
     );
 
@@ -139,7 +139,7 @@ class FormField extends AbstractFormComponent {
         $this->input = $this->createNode();
 
         $this->container = new HTMLNode("div", array(
-            "class" => "form_field " . $this->classname . " form_field_" . $name . ""
+            "class" => "form_field " . ClassManifest::getUrlClassName($this->classname) . " form_field_" . $name . ""
         ));
 
         if ($this->fullSizedField)
@@ -188,6 +188,10 @@ class FormField extends AbstractFormComponent {
 
         $this->setValue();
 
+        if(!$this->title) {
+            $this->container->addClass("fullSize");
+        }
+
         if($this->template) {
             $this->container->append(
                 $this->renderTemplate($info)
@@ -195,11 +199,11 @@ class FormField extends AbstractFormComponent {
         } else {
             // old way of doing it
             // TODO: Replace all Fields with new way
-            $this->container->append(new HTMLNode(
-                "label",
-                array("for" => $this->ID()),
-                $this->title
-            ));
+            if($this->title) {
+                $this->container->append(
+                    new HTMLNode("label", array("for" => $this->ID()), $this->title)
+                );
+            }
 
             if ($this->maxLength > 0) {
                 $this->input->attr("maxlength", $this->maxLength);
@@ -236,8 +240,10 @@ class FormField extends AbstractFormComponent {
             $info->ToRestArray()
         )->customise(
             array(
-                "model"    => $this->getModel(),
-                "postname" => $this->PostName()
+                "model"         => $this->getModel(),
+                "postname"      => $this->PostName(),
+                "placeholder"   => $this->placeholder,
+                "formVar"       => $this->form()->id()
             )
         )->renderWith($this->template);
     }

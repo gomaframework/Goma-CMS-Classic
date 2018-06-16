@@ -36,18 +36,18 @@ class User extends DataObject implements PermProvider
      * the database fields of a user
      */
     static $db = array(
-        'nickname' => 'varchar(200)',
-        'name' => 'varchar(200)',
-        'email' => 'varchar(200)',
-        'password' => 'varchar(1000)',
-        'signatur' => 'text',
-        'status' => 'int(2)',
-        'phpsess' => 'varchar(200)',
-        "code" => "varchar(200)",
+        'nickname'      => 'varchar(200)',
+        'name'          => 'varchar(200)',
+        'email'         => 'varchar(200)',
+        'password'      => 'varchar(1000)',
+        'signatur'      => 'text',
+        'status'        => 'int(2)',
+        'phpsess'       => 'varchar(200)',
+        "code"          => "varchar(200)",
         "code_has_sent" => "Switch",
-        "timezone" => "timezone",
-        "custom_lang" => "varchar(10)",
-        "groupAdmin" => "Switch",
+        "timezone"      => "timezone",
+        "custom_lang"   => "varchar(10)",
+        "groupAdmin"    => "Switch",
     );
 
 
@@ -56,7 +56,7 @@ class User extends DataObject implements PermProvider
      */
     static $index = array(
         "login" => array("type" => "INDEX", "fields" => 'nickname, password'),
-        "name" => true
+        "name"  => true
     );
 
     /**
@@ -82,7 +82,7 @@ class User extends DataObject implements PermProvider
      * authentications.
      */
     static $has_many = array("authentications" => array(
-        DataObject::RELATION_TARGET => "UserAuthentication",
+        DataObject::RELATION_TARGET  => "UserAuthentication",
         DataObject::RELATION_INVERSE => "user"
     ));
 
@@ -92,7 +92,7 @@ class User extends DataObject implements PermProvider
     static $has_one = array(
         "avatar" => array(
             DataObject::RELATION_TARGET => "Uploads",
-            DataObject::FETCH_TYPE => DataObject::FETCH_TYPE_EAGER
+            DataObject::FETCH_TYPE      => DataObject::FETCH_TYPE_EAGER
         )
     );
 
@@ -123,6 +123,34 @@ class User extends DataObject implements PermProvider
      * @var bool
      */
     static $useEmailAsNickname = false;
+    /**
+     * cache for permissions.
+     *
+     * @var array
+     */
+    private static $permissionCache = array();
+    /**
+     * @var int
+     */
+    private $groupType = null;
+    /**
+     * @var null{array
+     */
+    private $groupIds;
+
+    /**
+     * validates code for form.
+     *
+     * @param FormValidator $obj
+     * @throws FormInvalidDataException
+     */
+    public static function _validateCode($obj)
+    {
+        $value = $obj->getForm()->result["code"];
+        if (is_string($value) && RegisterExtension::$registerCode != "" && RegisterExtension::$registerCode != $value) {
+            throw new FormInvalidDataException("code", lang("register_code_wrong", "The Code was wrong!"));
+        }
+    }
 
     /**
      * returns true if you can write
@@ -130,7 +158,7 @@ class User extends DataObject implements PermProvider
      */
     public function canWrite()
     {
-        if(Member::$loggedIn !== null) {
+        if (Member::$loggedIn !== null) {
             if ($this->id == Member::$loggedIn->id) {
                 return true;
             }
@@ -156,17 +184,17 @@ class User extends DataObject implements PermProvider
     /**
      * @return bool
      */
-    public function canPublish()
+    public function canDelete()
     {
-        return $this->canWrite();
+        return Permission::check("USERS_MANAGE");
     }
 
     /**
      * @return bool
      */
-    public function canDelete()
+    public function canPublish()
     {
-        return Permission::check("USERS_MANAGE");
+        return $this->canWrite();
     }
 
     /**
@@ -181,6 +209,7 @@ class User extends DataObject implements PermProvider
      * forms
      *
      * @param Form $form
+     * @throws \Goma\Form\Exception\DuplicateActionException
      */
     public function getForm(&$form)
     {
@@ -241,6 +270,7 @@ class User extends DataObject implements PermProvider
      * gets the edit-form for profile-edit or admin-edit
      *
      * @param Form $form
+     * @throws \Goma\Form\Exception\DuplicateActionException
      */
     public function getEditForm(&$form)
     {
@@ -321,6 +351,7 @@ class User extends DataObject implements PermProvider
     public function generateNickNameFromEmail($result)
     {
         $result["nickname"] = $result["email"];
+
         return $result;
     }
 
@@ -359,8 +390,11 @@ class User extends DataObject implements PermProvider
             throw new InvalidStateException("Code not generated or marked as sent. Call \$user->generateCode(true) before calling sendNotificationMail.");
         }
 
+        $subject = str_replace("\$serverName", $request->getServerName(), lang("welcome_mail_subject"));
+        Core::callHook("welcome_mail_subject", $subject);
+
         $mail = new Mail("noreply@" . $request->getServerName());
-        $mail->sendHTML($this->email, lang("group_user_changed"),
+        $mail->sendHTML($this->email, $subject,
             $this->customise(array(
                 "setPasswordLink" => BASE_URI . BASE_SCRIPT . "profile/lost_password/?code=" . $this->code
             ))->renderWith("mail/newUserNotification.html")
@@ -368,23 +402,8 @@ class User extends DataObject implements PermProvider
     }
 
     /**
-     * validates code for form.
-     *
-     * @param FormValidator $obj
-     * @throws FormInvalidDataException
-     */
-    public static function _validateCode($obj)
-    {
-        $value = $obj->getForm()->result["code"];
-        if (is_string($value) && RegisterExtension::$registerCode != "" && RegisterExtension::$registerCode != $value) {
-            throw new FormInvalidDataException("code", lang("register_code_wrong", "The Code was wrong!"));
-        }
-    }
-
-    /**
      * validates an new user
      * @param FormValidator $obj
-     * @throws FormInvalidDataException
      * @throws FormMultiFieldInvalidDataException
      */
     public function _validateuser($obj)
@@ -480,14 +499,17 @@ class User extends DataObject implements PermProvider
     /**
      * regenerates and gives back code.
      *
-     * @param bool if code should has been sent to user
-     * @param bool if write Entity.
+     * @param bool $setSendToTrue if code should has been sent to user
+     * @param bool $write if write Entity.
      * @return string
+     * @throws Exception
+     * @throws PermissionException
+     * @throws SQLException
      */
-    public function generateCode($send = false, $write = false)
+    public function generateCode($setSendToTrue = false, $write = false)
     {
         $this->code = randomString(20);
-        $this->code_has_sent = $send;
+        $this->code_has_sent = $setSendToTrue;
 
         if ($write) {
             $this->writeToDB(false, true);
@@ -527,6 +549,7 @@ class User extends DataObject implements PermProvider
             }
             $str .= Convert::raw2text($group->name);
         }
+
         return $str;
     }
 
@@ -541,9 +564,9 @@ class User extends DataObject implements PermProvider
     {
         return array(
             self::USERS_PERMISSION => array(
-                "title" => '{$_lang_administration}: {$_lang_user}',
-                "default" => array(
-                    "type" => "admins",
+                "title"    => '{$_lang_administration}: {$_lang_user}',
+                "default"  => array(
+                    "type"    => "admins",
                     "inherit" => "superadmin"
                 ),
                 "category" => "superadmin"
@@ -561,6 +584,7 @@ class User extends DataObject implements PermProvider
         if ($this->avatar && $this->avatar->realfile) {
             if ((ClassInfo::exists("gravatarimagehandler") && $this->avatar->filename == "no_avatar.png" && $this->avatar->classname != "gravatarimagehandler") || $this->avatar->classname == "gravatarimagehandler") {
                 $this->avatarid = 0;
+
                 return new GravatarImageHandler(array("email" => $this->email));
             }
 
@@ -579,27 +603,11 @@ class User extends DataObject implements PermProvider
     }
 
     /**
-     * cache for permissions.
-     *
-     * @var array
-     */
-    private static $permissionCache = array();
-
-    /**
-     * @var int
-     */
-    private $groupType = null;
-
-    /**
-     * @var null{array
-     */
-    private $groupIds;
-
-    /**
      * @return array
      */
-    public function groupIds() {
-        if(isset($this->groupIds)) {
+    public function groupIds()
+    {
+        if (isset($this->groupIds)) {
             return $this->groupIds;
         }
 
@@ -613,8 +621,9 @@ class User extends DataObject implements PermProvider
      *
      * @return int|null
      */
-    public function getGroupType() {
-        if(!isset($this->groupType)) {
+    public function getGroupType()
+    {
+        if (!isset($this->groupType)) {
             $this->groupType = $this->groups()->first() != null ? $this->groups()->first()->type : null;
         }
 
@@ -624,11 +633,15 @@ class User extends DataObject implements PermProvider
     /**
      * @param $permissionCode
      * @return bool
+     * @throws Exception
+     * @throws PermissionException
+     * @throws SQLException
      */
-    public function hasPermissions($permissionCode) {
+    public function hasPermissions($permissionCode)
+    {
         $permissionCode = strtolower($permissionCode);
 
-        if(isset(self::$permissionCache[$this->id][$permissionCode])) {
+        if (isset(self::$permissionCache[$this->id][$permissionCode])) {
             return self::$permissionCache[$this->id][$permissionCode];
         }
 
@@ -647,6 +660,7 @@ class User extends DataObject implements PermProvider
                     if ($data->type != "groups") {
                         $data->writeToDB(false, true, 2, false, false);
                     }
+
                     return self::$permissionCache[$this->id][$permissionCode];
                 } else {
 
@@ -661,6 +675,7 @@ class User extends DataObject implements PermProvider
                             $data->forModel = "permission";
                             self::$permissionCache[$this->id][$permissionCode] = $perm->hasPermission($this);
                             $perm->writeToDB(true, true, 2);
+
                             return self::$permissionCache[$this->id][$permissionCode];
                         }
                     }
@@ -671,6 +686,7 @@ class User extends DataObject implements PermProvider
 
                     self::$permissionCache[$this->id][$permissionCode] = $perm->hasPermission($this);
                     $perm->writeToDB(true, true, 2, false, false);
+
                     return self::$permissionCache[$this->id][$permissionCode];;
                 }
             } else {
@@ -688,8 +704,12 @@ class User extends DataObject implements PermProvider
      *
      * @param int $needed
      * @return bool
+     * @throws Exception
+     * @throws PermissionException
+     * @throws SQLException
      */
-    protected function intRight($needed) {
+    protected function intRight($needed)
+    {
         if (!defined("SQL_INIT"))
             return true;
 

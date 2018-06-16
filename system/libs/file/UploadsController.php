@@ -30,9 +30,10 @@ class UploadsController extends Controller {
      * checks for the permission to do anything
      *
      * @param string $action
+     * @param string $classWithActionDefined
      * @return bool
      */
-	public function checkPermission($action) {
-		return (parent::checkPermission($action) && $this->modelInst()->checkPermission());
+	public function checkPermission($action, $classWithActionDefined) {
+		return (parent::checkPermission($action, $classWithActionDefined) && $this->modelInst()->checkPermission());
 	}
 }

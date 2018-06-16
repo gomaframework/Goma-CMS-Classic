@@ -31,16 +31,6 @@ class Controller extends RequestHandler
     protected static $live_counter = false;
 
     /**
-     * allowed actions
-     */
-    public $allowed_actions = array(
-        "edit",
-        "delete",
-        "record",
-        "version"
-    );
-
-    /**
      * template for this controller
      */
     public $template = "";
@@ -53,8 +43,11 @@ class Controller extends RequestHandler
     /**
      * url-handlers
      */
-    public $url_handlers = array(
-        '$Action/$id' => '$Action',
+    static $url_handlers = array(
+        'edit/$id' => 'edit',
+        'delete/$id' => 'delete',
+        'record/$id' => "record",
+        'version/$id' => 'version'
     );
 
     /**
@@ -105,10 +98,6 @@ class Controller extends RequestHandler
     public function Init($request = null)
     {
         parent::Init($request);
-
-        if ($this->template == "") {
-            $this->template = $this->model() . ".html";
-        }
 
         if(!$this->subController) {
             if (static::$live_counter) {
@@ -327,7 +316,7 @@ class Controller extends RequestHandler
             $this->tplVars["namespace"] = $this->namespace;
             return $this->modelInst()->customise($this->tplVars)->renderWith($this->template, $this->inExpansion);
         } else {
-            throw new LogicException("No Template for Controller " . $this->classname . ". Please define \$template to activate the index-method.");
+            return null;
         }
     }
 

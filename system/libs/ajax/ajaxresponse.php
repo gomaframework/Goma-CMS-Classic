@@ -165,10 +165,9 @@ class AjaxResponse extends GomaResponse
 
     public function output()
     {
-        $data = Resources::get(true, true, true);
+        $data = Resources::get(false, true, true, true);
         $this->setHeader("X-JavaScript-Load", implode(";", $data["js"]));
         $this->setHeader("X-CSS-Load", implode(";", $data["css"]));
-
 
         parent::output();
     }

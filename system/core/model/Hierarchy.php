@@ -7,6 +7,7 @@ defined("IN_GOMA") OR die();
  * It provides features like "AllChildren", "getAllParents"
  *
  * @package        Goma\Model
+ * @method  DataObject getOwner()
  *
  * @author        Goma-Team
  * @license        GNU Lesser General Public License, version 3; see "LICENSE.txt"
@@ -20,7 +21,7 @@ class Hierarchy extends DataObjectExtension
      * @name extra_methods
      */
     protected static $extra_methods = array(
-        "AllChildren",
+        "getAllChildren",
         "getallChildVersionIDs",
         "getAllChildIDs",
         "searchChildren",
@@ -39,7 +40,10 @@ class Hierarchy extends DataObjectExtension
         }
 
         return array(
-            "parent" => $class,
+            "parent" => array(
+                DataObject::RELATION_TARGET => $class,
+                DataObject::CASCADE_TYPE => DataObject::CASCADE_TYPE_UPDATEFIELD
+            )
         );
     }
 
@@ -66,7 +70,7 @@ class Hierarchy extends DataObjectExtension
      * @return DataObjectSet
      * @internal param $AllChildren
      */
-    public function AllChildren($filter = null, $sort = null, $limit = null)
+    public function getAllChildren($filter = null, $sort = null, $limit = null)
     {
         return DataObject::get(
             $this->getOwner()->classname,
@@ -167,7 +171,7 @@ class Hierarchy extends DataObjectExtension
     public function getAllParents($filter = null, $sort = null, $limit = null)
     {
         if (!isset($sort)) {
-            $sort = array("field" => $this->getOwner()->baseTable."_tree.height", "type" => "DESC");
+            $sort = array($this->getOwner()->baseTable."_tree.height" => "DESC");
         }
 
         return DataObject::get(
@@ -176,11 +180,11 @@ class Hierarchy extends DataObjectExtension
             $sort,
             $limit,
             array(
-                array(
+                $this->getOwner()->baseTable."_tree" => array(
                     DataObject::JOIN_TYPE        => "INNER",
                     DataObject::JOIN_TABLE       => $this->getOwner()->baseTable."_tree",
                     DataObject::JOIN_STATEMENT   => $this->getOwner()->baseTable."_tree.parentid = ".$this->getOwner(
-                        )->baseTable.".id",
+                        )->baseTable.".recordid",
                     DataObject::JOIN_INCLUDEDATA => false,
                 ),
             )
@@ -267,23 +271,22 @@ class Hierarchy extends DataObjectExtension
             );
 
             $height = 0;
-            $p = $this->getOwner();
+            $currentParent = $this->getOwner();
 
             $ids = array();
 
-            while ($p->parent && $height < 100) {
-                $p = $p->parent();
+            while ($currentParent->parent && $height < 100) {
+                $currentParent = $currentParent->parent();
 
-                if (!in_array($p->id, $ids)) {
+                if (!in_array($currentParent->id, $ids)) {
                     $manipulation["tree_table"]["fields"][] = array(
                         "id"       => $this->getOwner()->versionid,
-                        "parentid" => $p->id,
+                        "parentid" => $currentParent->id,
                     );
-                    $ids[] = $p->id;
+                    $ids[] = $currentParent->id;
                     $height++;
                 } else {
-                    log_error("Endless-Hierarchy-Error: ".$id." is a endless-loop.");
-                    break;
+                    throw new LogicException("Endless-Hierarchy-Error: ".$currentParent->id." is a endless-loop.");
                 }
             }
 
@@ -347,14 +350,14 @@ class Hierarchy extends DataObjectExtension
      *
      * @param $prefix
      * @param $log
-     * @return bool
+     * @return void
      * @throws SQLException
      */
     public function buildDB($prefix, &$log)
     {
 
         if (strtolower(get_parent_class($this->getOwner()->classname)) != "dataobject") {
-            return true;
+            return;
         }
 
         $migrate = !SQL::getFieldsOfTable($this->getOwner()->baseTable."_tree");
@@ -426,9 +429,7 @@ class Hierarchy extends DataObjectExtension
                     }
                 }
 
-                if (SQL::Query($insert)) {
-                    return true;
-                } else {
+                if (!SQL::Query($insert)) {
                     throw new SQLException();
                 }
             }

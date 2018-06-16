@@ -94,10 +94,6 @@ class RuleMatcher {
 
                 $this->currentRequest = $request;
                 $controller = $controllers[$i];
-                if($request->getParam("controller")) {
-                    $controller = $request->getParam("controller");
-                }
-
                 $this->position = $i + 1;
                 return $controller;
             }

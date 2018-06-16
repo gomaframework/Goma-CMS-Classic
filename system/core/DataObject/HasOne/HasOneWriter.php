@@ -3,10 +3,14 @@
 /**
  * Basic Class for Writing Has-One-Relationships of Models to DataBase.
  *
+ * @method ModelWriter getOwner()
+ *
  * @package     Goma\Model
  *
  * @license     GNU Lesser General Public License, version 3; see "LICENSE.txt"
  * @author      Goma-Team
+ *
+ * @method ModelWriter getOwner()
  *
  * @version    1.0
  */
@@ -42,6 +46,7 @@ class HasOneWriter extends Extension {
                         }
 
                         $data[$key . "id"] = $record->id;
+                        $this->getOwner()->getModel()->setField($key . "id", $record->id);
                         unset($data[$key]);
                     } else {
                         if($this->shouldUpdateData($has_one[$key])) {
@@ -59,6 +64,7 @@ class HasOneWriter extends Extension {
                         }
                         // get id from object
                         $data[$key . "id"] = $record->id;
+                        $this->getOwner()->getModel()->setField($key . "id", $record->id);
                         unset($data[$key]);
                     }
                 }

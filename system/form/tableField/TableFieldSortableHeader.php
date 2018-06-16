@@ -13,116 +13,174 @@
  *
  * @version     1.1.1
  */
-class TableFieldSortableHeader implements TableField_HTMLProvider, TableField_DataManipulator, TableField_ActionProvider {
-	/**
-	 * provides HTML-fragments
-	 *
-	 * @name provideFragments
-	 * @param TableField $tableField
-	 * @return array
-	 */
-	public function provideFragments($tableField) {
+class TableFieldSortableHeader implements TableField_HTMLProvider, TableField_DataManipulator, TableField_ActionProvider
+{
 
-		Resources::add("font-awsome/font-awesome.css");
+    /**
+     * callback to filter correctly by given data.
+     */
+    protected $valueCallback = array();
 
-		$forTemplate = new ViewAccessableData();
-		$fields = new DataSet();
+    /**
+     * sets a value-callback.
+     * it can also unset the callback by providing null as callback.
+     *
+     * @param string $name
+     * @param Callback|null $callback
+     * @return $this
+     */
+    public function setValueCallback($name, $callback)
+    {
+        $this->valueCallback[strtolower($name)] = $callback;
 
-		$state = $tableField->state->tableFieldSortableHeader;
-		$columns = $tableField->getColumns();
-		$currentColumn = 0;
-		foreach($columns as $columnField) {
-			$currentColumn++;
-			$metadata = $tableField->getColumnMetadata($columnField);
-			$title = $metadata['title'];
+        return $this;
+    }
 
-			// sortable column
-			if($title && $tableField->getData()->canSortBy($columnField)) {
+    /**
+     * provides HTML-fragments
+     *
+     * @param TableField $tableField
+     * @return array
+     */
+    public function provideFragments($tableField)
+    {
+        Resources::add("font-awsome/font-awesome.css");
 
-				$title = convert::raw2text($title);
-				$nextDirection = "desc";
-				if($state->sortColumn == $columnField){
-					if($state->sortDirection == 'asc') {
-						$title .= ' <i class="fa fa-caret-up"></i>';
-					} else {
-						$title .= ' <i class="fa fa-caret-down"></i>';
-						$nextDirection = "asc";
-					}
-				} else {
-					$title .= ' <i class="fa fa-sort"></i>';
-				}
+        $forTemplate = new ViewAccessableData();
+        $fields = new DataSet();
 
-				$field = new TableField_FormAction($tableField, "SetOrder" . $columnField, $title, "sort" . $nextDirection, array("SortColumn" => $columnField));
-				$field->addExtraClass("tablefield-sortable");
-				$field->addClass("button-clear");
+        $state = $tableField->state->tableFieldSortableHeader;
+        $columns = $tableField->getColumns();
+        $currentColumn = 0;
+        foreach ($columns as $columnField) {
+            $currentColumn++;
+            $metadata = $tableField->getColumnMetadata($columnField);
+            $title = $metadata['title'];
 
-				// last column
-			} else if($currentColumn == count($columns) && $tableField->getConfig()->getComponentByType('TableFieldFilterHeader')){
-				$field = new TableField_FormAction($tableField, "toggleFilter", '<i title="' . lang("search") . '" class="fa fa-search"></i>', "toggleFilterVisibility", null,
-						"var h  = $(this).parents('table').find('.filter-header');if(window['".$tableField->divID()."hasBeenOpened']) { h.addClass('hidden'); window['".$tableField->divID()."hasBeenOpened'] = false; return false; } else if (h.hasClass('hidden')) { window['".$tableField->divID()."hasBeenOpened'] = true; h.removeClass('hidden'); return false; }");
-				$field->addExtraClass("tablefield-button-filter");
-				$field->addExtraClass("trigger");
-				$field->addClass("button-clear");
+            // sortable column
+            if ($title && ($tableField->getData()->canSortBy($columnField)) || isset(
+                    $this->valueCallback[strtolower(
+                        $columnField
+                    )]
+                )) {
 
-				// not sortable column
-			} else {
-				$field = new HTMLField($columnField, '<span class="non-sortable">' . $title . '</span>');
-			}
+                $title = convert::raw2text($title);
+                $nextDirection = "desc";
+                if ($state->sortColumn == $columnField) {
+                    if ($state->sortDirection == 'asc') {
+                        $title .= ' <i class="fa fa-caret-up"></i>';
+                    } else {
+                        $title .= ' <i class="fa fa-caret-down"></i>';
+                        $nextDirection = "asc";
+                    }
+                } else {
+                    $title .= ' <i class="fa fa-sort"></i>';
+                }
+                $field = new TableField_FormAction(
+                    $tableField,
+                    "SetOrder".$columnField,
+                    $title,
+                    "sort".$nextDirection,
+                    array("SortColumn" => $columnField)
+                );
+                $field->addExtraClass("tablefield-sortable");
+                $field->addClass("button-clear");
 
-			$fields->push(array("field" => $field->exportFieldInfo()->ToRestArray(true), "name" => $columnField, "title" => $title));
-		}
+                // last column
+            } else if ($currentColumn == count($columns) && $tableField->getConfig()->getComponentByType(
+                    'TableFieldFilterHeader'
+                )) {
+                $field = new TableField_FormAction(
+                    $tableField,
+                    "toggleFilter",
+                    '<i title="'.lang("search").'" class="fa fa-search"></i>',
+                    "toggleFilterVisibility",
+                    null,
+                    "var h  = $(this).parents('table').find('.filter-header');if(window['".$tableField->divID(
+                    )."hasBeenOpened']) { h.addClass('hidden'); window['".$tableField->divID(
+                    )."hasBeenOpened'] = false; return false; } else if (h.hasClass('hidden')) { window['".$tableField->divID(
+                    )."hasBeenOpened'] = true; h.removeClass('hidden'); return false; }"
+                );
+                $field->addExtraClass("tablefield-button-filter");
+                $field->addExtraClass("trigger");
+                $field->addClass("button-clear");
 
-		return array(
-			"header" => $forTemplate->customise(array("fields" => $fields))->renderWith("form/tableField/sortableHeader.html")
-		);
-	}
+                // not sortable column
+            } else {
+                $field = new HTMLField($columnField, '<span class="non-sortable">'.$title.'</span>');
+            }
 
-	/**
-	 * manipulates the dataobjectset
-	 * @param TableField $tableField
-	 * @param DataObjectSet|DataSet $data
-	 * @return $this|DataObjectSet|DataSet
-	 */
-	public function manipulate($tableField, $data) {
-		$state = $tableField->state->tableFieldSortableHeader;
+            $fields->push(
+                array(
+                    "field" => $field->exportFieldInfo()->ToRestArray(true),
+                    "name"  => $columnField,
+                    "title" => $title,
+                )
+            );
+        }
 
-		if ($state->sortColumn == "") {
-			return $data;
-		}
+        return array(
+            "header" => $forTemplate->customise(array("fields" => $fields))->renderWith(
+                "form/tableField/sortableHeader.html"
+            ),
+        );
+    }
 
-		return $data->sort($state->sortColumn, $state->sortDirection);
-	}
+    /**
+     * manipulates the dataobjectset
+     * @param TableField $tableField
+     * @param DataObjectSet|DataSet $data
+     * @return $this|DataObjectSet|DataSet
+     */
+    public function manipulate($tableField, $data)
+    {
+        $state = $tableField->state->tableFieldSortableHeader;
+        if (isset($this->valueCallback[strtolower($state->sortColumn)])) {
+            return call_user_func_array(
+                $this->valueCallback[strtolower($state->sortColumn)],
+                array($data, $state->sortDirection)
+            );
+        } else {
+            if ($state->sortColumn == "") {
+                return $data;
+            }
 
-	/**
-	 * provide some actions of this tablefield
-	 *
-	 * @name getActions
-	 * @access public
-	 * @return array
-	 */
-	public function getActions($tableField) {
-		return array("sortasc", "sortdesc");
-	}
+            return $data->sort($state->sortColumn, $state->sortDirection);
+        }
+    }
 
-	/**
-	 * handles the actions, so it pushes the states
-	 *
-	 *@name handleAction
-	 *@access public
-	 */
-	public function handleAction($tableField, $actionName, $arguments, $data) {
-		$state = $tableField->state->tableFieldSortableHeader;
+    /**
+     * provide some actions of this tablefield
+     *
+     * @name getActions
+     * @access public
+     * @return array
+     */
+    public function getActions($tableField)
+    {
+        return array("sortasc", "sortdesc");
+    }
 
-		switch($actionName) {
-			case 'sortasc':
-				$state->sortColumn = $arguments['SortColumn'];
-				$state->sortDirection = 'asc';
-				break;
+    /**
+     * handles the actions, so it pushes the states
+     *
+     * @name handleAction
+     * @access public
+     */
+    public function handleAction($tableField, $actionName, $arguments, $data)
+    {
+        $state = $tableField->state->tableFieldSortableHeader;
 
-			case 'sortdesc':
-				$state->sortColumn = $arguments['SortColumn'];
-				$state->sortDirection = 'desc';
-				break;
-		}
-	}
+        switch ($actionName) {
+            case 'sortasc':
+                $state->sortColumn = $arguments['SortColumn'];
+                $state->sortDirection = 'asc';
+                break;
+
+            case 'sortdesc':
+                $state->sortColumn = $arguments['SortColumn'];
+                $state->sortDirection = 'desc';
+                break;
+        }
+    }
 }

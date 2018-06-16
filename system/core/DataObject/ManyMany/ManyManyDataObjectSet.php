@@ -572,10 +572,16 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
         $this->updateLastModifiedOnAddedRecords($addedRecords);
 
         $this->dbDataSource()->clearCache();
-        $this->dbDataSource()->onBeforeManipulateManyMany($manipulation, $this, $addedRecords);
-        $this->modelSource()->callExtending("onBeforeManipulateManyMany", $manipulation, $this, $addedRecords);
+        $this->ownRecord->onBeforeManipulateManyMany($manipulation, $this, $addedRecords);
+        $this->ownRecord->callExtending("onBeforeManipulateManyMany", $manipulation, $this, $addedRecords);
         if(!$this->dbDataSource()->manipulate($manipulation)) {
-            $exceptions[] = new LogicException("Could not manipulate Database. Manipulation corrupted. <pre>" . print_r($manipulation, true) . "</pre>");
+            $exceptions[] = new LogicException(
+                "Could not manipulate Database. Manipulation corrupted. <pre>".print_r($manipulation, true)."</pre>"
+            );
+        }
+
+        if(!isset($options["callRemove"]) || $options["callRemove"] === true) {
+            $this->ownRecord->onAfterWriteManyMany($this);
         }
     }
 
@@ -777,13 +783,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
             }
 
             $insertedRelationships = array();
-            $this->dbDataSource()->onBeforeManipulateManyMany($manipulation, $this, $insertedRelationships);
-            $this->modelSource()->callExtending(
-                "onBeforeManipulateManyMany",
-                $manipulation,
-                $this,
-                $insertedRelationships
-            );
+            $this->ownRecord->onBeforeManipulateManyMany($manipulation, $this, $insertedRelationships);
             if (!$this->dbDataSource()->manipulate($manipulation)) {
                 throw new LogicException(
                     "Could not manipulate Database. Manipulation corrupted. <pre>".print_r($manipulation, true)."</pre>"

@@ -1,7 +1,6 @@
 (function($){
     if(goma.ui.ajaxloader === undefined) {
-        var http_regexp = /https?\:\/\//,
-            load_alwaysLoad = /\/[^\/]*(data)[^\/]+\.js/,
+        var load_alwaysLoad = /\/[^\/]*(data)[^\/]+\.js/,
             external_regexp = /https?\:\/\/|ftp\:\/\//,
             run_regexp = /\/[^\/]*(script|raw)[^\/]+\.js/;
 
@@ -27,17 +26,17 @@
                     }
                 }
 
-                goma.ui.loadResources(xhr, progress).done(function () {
+                goma.ui.ajaxloader.loadResources(xhr, progress).done(function () {
                     if (xhr === undefined) {
                         throw new Error("xhr is not defined but required param.");
                     }
 
                     var content_type = xhr.getResponseHeader("content-type"),
 
-                        regexp = new RegExp("<body"),
+                        bodyRegexp = new RegExp("<body"),
                         id = randomString(5);
 
-                    if (content_type.indexOf("text/javascript") != -1) {
+                    if (content_type.indexOf("text/javascript") !== -1) {
                         if (object !== undefined) {
                             var method = new Function(html);
                             method.call(object);
@@ -46,19 +45,30 @@
                         }
                         RunAjaxResources(xhr);
                         return true;
-                    } else if (content_type == "text/x-json" && json_regexp.test(html)) {
+                    } else if (content_type === "text/x-json" && json_regexp.test(html)) {
                         RunAjaxResources(xhr);
                         return false;
                     }
 
-                    if (regexp.test(html)) {
+                    if (bodyRegexp.test(html)) {
                         window.top[id + "_html"] = html;
                         node.html('<iframe src="javascript:document.write(top.'+id+'_html);" height="500" width="100%" name="'+id+'" frameborder="0"></iframe>');
                     } else {
+                        html = html.replace(/<link[^>]+rel="stylesheet"[^>]*>/gmi, "");
+                        var scriptMatches = goma.ui.ajaxloader.getAllMatches(/<script[^>]+type="text\/javascript"[^>]*>([\s\S]+?)<\/script\s*>/gmi, html);
+                        html = html.replace(/<script[^>]+type="text\/javascript"[^>]*>([\s\S]*)<\/script\s*>/gmi, "");
                         node.html(html);
                     }
 
                     RunAjaxResources(xhr);
+
+                    if(scriptMatches !== undefined) {
+                        for (var i in scriptMatches) {
+                            if (scriptMatches.hasOwnProperty(i)) {
+                                eval_global(scriptMatches[i][1]);
+                            }
+                        }
+                    }
 
                     deferred.resolve();
                 }).fail(function (err) {
@@ -66,6 +76,28 @@
                 });
 
                 return deferred.promise();
+            },
+
+            getAllMatches: function(regex, text) {
+                if (regex.constructor !== RegExp) {
+                    throw new Error('not RegExp');
+                }
+
+                var res = [];
+                var match = null;
+
+                if (regex.global) {
+                    while (match = regex.exec(text)) {
+                        res.push(match);
+                    }
+                }
+                else {
+                    if (match = regex.exec(text)) {
+                        res.push(match);
+                    }
+                }
+
+                return res;
             },
 
             setProgress: function(percent, slowp) {
@@ -88,18 +120,18 @@
                     duration: duration,
                     queue: false,
                     complete: function () {
-                        if (percent != 100) {
+                        if (percent !== 100) {
                             deferred.resolve();
                         }
                     },
                     fail: function () {
-                        if (percent != 100) {
+                        if (percent !== 100) {
                             deferred.reject();
                         }
                     }
                 });
 
-                if (percent == 100) {
+                if (percent === 100) {
                     $("#loadingBar").animate({
                         opacity: 0
                     }, {
@@ -214,8 +246,6 @@
 
                     css = request.getResponseHeader("X-CSS-Load"),
                     js = request.getResponseHeader("X-JavaScript-Load"),
-                    base_uri = request.getResponseHeader("x-base-uri"),
-                //root_path = request.getResponseHeader("x-root-path"),
                     cssfiles = (css != null) ? css.split(";") : [],
                     jsfiles = (js != null) ? js.split(";") : [],
 

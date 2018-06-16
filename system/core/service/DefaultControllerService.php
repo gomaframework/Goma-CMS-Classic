@@ -111,7 +111,7 @@ class DefaultControllerService extends gObject {
     public function setModel($model)
     {
         if(!is_a($model, \ViewAccessableData::class)) {
-            throw new InvalidArgumentException("Argument must be type of ViewAccessableData.");
+            throw new InvalidArgumentException("Argument must be type of ViewAccessableData. It was " . gettype($model) . ".");
         }
 
         $this->model = $model;

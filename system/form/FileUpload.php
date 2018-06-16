@@ -12,7 +12,7 @@ class FileUpload extends FormField {
     /**
      * url-handlers. used for controller.
      */
-    public $url_handlers = array(
+    static $url_handlers = array(
         "ajaxUpload" => "ajaxUpload",
         "frameUpload" => "frameUpload"
     );
@@ -20,7 +20,7 @@ class FileUpload extends FormField {
     /**
      * used for controller.
      */
-    public $allowed_actions = array(
+    static $allowed_actions = array(
         "ajaxUpload",
         "frameUpload"
     );

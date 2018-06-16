@@ -513,7 +513,7 @@ class SQL
                 }
 
                 if (isset($DBFields[$field])) {
-                    $field = $DBFields[$field][0].".".$DBFields[$field][1];
+                    $field = $DBFields[$field][1] ? $DBFields[$field][0].".".$DBFields[$field][1] : $DBFields[$field][0];
                 }
 
                 $currentQuery = self::parseValue($field, $value);
@@ -567,19 +567,19 @@ class SQL
     static function parseValue($field, $value)
     {
         if($value === null) {
-            return ' ' . convert::raw2sql($field) . ' IS NULL ';
+            return ' ' . $field . ' IS NULL ';
         } else
         if (is_array($value) && count($value) == 2 && isset($value[1], $value[0]) && ($value[0] == "LIKE" || $value[0] == ">" || $value[0] == "!=" || $value[0] == "<" || $value[0] == ">=" || $value[0] == "<=" || $value[0] == "<>")) {
             if ($value[0] == "LIKE") {
-                return ' ' . convert::raw2sql($field) . ' ' . (defined("SQL_LIKE") ? SQL_LIKE : "LIKE") . ' "' . convert::raw2sql($value[1]) . '"';
+                return ' ' . $field . ' ' . (defined("SQL_LIKE") ? SQL_LIKE : "LIKE") . ' "' . convert::raw2sql($value[1]) . '"';
             } else {
-                return ' ' . convert::raw2sql($field) . ' ' . $value[0] . ' "' . convert::raw2sql($value[1]) . '"';
+                return ' ' . $field . ' ' . $value[0] . ' "' . convert::raw2sql($value[1]) . '"';
             }
 
         } else if (is_array($value)) {
-            return ' ' . convert::raw2sql($field) . ' IN ("' . implode('","', array_map(array("convert", "raw2sql"), $value)) . '")';
+            return ' ' . $field . ' IN ("' . implode('","', array_map(array("convert", "raw2sql"), $value)) . '")';
         } else {
-            return ' ' . convert::raw2sql($field) . ' = "' . convert::raw2sql($value) . '"';
+            return ' ' . $field . ' = "' . convert::raw2sql($value) . '"';
         }
     }
 }

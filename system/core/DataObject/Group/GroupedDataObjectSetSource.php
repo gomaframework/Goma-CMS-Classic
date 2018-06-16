@@ -176,17 +176,6 @@ class GroupedDataObjectSetDataSource implements \IDataObjectSetDataSource {
     }
 
     /**
-     * @param array $manipulation
-     * @param ManyMany_DataObjectSet $set
-     * @param array $writeData array of versionid => boolean
-     * @return mixed
-     */
-    public function onBeforeManipulateManyMany(&$manipulation, $set, $writeData)
-    {
-        return $this->datasource->onBeforeManipulateManyMany($manipulation, $set, $writeData);
-    }
-
-    /**
      * @return void
      */
     public function clearCache()

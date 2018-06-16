@@ -17,7 +17,7 @@ class HistoryController extends Controller
      * @name url_handlers
      * @access public
      */
-    public $url_handlers = array(
+    static $url_handlers = array(
         'compareVersion/$class!/$id!/$nid!' => "compareVersion",
         'restoreVersion/$class!/$id!' => "restoreVersion",
         '$c/$i' => "index"
@@ -28,7 +28,7 @@ class HistoryController extends Controller
      *
      * @name allowed_actions
      */
-    public $allowed_actions = array(
+    static $allowed_actions = array(
         "compareVersion" => "->canCompareVersion",
         "restoreVersion" => "->canRestoreVersion"
     );
@@ -50,16 +50,15 @@ class HistoryController extends Controller
                 foreach ((array)$filter["dbobject"] as $class) {
                     $dbObjectFilter = array_merge($dbObjectFilter, array($class), ClassInfo::getChildren($class));
                 }
-                $filter["dbobject"] = array_intersect(ArrayLib::key_value($dbObjectFilter), History::supportHistoryView());
+                $filter["dbobject"] = array_intersect(ArrayLib::key_value($dbObjectFilter), array_keys(History::supportHistoryView()));
                 if (count($filter["dbobject"]) == 0) {
                     return false;
                 }
             } else {
-                $filter["dbobject"] = History::supportHistoryView();
+                $filter["dbobject"] = array_keys(History::supportHistoryView());
             }
-            foreach ($filter["dbobject"] as $key => $value) {
-                $filter["dbobject"][$key] = str_replace("historydata_", "", $value);
-            }
+
+            $filter["dbobject"] = array_map("strtolower", $filter["dbobject"]);
 
             $data = DataObject::get("History", $filter);
         }

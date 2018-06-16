@@ -27,7 +27,7 @@ class FormValidator extends gObject
     protected $args = array();
 
     /**
-     * @param callback $data
+     * @param callable $data
      * @param array $args
      */
     public function __construct($data = null, $args = null)
@@ -40,6 +40,10 @@ class FormValidator extends gObject
 
         $this->args = isset($args) && is_array($args) ? $args : array();
         $this->data = $data;
+
+        if(is_a($data, Closure::Class)) {
+            throw new InvalidArgumentException("\$data can't be a closure due to serialization.");
+        }
     }
 
     /**

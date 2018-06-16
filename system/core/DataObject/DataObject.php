@@ -574,6 +574,17 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
     }
 
     /**
+     * Method is called from ManyMany_DataObjectSet after a commit of a ManyMany-Relationship was done.
+     * First parameter is the corresponding relationship object.
+     *
+     * @param ManyMany_DataObjectSet $manyManyDataObjectSet
+     */
+    public function onAfterWriteManyMany($manyManyDataObjectSet)
+    {
+        $this->callExtending("onAfterWriteManyMany", $manyManyDataObjectSet);
+    }
+
+    /**
      * will be called after publish
      *
      * @param ModelWriter $modelWriter
@@ -1324,9 +1335,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
 
         if (is_array($filter)) {
             if (isset($filter["versionid"])) {
-                $filter["".$baseTable.".id"] = $filter["versionid"];
-                unset($filter["versionid"]);
-
                 if($version === null) {
                     $version = false;
                 }
@@ -1339,6 +1347,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         $query->db_fields["last_modified"] = $baseTable;
         $query->db_fields["class_name"] = $baseTable;
         $query->db_fields["created"] = $baseTable;
+        $query->db_fields["hashvalue"] = array("concat('DataObject_', " . $baseTable . ".class_name, '_', " . $baseTable . ".id)", "");
         $query->db_fields["versionid"] = array($baseTable, "id");
 
         // set filter
@@ -2439,6 +2448,18 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      */
     public function manipulate($manipulation) {
         return SQL::manipulate($manipulation);
+    }
+
+    /**
+     * returns a unique string value to identify this object.
+     * @return string
+     */
+    public function hashValue() {
+        if($this->versionid != 0) {
+            return "DataObject_" . $this->class_name . "_" . $this->versionid;
+        } else {
+            return parent::hashValue();
+        }
     }
 }
 

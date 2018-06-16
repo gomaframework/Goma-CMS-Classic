@@ -703,5 +703,7 @@ $lang = array(
 
 
     "your_new_user_account" => "A new user has been created for you",
-    "welcome_new_user" => "Welcome! Please set your password to get started."
+    "welcome_new_user" => "Welcome! Please set your password to get started.",
+
+    "welcome_mail_subject" => "You have been invited to activate your account for \$serverName."
 );

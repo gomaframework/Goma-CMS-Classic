@@ -19,7 +19,7 @@ class ModelInfoGenerator {
     public static function generate_combined_array($class, $staticProp, $extensionMethod = null, $useParents = false) {
         $class = ClassManifest::resolveClassName($class);
 
-        $fields = (array)StaticsManager::getNotExtendedStatic($class, $staticProp);
+        $fields = (array)StaticsManager::getNotInheritedStatic($class, $staticProp);
 
         // fields of extensions
         if($extensionMethod !== null) {
@@ -273,7 +273,7 @@ class ModelInfoGenerator {
 
         $indexes = array_merge(self::getHasOneArrayWithValue($class, "INDEX"), $indexes);
 
-        $searchable_fields = StaticsManager::getNotExtendedStatic($class, "search_fields");
+        $searchable_fields = StaticsManager::getNotInheritedStatic($class, "search_fields");
         if ($searchable_fields) {
             // we add an index for fast searching
             $indexes["searchable_fields"] = array("type" => "INDEX", "fields" => implode(",", $searchable_fields), "name" => "searchable_fields");

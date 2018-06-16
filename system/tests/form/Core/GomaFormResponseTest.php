@@ -118,7 +118,7 @@ class GomaFormResponseTest extends GomaUnitTest {
     }
 }
 
-class FormMock {
+class FormMock extends \gObject {
     /**
      * @var mixed
      */
@@ -132,7 +132,7 @@ class FormMock {
     /**
      * @return mixed
      */
-    public function renderData() {
+    public function submitOrRenderForm() {
         return $this->response;
     }
 

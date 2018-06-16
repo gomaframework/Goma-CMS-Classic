@@ -552,4 +552,94 @@ class FormTest extends GomaUnitTest implements TestAble {
         $this->assertInstanceOf(\FormNotSubmittedException::class, $exc);
         $this->assertFalse(!!preg_match('/url/', $exc->getMessage()));
     }
+
+    /**
+     * tests if after removing a field, field is not accessible anymore.
+     *
+     * 1. Create form $form
+     * 2. Add FormField $field as "field"
+     * 3. Call $form->field->remove()
+     * 4. Assert That $form->field is null.
+     */
+    public function testRemoveField() {
+        $form = new Form(new Controller(), "name");
+        $form->add(new FormField("field"));
+        $form->field->remove();
+        $this->assertNull($form->field);
+    }
+
+    /**
+     * tests if after removing a field by name, field is not accessible anymore.
+     *
+     * 1. Create form $form
+     * 2. Add FormField $field as "field"
+     * 3. Call $form->remove("field")
+     * 4. Assert That $form->field is null.
+     */
+    public function testRemoveFieldByName() {
+        $form = new Form(new Controller(), "name");
+        $form->add(new FormField("field"));
+        $form->remove("field");
+        $this->assertNull($form->field);
+    }
+
+    /**
+     * tests if after removing a field, field is not accessible anymore if it was in FieldSet.
+     *
+     * 1. Create form $form
+     * 2. Add FieldSet with $field as "field"
+     * 3. Call $form->field->remove()
+     * 4. Assert That $form->field is null.
+     */
+    public function testRemoveFieldInFieldSet() {
+        $form = new Form(new Controller(), "name");
+        $form->add(new FieldSet("set", array(new FormField("field"))));
+        $form->field->remove();
+        $this->assertNull($form->field);
+    }
+
+    /**
+     * tests if after removing a field by name, field is not accessible anymore if it was in FieldSet.
+     *
+     * 1. Create form $form
+     * 2. Add FieldSet with $field as "field"
+     * 3. Call $form->remove("field")
+     * 4. Assert That $form->field is null.
+     */
+    public function testRemoveFieldByNameInFieldSet() {
+        $form = new Form(new Controller(), "name");
+        $form->add(new FieldSet("set", array(new FormField("field"))));
+        $form->remove("field");
+        $this->assertNull($form->field);
+    }
+
+    /**
+     * tests if after removing a field by name by calling method on FieldSet, field is not accessible anymore if it was in FieldSet.
+     *
+     * 1. Create form $form
+     * 2. Add FieldSet $set with $field as "field"
+     * 3. Call $set->remove("field")
+     * 4. Assert That $form->field is null.
+     */
+    public function testRemoveFieldByNameOnSetInFieldSet() {
+        $form = new Form(new Controller(), "name");
+        $form->add($set = new FieldSet("set", array(new FormField("field"))));
+        $set->remove("field");
+        $this->assertNull($form->field);
+    }
+
+    /**
+     * tests if after removing a field by name by calling method on FieldSet, field is not accessible anymore if it was in FieldSet.
+     *
+     * 1. Create form $form
+     * 2. Add FieldSet $set with $field as "field"
+     * 3. Call $set->remove("FIELD")
+     * 4. Assert That $form->field is null.
+     */
+    public function testRemoveFieldByNameOnSetInFieldSetUppercase() {
+        $form = new Form(new Controller(), "name");
+        $form->add($set = new FieldSet("set", array(new FormField("field"))));
+        $set->remove("FIELD");
+        $this->assertNull($form->field);
+    }
 }

@@ -3,7 +3,7 @@
 defined("IN_GOMA") or die();
 
 /**
- * The base model for the admin-panel.
+ * The base model for the admin-panel overview.
  *
  * @package     Goma\Core\Admin
  *
@@ -14,16 +14,14 @@ defined("IN_GOMA") or die();
  */
 class admin extends ViewAccessableData implements PermProvider
 {
+    /**
+     * @var array
+     */
     static $casting = array(
         "updatables_json" => DBField::class,
         "updatables" => DBField::class,
         "addcontent" => DBField::class
     );
-
-    /**
-     * @var User
-     */
-    public $currentUser;
 
     /**
      * user-bar
@@ -127,35 +125,53 @@ class admin extends ViewAccessableData implements PermProvider
      * gets data fpr available points
      *
      * @return DataSet
+     * @throws Exception
+     * @throws PermissionException
+     * @throws SQLException
      */
     public function this()
     {
-        if(!$this->currentUser) {
-            throw new InvalidArgumentException("\$currentUser must be set for model admin.");
+        if (!Member::$loggedIn) {
+            throw new InvalidArgumentException("User must be logged in. (Member::\$loggedIn must be set.)");
         }
 
         $data = new DataSet();
         foreach (ClassInfo::getChildren("adminitem") as $child) {
-            /** @var adminItem $class */
-            $class = new $child;
-            if (isset($class->text) && $class->text) {
-                if ($class->visible($this->currentUser) && $this->currentUser->hasPermissions($class->rights)) {
-                    if (adminController::activeController()->classname == $child)
+            if ($text = StaticsManager::getStatic($child, "text", true)) {
+                if (StaticsManager::callStatic($child, "visible", true, array(Member::$loggedIn))) {
+                    if (adminController::activeController()->classname == $child) {
                         $active = true;
-                    else
+                    } else {
                         $active = false;
+                    }
 
-                    $data->push(array('text'   => parse_lang($class->text),
-                        'uname'  => str_replace("\\", "-", substr($class->classname, 0, -5)),
-                        'sort'   => StaticsManager::getStatic($class, "sort", true),
-                        "active" => $active,
-                        "icon"   => ClassInfo::getClassIcon($class->classname)));
+                    $data->push(
+                        array(
+                            'text'   => parse_lang($text),
+                            'uname'  => $this->getUrlForClass($child),
+                            'sort'   => StaticsManager::getStatic($child, "sort", true),
+                            "active" => $active,
+                            "icon"   => ClassInfo::getClassIcon($child),
+                        )
+                    );
                 }
             }
         }
         $data->sort("sort", "DESC");
 
         return $data;
+    }
+
+    /**
+     * @param string $class
+     * @return string
+     */
+    protected function getUrlForClass($class) {
+        if(strtolower(substr($class, -5)) == "admin") {
+            return substr(ClassManifest::getUrlClassName($class), 0, -5);
+        }
+
+        return ClassManifest::getUrlClassName($class);
     }
 
     /**
@@ -171,7 +187,6 @@ class admin extends ViewAccessableData implements PermProvider
     /**
      * lost_password
      *
-     * @name getLost_password
      * @access public
      */
     public function getLost_password()

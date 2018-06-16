@@ -38,7 +38,6 @@ class livecounter extends DataObject
      * database-fields
      */
     static $db = array(
-        'user' 			=> 'varchar(200)',
         'phpsessid' 	=> 'varchar(800)',
         "browser"		=> "varchar(200)",
         "referer"		=> "varchar(400)",
@@ -194,10 +193,6 @@ class livecounter extends DataObject
         return $user_identifier;
     }
 
-    public static function userId() {
-        return member::$id;
-    }
-
     public static function isBot($userAgent, $referer) {
 
         if(!isset($referer)) {
@@ -239,7 +234,7 @@ class livecounter extends DataObject
                 return true;
             } else if($data) {
 
-                self::generateLiveCounterSession($userAgent, $user_identifier, self::userId(), 1);
+                self::generateLiveCounterSession($userAgent, $user_identifier, 1);
 
                 return;
             }
@@ -269,7 +264,7 @@ class livecounter extends DataObject
                     DataObject::update("livecounter", array("hitcount" => $data->hitcount, "phpsessid" => $data->phpsessid, "last_modified" => $data->last_modified), array("recordid" => $lt));
                     $data->remove(true);
 
-                    self::generateLiveCounterSession($userAgent, $user_identifier, self::userId(), 1);
+                    self::generateLiveCounterSession($userAgent, $user_identifier, 1);
                 }
 
                 // free memory
@@ -284,7 +279,7 @@ class livecounter extends DataObject
          */
         $data = DataObject::get_one("livecounter_live", array("phpsessid" => $user_identifier, "last_modified" => array(">", $timeout)));
         if($data && date("d", $data->created) == date("d", time())) {
-            DataObject::update(livecounter_live::class, array("user" => self::userId(), "hitcount" => $data->hitcount + 1), array("id" => $data->versionid));
+            DataObject::update(livecounter_live::class, array("hitcount" => $data->hitcount + 1), array("id" => $data->versionid));
         } else {
             if($data) {
                 $lt = $data->longtermid;
@@ -293,7 +288,7 @@ class livecounter extends DataObject
             }
 
             $recurring = (isset($_COOKIE["goma_lifeid"]) && DataObject::count("livecounter", array("phpsessid" => $_COOKIE["goma_lifeid"])) > 0);
-            self::generateLiveCounterSession($userAgent, $user_identifier, self::userId(), $recurring);
+            self::generateLiveCounterSession($userAgent, $user_identifier, $recurring);
         }
 
     }
@@ -333,12 +328,11 @@ class livecounter extends DataObject
         }
     }
 
-    public static function generateLiveCounterSession($userAgent, $user_identifier, $userid, $recurring) {
+    public static function generateLiveCounterSession($userAgent, $user_identifier, $recurring) {
 
         $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : "";
 
         $data = new LiveCounter();
-        $data->user = $userid;
         $data->phpsessid = $user_identifier;
         $data->browser = $userAgent;
         $data->referer = $referer;
@@ -401,6 +395,7 @@ class livecounter extends DataObject
      * @param int $start timestamp to start
      * @param int $end timestamp to end
      * @return array
+     * @throws SQLException
      */
     static function statisticsData($start, $end, $maxPoints = 32) {
 

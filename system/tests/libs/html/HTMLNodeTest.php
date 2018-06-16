@@ -34,7 +34,7 @@ class HTMLNodeTests extends GomaUnitTest {
     /**
      * tests setting css attribute.
      */
-    public function testSetCSSAttribute() {
+	public function testSetCSSAttribute() {
         $node = new HTMLNode("div");
         $node->css = "color:red;background-color: green;";
         $this->assertEqual("red", $node->css("color"));

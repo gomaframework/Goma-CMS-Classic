@@ -787,7 +787,7 @@ class SelectQuery {
 
 	/**
 	 * generates the coliding SQL
-	 * @return string
+	 * @return array
 	 */
 	protected function generateColidingSQL() {
 		// some added caches ;)
@@ -798,7 +798,7 @@ class SelectQuery {
 			$colidingSQL = array();
 
 			foreach($data["dbfields"] as $field => $info) {
-				$colidingSQL[] = $info[0] . "." . $info[1] . " as " . $field;
+				$colidingSQL[] = $info[1] ? $info[0] . "." . $info[1] . " as " . $field : $info[0] . " as " . $field;
 			}
 
 			// fix coliding fields
@@ -897,6 +897,7 @@ class SelectQuery {
 		}
 
 		$fieldsData = array_merge($fieldsData, $this->generateColidingSQL());
+		$DBFields = $this->generateDBFieldColidingCache()["dbfields"];
 
 		foreach($fields as $key => $field) {
 			// some basic filter
@@ -915,7 +916,8 @@ class SelectQuery {
 			} else {
 				if(isset($DBFields[$field]) && !isset($colidingFields[$field])) {
 					$alias = $field;
-					$field = self::getAlias($DBFields[$field][0]) . "." . $DBFields[$field][1];
+                    $field = $DBFields[$field][1] ? self::getAlias($DBFields[$field][0]) . "." . $DBFields[$field][1] :
+                        self::getAlias($DBFields[$field][0]);
 				} else if(isset($colidingFields[$field])) {
 					continue;
 				} else {

@@ -114,10 +114,10 @@ class PermissionField extends ClusterFormField {
         $model = parent::getModel();
 
         if(!isset($model)) {
-            $model = new Permission();
-        }
-
-        if(!is_a($model, "Permission")) {
+            if(!$this->isDisabled()) {
+                $model = new Permission();
+            }
+        } else if(!is_a($model, "Permission")) {
             throw new InvalidArgumentException("Model for Permissionfield must be Permission or null.");
         }
 
@@ -126,7 +126,7 @@ class PermissionField extends ClusterFormField {
 
     /**
      * @param Permission $model
-     * @return mixed
+     * @return Permission
      */
     protected function setInheritOnModel($model) {
         if($model->type == "inherit" && $this->inheritFrom) {
@@ -155,6 +155,10 @@ class PermissionField extends ClusterFormField {
      */
     public function result()
     {
+        if($this->isDisabled()) {
+            return $this->getModel();
+        }
+
         $model = parent::result();
 
         return $this->setInheritOnModel($model);

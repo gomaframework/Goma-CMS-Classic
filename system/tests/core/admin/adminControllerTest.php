@@ -47,7 +47,7 @@ class TestHandleItemAdmin extends \adminItem {
      * @param \User $user
      * @return bool
      */
-    public function visible($user)
+    public static function visible($user)
     {
         return false;
     }

@@ -65,7 +65,7 @@ class ConfirmationForm extends Form {
      * @param bool $notSavedYet
      * @return mixed|string
      */
-    public function renderForm($errors = array(), $notSavedYet = false)
+    protected function renderFormFields($errors = array(), $notSavedYet = false)
     {
         if($this->getRequest()->canReplyJavaScript() || isset($this->request->get_params["ajaxfy"])) {
             foreach($this->actions as $actionData) {
@@ -86,7 +86,7 @@ class ConfirmationForm extends Form {
             }
         }
 
-        $content = parent::renderForm($errors, $notSavedYet);
+        $content = parent::renderFormFields($errors, $notSavedYet);
 
         if($this->getRequest()->canReplyJavaScript()) {
             $ajaxResponse = new AjaxResponse();

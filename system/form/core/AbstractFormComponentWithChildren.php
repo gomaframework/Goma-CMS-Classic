@@ -149,28 +149,33 @@ abstract class AbstractFormComponentWithChildren extends AbstractFormComponent {
     /**
      * removes a field
      * @param string $field
+     * @param bool $propagateDown
      */
-    public function remove($field = null) {
-        if(!isset($field)) {
-            parent::remove();
-        }
+    public function remove($field = null, $propagateDown = true) {
+        if(isset($field)) {
+            if (!is_object($field) && !is_array($field)) {
+                if (isset($this->fields[strtolower($field)])) {
+                    unset($this->fields[strtolower($field)]);
+                }
 
-        if(!is_object($field) && !is_array($field)) {
-            if (isset($this->fields[$field])) {
-                unset($this->fields[$field]);
-            }
-
-            if (is_string($field)) {
-                $this->fieldList->remove($this->fieldList->find("__fieldname", $field, true));
-            }
-        }
-
-        if($this->fieldList->count() > 0) {
-            foreach ($this->fieldList as $myField) {
-                if (is_subclass_of($myField, "AbstractFormComponentWithChildren")) {
-                    $myField->remove($field);
+                if (is_string($field)) {
+                    $this->fieldList->remove($this->fieldList->find("__fieldname", strtolower($field), true));
                 }
             }
+
+            if($this->parent) {
+                $this->parent->remove($field, false);
+            }
+
+            if ($field && $propagateDown && $this->fieldList->count() > 0) {
+                foreach ($this->fieldList as $myField) {
+                    if (is_subclass_of($myField, "AbstractFormComponentWithChildren")) {
+                        $myField->remove($field);
+                    }
+                }
+            }
+        } else {
+            parent::remove();
         }
     }
 
@@ -216,12 +221,6 @@ abstract class AbstractFormComponentWithChildren extends AbstractFormComponent {
      * @return array|string|FormField
      */
     public function __get($offset) {
-        if($offset == "result") {
-            Core::Deprecate(2.0, "getResult");
-
-            return $this->result;
-        }
-
         if($offset == "form") {
             if(property_exists($this, "form")) {
                 return $this->form;
@@ -469,12 +468,15 @@ abstract class AbstractFormComponentWithChildren extends AbstractFormComponent {
     }
 
     /**
+     * adds to result regardless if disabled or not.
+     * Disabled is handled in sub components.
+     *
      * @param array $result
      */
     public function argumentResult(&$result)
     {
         /** @var AbstractFormComponent $field */
-        foreach($this->fieldList as $field) {
+        foreach ($this->fieldList as $field) {
             $field->argumentResult($result);
         }
     }

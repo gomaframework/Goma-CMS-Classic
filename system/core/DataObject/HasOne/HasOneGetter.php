@@ -154,7 +154,7 @@ class HasOneGetter extends AbstractGetterExtension implements postArgumentsQuery
                     $response->setVersion(DataObject::VERSION_STATE);
                 }
 
-                $this->getOwner()->setField($name, $instance = $response->first());
+                $this->getOwner()->setField($name, $instance = $response->first(), true);
             }
 
             return $instance;

@@ -79,14 +79,34 @@ class ManyManyGetter extends AbstractGetterExtension implements PostArgumentsQue
     protected function factorOutFilter($filterArray, $version, $forceClasses, $relationShips) {
         foreach($filterArray as $key => $value) {
             if(isset($relationShips[strtolower($key)])) {
-                $filterArray[$key] = " EXISTS ( ".
-                    $this->buildRelationQuery($relationShips[strtolower($key)], $version, $value, $forceClasses)->build()
-                    ." ) ";
-                $filterArray = ArrayLib::change_key($filterArray, $key, ArrayLib::findFreeInt($filterArray));
+                if($value) {
+                    if (!is_array($value) || ArrayLib::isAssocArray($value)) {
+                        $value = array($value);
+                    }
+
+                    $combinedExistsFilter = array();
+                    foreach ($value as $subFilterArray) {
+                        if (is_string($subFilterArray) && strtolower(trim($subFilterArray)) == "or") {
+                            $combinedExistsFilter[] = "OR";
+                        } else {
+                            $combinedExistsFilter[] = " EXISTS ( ".$this->buildRelationQuery(
+                                    $relationShips[strtolower($key)],
+                                    $version,
+                                    $subFilterArray,
+                                    $forceClasses
+                                )->build()." ) ";
+                        }
+                    }
+                    $filterArray[$key] = implode(" AND ", $combinedExistsFilter);
+                    $filterArray[$key] = str_replace(array(" AND OR ", " OR AND "), " OR ", $filterArray[$key]);
+                    $filterArray = ArrayLib::change_key($filterArray, $key, ArrayLib::findFreeInt($filterArray));
+                } else {
+                    unset($filterArray[$key]);
+                }
             } else if(strtolower(substr($key, -6)) == ".count" && isset($relationShips[strtolower(substr($key, 0, -6))])) {
-                $filterArray[$key] = " (".
+                $filterArray[$key] = SQL::parseValue(" (".
                     $this->buildRelationQuery($relationShips[strtolower(substr($key, 0, -6))], $version, array(), $forceClasses)->build("count(*)")
-                    .") = " . $value;
+                    .")",  $value);
                 $filterArray = ArrayLib::change_key($filterArray, $key, ArrayLib::findFreeInt($filterArray));
             } else {
                 if (is_array($value)) {
@@ -145,7 +165,7 @@ class ManyManyGetter extends AbstractGetterExtension implements PostArgumentsQue
                 $instance->setVersionMode(DataObject::VERSION_MODE_CURRENT_VERSION);
             }
 
-            $this->getOwner()->setField($name, $instance);
+            $this->getOwner()->setField($name, $instance, true);
 
             if ($this->getOwner()->queryVersion == DataObject::VERSION_STATE && !$this->getOwner()->isPublished()) {
                 $instance->setVersion(DataObject::VERSION_STATE);

@@ -25,8 +25,8 @@ class ImageUploadField extends FileUpload
 	/**
 	 * @var array
 	 */
-	public $allowed_actions = array(
-		"setCropInfo"
+	static $url_handlers = array(
+		"setCropInfo" => "setCropInfo"
 	);
 
 	/**
@@ -197,7 +197,7 @@ class ImageUploadField extends FileUpload
 	 * @throws Exception
 	 */
 	public function handleException($e) {
-		if(in_array(strtolower($this->request->getParam("action")), $this->allowed_actions)) {
+		if(in_array(strtolower($this->currentActionHandled), self::getExtendedUrlHandlers())) {
 			return GomaResponse::create(null, JSONResponseBody::create(array(
 				"class" => get_class($e),
 				"errstring" => $e->getMessage(),

@@ -19,24 +19,12 @@ class DropDown extends FormField {
 	 *
 	 * @var array
 	 */
-	public $url_handlers = array(
+	static $url_handlers = array(
 		"nojs/\$page" => "nojs",
 		"getData/\$page/\$search" => "getData",
 		"checkValue/\$value" => "checkValue",
 		"uncheckValue/\$value" => "uncheckValue",
-	);
-
-	/**
-	 * allowed actions for Controller-part.
-	 *
-	 * @var array
-	 */
-	public $allowed_actions = array(
-		"getData",
-		"checkValue",
-		"uncheckValue",
-		"nojs",
-		"saveSort"
+        "saveSort" => "saveSort"
 	);
 
 	/**
@@ -390,7 +378,11 @@ class DropDown extends FormField {
 			$this->container->addClass("disabled", "disabled");
 		}
 
-		$this->container->append(new HTMLNode("label", array("for" => $this->ID()), $this->title));
+		if($this->title) {
+            $this->container->append(new HTMLNode("label", array("for" => $this->ID()), $this->title));
+        } else {
+		    $this->container->addClass("fullSize");
+        }
 
 		$this->container->append($this->input);
 		$this->container->append(new HTMLNode("div", array("class" => "widgetwrapper input"), array($this->widget)));

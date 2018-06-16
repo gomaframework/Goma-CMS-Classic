@@ -11,46 +11,159 @@
 
 class RequestHandlerTest extends GomaUnitTest {
 
-	static $area = "Controller";
-	/**
-	 * name
-	*/
-	public $name = "RequestHandler";
+	public function testPermissionSystemBasic()
+    {
+        $h = new TestableRequestHandler();
+        $h->Init(new Request("get", ""));
+        $this->assertTrue($h->hasAction("testAction", $h->classname));
+        $this->assertEqual($h->handleAction("testAction"), $h->content);
+    }
 
-	public function testPermissionSystem() {
-		$h = new TestableRequestHandler();
-		$h->Init(new Request("get", ""));
-		$this->assertTrue($h->hasAction("testAction"));
-		$this->assertEqual($h->handleAction("testAction"), $h->content);
+    /**
+     * tests if hasAction returns true if method returns true and calls allowed_action method.
+     */
+    public function testPermissionSystemMethodHasActionTrue()
+    {
+        $h = new TestableRequestHandler();
+        $h->Init(new Request("get", ""));
+        $this->assertFalse($h->wasCalled);
+        $this->assertTrue($h->hasAction("testActionMethod", $h->classname));
+        $this->assertTrue($h->wasCalled);
+        $this->assertEqual($h->handleAction("testActionMethod"), $h->content);
+    }
 
-		$h->allowed_actions["testaction"] = "->canCallTestMethod";
-		$this->assertFalse($h->wasCalled);
-		$this->assertTrue($h->hasAction("testAction"));
-		$this->assertTrue($h->wasCalled);
-		$this->assertEqual($h->handleAction("testAction"), $h->content);
+    /**
+     * tests if hasAction returns false if method returns false and calls allowed_action method.
+     */
+    public function testPermissionSystemMethodHasActionFalse()
+    {
+        $h = new TestableRequestHandler();
+        $h->Init(new Request("get", ""));
+        $h->shouldCall = false;
+        $this->assertFalse($h->wasCalled);
+        $this->assertFalse($h->hasAction("testActionMethod"));
+        $this->assertTrue($h->wasCalled);
+    }
 
-		$h->wasCalled = false;
-		$h->shouldCall = false;
-		$this->assertFalse($h->wasCalled);
-		$this->assertFalse($h->hasAction("testAction"));
-		$this->assertTrue($h->wasCalled);
 
+    /**
+     * tests if hasAction returns false if method returns false and calls allowed_action method.
+     * $classWithActionDefined = TestableRequestHandler
+     */
+    public function testPermissionSystemMethodHasActionFalseSameClass()
+    {
+        $h = new TestableRequestHandler();
+        $h->Init(new Request("get", ""));
+        $h->shouldCall = false;
+        $this->assertFalse($h->wasCalled);
+        $this->assertFalse($h->hasAction("testActionMethod", TestableRequestHandler::class));
+        $this->assertTrue($h->wasCalled);
+    }
+
+    /**
+     * tests if hasAction returns true if method returns true and calls allowed_action method.
+     * $classWithActionDefined = TestableRequestHandler
+     */
+    public function testPermissionSystemMethodHasActionTrueSameClass()
+    {
+        $h = new TestableRequestHandler();
+        $h->Init(new Request("get", ""));
+        $h->shouldCall = true;
+        $this->assertFalse($h->wasCalled);
+        $this->assertTrue($h->hasAction("testActionMethod", TestableRequestHandler::class));
+        $this->assertTrue($h->wasCalled);
+    }
+
+    /**
+     * tests if handleRequest does not handle action if allowed action method returns false
+     * @throws Exception
+     */
+    public function testPermissionSystemMethodHandleRequestFalse()
+    {
+        $h = new TestableRequestHandler();
+        $h->shouldCall = false;
+        $h->content = "test";
+
+        $request = new Request("get", "testActionMethod");
+        $this->assertEqual("index", $h->handleRequest($request));
+    }
+
+    /**
+     * tests if handleRequest does handle action if allowed action method returns true
+     * @throws Exception
+     */
+    public function testPermissionSystemMethodHandleRequestTrue()
+    {
+        $h = new TestableRequestHandler();
+        $h->shouldCall = true;
+        $h->content = "test";
+
+        $request = new Request("get", "testActionMethod");
+        $this->assertEqual($h->content, $h->handleRequest($request));
+    }
+
+    public function testPermissionSystemMethodFalse()
+    {
+        $h = new TestableRequestHandler();
+        $h->Init(new Request("get", ""));
+        $h->shouldCall = false;
+        $this->assertFalse($h->wasCalled);
+        $this->assertFalse($h->hasAction("testActionMethod"));
+        $this->assertTrue($h->wasCalled);
+    }
+
+    public function testHandleAction() {
+        $h = new TestableRequestHandler();
+        $h->Init(new Request("get", ""));
 		// you should be able to call a method also when hasAction returns false, if method exists.
-		$this->assertEqual($h->handleAction("testAction"), $h->content);
-
-		// serve should not be called when handleAction gets called or handleRequest.
-		$this->assertEqual($h->serve($h->handleAction("testAction")), $h->content . 1);
+		$this->assertEqual($h->handleAction("testActionDisallowed"), "dis");
 	}
 
-	public function testRequestSystem() {
+	public function testServe() {
+        $h = new TestableRequestHandler();
+        $h->Init(new Request("get", ""));
+        $h->content = "blub";
+        // serve should not be called when handleAction gets called or handleRequest.
+        $this->assertEqual($h->serve($h->handleAction("testAction")), $h->content . 1);
+    }
+
+	public function testRequestSystemExtractsParams() {
 		$h = new TestableRequestHandler();
 		$r = new Request("GET", "testAction/1");
 
 		$this->assertEqual($h->handleRequest($r), $h->content);
-		$this->assertEqual($h->getParam("Action"), "testAction");
 		$this->assertEqual($h->getParam("id"), 1);
 		$this->assertEqual($h->getParam("uid"), null);
 	}
+
+    /**
+     * checks if new rule-action system was implemented by developer.
+     */
+	public function testAllowedActionWithoutRule() {
+	    $problemsInClassesWithActions = array();
+	    foreach(ClassInfo::getChildren(RequestHandler::class) as $class) {
+	        $actions = (array) call_user_func_array(array($class, "getExtendedAllowedActions"), array());
+	        $rules = StaticsManager::getInheritedStaticArrayFromMethod($class, "getExtendedUrlHandlers");
+
+	        foreach($actions as $action => $info) {
+	            if(RegexpUtil::isNumber($action)) {
+                    if(!in_array($info, $rules)) {
+                        $problemsInClassesWithActions[] = $class . "::" . $info;
+                    }
+                } else {
+                    // allow rules in format "action" => false without url-handler
+                    if(!in_array($action, $rules) && $info !== false) {
+                        $problemsInClassesWithActions[] = $class . "::" . $action;
+                    }
+                }
+            }
+        }
+
+        $this->assertEqual(array(
+            strtolower("TestableRequestHandler::testActionAllowed"),
+            strtolower("TestableRequestHandler::testActionMethodWithoutURl")
+        ), $problemsInClassesWithActions);
+    }
 }
 
 class TestableRequestHandler extends RequestHandler {
@@ -59,15 +172,25 @@ class TestableRequestHandler extends RequestHandler {
 	public $content = "test";
 	public $wasCalled = false;
 
-	public $url_handlers = array(
-		'$Action/$Id' => '$Action'
+	static $url_handlers = array(
+		'testAction/$Id'       => 'testAction',
+        'testActionMethod/$Id' => 'testActionMethod',
 	);
 
-	public $allowed_actions = array(
-		"testAction" => true
+	static $allowed_actions = array(
+		"testAction" => true,
+        "testActionDisallowed" => false,
+        "testActionMethod" => "->canCallTestMethod",
+        "testActionAllowed" => true,
+        "testActionMethodWithoutURl" => "->canCallTestMethod"
 	);
 
-	public function serve($content, $body) {
+	public function index()
+    {
+        return "index";
+    }
+
+    public function serve($content, $body) {
 		return $content . 1;
 	}
 
@@ -79,4 +202,12 @@ class TestableRequestHandler extends RequestHandler {
 	public function testAction() {
 		return $this->content;
 	}
+
+	public function testActionMethod() {
+	    return $this->content;
+    }
+
+    public function testActionDisallowed() {
+        return "dis";
+    }
 }

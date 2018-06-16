@@ -14,7 +14,7 @@ class gLoader extends RequestHandler
     /**
      * url-handlers
      */
-    public $url_handlers = array(
+    static $url_handlers = array(
         "v2/\$name" => "deliver",
         "\$name" => "deliver"
     );
@@ -22,7 +22,7 @@ class gLoader extends RequestHandler
     /**
      * allowed actions
      */
-    public $allowed_actions = array(
+    static $allowed_actions = array(
         "deliver"
     );
 

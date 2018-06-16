@@ -21,8 +21,9 @@ class VersionController extends Controller {
 
     public $template = "versions/versionsOverview.html";
 
-    public $allowed_actions = array(
-        "preview", "restore"
+    static $url_handlers = array(
+        "preview" => "preview",
+        "restore" => "restore"
     );
 
     /**

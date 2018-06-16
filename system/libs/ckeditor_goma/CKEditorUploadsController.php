@@ -20,14 +20,9 @@ class CKEditorUploadsController extends RequestHandler {
     /**
      * @var array
      */
-    public $url_handlers = array(
+    static $url_handlers = array(
         "ck_uploader"			=> "ckeditor_upload",
         "ck_imageuploader"		=> "ckeditor_imageupload",
-    );
-
-    public $allowed_actions = array(
-        "ckeditor_upload",
-        "ckeditor_imageupload"
     );
 
     /**
@@ -192,6 +187,7 @@ class CKEditorUploadsController extends RequestHandler {
      * @param int $allowedSize
      * @return array
      * @throws FileUploadException
+     * @throws FileNotPermittedException
      */
     protected function validateUpload($allowedTypes, $allowedSize) {
         if(!$this->request->getParam("accessToken") ||
@@ -236,7 +232,7 @@ class CKEditorUploadsController extends RequestHandler {
                 }
             } else {
                 if($upload["error"] == UPLOAD_ERR_INI_SIZE) {
-                    throw new FileUploadException(lang("files.filesize_failure"));
+                    throw new FileUploadException(lang("files.filesize_failure") . " (INI)");
                 } else {
                     throw new FileUploadException(lang("files.upload_failure"));
                 }

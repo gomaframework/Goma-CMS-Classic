@@ -119,7 +119,7 @@ class SessionManager implements ISessionManager {
      */
     public function get($key) {
         if(!self::$existing) {
-            throw new InvalidArgumentException("Session has been stopped or not every started.");
+            throw new InvalidArgumentException("Session has been stopped or not ever started.");
         }
 
         $data = null;

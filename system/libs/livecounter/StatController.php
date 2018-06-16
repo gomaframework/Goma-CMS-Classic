@@ -14,7 +14,7 @@ class StatController extends Controller {
      *
      *@name url_handlers
      */
-    public $url_handlers = array(
+    static $url_handlers = array(
         "lastWeek/\$page"		=> "lastWeek",
         "lastMonth/\$page"		=> "lastMonth",
         "lastYear/\$page"		=> "lastYear",
@@ -25,7 +25,7 @@ class StatController extends Controller {
     /**
      * allow actions
      */
-    public $allowed_actions = array(
+    static $allowed_actions = array(
         "handleStats"	=> "ADMIN",
         "lastMonth"		=> "ADMIN",
         "lastWeek"		=> "ADMIN",

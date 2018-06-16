@@ -42,8 +42,10 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
      * @param Callback|null $callback
      * @return $this
      */
-    public function setValueCallback($name, $callback) {
+    public function setValueCallback($name, $callback)
+    {
         $this->valueCallback[strtolower($name)] = $callback;
+
         return $this;
     }
 
@@ -52,14 +54,16 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
      * @param array $selectList
      * @return $this
      */
-    public function setSelectLists($selectList) {
-        foreach($selectList as $list) {
-            if(!is_array($list)) {
+    public function setSelectLists($selectList)
+    {
+        foreach ($selectList as $list) {
+            if (!is_array($list)) {
                 throw new InvalidArgumentException("You have to use arrays for SelectLists.");
             }
         }
 
         $this->selectList = $selectList;
+
         return $this;
     }
 
@@ -87,7 +91,11 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
 
             // sortabe column
             if ($title &&
-                ($tableField->getData()->canFilterBy($columnField) || isset($this->valueCallback[strtolower($columnField)]))) {
+                ($tableField->getData()->canFilterBy($columnField) || isset(
+                        $this->valueCallback[strtolower(
+                            $columnField
+                        )]
+                    ))) {
                 $value = '';
                 if (isset($filterArguments[strtolower($columnField)])) {
                     $value = $filterArguments[strtolower($columnField)];
@@ -95,34 +103,56 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
                 $searchField = $this->getFilterField($columnField, $value, $title);
 
                 if ($value != "") {
-                    $searchAction = new TableField_FormAction($tableField, "resetFields" . str_replace(".", "_", $columnField), '<i title="' . lang("form_tablefield.reset") . '" class="fa fa-times"></i>', "resetFields", $columnField);
+                    $searchAction = new TableField_FormAction(
+                        $tableField,
+                        "resetFields".str_replace(".", "_", $columnField),
+                        '<i title="'.lang("form_tablefield.reset").'" class="fa fa-times"></i>',
+                        "resetFields",
+                        $columnField
+                    );
                     $searchAction->addExtraClass("tablefield-button-resetFields");
                     $searchAction->addExtraClass("no-change-track");
                     $searchAction->addClass("button-clear");
 
-                    $field = new FieldSet($columnField . "_sortActions", array(
+                    $field = new FieldSet(
+                        $columnField."_sortActions", array(
                         $searchField,
-                        $searchAction
-                    ));
+                        $searchAction,
+                    )
+                    );
                 } else {
                     $field = $searchField;
                 }
                 // action column
             } else if ($currentColumn == count($columns)) {
-                $searchAction = new TableField_FormAction($tableField, "reset" . $columnField, '<i title="' . lang("form_tablefield.reset") . '" class="fa fa-times"></i>', "reset", null);
+                $searchAction = new TableField_FormAction(
+                    $tableField,
+                    "reset".$columnField,
+                    '<i title="'.lang("form_tablefield.reset").'" class="fa fa-times"></i>',
+                    "reset",
+                    null
+                );
                 $searchAction->addExtraClass("tablefield-button-reset");
                 $searchAction->addExtraClass("no-change-track");
                 $searchAction->addClass("button-clear");
 
-                $action = new TableField_FormAction($tableField, "filter" . $columnField, '<i title="' . lang("search") . '" class="fa fa-search"></i>', "filter", null);
+                $action = new TableField_FormAction(
+                    $tableField,
+                    "filter".$columnField,
+                    '<i title="'.lang("search").'" class="fa fa-search"></i>',
+                    "filter",
+                    null
+                );
                 $action->addExtraClass("tablefield-button-filter");
                 $action->addExtraClass("no-change-track");
                 $action->addClass("button-clear");
 
-                $field = new FieldSet($columnField . "_sortActions", array(
+                $field = new FieldSet(
+                    $columnField."_sortActions", array(
                     $action,
-                    $searchAction
-                ));
+                    $searchAction,
+                )
+                );
 
                 // no searchable column
             } else {
@@ -132,37 +162,20 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
             $form = $tableField->Form();
             $field->setForm($form);
 
-            $fields->push(array("field" => $field->exportFieldInfo()->ToRestArray(true), "name" => $columnField, "title" => $title));
+            $fields->push(
+                array(
+                    "field" => $field->exportFieldInfo()->ToRestArray(true),
+                    "name"  => $columnField,
+                    "title" => $title,
+                )
+            );
         }
 
         return array(
-            'header' => $forTemplate->customise(array("fields" => $fields, "visible" => $state->visible))->renderWith("form/tableField/filterHeader.html")
+            'header' => $forTemplate->customise(array("fields" => $fields, "visible" => $state->visible))->renderWith(
+                "form/tableField/filterHeader.html"
+            ),
         );
-    }
-
-    /**
-     * @param string $columnField
-     * @param string $value
-     * @param string $title
-     * @return TextField
-     */
-    protected function getFilterField($columnField, $value, $title) {
-        if(isset($this->selectList[$columnField])) {
-            $searchField = new Select(
-                "filter[" . $columnField . "]",
-                "",
-                array("" => "-") + $this->selectList[$columnField],
-                $value
-            );
-        } else {
-            $searchField = new TextField('filter[' . $columnField . ']', '', $value);
-            $searchField->setPlaceholder($title);
-        }
-
-        $searchField->addExtraClass('tablefield-filter');
-        $searchField->addExtraClass('no-change-track');
-
-        return $searchField;
     }
 
     /**
@@ -187,22 +200,22 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
 
         $filterArguments = $state->columns->toArray();
         foreach ($filterArguments as $columnName => $value) {
-            if(isset($this->valueCallback[strtolower($columnName)])) {
+            if (isset($this->valueCallback[strtolower($columnName)])) {
                 call_user_func_array($this->valueCallback[strtolower($columnName)], array($filterArguments, $data));
             } else if ($data->canFilterBy($columnName) && $this->isValueValid($value)) {
                 $values = $this->getValueCastingForValue($columnName, $value);
                 if (is_array($values) && count($values) > 0) {
-                    if($this->shouldTrim) {
+                    if ($this->shouldTrim) {
                         $values = array_map("trim", $values);
                     }
 
                     $data->AddFilter(array($columnName => $values));
                 } else {
-                    if($this->shouldTrim) {
+                    if ($this->shouldTrim) {
                         $value = trim($value);
                     }
 
-                    $data->AddFilter(array($columnName => array("LIKE", "%" . $value . "%")));
+                    $data->AddFilter(array($columnName => array("LIKE", "%".$value."%")));
                 }
             }
         }
@@ -211,43 +224,12 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
     }
 
     /**
-     * @param string $columnName
-     * @param string $value
-     * @return mixed
-     */
-    protected function getValueCastingForValue($columnName, $value) {
-        $values = array();
-        if(isset($this->selectList[$columnName])) {
-            if(isset($this->valueCasting[$value])) {
-                return array($value);
-            } else if($key = array_search($value, $this->valueCasting)) {
-                return array($key);
-            } else {
-                return array($value);
-            }
-        } else {
-            if (isset($this->valueCasting[$columnName])) {
-                foreach ($this->valueCasting[$columnName] as $key => $orgValue) {
-                    if (preg_match('/' . preg_quote($value, "/") . '/i', $key)) {
-                        if (is_array($orgValue)) {
-                            $values = array_merge($values, $orgValue);
-                        } else {
-                            $values[] = $orgValue;
-                        }
-                    }
-                }
-            }
-        }
-
-        return $values;
-    }
-
-    /**
      * @param TableField $tableField
      */
-    public function Init($tableField) {
+    public function Init($tableField)
+    {
         $state = $tableField->state->tableFieldFilterHeader;
-        if(!is_bool($state->visible)) {
+        if (!is_bool($state->visible)) {
             $state->visible = false;
         }
     }
@@ -298,39 +280,41 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
      */
     public function augmentColumns($tableField, &$columns)
     {
-        if (!in_array('Actions', $columns))
+        if (!in_array('Actions', $columns)) {
             $columns[] = 'Actions';
+        }
     }
 
     /**
      * @param TableField $tableField
      */
-    public function filter($tableField) {
+    public function filter($tableField)
+    {
         $state = $tableField->state->tableFieldFilterHeader;
 
         if (isset($tableField->getRequest()->post_params['filter']) && !$state->reset) {
             $hasValue = false;
             foreach ($tableField->getRequest()->post_params['filter'] as $key => $filter) {
-                if($this->isValueValid($filter) && $state->resetColumn != $key) {
+                if ($this->isValueValid($filter) && $state->resetColumn != $key) {
                     $hasValue = true;
                     $state->columns->$key = $filter;
-                } else if($state->columns->$key || $state->resetColumn == $key) {
+                } else if ($state->columns->$key || $state->resetColumn == $key) {
                     $state->columns->$key = null;
                 }
             }
 
-            if($hasValue) {
+            if ($hasValue) {
                 if ($state->visible === false) {
                     $state->visible = true;
                 }
             }
         }
 
-        if($state->reset) {
+        if ($state->reset) {
             $state->reset = false;
         }
 
-        if($state->resetColumn) {
+        if ($state->resetColumn) {
             $state->resetColumn = null;
         }
     }
@@ -402,16 +386,9 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
      * @param string $field
      * @param array $values
      */
-    public function setCastedValues($field, $values) {
+    public function setCastedValues($field, $values)
+    {
         $this->valueCasting[$field] = $values;
-    }
-
-    /**
-     * @param string|int $value
-     * @return bool
-     */
-    protected function isValueValid($value) {
-        return $value || $value === 0 || $value === "0";
     }
 
     /**
@@ -429,6 +406,75 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
     public function setShouldTrim($shouldTrim)
     {
         $this->shouldTrim = $shouldTrim;
+
         return $this;
+    }
+
+    /**
+     * @param string $columnField
+     * @param string $value
+     * @param string $title
+     * @return TextField
+     */
+    protected function getFilterField($columnField, $value, $title)
+    {
+        if (isset($this->selectList[$columnField])) {
+            $searchField = new Select(
+                "filter[".$columnField."]",
+                "",
+                array("" => "-") + $this->selectList[$columnField],
+                $value
+            );
+        } else {
+            $searchField = new TextField('filter['.$columnField.']', '', $value);
+            $searchField->setPlaceholder($title);
+        }
+
+        $searchField->addExtraClass('tablefield-filter');
+        $searchField->addExtraClass('no-change-track');
+
+        return $searchField;
+    }
+
+    /**
+     * @param string $columnName
+     * @param string $value
+     * @return mixed
+     */
+    protected function getValueCastingForValue($columnName, $value)
+    {
+        $values = array();
+        if (isset($this->selectList[$columnName])) {
+            if (isset($this->valueCasting[$value])) {
+                return array($value);
+            } else if ($key = array_search($value, $this->valueCasting)) {
+                return array($key);
+            } else {
+                return array($value);
+            }
+        } else {
+            if (isset($this->valueCasting[$columnName])) {
+                foreach ($this->valueCasting[$columnName] as $key => $orgValue) {
+                    if (preg_match('/'.preg_quote($value, "/").'/i', $key)) {
+                        if (is_array($orgValue)) {
+                            $values = array_merge($values, $orgValue);
+                        } else {
+                            $values[] = $orgValue;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * @param string|int $value
+     * @return bool
+     */
+    protected function isValueValid($value)
+    {
+        return $value || $value === 0 || $value === "0";
     }
 }

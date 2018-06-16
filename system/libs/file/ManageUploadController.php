@@ -18,10 +18,18 @@ class ManageUploadController extends FrontedController {
      */
     public $template = "uploads/manageFile.html";
 
+    static $url_handlers = array(
+        "allVersions" => "allVersions",
+        "backtrack"   => "backtrack",
+        "backtrackAll"=> "backtrackAll",
+        "children"    => "children",
+        "deleteAll"   => "deleteAll"
+    );
+
     /**
      * allowed actions.
      */
-    public $allowed_actions = array(
+    static $allowed_actions = array(
         "allVersions"   => Uploads::PERMISSION_ADMIN,
         "backtrack"     => Uploads::PERMISSION_ADMIN,
         "backtrackAll"  => Uploads::PERMISSION_ADMIN,
