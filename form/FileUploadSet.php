@@ -16,20 +16,11 @@ class FileUploadSet extends FormField
     /**
      * url-handlers
      */
-    public $url_handlers = array(
+    static $url_handlers = array(
         "ajaxUpload" => "ajaxUpload",
         "frameUpload" => "frameUpload",
-        "POST remove/\$id" => "removeFile"
-    );
-
-    /**
-     * actions
-     */
-    public $allowed_actions = array(
-        "ajaxUpload",
-        "frameUpload",
-        "removeFile",
-        "saveSort"
+        "POST remove/\$id" => "removeFile",
+        "saveSort"  => "saveSort"
     );
 
     /**

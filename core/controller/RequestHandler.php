@@ -16,20 +16,24 @@ defined('IN_GOMA') OR die();
  */
 class RequestHandler extends gObject
 {
-
     /**
      * url-handlers
      *
      * @var array
      */
-    public $url_handlers = array('$Action' => '$Action');
+    static $url_handlers = array();
 
     /**
-     * requests, key is name of the request and value the function for it
+     * this method defines rules to disallow action for specific groups.
+     * By default all explicit mentioned actions in url_handlers are allowed.
+     *
+     * Permissions are defined like:
+     * "actionName" => "PERMISSION_NAME",
+     * "actionName" => "->methodWhichShouldReturnTrueIfAllowed"
      *
      * @var    array
      */
-    public $allowed_actions = array("index");
+    static $allowed_actions = array();
 
     /**
      * the url base-path of this controller
@@ -37,21 +41,18 @@ class RequestHandler extends gObject
      * @var string
      */
     public $namespace;
-
-    /**
-     * defines whether shift on success or not
-     *
-     * @var bool
-     */
-    protected $shiftOnSuccess = true;
-
     /**
      * original namespace, so always from first controller
      *
      * @var string
      */
     public $originalNamespace;
-
+    /**
+     * defines whether shift on success or not
+     *
+     * @var bool
+     */
+    protected $shiftOnSuccess = true;
     /**
      * defines if this is a sub-controller.
      * by default yes, because then handleRequest was not called.
@@ -66,41 +67,76 @@ class RequestHandler extends gObject
      * @var     Request
      */
     protected $request;
-
+    /**
+     * @var string
+     */
+    protected $currentActionHandled;
     /**
      * current depth of request-handlers
      */
     private $requestHandlerKey;
 
     /**
-     * @var string
+     * cache for url-handler generation.
+     * @var array
      */
-    protected $currentActionHandled;
+    private static $urlHandlerCache = array();
 
     /**
-     * sets vars
+     * cache for action-generation.
      *
-     * @name    __construct
-     * @access    public
+     * @var array
      */
-    public function __construct()
-    {
-        parent::__construct();
+    private static $actionCache = array();
 
-        /* --- */
+    /**
+     * @return array
+     */
+    public static function getExtendedAllowedActions() {
+        if(PROFILE) Profiler::mark("RequestHandler::getExtendedAllowedActions");
 
-        if (PROFILE) Profiler::mark("RequestHandler::__construct");
+        if(!isset(self::$actionCache[static::class])) {
+            $actions = (array)StaticsManager::getNotInheritedStatic(static::class, "allowed_actions");
 
-        $this->allowed_actions = ArrayLib::map_key("strtolower", array_map("strtolower", $this->allowed_actions), false);
-        $this->url_handlers = array_map("strtolower", $this->url_handlers);
+            foreach (gObject::getExtensionsForClass(static::class, false) as $extensionsForClass) {
+                $actions = array_merge(
+                    $actions,
+                    (array)StaticsManager::getNotInheritedStatic($extensionsForClass, "allowed_actions")
+                );
+            }
 
-        if (isset(ClassInfo::$class_info[$this->classname]["allowed_actions"]))
-            $this->allowed_actions = array_merge(ClassInfo::$class_info[$this->classname]["allowed_actions"], $this->allowed_actions);
+            self::$actionCache[static::class] = ArrayLib::map_key("strtolower", array_map(function($value){
+                return is_string($value) ? strtolower($value) : $value;
+            }, $actions));
+        }
 
-        if (isset(ClassInfo::$class_info[$this->classname]["url_handlers"]))
-            $this->url_handlers = array_merge(ClassInfo::$class_info[$this->classname]["url_handlers"], $this->url_handlers);
+        if(PROFILE) Profiler::unmark("RequestHandler::getExtendedAllowedActions");
 
-        if (PROFILE) Profiler::unmark('RequestHandler::__construct');
+        return self::$actionCache[static::class];
+    }
+
+    /**
+     * @return array
+     */
+    public static function getExtendedUrlHandlers() {
+        if(PROFILE) Profiler::mark("RequestHandler::getExtendedUrlHandlers");
+
+        if(!isset(self::$urlHandlerCache[static::class])) {
+            $actions = (array)StaticsManager::getNotInheritedStatic(static::class, "url_handlers");
+
+            foreach (gObject::getExtensionsForClass(static::class, false) as $extensionsForClass) {
+                $actions = array_merge(
+                    $actions,
+                    (array)StaticsManager::getNotInheritedStatic($extensionsForClass, "url_handlers")
+                );
+            }
+
+            self::$urlHandlerCache[static::class] = array_map("strtolower", $actions);
+        }
+
+        if(PROFILE) Profiler::unmark("RequestHandler::getExtendedUrlHandlers");
+
+        return self::$urlHandlerCache[static::class];
     }
 
     /**
@@ -114,14 +150,16 @@ class RequestHandler extends gObject
     public function Init($request = null)
     {
         if (!isset($request) && !isset($this->request)) {
-            throw new InvalidArgumentException("RequestHandler" . $this->classname . " has no request-instance.");
+            throw new InvalidArgumentException("RequestHandler".$this->classname." has no request-instance.");
         }
 
         $this->request = isset($request) ? $request : $this->request;
         $this->originalNamespace = $this->namespace;
         $this->namespace = $this->request->getShiftedPart();
 
-        if (!isset($this->originalNamespace)) $this->originalNamespace = $this->namespace;
+        if (!isset($this->originalNamespace)) {
+            $this->originalNamespace = $this->namespace;
+        }
 
         $this->requestHandlerKey = count($this->request->getController());
         $this->request->addController($this, !$this->subController);
@@ -140,7 +178,11 @@ class RequestHandler extends gObject
     public function handleRequest($request, $subController = false)
     {
         if ($this->classname == "") {
-            throw new LogicException('Class ' . get_class($this) . ' has no class_name. Please make sure you call <code>parent::__construct();</code> ');
+            throw new LogicException(
+                'Class '.get_class(
+                    $this
+                ).' has no class_name. Please make sure you call <code>parent::__construct();</code> before calling handleRequest.'
+            );
         }
 
         try {
@@ -159,11 +201,12 @@ class RequestHandler extends gObject
             $preservedRequest = clone $this->request;
 
             $class = $this->classname;
-            while ($class && !ClassInfo::isAbstract($class)) {
-                $handlers = gObject::instance($class)->url_handlers;
+            while (ClassManifest::isOfType($class, self::class)) {
+                $method = new ReflectionMethod($class, "getExtendedUrlHandlers");
+                $handlers = $method->invoke(null);
                 foreach ($handlers as $pattern => $action) {
                     $this->request->setState($preservedRequest);
-                    $data = $this->matchRuleWithResult($pattern, $action, $request);
+                    $data = $this->matchRuleWithResult($pattern, $action, $class, $request);
                     if ($data !== null && $data !== false) {
                         return $data;
                     }
@@ -173,6 +216,7 @@ class RequestHandler extends gObject
             }
 
             $this->request->setState($preservedRequest);
+
             return $this->handleAction("index");
         } catch (Exception $e) {
             return $this->handleException($e);
@@ -184,28 +228,20 @@ class RequestHandler extends gObject
      *
      * @param string $rule
      * @param string $action
+     * @param string $classWithRule
      * @param Request $request optional
      * @return string
      */
-    public function matchRuleWithResult($rule, $action, $request = null)
+    public function matchRuleWithResult($rule, $action, $classWithRule, $request = null)
     {
         if (!isset($request)) {
             $request = $this->request;
         }
 
         if ($argument = $request->match($rule, $this->shiftOnSuccess, $this->classname)) {
-            if ($action{0} == "$") {
-                $action = substr($action, 1);
-                if ($this->getParam($action, false)) {
-                    $action = $this->getParam($action, false);
-                } else {
-                    return null;
-                }
-            }
-
             $action = str_replace('-', '_', $action);
 
-            if (!$this->hasAction($action)) {
+            if (!$this->hasAction($action, $classWithRule)) {
                 return null;
             }
 
@@ -231,25 +267,32 @@ class RequestHandler extends gObject
     /**
      * checks if this class has a given action.
      * it also checks for permissions.
+     * It does not check if rule for an action exists. It means that any method which is *not* disallowed is
+     * considered as action.
      *
      * @param   string $action
-     * @return  bool
+     * @param string $classWithActionDefined
+     * @return bool
      */
-    public function hasAction($action)
+    public function hasAction($action, $classWithActionDefined = null)
     {
+        if(!isset($classWithActionDefined)) {
+            $classWithActionDefined = $this->classname;
+        }
+
         $hasAction = true;
-        if (!gObject::method_exists($this, $action) || !$this->checkPermission($action)) {
+        if (!gObject::method_exists($this, $action) || !$this->checkPermission($action, $classWithActionDefined)) {
             $hasAction = false;
         }
 
         $this->extendHasAction($action, $hasAction);
-        $this->callExtending("extendHasAction", $action, $hasAction);
+        $this->callExtending("extendHasAction", $action, $hasAction, $classWithActionDefined);
 
         return $hasAction;
     }
 
     /**
-     * handles the action.
+     * performs action handling which means extending action handling and calling method if not handled yet.
      *
      * @name    handleAction
      * @access  public
@@ -264,8 +307,9 @@ class RequestHandler extends gObject
         $this->onBeforeHandleAction($action, $content, $handleWithMethod);
         $this->callExtending("onBeforeHandleAction", $action, $content, $handleWithMethod);
 
-        if ($handleWithMethod && gObject::method_exists($this, $action))
+        if ($handleWithMethod && gObject::method_exists($this, $action)) {
             $content = call_user_func_array(array($this, $action), array());
+        }
 
         $this->extendHandleAction($action, $content);
         $this->callExtending("extendHandleAction", $action, $content);
@@ -306,76 +350,6 @@ class RequestHandler extends gObject
     }
 
     /**
-     * checks the permissions
-     *
-     * @param string - permission
-     * @return bool
-     */
-    protected function checkPermission($action)
-    {
-        if (PROFILE)
-            Profiler::mark("RequestHandler::checkPermission");
-
-        $class = $this;
-
-        while ($class != null && gObject::method_exists($class, "checkPermissionsOnClass")) {
-            // check class
-            $result = $class->checkPermissionsOnClass($action);
-
-            // if we have an result which is a boolean.
-            if (is_bool($result)) {
-                if (PROFILE)
-                    Profiler::unmark("RequestHandler::checkPermission");
-
-                return $result;
-            }
-
-            // check for parent class
-            $class = !ClassInfo::isAbstract(get_parent_class($class)) ? gObject::instance(get_parent_class($class)) : null;
-        }
-
-        if (PROFILE)
-            Profiler::unmark("RequestHandler::checkPermission");
-        return false;
-    }
-
-    /**
-     * checks permissions on this class.
-     *
-     * @return    null when no definition was found or a boolean when definition was found.
-     */
-    protected function checkPermissionsOnClass($action)
-    {
-        $actionLower = strtolower($action);
-
-        if (in_array($actionLower, $this->allowed_actions)) {
-            return true;
-        } else if (isset($this->allowed_actions[$actionLower])) {
-            $data = $this->allowed_actions[$actionLower];
-
-            // advanced options for Action.
-            if (is_bool($data)) {
-                return $data;
-            } else if (substr($data, 0, 2) == "->") {
-                $func = substr($data, 2);
-                if (gObject::method_exists($this, $func)) {
-                    return $this->$func();
-                } else {
-                    return false;
-                }
-            } else if ($data == "admins") {
-                return (member::$groupType == 2);
-            } else if ($data == "users") {
-                return (member::$groupType == 1);
-            } else {
-                return Permission::check($data);
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * default Action
      *
      * @return string
@@ -397,6 +371,7 @@ class RequestHandler extends gObject
         if (isset($this->request) && is_a($this->request, "request")) {
             return $this->request->getParam($param, $useall);
         }
+
         return null;
     }
 
@@ -428,14 +403,19 @@ class RequestHandler extends gObject
         log_exception($e);
 
         if ($this->request->canReplyJavaScript() || $this->request->canReplyJSON()) {
-            return GomaResponse::create(null, new JSONResponseBody(array(
-                "status" => $e->getCode(),
-                "error" => $e->getMessage(),
-                "errorClass" => get_class($e)
-            )))->setStatus($status);
+            return GomaResponse::create(
+                null,
+                new JSONResponseBody(
+                    array(
+                        "status"     => $e->getCode(),
+                        "error"      => $e->getMessage(),
+                        "errorClass" => get_class($e),
+                    )
+                )
+            )->setStatus($status);
         }
 
-        return GomaResponse::create(null, $e->getCode() . ": " . get_class($e) . "\n" . $e->getMessage())->setStatus($status);
+        return GomaResponse::create(null, $e->getCode().": ".get_class($e)."\n".$e->getMessage())->setStatus($status);
     }
 
     /**
@@ -513,6 +493,7 @@ class RequestHandler extends gObject
     public function isManagingController($response = null, $type = null)
     {
         $type = isset($type) ? $type : self::class;
+
         return !$this->isSubController() && !\Director::isResponseFullPage($response) &&
             $this->controllerIsMostSpecialOfType($type, true);
     }
@@ -565,11 +546,11 @@ class RequestHandler extends gObject
         if ($this->currentActionHandled != "index" ||
             (is_string($sender) && strtolower($sender) == "tothis") ||
             (is_object($sender) && $sender != $this)) {
-            return ROOT_PATH . $this->namespace;
+            return ROOT_PATH.$this->namespace;
         }
 
         if ($this->parentController() && $this->parentController()->namespace) {
-            return ROOT_PATH . $this->parentController()->namespace;
+            return ROOT_PATH.$this->parentController()->namespace;
         }
 
         if ($this->namespace) {
@@ -584,7 +565,91 @@ class RequestHandler extends gObject
      */
     public function getRedirectToSelf()
     {
-        return $this->request->url . URLEND . "?" . $this->request->queryString();
+        return $this->request->url.URLEND."?".$this->request->queryString();
+    }
+
+    /**
+     * checks the permissions
+     *
+     * @param string $action
+     * @param string $classWithActionDefined
+     * @return bool
+     */
+    protected function checkPermission($action, $classWithActionDefined)
+    {
+        if (PROFILE) {
+            Profiler::mark("RequestHandler::checkPermission");
+        }
+
+        $action = strtolower($action);
+        $class = $this->classname;
+
+        while (
+            // no class which is more common than the definition of the rule can decide if action is allowed.
+            ClassManifest::isOfType($class, $classWithActionDefined) &&
+            gObject::method_exists($class, "checkPermissionsOnClass")
+        ) {
+            // check class
+            $result = $this->checkPermissionsOnClass($class, $action);
+
+            // if we have an result which is a boolean.
+            if (is_bool($result)) {
+                if (PROFILE) {
+                    Profiler::unmark("RequestHandler::checkPermission");
+                }
+
+                return $result;
+            }
+
+            // check for parent class
+            $class = get_parent_class($class);
+        }
+
+        if (PROFILE) {
+            Profiler::unmark("RequestHandler::checkPermission");
+        }
+
+        // by default if no result has been gotten, it returns true since it's implicitly allowed due to url-handler.
+        return true;
+    }
+
+    /**
+     * checks permissions on provided class.
+     *
+     * @param string $className
+     * @param string $action
+     * @return null when no definition was found or a boolean when definition was found.
+     */
+    protected function checkPermissionsOnClass($className, $action)
+    {
+        $actionLower = strtolower($action);
+        $allowedActions = (array) call_user_func_array(array($className, "getExtendedAllowedActions"), array());
+
+        if(in_array($actionLower, array_values($allowedActions), true)) {
+            return true;
+        } else if (isset($allowedActions[$actionLower])) {
+            $data = $allowedActions[$actionLower];
+
+            // explicit allow
+            if (is_bool($data)) {
+                return $data;
+            } else if (substr($data, 0, 2) == "->") {
+                $func = substr($data, 2);
+                if (gObject::method_exists($this, $func)) {
+                    return $this->$func();
+                } else {
+                    return false;
+                }
+            } else if ($data == "admins") {
+                return (member::$groupType == 2);
+            } else if ($data == "users") {
+                return (member::$groupType == 1);
+            } else {
+                return Permission::check($data);
+            }
+        }
+
+        return null;
     }
 }
 

@@ -685,5 +685,8 @@ $lang = array(
 	"uploads_manage"	=> "Dateien verwalten",
 
     "your_new_user_account" => "Es wurde für Sie ein Benutzer angelegt",
-    "welcome_new_user" => "Herzlich Willkommen. Bitte legen Sie ihr Passwort fest, um fortzufahren."
+    "welcome_new_user" => "Herzlich Willkommen. Bitte legen Sie ihr Passwort fest, um fortzufahren.",
+
+
+    "welcome_mail_subject" => "Sie wurden eingeladen, Ihren Account für \$serverName zu aktivieren."
 );

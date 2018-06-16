@@ -127,16 +127,22 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
      * @param string|array $search
      * @param string|null $version
      */
-    public function __construct($class = null, $filter = null, $sort = null, $join = null, $search = null, $version = null)
-    {
+    public function __construct(
+        $class = null,
+        $filter = null,
+        $sort = null,
+        $join = null,
+        $search = null,
+        $version = null
+    ) {
         parent::__construct();
 
         if (isset($class)) {
             $this->resolveSources($class);
 
+            $this->join($join);
             $this->filter($filter);
             $this->sort($sort);
-            $this->join($join);
             $this->search($search);
             $this->setVersion($version);
         }
@@ -213,13 +219,17 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
                 }
 
                 if (!isset($this->dbDataSource) && !isset($this->modelSource)) {
-                    throw new InvalidArgumentException("Class " . $class . " does not integrate method getDbDataSource or getModelDataSource.");
+                    throw new InvalidArgumentException(
+                        "Class ".$class." does not integrate method getDbDataSource or getModelDataSource."
+                    );
                 }
             } else {
-                throw new InvalidArgumentException("Class " . $class . " does not exist.");
+                throw new InvalidArgumentException("Class ".$class." does not exist.");
             }
         } else {
-            throw new InvalidArgumentException("\$class must be either String or IDataObjectSetDataSource or IDataObjectSetModelSource or array of both.");
+            throw new InvalidArgumentException(
+                "\$class must be either String or IDataObjectSetDataSource or IDataObjectSetModelSource or array of both."
+            );
         }
     }
 
@@ -235,6 +245,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
 
         $this->dbDataSource = $source;
         $this->inExpansion = $source->getInExpansion();
+
         return $this;
     }
 
@@ -249,6 +260,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         }
 
         $this->modelSource = $modelSource;
+
         return $this;
     }
 
@@ -284,7 +296,8 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
      */
     public function DataClass()
     {
-        return isset($this->dbDataSource) ? $this->dbDataSource->DataClass() : (isset($this->modelSource) ? $this->modelSource->DataClass() : null);
+        return isset($this->dbDataSource) ? $this->dbDataSource->DataClass(
+        ) : (isset($this->modelSource) ? $this->modelSource->DataClass() : null);
     }
 
     /**
@@ -301,7 +314,9 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
                 if (is_array($record)) {
                     $this->staging->add($record);
                 } else {
-                    throw new InvalidArgumentException("setData requires array of arrays. And It's marked as Deprecated.");
+                    throw new InvalidArgumentException(
+                        "setData requires array of arrays. And It's marked as Deprecated."
+                    );
                 }
             }
         }
@@ -346,6 +361,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     public function & ToArray($additional_fields = array())
     {
         $this->forceData();
+
         return $this->items;
     }
 
@@ -390,6 +406,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     public function getFirst()
     {
         Core::Deprecate(2.0, "first");
+
         return $this->first();
     }
 
@@ -444,6 +461,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     {
         $set = new DataSet($this->getRecordsByRange($start, $length));
         $set->inExpansion = $this->inExpansion;
+
         return $set;
     }
 
@@ -460,6 +478,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         $length = min($length, $this->perPage);
         $set = new DataSet($this->getRecordsByRange($start, $length));
         $set->inExpansion = $this->inExpansion;
+
         return $set;
     }
 
@@ -514,9 +533,16 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     {
         if (!isset($this->count)) {
             $this->count = (int)$this->dbDataSource()->getAggregate(
-                    $this->version, "count", "*", false,
-                    $this->getFilterForQuery(), array(), null,
-                    $this->getJoinForQuery(), $this->search) + $this->getStagingWithFilterAndSort()->count();
+                    $this->version,
+                    "count",
+                    "*",
+                    false,
+                    $this->getFilterForQuery(),
+                    array(),
+                    null,
+                    $this->getJoinForQuery(),
+                    $this->search
+                ) + $this->getStagingWithFilterAndSort()->count();
         }
 
         return $this->count;
@@ -533,9 +559,16 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         }
 
         return (int)$this->dbDataSource()->getAggregate(
-                $this->version, "count", $field, true,
-                $this->getFilterForQuery(), array(), null,
-                $this->getJoinForQuery(), $this->search) + $this->staging->count();
+                $this->version,
+                "count",
+                $field,
+                true,
+                $this->getFilterForQuery(),
+                array(),
+                null,
+                $this->getJoinForQuery(),
+                $this->search
+            ) + $this->staging->count();
     }
 
     /**
@@ -549,9 +582,16 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     public function Max($field)
     {
         return (double)$this->dbDataSource()->getAggregate(
-            $this->version, "max", $field, false,
-            $this->getFilterForQuery(), array(), null,
-            $this->getJoinForQuery(), $this->search);
+            $this->version,
+            "max",
+            $field,
+            false,
+            $this->getFilterForQuery(),
+            array(),
+            null,
+            $this->getJoinForQuery(),
+            $this->search
+        );
     }
 
     /**
@@ -566,11 +606,18 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     public function MaxCount($field)
     {
         $data = $this->dbDataSource()->getAggregate(
-            $this->version, array("max", "count"), $field, false,
-            $this->getFilterForQuery(), array(), null,
-            $this->getJoinForQuery(), $this->search);
+            $this->version,
+            array("max", "count"),
+            $field,
+            false,
+            $this->getFilterForQuery(),
+            array(),
+            null,
+            $this->getJoinForQuery(),
+            $this->search
+        );
 
-        return $data["max"] . "," . $data["count"];
+        return $data["max"].",".$data["count"];
     }
 
     /**
@@ -584,9 +631,16 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     public function Min($field)
     {
         return (double)$this->dbDataSource()->getAggregate(
-            $this->version, "min", $field, false,
-            $this->getFilterForQuery(), array(), null,
-            $this->getJoinForQuery(), $this->search);
+            $this->version,
+            "min",
+            $field,
+            false,
+            $this->getFilterForQuery(),
+            array(),
+            null,
+            $this->getJoinForQuery(),
+            $this->search
+        );
     }
 
     /**
@@ -602,9 +656,16 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     public function Sum($field)
     {
         return (double)$this->dbDataSource()->getAggregate(
-            $this->version, "Sum", $field, false,
-            $this->getFilterForQuery(), array(), null,
-            $this->getJoinForQuery(), $this->search);
+            $this->version,
+            "Sum",
+            $field,
+            false,
+            $this->getFilterForQuery(),
+            array(),
+            null,
+            $this->getJoinForQuery(),
+            $this->search
+        );
     }
 
     /**
@@ -624,8 +685,9 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
      */
     public function current($position = null)
     {
-        if (!isset($position))
+        if (!isset($position)) {
             $position = $this->position;
+        }
 
         $this->forceData();
 
@@ -713,7 +775,9 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
                     $limit[1]--;
                 }
                 $this->items = array_values($this->getRecordsByRange($limit[0], $limit[1]));
-                if (isset($this->firstCache)) array_unshift($this->items, $this->firstCache);
+                if (isset($this->firstCache)) {
+                    array_unshift($this->items, $this->firstCache);
+                }
                 if (isset($this->lastCache) &&
                     $this->lastCache !== $this->firstCache
                 ) {
@@ -725,6 +789,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
                 }
             }
         }
+
         return $this;
     }
 
@@ -746,6 +811,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
             return $this->staging->filter((array)$this->filter)->sort($this->sort);
         } catch (Exception $e) {
             log_exception($e);
+
             return new ArrayList();
         }
     }
@@ -762,6 +828,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
             $this->filter = $filter;
             $this->clearCache();
         }
+
         return $this;
     }
 
@@ -819,7 +886,9 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
             }
         } else {
             if ($this->hasChanged()) {
-                throw new LogicException("Group by is only possible on not changed DataObjectSet, call commitStaging before grouping.");
+                throw new LogicException(
+                    "Group by is only possible on not changed DataObjectSet, call commitStaging before grouping."
+                );
             }
 
             if (is_string($field) && strpos($field, ",") !== false) {
@@ -829,11 +898,13 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
             if (is_a($this->dbDataSource, \Goma\Model\Group\GroupedDataObjectSetDataSource::class)) {
                 $this->dbDataSource->setGroupField($field);
             } else {
-                $this->setDbDataSource(new \Goma\Model\Group\GroupedDataObjectSetDataSource(
-                    $this->dbDataSource(),
-                    $this->modelSource,
-                    $field
-                ));
+                $this->setDbDataSource(
+                    new \Goma\Model\Group\GroupedDataObjectSetDataSource(
+                        $this->dbDataSource(),
+                        $this->modelSource,
+                        $field
+                    )
+                );
             }
 
             $this->clearCache();
@@ -859,6 +930,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     {
         $this->join = array_merge((array)$this->join, (array)$join);
         $this->clearCache();
+
         return $this;
     }
 
@@ -875,6 +947,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
 
         unset($this->join[$key]);
         $this->clearCache();
+
         return $this;
     }
 
@@ -893,6 +966,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
             $this->join = (array)$join;
             $this->clearCache();
         }
+
         return $this;
     }
 
@@ -910,8 +984,9 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         }
 
         $this->clearCache();
-        if (isset($perPage) && $perPage > 0)
+        if (isset($perPage) && $perPage > 0) {
             $this->perPage = $perPage;
+        }
 
         if (isset($page) && RegexpUtil::isNumber($page) && $page > 0) {
             // first validate the data
@@ -937,6 +1012,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     {
         $this->clearCache();
         $this->page = null;
+
         return $this;
     }
 
@@ -1032,6 +1108,12 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
      */
     public function canSortBy($field)
     {
+        if (strpos($field, ".") !== false) {
+            if (isset($this->join[substr($field, 0, strpos($field, "."))])) {
+                return true;
+            }
+        }
+
         return $this->dbDataSource()->canSortBy($field);
     }
 
@@ -1056,6 +1138,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     {
         $this->version = $version;
         $this->clearCache();
+
         return $this;
     }
 
@@ -1097,8 +1180,14 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
 
         $result = $this->getResultFromCache($start, $length);
         if ($result === null) {
-            $result = $this->dbDataSource()->getRecords($this->version, $this->getFilterForQuery(),
-                $this->getSortForQuery(), array($start, $length), $this->getJoinForQuery(), $this->search);
+            $result = $this->dbDataSource()->getRecords(
+                $this->version,
+                $this->getFilterForQuery(),
+                $this->getSortForQuery(),
+                array($start, $length),
+                $this->getJoinForQuery(),
+                $this->search
+            );
 
             // merge with staging
             $stageCount = $this->getStagingWithFilterAndSort()->count();
@@ -1108,7 +1197,12 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
                     $mergeStart -= ($this->countWholeSet() - $stageCount);
                 }
 
-                $result = $this->mergeWithStaging($result, $length, $mergeStart, $mergeStart != 0 && isset($result[0]) ? $result[0] : null);
+                $result = $this->mergeWithStaging(
+                    $result,
+                    $length,
+                    $mergeStart,
+                    $mergeStart != 0 && isset($result[0]) ? $result[0] : null
+                );
             }
         }
 
@@ -1127,8 +1221,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         if ($result) {
             $merged = new ArrayList(
                 array_merge(
-                    $result, $this->getStagingWithFilterAndSort()->ToArray()
-                ));
+                    $result,
+                    $this->getStagingWithFilterAndSort()->ToArray()
+                )
+            );
             $merged = $merged->sort($this->sort);
         } else {
             $merged = $this->getStagingWithFilterAndSort();
@@ -1195,6 +1291,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
             $this->search = $search;
             $this->clearCache();
         }
+
         return $this;
     }
 
@@ -1215,8 +1312,9 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         }
 
         foreach ((array)$this->defaults as $key => $value) {
-            if (empty($record->{$key}))
+            if (empty($record->{$key})) {
                 $record->{$key} = $value;
+            }
         }
 
         $matchesFilter = $this->filter ? ArrayList::itemMatchesFilter($record, (array)$this->filter) : true;
@@ -1239,8 +1337,9 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
             $this->clearCache();
         }
 
-        if ($write)
+        if ($write) {
             $this->commitStaging();
+        }
 
         return $this;
     }
@@ -1314,6 +1413,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
 
         if (is_object($object) && method_exists($object, "customise")) {
             $object->customise($this->protected_customised);
+
             return $object;
         } else {
             return $object;
@@ -1326,7 +1426,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
      */
     public function __toString()
     {
-        return "DataObjectSet {$this->classname}{" . $this->count() . "}";
+        return "DataObjectSet {$this->classname}{".$this->count()."}";
     }
 
     /**
@@ -1350,6 +1450,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         foreach ((array)$this->items as $record) {
             $arr[] = self::getItemProp($record, $field);
         }
+
         return $arr;
     }
 
@@ -1362,14 +1463,27 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
      * @param array $options
      * @throws DataObjectSetCommitException
      */
-    final public function commitStaging($forceInsert = false, $forceWrite = false, $writeType = IModelRepository::WRITE_TYPE_PUBLISH, $repository = null, $options = array())
-    {
+    final public function commitStaging(
+        $forceInsert = false,
+        $forceWrite = false,
+        $writeType = IModelRepository::WRITE_TYPE_PUBLISH,
+        $repository = null,
+        $options = array()
+    ) {
         $exceptions = array();
         $errorRecords = array();
 
         $repository = isset($repository) ? $repository : Core::repository();
 
-        $this->writeCommit($forceInsert, $forceWrite, $writeType, $repository, (array)$options, $exceptions, $errorRecords);
+        $this->writeCommit(
+            $forceInsert,
+            $forceWrite,
+            $writeType,
+            $repository,
+            (array)$options,
+            $exceptions,
+            $errorRecords
+        );
 
         $this->setFetchMode(DataObjectSet::FETCH_MODE_EDIT);
         $this->clearCache();
@@ -1378,7 +1492,11 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
             DataObject::VERSION_STATE : DataObject::VERSION_PUBLISHED;
 
         if (count($exceptions) > 0) {
-            throw new DataObjectSetCommitException($exceptions, $errorRecords, count($errorRecords) . " record(s) of type " . get_class($errorRecords[0]) . " could not be written.");
+            throw new DataObjectSetCommitException(
+                $exceptions,
+                $errorRecords,
+                count($errorRecords)." record(s) of type ".get_class($errorRecords[0])." could not be written."
+            );
         }
 
         $this->dbDataSource()->clearCache();
@@ -1393,8 +1511,15 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
      * @param array $exceptions
      * @param array $errorRecords
      */
-    protected function writeCommit($forceInsert, $forceWrite, $snap_priority, $repository, $options, &$exceptions, &$errorRecords)
-    {
+    protected function writeCommit(
+        $forceInsert,
+        $forceWrite,
+        $snap_priority,
+        $repository,
+        $options,
+        &$exceptions,
+        &$errorRecords
+    ) {
         if ($this->queryVersion() == "state" && $snap_priority > 1) {
             $this->publishStateRecords($repository, $forceWrite, $exceptions, $errorRecords);
         }
@@ -1426,8 +1551,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     {
         if ($this->fetchMode == self::FETCH_MODE_EDIT) {
             $info = clone $this;
-            $info->addFilter($this->dbDataSource()->baseTable() . '_state.publishedid != ' .
-                $this->dbDataSource()->baseTable() . '_state.stateid');
+            $info->addFilter(
+                $this->dbDataSource()->baseTable().'_state.publishedid != '.
+                $this->dbDataSource()->baseTable().'_state.stateid'
+            );
 
             foreach ($info as $record) {
                 try {
@@ -1534,6 +1661,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     public function goToLastPage()
     {
         $this->setPage($this->getPageCount());
+
         return $this;
     }
 
@@ -1603,8 +1731,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
 
             if (isset($this->items[$offset])) {
                 $this->items[$offset] = $this->getConverted($this->items[$offset]);
+
                 return $this->items[$offset];
             }
+
             return null;
         }
 
@@ -1635,16 +1765,23 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
      * @param string|null|array|Closure $submission
      * @return Form
      */
-    public function generateForm($name = null, $edit = false, $disabled = false, $request = null, $controller = null, $submission = null)
-    {
+    public function generateForm(
+        $name = null,
+        $edit = false,
+        $disabled = false,
+        $request = null,
+        $controller = null,
+        $submission = null
+    ) {
         // if name is not set, we generate a name from this model
         if (!isset($name)) {
-            $name = $this->getModelSource()->DataClass() . "_dataobjectset_new";
+            $name = $this->getModelSource()->DataClass()."_dataobjectset_new";
         }
 
         $form = new Form($controller, $name, array(), array(), array(), $request, $model = $this->createNewModel());
-        if ($disabled)
+        if ($disabled) {
             $form->disable();
+        }
 
         // default submission
         $form->setSubmission(isset($submission) ? $submission : "submit_form");
@@ -1695,8 +1832,9 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     public function __cancall($offset)
     {
         $loweroffset = trim(strtolower($offset));
-        if ($loweroffset == "current")
+        if ($loweroffset == "current") {
             return true;
+        }
 
         return parent::__cancall($offset);
     }
@@ -1707,7 +1845,9 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     protected function dbDataSource()
     {
         if (!isset($this->dbDataSource)) {
-            throw new InvalidArgumentException("This DataObjectSet has no bound DataSource. It can't be used for queries.");
+            throw new InvalidArgumentException(
+                "This DataObjectSet has no bound DataSource. It can't be used for queries."
+            );
         }
 
         return $this->dbDataSource;
@@ -1719,8 +1859,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     protected function modelSource()
     {
         if (!isset($this->modelSource)) {
-            throw new InvalidArgumentException("This DataObjectSet has no bound ModelSource. " .
-                "It can't be used for creating new Models or converting arrays.");
+            throw new InvalidArgumentException(
+                "This DataObjectSet has no bound ModelSource. ".
+                "It can't be used for creating new Models or converting arrays."
+            );
         }
 
         return $this->modelSource;
@@ -1763,7 +1905,10 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         $object = parent::getObjectWithoutCustomisation();
         $object->protected_customised = array();
 
-        $data = array_merge(array("firstCache" => $this->firstCache, "lastCache" => $this->lastCache), (array)$this->items);
+        $data = array_merge(
+            array("firstCache" => $this->firstCache, "lastCache" => $this->lastCache),
+            (array)$this->items
+        );
         /** @var ViewAccessableData $record */
         foreach ($this->protected_customised as $key => $val) {
             foreach ($data as $id => $record) {
@@ -1816,8 +1961,14 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
             if ($this->count() < $end) {
                 $end = $this->count();
             }
-            return array("start" => $this->page * $this->perPage - $this->perPage, "end" => $end, "whole" => $this->countWholeSet());
+
+            return array(
+                "start" => $this->page * $this->perPage - $this->perPage,
+                "end"   => $end,
+                "whole" => $this->countWholeSet(),
+            );
         }
+
         return false;
     }
 
@@ -1841,13 +1992,21 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
                     return $item;
                 }
             }
+
             return null;
         } else {
             $set = clone $this;
-            $set->addFilter(array(
-                $name => !$caseInsensitive ? $value : array("LIKE", $value)
-            ));
-            return $set->first() ? $set->first() : $this->getStagingWithFilterAndSort()->find($name, $value, $caseInsensitive);
+            $set->addFilter(
+                array(
+                    $name => !$caseInsensitive ? $value : array("LIKE", $value),
+                )
+            );
+
+            return $set->first() ? $set->first() : $this->getStagingWithFilterAndSort()->find(
+                $name,
+                $value,
+                $caseInsensitive
+            );
         }
     }
 
@@ -1893,7 +2052,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         }
 
         $set = new ArrayList();
-        if($this->countWholeSet() == 0) {
+        if ($this->countWholeSet() == 0) {
             return $set;
         }
 
@@ -1912,22 +2071,35 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
              * It's a good compromise to use something like 2 here.
              */
             $poolProbability = ($n - $set->count()) / $this->countWholeSet() * self::POOL_PROP_SIZE;
-            $subQuery = $this->dbDataSource()->buildExtendedQuery($this->version, array_merge(
-                (array) $this->getFilterForQuery(),
-                array(" RAND() < {$poolProbability} ")
-            ), array("RAND()"), array(), $this->getJoinForQuery(), true);
+            $subQuery = $this->dbDataSource()->buildExtendedQuery(
+                $this->version,
+                array_merge(
+                    (array)$this->getFilterForQuery(),
+                    array(" RAND() < {$poolProbability} ")
+                ),
+                array("RAND()"),
+                array(),
+                $this->getJoinForQuery(),
+                true
+            );
 
             $join = $this->getJoinForQuery();
-            $randomPoolId = "randompool_" . randomString(5);
+            $randomPoolId = "randompool_".randomString(5);
             $join[] = array(
-                DataObject::JOIN_TYPE => "INNER",
-                DataObject::JOIN_TABLE => "(" . $subQuery->build($this->dbDataSource()->baseTable() . ".id") . ")",
-                DataObject::JOIN_STATEMENT => $this->dbDataSource()->baseTable() . ".id = " .
-                    $this->dbDataSource()->baseTable() . "_" . $randomPoolId . ".id",
-                DataObject::JOIN_ALIAS => $this->dbDataSource()->baseTable() . "_" . $randomPoolId
+                DataObject::JOIN_TYPE      => "INNER",
+                DataObject::JOIN_TABLE     => "(".$subQuery->build($this->dbDataSource()->baseTable().".id").")",
+                DataObject::JOIN_STATEMENT => $this->dbDataSource()->baseTable().".id = ".
+                    $this->dbDataSource()->baseTable()."_".$randomPoolId.".id",
+                DataObject::JOIN_ALIAS     => $this->dbDataSource()->baseTable()."_".$randomPoolId,
             );
-            foreach ($this->dbDataSource()->getRecords($this->version, $this->getFilterForQuery(), array("RAND()"),
-                array(0, $n - $set->count()), $join, $this->search) as $record) {
+            foreach ($this->dbDataSource()->getRecords(
+                $this->version,
+                $this->getFilterForQuery(),
+                array("RAND()"),
+                array(0, $n - $set->count()),
+                $join,
+                $this->search
+            ) as $record) {
                 $set->add($this->getConverted($record));
             }
         }
@@ -1944,6 +2116,19 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     public function clearStaging()
     {
         $this->staging->clear();
+    }
+
+    /**
+     * @param callable $function
+     * @return array
+     */
+    public function mapToArray($function)
+    {
+        $newData = array();
+        foreach ($this as $item) {
+            $newData[] = call_user_func_array($function, array($item));
+        }
+        return $newData;
     }
 }
 
@@ -1984,9 +2169,9 @@ class DataObjectSetCommitException extends GomaException
         $message = parent::getDeveloperMessage();
 
         foreach ($this->exceptions as $exception) {
-            $message .= get_class($exception) . ": " . $exception->getCode() . ": " . $exception->getMessage() . " in " .
-                $exception->getFile() . " on line " . $exception->getLine() . "\n" .
-                exception_get_dev_message($exception) . "\n" . $exception->getTraceAsString() . "\n\n";
+            $message .= get_class($exception).": ".$exception->getCode().": ".$exception->getMessage()." in ".
+                $exception->getFile()." on line ".$exception->getLine()."\n".
+                exception_get_dev_message($exception)."\n".$exception->getTraceAsString()."\n\n";
         }
 
         return $message;

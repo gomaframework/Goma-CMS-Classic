@@ -55,7 +55,7 @@ class FieldSet extends AbstractFormComponentWithChildren
         $this->title = $label;
 
         $this->container = new HTMLNode("fieldset", array(
-            "class" => "form_field " . $this->classname . " form_field_" . $name . ""
+            "class" => "form_field " . ClassManifest::getUrlClassName($this->classname) . " form_field_" . $name . ""
         ));
 
         $this->input = $this->createNode();
@@ -73,7 +73,7 @@ class FieldSet extends AbstractFormComponentWithChildren
 
     /**
      * @param null $fieldErrors
-     * @return $this
+     * @return FormFieldRenderData
      */
     public function exportBasicInfo($fieldErrors = null)
     {

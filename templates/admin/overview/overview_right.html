@@ -1,0 +1,23 @@
+<div id="cache" class="content_container">
+    <h2>{$_lang_cache}</h2>
+    <div>
+        <div class="info">
+            {$_lang_cache_del_info}
+        </div>
+        <a href="admin/?flush=1">{$_lang_del_cache}</a>
+        <% IF permission("superadmin") %>
+        <a href="admin/flushLog/">{$_lang_flush_log}</a>
+        <% END %>
+    </div>
+</div>
+<% IF PERMISSION("superadmin") %>
+<div id="database" class="content_container">
+    <h2>{$_lang_database}</h2>
+    <div>
+        <p class="info">
+            {$_lang_db_update_info}
+        </p>
+        <a href="dev">{$_lang_db_update}</a>
+    </div>
+</div>
+<% END %>

@@ -60,10 +60,7 @@ class HTMLText extends Varchar {
     }
 
     /**
-     * parses images and converts them so only the size is delivered which is required.
-     *
-     * @name forTemplate
-     * @return string
+     * parses images and converts them so only the size is delivered which is required
      */
     public function forTemplate() {
         // parse a bit

@@ -93,108 +93,122 @@ if(typeof goma == "undefined")
         return this;
     };
 
-    goma.form.prototype = {
-        runScripts: function (fields, parent) {
-            for(var i in fields) {
-                if(fields.hasOwnProperty(i)) {
-                    if(parent != null) {
-                        fields[i]["parent"] = parent;
+    goma.form.prototype.runScripts = function (fields, parent) {
+        for(var i in fields) {
+            if(fields.hasOwnProperty(i)) {
+                if(parent != null) {
+                    fields[i]["parent"] = parent;
+                }
+
+                fields[i].getValue = function() {
+                    return $("#" + this.id).val();
+                }.bind(fields[i]);
+
+                fields[i].setValue = function(value) {
+                    $("#" + this.id).val(value);
+                    return this;
+                }.bind(fields[i]);
+
+                var field = $("#" + fields[i].id);
+                fields[i].on = field.on.bind(field);
+                fields[i].off = field.off.bind(field);
+
+                fields[i].disable = function() {
+                    $("#" + this.id).prop("disabled", true);
+                    return this;
+                }.bind(fields[i]);
+
+                fields[i].enable = function() {
+                    $("#" + this.id).prop("disabled", false);
+                    return this;
+                }.bind(fields[i]);
+
+                fields[i].getPossibleValuesAsync = function() {
+                    var deferred = $.Deferred();
+
+                    deferred.resolve("*");
+
+                    return deferred.promise();
+                };
+
+                if(fields[i]["js"]) {
+                    try {
+                        var method = new Function("field", "fieldIndex", "form", fields[i]["js"]);
+
+                        method.call(this, fields[i], i, this);
+                    } catch(e) {
+                        console.log(fields[i]);
+                        throw e;
                     }
+                }
 
-                    fields[i].getValue = function() {
-                        return $("#" + this.id).val();
-                    }.bind(fields[i]);
+                if(fields[i]["children"]) {
+                    this.runScripts(fields[i]["children"], fields[i]);
+                }
+            }
+        }
+    };
 
-                    fields[i].setValue = function(value) {
-                        $("#" + this.id).val(value);
-                        return this;
-                    }.bind(fields[i]);
+    goma.form.prototype.errorsRaised = function() {
+        var event = jQuery.Event("errorsraised");
+        this.form.trigger(event);
+    };
 
-                    fields[i].getPossibleValuesAsync = function() {
-                        var deferred = $.Deferred();
+    goma.form.prototype.setLeaveCheck = function(bool) {
+        if(bool) {
+            this.form.addClass("leave_check");
+        } else {
+            this.form.removeClass("leave_check");
+        }
+    };
 
-                        deferred.resolve("*");
+    goma.form.prototype.getLeaveCheck = function() {
+        return this.form.hasClass("leave_check");
+    };
 
-                        return deferred.promise();
-                    };
+    goma.form.prototype.unloadEvent = function() {
+        if(this.leave_check) {
+            if (this.form.hasClass("leave_check")) {
+                return lang("unload_not_saved").replace('\n', "\n");
+            }
+        }
 
-                    if(fields[i]["js"]) {
-                        try {
-                            var method = new Function("field", "fieldIndex", "form", fields[i]["js"]);
+        return true;
+    };
 
-                            method.call(this, fields[i], i, this);
-                        } catch(e) {
-                            console.log(fields[i]);
-                            throw e;
-                        }
-                    }
+    goma.form.prototype.findFieldByName = function(name, fields) {
+        fields = fields !== undefined ? fields : this.fields;
 
-                    if(fields[i]["children"]) {
-                        this.runScripts(fields[i]["children"], fields[i]);
+        if(name.indexOf(".") != -1) {
+            var names = name.split(".");
+            var currentField = {children: fields};
+            for(var a in names) {
+                if(names.hasOwnProperty(a)) {
+                    if(currentField != null && currentField.children !== undefined) {
+                        currentField = this.findFieldByName(names[a], currentField.children);
+                    } else {
+                        return null;
                     }
                 }
             }
-        },
+            return currentField;
+        } else {
+            for (var i in fields) {
+                if (fields.hasOwnProperty(i)) {
+                    if (fields[i].name && fields[i].name.toLowerCase() == name.toLowerCase()) {
+                        return fields[i];
+                    }
 
-        errorsRaised: function() {
-            var event = jQuery.Event("errorsraised");
-            this.form.trigger(event);
-        },
-
-        setLeaveCheck: function(bool) {
-            if(bool)
-                this.form.addClass("leave_check");
-            else
-                this.form.removeClass("leave_check");
-        },
-        getLeaveCheck: function() {
-            return this.form.hasClass("leave_check");
-        },
-
-        unloadEvent: function() {
-            if(this.leave_check) {
-                if (this.form.hasClass("leave_check")) {
-                    return lang("unload_not_saved").replace('\n', "\n");
-                }
-            }
-
-            return true;
-        },
-
-        findFieldByName: function(name, fields) {
-            fields = fields !== undefined ? fields : this.fields;
-
-            if(name.indexOf(".") != -1) {
-                var names = name.split(".");
-                var currentField = {children: fields};
-                for(var a in names) {
-                    if(names.hasOwnProperty(a)) {
-                        if(currentField != null && currentField.children !== undefined) {
-                            currentField = this.findFieldByName(names[a], currentField.children);
-                        } else {
-                            return null;
+                    if (fields[i].children !== undefined) {
+                        var fieldInChildren = this.findFieldByName(name, fields[i].children);
+                        if (fieldInChildren != null) {
+                            return fieldInChildren;
                         }
                     }
                 }
-                return currentField;
-            } else {
-                for (var i in fields) {
-                    if (fields.hasOwnProperty(i)) {
-                        if (fields[i].name && fields[i].name.toLowerCase() == name.toLowerCase()) {
-                            return fields[i];
-                        }
-
-                        if (fields[i].children !== undefined) {
-                            var fieldInChildren = this.findFieldByName(name, fields[i].children);
-                            if (fieldInChildren != null) {
-                                return fieldInChildren;
-                            }
-                        }
-                    }
-                }
-
-                return null;
             }
+
+            return null;
         }
     };
 

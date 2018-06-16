@@ -29,18 +29,11 @@ class systemController extends Controller {
 	/**
 	 * @var array
 	 */
-	public $url_handlers = array(
+	static $url_handlers = array(
 		"setUserView/\$bool!"	=> "setUserView",
-		"switchView",
+		"switchView"            => "switchView",
 		"getLang/\$lang"		=> "getLang",
 		"indexSearch/\$max"		=> "indexSearch"
-	);
-	
-	public $allowed_actions = array(
-		"setUserView",
-		"switchView",
-		"getLang",
-		"indexSearch"
 	);
 
 	/**

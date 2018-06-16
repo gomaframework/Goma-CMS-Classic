@@ -23,7 +23,11 @@ $form_lang = array(
 	"not_saved_yet"				=> "The action could not be completed for security reason, yet. Please repeat it.",
 
 	"tablefield.reset"			=> "Reset",
-	"tablefield.filterBy"		=> "filter by "
+	"tablefield.filterBy"		=> "filter by ",
+
+    "select_x"                  => "Select %label%",
+
+    "dropdown_add_input"        => "Add \$input"
 );
 foreach($form_lang as $key => $value)
 {

@@ -17,12 +17,13 @@ class CheckBox extends FormField {
     protected $template = "form/checkbox.html";
 
 	/**
-	 * @return array|bool|string|ViewAccessableData
+	 * @return bool
 	 */
 	public function getModel()
 	{
 		if($this->POST) {
-			if (!$this->isDisabled() && count($this->getRequest()->post_params) > 0 && !$this->parent->getFieldPost($this->PostName())) {
+			if (!$this->isDisabled() && $this->getRequest() &&
+                count($this->getRequest()->post_params) > 0 && !$this->parent->getFieldPost($this->PostName())) {
 				return false;
 			}
 		}

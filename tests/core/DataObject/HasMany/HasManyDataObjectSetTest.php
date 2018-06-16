@@ -22,16 +22,6 @@ defined("IN_GOMA") OR die();
 class HasManyDataObjectSetTest extends GomaUnitTest implements TestAble
 {
     /**
-     * area
-     */
-    static $area = "HasMany";
-
-    /**
-     * internal name.
-     */
-    public $name = "HasManyDataObjectSet";
-
-    /**
      * @var DumpDBElementPerson
      */
     protected $patrick;
@@ -300,6 +290,8 @@ class HasManyDataObjectSetTest extends GomaUnitTest implements TestAble
             $hasManyFromDB->many()->first()->one = clone $hasManyFromDB->many()->first()->one;
             $hasManyFromDB->many()->first()->one->blah = 1;
 
+            $this->assertNotEqual(1, $hasManyFromDB->blah);
+
             $i = 0;
             /** @var MockHasOneClass $one */
             foreach($hasManyFromDB->many() as $one) {
@@ -415,42 +407,4 @@ class HasManyDataObjectSetTest extends GomaUnitTest implements TestAble
             }
         }
     }
-}
-
-/**
- * Class MockHasOneClass
- * @property MockHasManyClass one
- * @package Goma\Test\Model
- */
-class MockHasOneClass extends \DataObject {
-    static $has_one = array(
-        "one" => MockHasManyClass::class
-    );
-
-    /**
-     * checks if one is set.
-     *
-     * @param \ModelWriter $modelWriter
-     * @throws \FormInvalidDataException
-     */
-    public function onBeforeWrite($modelWriter)
-    {
-        parent::onBeforeWrite($modelWriter);
-
-        if(!$this->one && !$this->override) {
-            throw new \FormInvalidDataException("one");
-        }
-    }
-}
-
-/**
- * Class MockHasManyClass
- * @property MockHasManyClass one
- * @package Goma\Test\Model
- * @method HasMany_DataObjectSet many($filter = null, $sort = null)
- */
-class MockHasManyClass extends \DataObject {
-    static $has_many = array(
-        "many"  => MockHasOneClass::class
-    );
 }

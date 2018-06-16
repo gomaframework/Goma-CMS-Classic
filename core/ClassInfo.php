@@ -170,10 +170,11 @@ class ClassInfo extends gObject {
 		return isset(self::$class_info[$class]["interfaces"]) ? in_array($interface, self::$class_info[$class]["interfaces"]) : false;
 	}
 
-	/**
-	 * gets the parent class of a class
-	 *
-	 */
+    /**
+     * gets the parent class of a class
+     * @param string $class
+     * @return bool
+     */
 	public static function getParentClass($class) {
 		$class = ClassManifest::resolveClassName($class);
 

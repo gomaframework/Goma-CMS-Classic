@@ -26,17 +26,11 @@ class LeftAndMain extends AdminItem {
 	/**
 	 * defines the url-handlers
 	*/
-	public $url_handlers = array(
+	static $url_handlers = array(
 		"updateTree/\$search"			=> "updateTree",
 		"add/\$model"					=> "cms_add",
-        "versions"                      => "versions"
-	);
-
-	/**
-	 * defines the allowed actions
-	*/
-	public $allowed_actions = array(
-		"cms_add", "updateTree", "savesort", "versions"
+        "versions"                      => "versions",
+        "savesort"                      => "savesort"
 	);
 
 	/**

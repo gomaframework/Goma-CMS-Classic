@@ -17,12 +17,10 @@ class PushController extends Controller {
 	static $pusher;
 	
 	/**
-	 * allowed actions
-	 *
-	 *@name allowed_actions
+	 * url handlers
 	*/
-	public $allowed_actions = array(
-		"auth"
+	static $url_handlers = array(
+		"auth" => "auth"
 	);
 
 	protected static $key;

@@ -399,6 +399,281 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
     }
 
     /**
+     * tests getting DataObject and filtering by ManyMany with standard array by existence of one record.
+     *
+     * 1. Create One TestObjectOne $one and two testObjectTwo.
+     * 2. Assign both of the twos to $one->twos().
+     * 3. Write $one
+     * 4. Get ManyManyTestObjectTwo with filter = array("ones" => array("id" => $one->id), set to $set
+     * 5. Assert that set contains two objects.
+     *
+     * @throws MySQLException
+     */
+    public function testFilterByManyManyOneFilter() {
+        try {
+            $one = new ManyManyTestObjectOne(
+                array(
+                    "one" => 10
+                )
+            );
+            $one->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 10
+                    )
+                )
+            );
+            $one->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 11
+                    )
+                )
+            );
+            $one->writeToDB(true, true);
+
+            $set = DataObject::get(ManyManyTestObjectTwo::class, array(
+                "ones" => array(
+                    "id" => $one->id
+                )
+            ));
+            $this->assertEqual(2, $set->count());
+        } finally {
+            foreach($one->twos() as $two) {
+                $two->remove(true);
+            }
+
+            $one->remove(true);
+        }
+    }
+
+    /**
+     * tests getting DataObject and filtering by ManyMany with multi-dimensional array by existence of one record.
+     *
+     * 1. Create One TestObjectOne $one and two testObjectTwo.
+     * 2. Assign both of the twos to $one->twos().
+     * 3. Write $one
+     * 4. Get ManyManyTestObjectTwo with filter = array("ones" => array(0 => array("id" => $one->id)), set to $set
+     * 5. Assert that set contains two objects.
+     *
+     * @throws MySQLException
+     */
+    public function testFilterByManyManyMultiDimensionalOneFilter() {
+        try {
+            $one = new ManyManyTestObjectOne(
+                array(
+                    "one" => 10
+                )
+            );
+            $one->twos()->add(
+                 new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 10
+                    )
+                )
+            );
+            $one->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 11
+                    )
+                )
+            );
+            $one->writeToDB(true, true);
+
+            $set = DataObject::get(ManyManyTestObjectTwo::class, array(
+                "ones" => array(
+                    array(
+                        "id" => $one->id
+                    )
+                )
+            ));
+            $this->assertEqual(2, $set->count());
+        } finally {
+            foreach($one->twos() as $two) {
+                $two->remove(true);
+            }
+
+            $one->remove(true);
+        }
+    }
+
+    /**
+     * tests getting DataObject and filtering by ManyMany with multi-dimensional array by existence of two record using OR-conjunction.
+     *
+     * 1. Create One TestObjectOne $one and two testObjectTwo.
+     * 2. Assign both of the twos to $one->twos().
+     * 3. Write $one
+     * 4. Get ManyManyTestObjectTwo with filter = array("ones" => array(0 => array("id" => $one->id), "OR", 2 => array("id" => 0)), set to $set
+     * 5. Assert that set contains two objects.
+     *
+     * @throws MySQLException
+     */
+    public function testFilterByManyManyMultiDimensionalTwoFilterOr() {
+        try {
+            $one = new ManyManyTestObjectOne(
+                array(
+                    "one" => 10
+                )
+            );
+            $one->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 10
+                    )
+                )
+            );
+            $one->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 11
+                    )
+                )
+            );
+            $one->writeToDB(true, true);
+
+            $set = DataObject::get(ManyManyTestObjectTwo::class, array(
+                "ones" => array(
+                    array(
+                        "id" => $one->id
+                    ),
+                    "OR",
+                    array(
+                        "id" => 0
+                    )
+                )
+            ));
+            $this->assertEqual(2, $set->count());
+        } finally {
+            foreach($one->twos() as $two) {
+                $two->remove(true);
+            }
+
+            $one->remove(true);
+        }
+    }
+
+    /**
+     * tests getting DataObject and filtering by ManyMany with empty filter.
+     *
+     * 1. Create One TestObjectOne $one and two testObjectTwo.
+     * 2. Assign both of the twos to $one->twos().
+     * 3. Write $one
+     * 4. Get ManyManyTestObjectTwo with filter = array("ones" => array(), set to $set
+     * 5. Assert that set contains two objects.
+     *
+     * @throws MySQLException
+     */
+    public function testFilterByManyManyEmptyFilter() {
+        try {
+            $one = new ManyManyTestObjectOne(
+                array(
+                    "one" => 10
+                )
+            );
+            $one->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 100
+                    )
+                )
+            );
+            $one->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 100
+                    )
+                )
+            );
+            $one->writeToDB(true, true);
+
+            $set = DataObject::get(ManyManyTestObjectTwo::class, array(
+                "ones" => array(
+
+                ),
+                "two" => 100
+            ));
+            $this->assertEqual(2, $set->count());
+        } finally {
+            foreach($one->twos() as $two) {
+                $two->remove(true);
+            }
+
+            $one->remove(true);
+        }
+    }
+
+
+    /**
+     * tests getting DataObject and filtering by ManyMany with multi-dimensional array  by existence of two records.
+     *
+     * 1. Create One TestObjectOne $one and two testObjectTwo.
+     * 2. Assign both of the twos to $one->twos().
+     * 3. Write $one
+     * 4. Create second TestObjectOne $two and assign both testObjectTwos to it too
+     * 5. Write $two
+     * 6. Get ManyManyTestObjectTwo with filter = array("ones" => array(
+     *  0 => array("id" => $one->id),
+     *  1 => array("id" => $two->id)
+     * ), set to $set
+     * 7. Assert that set contains two objects.
+     *
+     * @throws MySQLException
+     */
+    public function testFilterByManyManyMultiDimensionalTwoFilters() {
+        try {
+            $one = new ManyManyTestObjectOne(
+                array(
+                    "one" => 10
+                )
+            );
+            $one->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 10
+                    )
+                )
+            );
+            $one->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 11
+                    )
+                )
+            );
+            $one->writeToDB(true, true);
+
+            $two = new ManyManyTestObjectOne(
+                array(
+                    "one" => 11
+                )
+            );
+            $two->twos()->add($one->twos()->first());
+            $two->twos()->add($one->twos()->last());
+            $two->writeToDB(false, true);
+
+            $set = DataObject::get(ManyManyTestObjectTwo::class, array(
+                "ones" => array(
+                    array(
+                        "id" => $one->id
+                    ),
+                    array(
+                        "id" => $two->id
+                    )
+                )
+            ));
+            $this->assertEqual(2, $set->count());
+        } finally {
+            foreach($one->twos() as $two) {
+                $two->remove(true);
+            }
+
+            $one->remove(true);
+            $two->remove(true);
+        }
+    }
+
+    /**
      * tests state-upgrades when writing manymany-DataObjectSets from a DataObject
      * it tests when also already published records are available, which has a new state-version
      *
@@ -416,64 +691,119 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
      */
     public function testUpgradeStateToPublishWithPublished()
     {
-        $newOne = new ManyManyTestObjectOne(array(
-            "one" => 10
-        ));
-        $newOne->twos()->add($first = new ManyManyTestObjectTwo(array(
-            "two" => 10
-        )));
-        $newOne->twos()->add(new ManyManyTestObjectTwo(array(
-            "two" => 11
-        )));
-        $first->writeToDB(true, true);
-        $first->two = 12;
-        $first->writeToDB(false, true, 1);
-        $newOne->writeToDB(true, true, 1);
+        try {
+            $newOne = new ManyManyTestObjectOne(
+                array(
+                    "one" => 10
+                )
+            );
+            $newOne->twos()->add(
+                $first = new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 10
+                    )
+                )
+            );
+            $newOne->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 11
+                    )
+                )
+            );
+            $first->writeToDB(true, true);
+            $first->two = 12;
+            $first->writeToDB(false, true, 1);
+            $newOne->writeToDB(true, true, 1);
 
-        $this->assertEqual($newOne, $newOne->twos()->getOwnRecord());
-        $this->assertEqual(12, $newOne->twos()->first()->two);
-        $this->assertEqual(2, $newOne->twos()->count());
+            $this->assertEqual($newOne, $newOne->twos()->getOwnRecord());
+            $this->assertEqual(12, $newOne->twos()->first()->two);
+            $this->assertEqual(2, $newOne->twos()->count());
 
-        $this->assertEqual(1, DataObject::count(ManyManyTestObjectTwo::class, array(
-            "two" => 10
-        )));
+            $this->assertEqual(
+                1,
+                DataObject::count(
+                    ManyManyTestObjectTwo::class,
+                    array(
+                        "two" => 10
+                    )
+                )
+            );
 
-        /** @var ManyManyTestObjectOne $stateOne */
-        $stateOne = DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
-            "one" => 10
-        ))->first();
-        $this->assertEqual(DataObject::VERSION_STATE, $stateOne->queryVersion);
+            /** @var ManyManyTestObjectOne $stateOne */
+            $stateOne = DataObject::get_versioned(
+                ManyManyTestObjectOne::class,
+                DataObject::VERSION_STATE,
+                array(
+                    "one" => 10
+                )
+            )->first();
+            $this->assertEqual(DataObject::VERSION_STATE, $stateOne->queryVersion);
 
-        $this->assertIsA($stateOne, ManyManyTestObjectOne::class);
-        $this->assertEqual(2, $stateOne->twos()->count());
-        $this->assertEqual(1, DataObject::get(ManyManyTestObjectTwo::class, array(
-            "two" => array(10, 11)
-        ))->count());
+            $this->assertIsA($stateOne, ManyManyTestObjectOne::class);
+            $this->assertEqual(2, $stateOne->twos()->count());
+            $this->assertEqual(
+                1,
+                DataObject::get(
+                    ManyManyTestObjectTwo::class,
+                    array(
+                        "two" => array(10, 11)
+                    )
+                )->count()
+            );
 
-        // publish
-        $stateOne->writeToDB(false, true, 2);
-        $this->assertEqual(1, DataObject::get(ManyManyTestObjectTwo::class, array(
-            "two" => array(10, 11)
-        ))->count());
-        $this->assertEqual(2, DataObject::get(ManyManyTestObjectTwo::class, array(
-            "two" => array(12, 11)
-        ))->count());
+            // publish
+            $stateOne->writeToDB(false, true, 2);
+            $this->assertEqual(
+                1,
+                DataObject::get(
+                    ManyManyTestObjectTwo::class,
+                    array(
+                        "two" => array(10, 11)
+                    )
+                )->count()
+            );
+            $this->assertEqual(
+                2,
+                DataObject::get(
+                    ManyManyTestObjectTwo::class,
+                    array(
+                        "two" => array(12, 11)
+                    )
+                )->count()
+            );
 
-        $this->assertEqual(2, $stateOne->twos()->count());
+            $this->assertEqual(2, $stateOne->twos()->count());
 
-        // cleanup
-        foreach ($stateOne->twos() as $two) {
-            $two->remove(true);
+        } finally {
+            // cleanup
+            foreach ($stateOne->twos() as $two) {
+                $two->remove(true);
+            }
+
+            try {
+                $this->assertEqual(
+                    0,
+                    DataObject::get(
+                        ManyManyTestObjectTwo::class,
+                        array(
+                            "two" => array(10, 11)
+                        )
+                    )->count()
+                );
+            } finally {
+                $stateOne->remove(true);
+                $this->assertNull(
+                    DataObject::get_versioned(
+                        ManyManyTestObjectOne::class,
+                        DataObject::VERSION_STATE,
+                        array(
+                            "one" => 10
+                        )
+                    )->first()
+                );
+            }
         }
-
-        $this->assertEqual(0, DataObject::get(ManyManyTestObjectTwo::class, array(
-            "two" => array(10, 11)
-        ))->count());
-
-        $stateOne->remove(true);
-        $this->assertNull(DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
-            "one" => 10
-        ))->first());
     }
 
     /**

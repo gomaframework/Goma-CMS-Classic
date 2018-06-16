@@ -13,17 +13,17 @@ class userAdmin extends adminItem {
 	/**
 	 * text
 	*/
-	public $text = '{$_lang_users}';
+    static $text = '{$_lang_users}';
 	
 	/**
 	 * permissions
 	*/
-	public $rights = "USERS_MANAGE";
+    static $rights = "USERS_MANAGE";
 	
 	/**
 	 * sort
 	*/
-	public $sort = "700";
+    static $sort = "700";
 	
 	/**
 	 * models
@@ -46,11 +46,9 @@ class userAdmin extends adminItem {
 
 	/**
 	 * extend actions
-	 *
-	 *@name allowed_actions
 	*/
-	public $allowed_actions = array(
-		"toggleLock"
+	static $url_handlers = array(
+		"toggleLock" => "toggleLock"
 	);
 
 	/**

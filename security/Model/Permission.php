@@ -15,9 +15,10 @@
  * @property string type
  * @property string password
  * @property string name
- * @property int invert_groups
  * @property ManyMany_DataObjectSet groups
+ * @property Permission|null parent
  * @method ManyMany_DataObjectSet Groups($filter = null, $sort = null)
+ * @method HasMany_DataObjectSet Children($filter = null, $sort = null)
  */
 class Permission extends DataObject
 {
@@ -59,7 +60,6 @@ class Permission extends DataObject
         "name" => "varchar(100)",
         "type" => "enum('all', 'users', 'admins', 'password', 'groups')",
         "password" => "varchar(100)",
-        "invert_groups" => "int(1)",
         "forModel" => "varchar(100)"
     );
 
@@ -191,7 +191,8 @@ class Permission extends DataObject
     {
         $r = strtolower(trim($r));
         if (isset(self::$providedPermissions[$r])) {
-            if ($data = DataObject::get_one("Permission", array("name" => array("LIKE", $r)))) {
+            /** @var Permission $data */
+            if ($data = DataObject::get_one(self::class, array("name" => array("LIKE", $r)))) {
                 return $data;
             } else {
                 if (isset(self::$providedPermissions[$r]["default"]["inherit"]) && strtolower(self::$providedPermissions[$r]["default"]["inherit"]) != $r) {
@@ -217,14 +218,13 @@ class Permission extends DataObject
                 return $perm;
             }
         } else {
-            return false;
+            return null;
         }
     }
 
     /**
      * setting the parent-id
-     *
-     * @name setParentID
+     * @param int $parentid
      */
     public function setParentID($parentid)
     {
@@ -234,9 +234,9 @@ class Permission extends DataObject
             if ($this->hasChanged()) {
                 $this->type = $perm->type;
                 $this->password = $perm->password;
-                $this->invert_groups = $perm->invert_groups;
-                if ($this->type == "groups")
+                if ($this->type == "groups") {
                     $this->groupsids = $perm->groupsids;
+                }
             }
         } else {
             $this->parentid = 0;
@@ -250,8 +250,9 @@ class Permission extends DataObject
      */
     public function onBeforeWrite($modelWriter)
     {
-        if ($this->parentid == $this->id)
+        if ($this->parentid == $this->id) {
             $this->parentid = 0;
+        }
 
         if ($this->name) {
             if ($this->type != "groups") {
@@ -271,6 +272,23 @@ class Permission extends DataObject
 
         if(!in_array($this->type, array("all", "users", "groups", "admins", "password"))) {
             throw new FormInvalidDataException("type", "Type of permission must be a valid type. " . $this->type . " given.");
+        }
+
+        if(isset($this->data["parent"]) && $this->data["parent"] != $this) {
+            if(($mostParent = $this->getAllParents(array(
+                "height" => 1
+            ))->first()) === null) {
+                $mostParent = $this->parent;
+                while($mostParent->parent) {
+                    $mostParent = $mostParent->parent;
+                }
+            }
+
+            $this->type = $mostParent->type;
+            $this->password = $mostParent->password;
+            if ($this->type == "groups") {
+                $this->groupsids = $mostParent->groupsids;
+            }
         }
 
         parent::onBeforeWrite($modelWriter);
@@ -333,8 +351,7 @@ class Permission extends DataObject
                     "table_name" => $this->baseTable,
                     "fields" => array(
                         "type" => $this->type,
-                        "password" => $this->password,
-                        "invert_groups" => $this->invert_groups
+                        "password" => $this->password
                     ),
                     "where" => array(
                         "id" => $subversions
@@ -374,20 +391,6 @@ class Permission extends DataObject
                     $i++;
                 }
             }
-        }
-    }
-
-    /**
-     * preserve Defaults
-     *
-     * @return bool|void
-     */
-    public function preserveDefaults($prefix = DB_PREFIX, &$log)
-    {
-        parent::preserveDefaults($prefix, $log);
-
-        foreach (self::$providedPermissions as $name => $data) {
-            self::forceExisting($name);
         }
     }
 
@@ -437,8 +440,9 @@ class Permission extends DataObject
      */
     public function hasPermission($user = null)
     {
-        if (!defined("SQL_INIT"))
+        if (!defined("SQL_INIT")) {
             return true;
+        }
 
         if ($this->type == "all") {
             return true;
@@ -453,7 +457,7 @@ class Permission extends DataObject
         }
 
         if ($this->type == "users") {
-            return ($user->getGroupType() > 0);
+            return true;
         }
 
         if ($this->type == "admins") {
@@ -465,20 +469,9 @@ class Permission extends DataObject
         }
 
         if ($this->type == "groups") {
-            $groups = $this->Groups()->fieldToArray("id");
-            if ($this->invert_groups) {
-                if (count(array_intersect($groups, $user->groupIds())) > 0) {
-                    return false;
-                } else {
-                    return true;
-                }
-            } else {
-                if (count(array_intersect($groups, $user->groupIds())) > 0) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
+            return $this->Groups(array(
+                "id" => $user->groupIds()
+            ))->count() > 0;
         }
 
         return (member::$groupType > 0);

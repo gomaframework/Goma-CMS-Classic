@@ -12,11 +12,11 @@
  */
 
 class GomaRestfulService extends RequestHandler {
-    public $url_handlers = array(
+    static $url_handlers = array(
         '$ClassName!'	=> "handleWithDataType"
     );
 
-    public $allowed_actions = array(
+    static $allowed_actions = array(
         "handleWithDataType"
     );
 

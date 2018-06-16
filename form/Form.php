@@ -258,7 +258,7 @@ class Form extends AbstractFormComponentWithChildren {
 			'method' => 'post',
 			'name' => $this->name(),
 			'id' => $this->ID(),
-			"class" => "form " . $this->name
+			"class" => "form " . $this->name,
 		));
 	}
 
@@ -298,12 +298,11 @@ class Form extends AbstractFormComponentWithChildren {
 	}
 
 	/**
-	 * renders the form
+	 * renders the form. This is done within GomaFormResponse.
 	 *
 	 * @return GomaResponse
-	 * @internal
 	 */
-	public function renderData() {
+	protected function submitOrRenderForm() {
 		Resources::add("form.less", "css");
 
 		$this->defaultFields();
@@ -344,7 +343,7 @@ class Form extends AbstractFormComponentWithChildren {
 
 		$this->session->remove("form_secrets." . $this->name());
 
-		return $this->renderForm(array(), $notSavedYet);
+		return $this->renderFormFields(array(), $notSavedYet);
 	}
 
 	/**
@@ -405,7 +404,7 @@ class Form extends AbstractFormComponentWithChildren {
 	 * @param bool $notSavedYet
 	 * @return mixed|string
 	 */
-	public function renderForm($errors = array(), $notSavedYet = false) {
+	protected function renderFormFields($errors = array(), $notSavedYet = false) {
 		if($errors || $notSavedYet) {
 			if($this->getRequest()->canReplyJavaScript()) {
 				return $this->replyJSErrors($errors, $notSavedYet);
@@ -463,7 +462,7 @@ class Form extends AbstractFormComponentWithChildren {
 		if(count($errors) > 0) {
 			$js .= "form.setLeaveCheck(true);";
 		}
-		Resources::addJS('$(function(){ '.$js.' });');
+		Resources::addJS('$(function(){ '.$js.' window['.var_export($this->id(), true).'] = form; });');
 
 		if(PROFILE)
 			Profiler::unmark("Form::renderForm::render");
@@ -715,7 +714,7 @@ class Form extends AbstractFormComponentWithChildren {
 
         try {
 	        if(!$this->session->hasKey(self::SESSION_PREFIX . "." . strtolower($this->name))) {
-	            $this->renderForm();
+	            $this->renderFormFields();
             }
 
             return $this->submitForm();
@@ -800,7 +799,7 @@ class Form extends AbstractFormComponentWithChildren {
 			$this->activatesecret();
 			$this->session->set(self::SESSION_STATE_PREFIX . $this->name, $this->state->ToArray());
 
-			return $this->renderForm($errors);
+			return $this->renderFormFields($errors);
 		}
 	}
 

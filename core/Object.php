@@ -135,7 +135,7 @@ abstract class gObject
     public static function method_exists($class, $method)
     {
         if(!$method || !$class) {
-            throw new InvalidArgumentException("Method must be set and a string. " . $class . "::" . $method . " asked for.");
+            throw new InvalidArgumentException("Method must be set and a string for gObject::method_exists. " . $class . "::" . $method . " was called.");
         }
 
         if (PROFILE) {
@@ -485,6 +485,10 @@ abstract class gObject
     public static function getExtensionsForClass($class, $recursive = true) {
         $class = ClassManifest::resolveClassName($class);
 
+        if(ClassInfo::hasInterface($class, ExtensionModel::class)) {
+            return array();
+        }
+
         if ($recursive === true) {
             if (defined("GENERATE_CLASS_INFO") || !isset(self::$cache_extensions[$class])) {
                 self::buildExtCache($class);
@@ -556,6 +560,12 @@ abstract class gObject
             }
 
             $reflectionClass = new ReflectionClass($extensionClassName);
+
+            // instance of non-extension not possible
+            if(!$reflectionClass->implementsInterface(ExtensionModel::class)) {
+                throw new LogicException("Extension $extensionClassName does not implement ExtensionModel.");
+            }
+
             $args =
                 is_array(self::$cache_extensions[$this->classname][$extensionClassName]) ?
                     self::$cache_extensions[$this->classname][$extensionClassName] :

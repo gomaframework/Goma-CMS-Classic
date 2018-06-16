@@ -749,4 +749,17 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     public function clear() {
         $this->items = array();
     }
+
+    /**
+     * @param callable $function
+     * @return array
+     */
+    public function mapToArray($function)
+    {
+        $newData = array();
+        foreach($this as $item) {
+            $newData[] = call_user_func_array($function, array($item));
+        }
+        return $newData;
+    }
 }

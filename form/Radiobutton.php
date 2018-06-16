@@ -27,6 +27,19 @@ class RadioButton extends FormField
     public $hideDisabled = false;
 
     /**
+     * creates field.
+     * @param null $name
+     * @param null $title
+     * @param array $options
+     * @param null $selected
+     * @param null $form
+     * @return static
+     */
+    public static function create($name = null, $title = null, $options = array(), $selected = null, $form = null) {
+        return new static($name, $title, $options, $selected, $form);
+    }
+
+    /**
      * @param string|null $name
      * @param string|null $title
      * @param array $options
@@ -70,7 +83,6 @@ class RadioButton extends FormField
 
         if (!isset($disabled))
             $disabled = false;
-
         $id = "radio_" . md5($this->ID() . $name . $value);
 
         $node = new HTMLNode("div", array("class" => "option"), array(
@@ -234,6 +246,9 @@ class RadioButton extends FormField
         return true;
     }
 
+    /**
+     * @return string
+     */
     public function js()
     {
         return parent::js() . ' initRadioButton(field, field.divId);';

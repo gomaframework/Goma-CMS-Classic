@@ -17,8 +17,6 @@ class Cacher {
 	/**
 	 * this var declares, whether cache is using cache-file or not
 	 *
-	 * @name active
-	 * @access private
 	 * @use whether cache active or not
 	 * @var bool
 	*/
@@ -26,11 +24,9 @@ class Cacher {
 	
 	/**
 	 * it is the data of the cachefile
-	 *
-	 * @name data
-	 * @access private
+     *
 	 * @use to save the private data
-	 * @var string
+	 * @var mixed
 	*/
 	private $data;
 
@@ -42,9 +38,7 @@ class Cacher {
 
 	/**
 	 * the filename
-	 *
-	 * @name filename
-	 * @access private
+     *
 	 * @use to save the path to the file
 	 * @var string
 	*/
@@ -59,19 +53,14 @@ class Cacher {
 	
 	/**
 	 * name of this cache
-	 *
-	 * @name name
-	 * @access public
 	*/
 	public $name;
 	
 	/**
 	 * default CacheManager which is used for this Cacher.
 	 *
-	 * @name dir
-	 * @access public
 	 * @use to save the directory
-	 * @var sting
+	 * @var string
 	*/
 	public static $manager;
 	
@@ -138,14 +127,12 @@ class Cacher {
 	}
 
 
-	/**
-	 * constructs the cacher
-	 *
-	 * @name __cunstruct
-	 * @access public
-	 * @param string - name of the cache
-	 * @use to init an cacher
-	*/
+    /**
+     * constructs the cacher
+     *
+     * @param string $name of the cache
+     * @param bool $important
+     */
 	public function __construct($name, $important = false) {
 
 		if(PROFILE) Profiler::mark("cacher");
@@ -183,11 +170,8 @@ class Cacher {
 	
 	/**
 	 * checks whether cache is valid
-	 *
-	 * @name checkvalid
-	 * @access public
-	 * @use to get the validation-result
-	 * @return bool - validation result
+     *
+     * @return bool
 	*/
 	public function checkValid() {
 		if($this->active === true) {
@@ -240,10 +224,6 @@ class Cacher {
 	
 	/**
 	 * deletes the cachefile
-	 *
-	 * @name delete
-	 * @access public
-	 * @use to delete the file
 	*/
 	public function delete() {
 		self::clearInstanceCache($this->name);
@@ -251,16 +231,14 @@ class Cacher {
 		$this->privateData = null;
 		return self::$manager->rm ($this->filename);
 	}
-	
-	/**
-	 * writes data into the cachefile
-	 *
-	 * @name write
-	 * @access public
-	 * @param string - the data of the cache
-	 * @param (string|numeric) - the time, how long the cache is valid in seconds
-	 * @return bool - result
-	*/
+
+    /**
+     * writes data into the cachefile
+     *
+     * @param mixed $data the data of the cache
+     * @param int $time time in seconds for validity*
+     * @return bool
+     */
 	public function write( $data , $time = 60 ) {
 		if(PROFILE) Profiler::mark("cacher_write");
 

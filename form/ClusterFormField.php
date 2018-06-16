@@ -9,7 +9,12 @@ defined("IN_GOMA") OR die();
  * @package Goma\Form
  * @version 1.0.5
  */
-class ClusterFormField extends FieldSet {
+class ClusterFormField extends FieldSet
+{
+    static $url_handlers = array(
+        "\$field!" => "handleField"
+    );
+
     /**
      * controller
      */
@@ -40,7 +45,8 @@ class ClusterFormField extends FieldSet {
     /**
      *
      */
-    protected function defineFields() {
+    protected function defineFields()
+    {
 
     }
 
@@ -48,9 +54,9 @@ class ClusterFormField extends FieldSet {
      * @param null $fieldErrors
      * @return FormFieldRenderData
      */
-    public function  exportBasicInfo($fieldErrors = null)
+    public function exportBasicInfo($fieldErrors = null)
     {
-        if(!$this->fieldsDefined) {
+        if (!$this->fieldsDefined) {
             $this->fieldsDefined = true;
             $this->defineFields();
         }
@@ -63,16 +69,18 @@ class ClusterFormField extends FieldSet {
      * we implement sub-namespaces for sub-items here
      *
      * @param string $action
+     * @param string $classWithActionDefined
      * @return bool
      */
-    public function hasAction($action)
+    public function hasAction($action, $classWithActionDefined = null)
     {
         if (isset($this->fields[strtolower($action)])) {
             return true;
         }
 
-        if (parent::hasAction($action))
+        if (parent::hasAction($action, $classWithActionDefined)) {
             return true;
+        }
 
         return false;
     }
@@ -81,16 +89,17 @@ class ClusterFormField extends FieldSet {
      * handles the action
      * we implement sub-namespaces for sub-items here
      *
-     * @param $action
-     * @return false|string
+     * @return null|string
+     * @throws Exception
      */
-    public function handleAction($action)
+    public function handleField()
     {
-        if (isset($this->fields[strtolower($action)])) {
-            return $this->fields[strtolower($action)]->handleRequest($this->request);
+        $field = $this->getParam("field");
+        if (isset($this->fields[strtolower($field)])) {
+            return $this->fields[strtolower($field)]->handleRequest($this->request);
         }
 
-        return parent::handleAction($action);
+        return null;
     }
 
     /**
@@ -100,7 +109,7 @@ class ClusterFormField extends FieldSet {
      */
     public function add($field, $sort = null, $to = null)
     {
-        $field->overridePostName = $this->PostName() . "_" . $field->PostName();
+        $field->overridePostName = $this->PostName()."_".$field->PostName();
 
         parent::add($field, $sort, $to);
     }
@@ -112,11 +121,9 @@ class ClusterFormField extends FieldSet {
      */
     public function ID()
     {
-        if (Core::is_ajax()) {
-            return "form_field_" . $this->classname . "_" . md5($this->form()->getName()) . "_" . $this->name . "_ajax";
-        } else {
-            return "form_field_" . $this->classname . "_" . md5($this->form()->getName()) . "_" . $this->name;
-        }
+        return "form_field_".ClassManifest::getUrlClassName($this->classname)."_".md5(
+                $this->form()->getName()
+            )."_".$this->name;
     }
 
     /**
@@ -127,8 +134,9 @@ class ClusterFormField extends FieldSet {
     public function result()
     {
         $result = $this->getModel();
-        if(!$result)
+        if (!$result) {
             $result = array();
+        }
 
         /** @var AbstractFormComponent $field */
         foreach ($this->fieldList as $field) {
@@ -139,6 +147,9 @@ class ClusterFormField extends FieldSet {
     }
 
     /**
+     * adds to result regardless if disabled or not.
+     * Disabled is handled in result.
+     *
      * @param array $result
      */
     public function argumentResult(&$result)
@@ -162,8 +173,10 @@ class ClusterFormField extends FieldSet {
     public function getModel()
     {
         if (!isset($this->hasNoValue) || !$this->hasNoValue) {
-            if($this->POST) {
-                if (!$this->isDisabled() && $this->parent && ($postData = $this->parent->getFieldPost($this->PostName()))) {
+            if ($this->POST) {
+                if (!$this->isDisabled() && $this->parent && ($postData = $this->parent->getFieldPost(
+                        $this->PostName()
+                    ))) {
                     return $postData;
                 } else if ($this->model === null) {
                     $this->model = $this->parent ? $this->parent->getFieldValue($this->dbname) : null;
@@ -196,10 +209,11 @@ class ClusterFormField extends FieldSet {
      */
     public function externalURL()
     {
-        if($this->namespace)
+        if ($this->namespace) {
             return $this->namespace;
+        }
 
-        return parent::form()->externalURL() . "/" . $this->name;
+        return parent::form()->externalURL()."/".$this->name;
     }
 
     /**
@@ -208,8 +222,9 @@ class ClusterFormField extends FieldSet {
      * @param string $name
      * @param AbstractFormComponent $field
      */
-    public function registerField($name, $field) {
-        if(!is_a($field, "AbstractFormComponent")) {
+    public function registerField($name, $field)
+    {
+        if (!is_a($field, "AbstractFormComponent")) {
             throw new InvalidArgumentException('$field must be AbstractFormComponent');
         }
 
@@ -222,7 +237,8 @@ class ClusterFormField extends FieldSet {
      *
      * @param string $name
      */
-    public function unRegisterField($name) {
+    public function unRegisterField($name)
+    {
         unset($this->fields[strtolower($name)]);
     }
 

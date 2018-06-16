@@ -49,6 +49,20 @@ abstract class historyGenerator extends gObject
     private $record;
 
     /**
+     * returns which model-types this class supports history for.
+     *
+     * @return array
+     */
+    public static function modelTypes() {
+        $baseClass = str_replace("historydata_", "", strtolower(static::class));
+        if(ClassInfo::exists($baseClass)) {
+            return array_merge(array($baseClass), ClassInfo::getChildren($baseClass));
+        }
+
+        throw new InvalidArgumentException("Please define which modelTypes are supported for " . static::class . " by defining static method modelTypes().");
+    }
+
+    /**
      * historyGenerator constructor.
      * @param History $record
      */

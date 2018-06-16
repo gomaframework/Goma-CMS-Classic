@@ -1002,6 +1002,7 @@ class mysqliDriver implements SQLDriver
 
                     if (isset($data["where"])) {
                         if (
+                            (isset($data["table"]) && $table_name = $data["table"]) ||
                             (isset($data["table_name"]) && $table_name = $data["table_name"]) ||
                             (ModelInfoGenerator::classTable($class) && $table_name = ModelInfoGenerator::classTable($class))
                         ) {
@@ -1012,7 +1013,7 @@ class mysqliDriver implements SQLDriver
 
                             $manipulation[$class]["sql"] = $sql;
                         } else {
-                            throw new InvalidArgumentException("Table for Delete does not exist." . print_r($data, true));
+                            throw new InvalidArgumentException("Table for Delete does not defined." . print_r($data, true));
                         }
                     } else {
                         throw new InvalidArgumentException("Delete requires specification of id or where." . print_r($data, true));

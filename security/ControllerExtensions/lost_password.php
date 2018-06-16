@@ -22,14 +22,9 @@ class lost_passwordExtension extends ControllerExtension {
     /**
      * add url-handler
      */
-    public $url_handlers = array(
+    static $url_handlers = array(
         "lost_password"	=> "lost_password"
     );
-
-    /**
-     * add action
-     */
-    public $allowed_actions = array("lost_password");
 
     /**
      * register method

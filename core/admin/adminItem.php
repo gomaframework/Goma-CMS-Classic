@@ -12,24 +12,24 @@
 */
 class adminItem extends AdminController implements PermProvider {
 	/**
-	 * sort
+	 * sort for admin
 	*/
-	public $sort = 0;
+	static $sort = 0;
 
-    public $rights = "admin";
+    /**
+     * required rights to access this.
+     *
+     * @var string
+     */
+    static $rights = "admin";
 
 	/**
 	 * allowed_actions
 	*/
-	public $allowed_actions = array
+	static $url_handlers = array
 	(
-		"cms_add"
+		"cms_add" => "cms_add"
 	);
-
-	/**
-	 * controller inst of the model if set
-	*/
-	public $controllerInst;
 
 	/**
 	 * the template
@@ -37,25 +37,11 @@ class adminItem extends AdminController implements PermProvider {
 	*/
 	public $template = "";
 
-	/**
-	 * @return bool
-	 */
-	public function userHasPermissions() {
-		if(StaticsManager::hasStatic($this->classname, "permission")) {
-			return Permission::check(StaticsManager::getStatic($this->classname, "permission"));
-		}
-
-		if(isset($this->rights)) {
-			return Permission::check($this->rights);
-		}
-
-		return Permission::check("ADMIN");
-	}
-
-	/**
-	 * @param null|string $model
-	 * @return IDataSet|ViewAccessableData
-	 */
+    /**
+     * @param null|string $model
+     * @return IDataSet|ViewAccessableData
+     * @throws ReflectionException
+     */
 	protected function guessModel($model = null)
 	{
 		if(!isset($model) && !StaticsManager::getStatic($this, "model", true)) {
@@ -86,13 +72,16 @@ class adminItem extends AdminController implements PermProvider {
     }
 
     /**
-     * if is visible
+     * if is visible to a specific user.
+     *
      * @param User $user
      * @return bool
+     * @throws PermissionException
+     * @throws SQLException
      */
-	public function visible($user)
+	public static function visible($user)
 	{
-		return true;
+		return $user->hasPermissions(static::$rights);
 	}
 
 	/**
@@ -113,37 +102,6 @@ class adminItem extends AdminController implements PermProvider {
 	*/
 	public function Title() {
 		return parse_lang(StaticsManager::getStatic($this, "text", true));
-	}
-
-	/**
-	 * we provide all methods of the model-controller, too
-	 *
-	 * @param string $methodName
-	 * @param array $args
-	 * @return mixed
-	 */
-	public function __call($methodName, $args) {
-		if(gObject::method_exists($this->getControllerInst(), $methodName)) {
-			$this->getControllerInst()->request = $this->request;
-			return call_user_func_array(array($this->getControllerInst(), $methodName), $args);
-		}
-
-		return parent::__call($methodName, $args);
-	}
-
-	/**
-	 * we provide all methods of the model-controller, too
-	 * method_exists-overloading-api of @see Object
-	 *
-	 * @param    string $methodName
-	 * @return bool
-	 */
-	public function __cancall($methodName) {
-		if($c = $this->getControllerInst()) {
-			return gObject::method_exists($c, $methodName);
-		} else {
-			return false;
-		}
 	}
 
 	/**
@@ -203,18 +161,5 @@ class adminItem extends AdminController implements PermProvider {
 	public function providePerms()
 	{
 		return array();
-	}
-
-	/**
-	 * generates the normal controller for the model inst
-	 *
-	 * @return bool|Controller|null
-	 */
-	public function getControllerInst() {
-		if(!isset($this->controllerInst)) {
-			$this->controllerInst = ControllerResolver::instanceForModel($this->modelInst());
-		}
-		
-		return $this->controllerInst;
 	}
 }

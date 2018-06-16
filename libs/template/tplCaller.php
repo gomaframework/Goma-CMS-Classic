@@ -343,73 +343,61 @@ class tplCaller extends gObject
     }
 
     /**
-     * includes JS
+     * internal include js function by type.
+     *
+     * @param string $name
+     * @param string $type
+     * @return string
+     */
+    protected function _includeJS($name, $type) {
+        if (preg_match("/\.js$/i", $name)) {
+            if (isset($this->subPath)) {
+                if (self::file_exists("tpl/" . Core::getTheme() . "/" . $this->subPath . "/" . $name)) {
+                    $name = "tpl/" . Core::getTheme() . "/" . $this->subPath . "/" . $name;
+                    Resources::add($name, "js", $type);
+
+                    return "";
+                } else if (self::file_exists(APPLICATION_TPL_PATH . $this->subPath . "/" . $name)) {
+                    $name = APPLICATION_TPL_PATH . $this->subPath . "/" . $name;
+                    Resources::add($name, "js", $type);
+
+                    return "";
+                } else if (self::file_exists(SYSTEM_TPL_PATH . $this->subPath . "/" . $name)) {
+                    $name = SYSTEM_TPL_PATH . $this->subPath . "/" . $name;
+                    Resources::add($name, "js", $type);
+
+                    return "";
+                }
+            }
+            if (self::file_exists($this->tplBase . "/" . $name)) {
+                $name = $this->tplBase . "/" . $name;
+            } else if (!isset($this->subPath) && file_exists("tpl/" . Core::getTheme() . "/" . $name)) {
+                $name = "tpl/" . Core::getTheme() . "/" . $name;
+            }
+        }
+        Resources::add($name, "js", $type);
+    }
+
+    /**
+     * includes JS as "tpl".
+     *
      * @param string $name
      * @return string
      */
     public function include_js($name)
     {
-        if (preg_match("/\.js$/i", $name)) {
-            if (isset($this->subPath)) {
-                if (self::file_exists("tpl/" . Core::getTheme() . "/" . $this->subPath . "/" . $name)) {
-                    $name = "tpl/" . Core::getTheme() . "/" . $this->subPath . "/" . $name;
-                    Resources::add($name, "js", "tpl");
-
-                    return "";
-                } else if (self::file_exists(APPLICATION_TPL_PATH . $this->subPath . "/" . $name)) {
-                    $name = APPLICATION_TPL_PATH . $this->subPath . "/" . $name;
-                    Resources::add($name, "js", "tpl");
-
-                    return "";
-                } else if (self::file_exists(SYSTEM_TPL_PATH . $this->subPath . "/" . $name)) {
-                    $name = SYSTEM_TPL_PATH . $this->subPath . "/" . $name;
-                    Resources::add($name, "js", "tpl");
-
-                    return "";
-                }
-            }
-            if (self::file_exists($this->tplBase . "/" . $name)) {
-                $name = $this->tplBase . "/" . $name;
-            } else if (!isset($this->subPath) && file_exists("tpl/" . Core::getTheme() . "/" . $name)) {
-                $name = "tpl/" . Core::getTheme() . "/" . $name;
-            }
-        }
-        Resources::add($name, "js", "tpl");
+        return $this->_includeJS($name, "tpl");
     }
 
     /**
-     * includes JS as "main"
+     * includes JS as "main".
+     *
      * @param string $name
      * @return string
      */
     public function include_js_main($name)
     {
-        if (preg_match("/\.js$/i", $name)) {
-            if (isset($this->subPath)) {
-                if (self::file_exists("tpl/" . Core::getTheme() . "/" . $this->subPath . "/" . $name)) {
-                    $name = "tpl/" . Core::getTheme() . "/" . $this->subPath . "/" . $name;
-                    Resources::add($name, "js", "main");
-
-                    return "";;
-                } else if (self::file_exists(APPLICATION_TPL_PATH . $this->subPath . "/" . $name)) {
-                    $name = APPLICATION_TPL_PATH . $this->subPath . "/" . $name;
-                    Resources::add($name, "js", "main");
-
-                    return "";
-                } else if (self::file_exists(SYSTEM_TPL_PATH . $this->subPath . "/" . $name)) {
-                    $name = SYSTEM_TPL_PATH . $this->subPath . "/" . $name;
-                    Resources::add($name, "js", "main");
-
-                    return "";
-                }
-            }
-            if (self::file_exists($this->tplBase . "/" . $name)) {
-                $name = $this->tplBase . "/" . $name;
-            } else if (!isset($this->subPath) && file_exists("tpl/" . Core::getTheme() . "/" . $name)) {
-                $name = "tpl/" . Core::getTheme() . "/" . $name;
-            }
-        }
-        Resources::add($name, "js", "main");
+        return $this->_includeJS($name, "main");
     }
 
     /**

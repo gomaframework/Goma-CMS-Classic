@@ -14,25 +14,27 @@
 class RegexpUtil {
     const EMAIL_REGEXP = '/^([a-zA-Z0-9\-\._]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z0-9]{2,9})$/';
     const NUMBER_REGEXP = '/^\-?[0-9\.]+$/';
+    const INT_REGEXP = '/^\-?[0-9]+$/';
 
     /**
-     * returns if string is a number.
+     * returns if variable is a number. returns false for float values.
      *
      * @param string $string
      * @return bool
      */
     public static function isNumber($string) {
-        return preg_match('/^\-?[0-9]+$/', $string);
+        return is_int($string) ||
+            ((is_string($string) || is_numeric($string)) && preg_match(self::INT_REGEXP, (string) $string));
     }
 
     /**
-     * returns if string is a double.
+     * returns if variable is a double. returns also true for integer values.
      *
      * @param string $string
      * @return bool
      */
     public static function isDouble($string) {
-        return preg_match(self::NUMBER_REGEXP, $string);
+        return is_numeric($string) || (is_string($string) && preg_match(self::NUMBER_REGEXP, $string));
     }
 
     /**
@@ -42,7 +44,7 @@ class RegexpUtil {
      * @return bool
      */
     public static function isEmail($email) {
-        return preg_match(self::EMAIL_REGEXP, $email);
+        return is_string($email) && preg_match(self::EMAIL_REGEXP, $email);
     }
 
     /**
@@ -52,7 +54,7 @@ class RegexpUtil {
      * @return bool
      */
     public static function isPhoneNumber($phone) {
-        return preg_match('/^\+?[0-9\s]+$/', $phone);
+        return is_string($phone) && preg_match('/^\+?[0-9\s]+$/', $phone);
     }
 
     /**
@@ -62,7 +64,7 @@ class RegexpUtil {
      * @return bool
      */
     public static function isWebsite($website) {
-        return preg_match('/^(http\:\/\/|https\:\/\/)?([a-z0-9][a-z0-9\-]*\.)+[a-z0-9][a-z0-9\-]*/i', $website);
+        return is_string($website) && preg_match('/^(http\:\/\/|https\:\/\/)?([a-z0-9][a-z0-9\-]*\.)+[a-z0-9][a-z0-9\-]*/i', $website);
     }
 
 
@@ -74,6 +76,6 @@ class RegexpUtil {
      * @return bool
      */
     public static function checkFileExt($filename, $ext) {
-        return (strtolower(substr($filename, 0 - strlen($ext) - 1)) == "." . $ext);
+        return is_string($filename) && (strtolower(substr($filename, 0 - strlen($ext) - 1)) == "." . $ext);
     }
 }

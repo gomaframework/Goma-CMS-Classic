@@ -103,7 +103,10 @@ class GomaFormResponse extends GomaResponse {
      */
     public function resolveForm() {
         if(!isset($this->renderedForm)) {
-            $this->renderedForm = $this->form->renderData();
+            $method = new ReflectionMethod($this->form->classname, "submitOrRenderForm");
+            $method->setAccessible(true);
+            $this->renderedForm = $method->invoke($this->form);
+
             if(!is_array($this->renderedForm)) {
                 if (!is_a($this->renderedForm, "GomaResponse")) {
                     parent::setBody($this->renderedForm);

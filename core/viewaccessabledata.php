@@ -880,10 +880,12 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 		return $this->__set($offset, $value);
 	}
 
-	/**
-	 * new set method
-	 *
-	 */
+    /**
+     * new set method
+     * @param string $name
+     * @param mixed $value
+     * @return $this
+     */
 	public function __set($name, $value) {
 		$this->changed = true;
 		$name = strtolower(trim($name));
@@ -897,14 +899,15 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 		return $this;
 	}
 
-	/**
-	 * sets a value of a given field.
-	 *
-	 * @param    string $var offset
-	 * @param    mixed $value value
-	 * @return $this|void
-	 */
-	public function setOffset($var, $value) {
+    /**
+     * sets a value of a given field.
+     *
+     * @param    string $var offset
+     * @param    mixed $value value
+     * @param bool $setOriginal
+     * @return $this
+     */
+	public function setOffset($var, $value, $setOriginal = false) {
 		if($var === null) {
 			if(is_array($this->data)) {
 				array_push($this->data, $value);
@@ -921,20 +924,39 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 
 			if(is_array($this->data)) {
 				// first unset, so the new value is last value of data stack
-				unset($this->data[$var]);
-				if(isset($this->data[$var]) && $this->data[$var] == $value) {
+				if(isset($this->data[$var]) && $this->data[$var] === $value) {
 					return $this;
 				}
-
+                unset($this->data[$var]);
 				$this->data[$var] = $value;
 			} else {
 				$this->data = array($var => $value);
 			}
+
+			if($setOriginal) {
+                if (is_array($this->original)) {
+                    unset($this->original[$var]);
+                    $this->original[$var] = $value;
+                } else {
+                    $this->original = array($var => $value);
+                }
+            }
 		}
 
-		$this->changed = true;
+		if(!$setOriginal) {
+            $this->changed = true;
+        }
+
 		return $this;
 	}
+
+    /**
+     * @return string
+     */
+    public function hashValue()
+    {
+        return $this->classname . "_" . md5(serialize($this->data));
+    }
 
     /**
      * gets default value for key.
@@ -954,13 +976,14 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
         }
     }
 
-	/**
-	 * sets the value of a given field.
-	 * @param string $name
-	 * @param mixed $value
-	 */
-	public function setField($name, $value) {
-		$this->setOffset($name, $value);
+    /**
+     * sets the value of a given field.
+     * @param string $name
+     * @param mixed $value
+     * @param bool $setOriginal if to keep unchanged
+     */
+	public function setField($name, $value, $setOriginal = false) {
+		$this->setOffset($name, $value, $setOriginal);
 	}
 
 	/**
@@ -1168,14 +1191,9 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
  * @version		1.0
  */
 abstract class Extension extends gObject implements ExtensionModel {
-
-	/**
-	 * extra_methods
-	 */
-	public static $all_extra_methods = array();
 	/**
 	 * the owner-class
-	 *@name owner
+	 * @name owner
 	 */
 	protected $owner;
 

@@ -71,4 +71,140 @@ class PermissionCheckerTest extends GomaUnitTest implements Testable {
 			$this->assertEqual(PermissionChecker::isValidPermission($perm), false, "Test Permission $perm; Should fail.");
 		}
 	}
+
+    /**
+     * tests simple hierarchy
+     *
+     * 1. Create Permission $parent
+     * 2. Create Permission $child, set parent $parent
+     * 3. Write $parent
+     * 4. Write $child
+     * 5. Assert that $parent->children() contains 1 Permission
+     * 6. Assert that $parent->children()->first() is equal to $child
+     * 7. Assert that $parent->getAllChildVersionIDs() returns array with $child->versionid
+     */
+    public function testHierarchyChildren() {
+        try {
+            $parent = new Permission(array(
+                "type" => "all"
+            ));
+            $child = new Permission(array(
+                "type" => "users",
+                "parent" => $parent
+            ));
+            $parent->writeToDB(false, true);
+            $child->writeToDB(false, true);
+
+            $this->assertEqual(1, $parent->children()->count());
+            $this->assertEqual($child->id, $parent->children()->first()->id);
+            $this->assertEqual(array($child->versionid), $parent->getAllChildVersionIDs());
+        } finally {
+            if($parent) {
+                $parent->remove(true);
+            }
+
+            if($child) {
+                $child->remove(true);
+            }
+        }
+    }
+
+
+    /**
+     * tests complex hierarchy
+     *
+     * 1. Create Permission $parent
+     * 2. Create Permission $child, set parent $parent
+     * 3. Create Permission $childChild, set parent to $child
+     * 4. Write $parent
+     * 5. Write $child
+     * 6. Write $childChild
+     * 7. Assert that $parent->getAllChildren() contains two objects
+     * 8. Assert that $childChild->getAllParents() contains two objects
+     */
+    public function testComplexHierarchyChildren() {
+        try {
+            $parent = new Permission(array(
+                "type" => "users"
+            ));
+            $child = new Permission(array(
+                "type" => "all",
+                "parent" => $parent
+            ));
+            $childChild = new Permission(array(
+                "type" => "all",
+                "parent" => $child
+            ));
+
+            $parent->writeToDB(false, true, 1);
+            $child->writeToDB(false, true, 1);
+            $childChild->writeToDB(false, true);
+
+            $this->assertEqual(2, $parent->getAllChildren()->count());
+            $this->assertEqual(2, $childChild->getAllParents()->count());
+        } finally {
+            if($parent) {
+                $parent->remove(true);
+            }
+
+            if($child) {
+                $child->remove(true);
+            }
+
+            if($childChild) {
+                $childChild->remove(true);
+            }
+        }
+    }
+
+    /**
+     * tests complex permission hierarchy + hasPermission
+     *
+     * 1. Create Permission $parent
+     * 2. Create Permission $child, set parent $parent
+     * 3. Create Permission $childChild, set parent to $child
+     * 4. Write $parent
+     * 5. Write $child
+     * 6. Write $childChild
+     * 7. Assert that $childChild->hasPermission(null) is false
+     * 8. Assert that $childChild->hasPermission(new User()) is true
+     */
+    public function testComplexHierarchyHasPermission() {
+        try {
+            $currentUser = Member::$loggedIn;
+            Member::InitUser(null);
+
+            $parent = new Permission(array(
+                "type" => "users"
+            ));
+            $child = new Permission(array(
+                "type" => "all",
+                "parent" => $parent
+            ));
+            $childChild = new Permission(array(
+                "type" => "all",
+                "parent" => $child
+            ));
+
+            $parent->writeToDB(false, true, 1);
+            $child->writeToDB(false, true, 1);
+            $childChild->writeToDB(false, true);
+
+            $this->assertFalse($childChild->hasPermission());
+            $this->assertTrue($childChild->hasPermission(new User()));
+        } finally {
+            Member::InitUser($currentUser);
+            if($parent) {
+                $parent->remove(true);
+            }
+
+            if($child) {
+                $child->remove(true);
+            }
+
+            if($childChild) {
+                $childChild->remove(true);
+            }
+        }
+    }
 }

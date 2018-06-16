@@ -117,6 +117,16 @@ class FormFieldRenderData extends gObject implements IRestResponse {
     protected $postname;
 
     /**
+     * @var string
+     */
+    protected $externalUrl;
+
+    /**
+     * @var array
+     */
+    protected $customised = array();
+
+    /**
      * constructor.
      * @param string $name
      * @param string $type
@@ -462,6 +472,41 @@ class FormFieldRenderData extends gObject implements IRestResponse {
     }
 
     /**
+     * @return string
+     */
+    public function getExternalUrl()
+    {
+        return $this->externalUrl;
+    }
+
+    /**
+     * @param string $externalUrl
+     * @return $this
+     */
+    public function setExternalUrl($externalUrl)
+    {
+        $this->externalUrl = $externalUrl;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCustomised()
+    {
+        return $this->customised;
+    }
+
+    /**
+     * @param array $additionalData
+     * @return $this
+     */
+    public function customise($additionalData) {
+        $this->customised = array_merge($this->customised, $additionalData);
+        return $this;
+    }
+
+    /**
      * to rest array.
      * @param bool $includeRendered
      * @param bool $includeChildren
@@ -483,7 +528,8 @@ class FormFieldRenderData extends gObject implements IRestResponse {
             "disabledString" => $this->isDisabled ? ' disabled="disabled" ' : "",
             "cssRenderResources" => $this->renderResources["css"],
             "jsRenderResources" => $this->renderResources["js"],
-            "postname"  => $this->postname
+            "postname"  => $this->postname,
+            "externalUrl" => $this->externalUrl
         );
 
         if($this->js) {
@@ -506,6 +552,8 @@ class FormFieldRenderData extends gObject implements IRestResponse {
                 $data["children"][] = $child->ToRestArray();
             }
         }
+
+        $data = array_merge($data, $this->customised);
 
         $this->callExtending("exportRESTData");
 

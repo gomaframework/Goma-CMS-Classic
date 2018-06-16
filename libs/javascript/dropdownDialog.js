@@ -234,8 +234,6 @@ self.dropdownDialogs = [];
 
 		/**
 		 * moves the dropdown to the right place cause of position (top, bottom, left, right)
-		 *
-		 *@name moveDropdown
 		 */
 		moveDropdown: function(position) {
 			if(typeof profiler !== "undefined") profiler.mark("dropdownDialog.moveDropdown");
@@ -396,8 +394,6 @@ self.dropdownDialogs = [];
 
 		/**
 		 * sets the dropdown in loading state
-		 *
-		 *@name setLoading
 		 */
 		setLoading: function() {
 			this.dropdown.css("display", "block");
@@ -409,9 +405,6 @@ self.dropdownDialogs = [];
 		/**
 		 * sets the given content
 		 * registers subDropdownEvents
-		 *
-		 *@name setContent
-		 *@access public
 		 */
 		setContent: function(content) {
 			if(typeof profiler != "undefined") profiler.mark("dropdownDialog.setContent");

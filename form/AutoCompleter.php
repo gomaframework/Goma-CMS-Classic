@@ -14,7 +14,9 @@ class AutoCompleterField extends ControllerExtension {
 	/**
 	 * extend allowed actions
 	 */
-	public $allowed_actions = array("autocomplete_search");
+	static $url_handlers = array(
+	    "autocomplete_search" => "autocomplete_search"
+    );
 
 	/**
 	 * extend methods

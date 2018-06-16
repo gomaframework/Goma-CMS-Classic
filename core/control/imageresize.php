@@ -16,13 +16,13 @@ class imageResize extends RequestHandler
      *
      * @name url_handler
      */
-    public $url_handlers = array(
+    static $url_handlers = array(
         "x/\$height!"        => "resizeByHeight",
         "\$width!/\$height!" => "resize",
         "\$width!"           => "resizeByWidth"
     );
 
-    public $allowed_actions = array(
+    static $allowed_actions = array(
         "resize", "resizeByWidth", "resizeByHeight"
     );
 

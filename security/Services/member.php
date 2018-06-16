@@ -113,22 +113,22 @@ class Member extends gObject {
 			AuthenticationService::sharedInstance()->checkLogin($user, $pwd);
 
 			return true;
-		} catch(LoginInvalidException $e) {
+		} catch(LoginUserLockedException $e) {
+
+            // user is locked
+            AddContent::addError(lang("login_locked"));
+        } catch(LoginUserMustUnlockException $e) {
+            // user must activate account
+            $add = "";
+            if(ClassInfo::exists("registerExtension")) {
+                $add = ' <a href="profile/resendActivation/?email=' . urlencode($e->getUser()->email) . '">'.lang("register_resend_title").'</a>';
+            }
+            AddContent::addError(lang("login_not_unlocked") . $add);
+        } catch(LoginInvalidException $e) {
 
 			// credentials wrong
 			logging("Login with wrong Username/Password with IP: ".$_SERVER["REMOTE_ADDR"].""); // just for security
 			AddContent::addError(lang("wrong_login"));
-		} catch(LoginUserLockedException $e) {
-
-			// user is locked
-			AddContent::addError(lang("login_locked"));
-		} catch(LoginUserMustUnlockException $e) {
-			// user must activate account
-			$add = "";
-			if(ClassInfo::exists("registerExtension")) {
-				$add = ' <a href="profile/resendActivation/?email=' . urlencode($e->getUser()->email) . '">'.lang("register_resend_title").'</a>';
-			}
-			AddContent::addError(lang("login_not_unlocked") . $add);
 		}
 
 		return false;

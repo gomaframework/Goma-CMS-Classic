@@ -27,8 +27,8 @@ defined("IN_GOMA") OR die();
  */
 class EditProfileController extends AbstractCategoryController {
 
-    public $allowed_actions = array(
-        "password"
+    static $url_handlers = array(
+        "password" => "password"
     );
 
     /**

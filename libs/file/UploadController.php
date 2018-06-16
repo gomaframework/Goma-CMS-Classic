@@ -15,7 +15,7 @@ class UploadController extends FrontedController {
 	/**
 	 * handler
 	*/
-	public $url_handlers = array(
+	static $url_handlers = array(
 		"manage/\$collection/\$hash/\$filename" => "manageFile",
 		"manageCollection/\$collection" => "manageCollection",
 		"\$collection/\$hash/\$filename" => "handleFile"
@@ -24,7 +24,7 @@ class UploadController extends FrontedController {
 	/**
 	 * allow action
 	*/
-	public $allowed_actions = array(
+	static $allowed_actions = array(
 		"handleFile",
 		"manageFile",
 		"manageCollection"

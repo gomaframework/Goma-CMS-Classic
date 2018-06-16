@@ -11,25 +11,18 @@
 class HasOneGetterTest extends GomaUnitTest implements TestAble
 {
     /**
-     * area
+     * 
      */
-    static $area = "HasOne";
-
-    /**
-     * internal name.
-     */
-    public $name = "HasOneGetter";
-
     public function testAssign() {
         $mockDBObject1 = new MockDBObjectHasOne();
         $mockDBObject2 = new MockDBObjectHasOne();
 
-        $this->assertEqual($mockDBObject1->hasone, null);
+        $this->assertEqual($mockDBObject1->hasonerelation, null);
 
-        $mockDBObject1->hasone = $mockDBObject2;
+        $mockDBObject1->hasonerelation = $mockDBObject2;
 
-        $this->assertEqual($mockDBObject1->hasone, $mockDBObject2);
-        $this->assertEqual($mockDBObject2->hasone, null);
+        $this->assertEqual($mockDBObject1->hasonerelation, $mockDBObject2);
+        $this->assertEqual($mockDBObject2->hasonerelation, null);
     }
 
     /**
@@ -39,24 +32,25 @@ class HasOneGetterTest extends GomaUnitTest implements TestAble
         $mockDBObject1 = new MockDBObjectHasOne();
         $mockDBObject2 = new MockDBObjectHasOne();
 
-        $this->assertEqual($mockDBObject1->hasone, null);
+        $this->assertEqual($mockDBObject1->hasonerelation, null);
 
-        $mockDBObject1->hasone = $mockDBObject2;
+        $mockDBObject1->hasonerelation = $mockDBObject2;
 
-        $this->assertEqual($mockDBObject1->hasone, $mockDBObject2);
-        $mockDBObject1->hasoneid = 0;
+        $this->assertEqual($mockDBObject1->hasonerelation, $mockDBObject2);
+        $mockDBObject1->hasonerelationid = 0;
 
-        $this->assertEqual($mockDBObject1->hasone, null);
+        $this->assertEqual($mockDBObject1->hasonerelation, null);
     }
 }
 
 /**
  * Class MockDBObjectHasOne
  *
- * @property MockDBObjectHasOne hasone
+ * @property MockDBObjectHasOne hasonerelation
+ * @property int hasonerelationid
  */
 class MockDBObjectHasOne extends DataObject {
     static $has_one = array(
-        "hasone" => "MockDBObjectHasOne"
+        "hasonerelation" => "MockDBObjectHasOne"
     );
 }

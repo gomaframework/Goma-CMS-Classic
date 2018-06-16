@@ -43,7 +43,6 @@ class ExternalFormController extends RequestHandler {
      */
     public function FieldExtAction($form, $field) {
         $field = strtolower($field);
-
         /** @var Form $formInstance */
         if($formInstance = GlobalSessionManager::globalSession()->get(Form::SESSION_PREFIX . "." . strtolower($form))) {
             if(isset($formInstance->$field)) {

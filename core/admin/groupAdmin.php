@@ -13,17 +13,17 @@ class groupAdmin extends adminItem {
 	/**
 	 * text
 	 */
-	public $text = '{$_lang_groups}';
+    static $text = '{$_lang_groups}';
 
 	/**
 	 * permissions
 	 */
-	public $rights = "canManagePermissions";
+    static $rights = "canManagePermissions";
 
 	/**
 	 * sort
 	 */
-	public $sort = "700";
+	static $sort = "700";
 
 	/**
 	 * models

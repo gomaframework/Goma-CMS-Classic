@@ -455,7 +455,6 @@ class ImageUploads extends Uploads {
 
         $image = new RootImage($this->realfile);
         $this->setField($size, $image->$size);
-        $this->writeToDB(false, true);
         return $image->$size;
     }
 
@@ -515,13 +514,17 @@ class ImageUploads extends Uploads {
     {
         parent::onBeforeWrite($modelWriter);
 
+        // assign $this->width and $this->height
+        $this->width = $this->getSize("width");
+        $this->height = $this->getSize("height");
+
         $gd = new GD($this->realfile);
         try {
             $tmpFile = ROOT . CACHE_DIRECTORY . "/" . md5($this->realfile). "_fixed2";
             $usage = memory_get_usage();
             $gd->fixRotationInPlace()->toFile($tmpFile);
 
-            if (self::$autoImageResize) {
+            if (self::$autoImageResize && self::$destinationSize < max($gd->width, $gd->height)) {
                 $gd->autoImageResizeInPlace(self::$destinationSize, self::$useCommandLineforAutoResize)->toFile($tmpFile);
             }
 
@@ -538,9 +541,10 @@ class ImageUploads extends Uploads {
 
             if(md5_file($tmpFile) != $this->md5) {
                 /** @var Uploads $upload */
-                if ($upload = DataObject::get_one(Uploads::class, array(
+                $upload = DataObject::get_one(Uploads::class, array(
                     "md5" => md5_file($tmpFile)
-                ))
+                ));
+                if ($upload && file_exists($upload->realfile)
                 ) {
                     $this->realfile = $upload->realfile;
                 } else {

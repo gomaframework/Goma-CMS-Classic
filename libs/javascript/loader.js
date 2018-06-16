@@ -932,8 +932,8 @@ if (window.loader === undefined) {
 				i,
 
 
-			// function if we click or tap on an exception
-				exceptionFunc = function () {
+				// function if we click or tap on an exception
+				exceptionFunc = function (e) {
 					clearTimeout(timeout);
 					mouseover = true;
 					timeout = setTimeout(function () {
@@ -941,7 +941,7 @@ if (window.loader === undefined) {
 					}, 300);
 				},
 
-			// function if we click anywhere
+				// function if we click anywhere
 				mouseDownFunc = function (e) {
 					setTimeout(function () {
 						if (mouseover === false) {
@@ -950,19 +950,22 @@ if (window.loader === undefined) {
 					}, 10);
 				};
 
+			var exceptionEvents = ["mouseup", "mousedown", "touchend", "touchstart"];
 			if (exceptions) {
 				for (i in exceptions) {
-					$(exceptions[i]).on("mouseup", exceptionFunc);
-					$(exceptions[i]).on("mousedown", exceptionFunc);
-					$(exceptions[i]).on("touchend", exceptionFunc);
-					$(exceptions[i]).on("touchstart", exceptionFunc);
+					if(exceptions.hasOwnProperty(i)) {
+                        for (var eventI in exceptionEvents) {
+                            $(exceptions[i]).on(exceptionEvents[eventI], exceptionFunc);
+                            $(exceptions[i]).each(function () {
+                                $(this).get(0).addEventListener(exceptionEvents[eventI], exceptionFunc, true);
+                            })
+                        }
+                    }
 				}
 			}
 			// init mouseover-events
 			$(window).on("mouseup", mouseDownFunc);
-			$(window).on("mousedown", mouseDownFunc);
 			$(window).on("touchend", mouseDownFunc);
-			$(window).on("touchstart", mouseDownFunc);
 			$("iframe").each(function () {
 				try {
 					var w = $(this).get(0).contentWindow;

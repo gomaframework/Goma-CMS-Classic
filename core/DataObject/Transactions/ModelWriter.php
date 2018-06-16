@@ -73,6 +73,13 @@ class ModelWriter extends gObject {
     protected $forceWrite;
 
     /**
+     * write locks.
+     *
+     * @var array
+     */
+    public static $writeActions = array();
+
+    /**
      * creates write.
      *
      * @param DataObject $model new version
@@ -421,34 +428,54 @@ class ModelWriter extends gObject {
      * writes generated data to DataBase.
      */
     public function write() {
-        if($this->getCommandType() != IModelRepository::COMMAND_TYPE_PUBLISH &&
-            $this->getCommandType() != IModelRepository::COMMAND_TYPE_INSERT &&
-            $this->getCommandType() != IModelRepository::COMMAND_TYPE_UPDATE) {
+        if ($this->getCommandType() != IModelRepository::COMMAND_TYPE_PUBLISH && $this->getCommandType(
+            ) != IModelRepository::COMMAND_TYPE_INSERT && $this->getCommandType(
+            ) != IModelRepository::COMMAND_TYPE_UPDATE) {
             throw new InvalidArgumentException("Calling write requires command type publish, insert or update.");
         }
 
-        $this->callPreflightEvents();
-
-        $this->gatherDataToWrite();
-
-        if ($this->data === null) {
-            throw new LogicException("Writer needs to have data.");
-        }
-
-        // find out if we should write data
-        $changes = $this->checkForChanges();
-        if ($this->getCommandType() == IModelRepository::COMMAND_TYPE_INSERT || $changes || $this->isNotActiveRecord($this->model)) {
-            if ($changes || $this->writeType != IModelRepository::WRITE_TYPE_PUBLISH) {
-                $this->callModelExtending("onBeforeDBWriter");
-
-                $this->updateStatusFields();
-
-                $this->databaseWriter->write();
-            } else {
-                $this->databaseWriter->publish();
+        if ($this->model->id != 0 && $this->getCommandType() != IModelRepository::COMMAND_TYPE_INSERT) {
+            $lockKey = $this->model->classname . "_" . $this->model->id;
+            if (isset(self::$writeActions[$lockKey])) {
+                throw new LogicException(
+                    "You should not write an object within it's write action. Endless loop detected "."for {$this->model->id} and class {$this->model->classname} at ".microtime(
+                        true
+                    )."."
+                );
             }
 
-            $this->callPostFlightEvents();
+            self::$writeActions[$lockKey] = true;
+        }
+
+        try {
+            $this->callPreflightEvents();
+
+            $this->gatherDataToWrite();
+
+            if ($this->data === null) {
+                throw new LogicException("Writer needs to have data.");
+            }
+
+            // find out if we should write data
+            $changes = $this->checkForChanges();
+            if ($this->getCommandType(
+                ) == IModelRepository::COMMAND_TYPE_INSERT || $changes || $this->isNotActiveRecord($this->model)) {
+                if ($changes || $this->writeType != IModelRepository::WRITE_TYPE_PUBLISH) {
+                    $this->callModelExtending("onBeforeDBWriter");
+
+                    $this->updateStatusFields();
+
+                    $this->databaseWriter->write();
+                } else {
+                    $this->databaseWriter->publish();
+                }
+
+                $this->callPostFlightEvents();
+            }
+        } finally {
+            if(isset($lockKey)) {
+                unset(self::$writeActions[$lockKey]);
+            }
         }
     }
 

@@ -90,27 +90,20 @@ class HTMLParserTests extends GomaUnitTest {
 		$this->assertEqual(trim(HTMLParser::process_links($html, $base, $root)), $expected, $html . " %s");
 	}
 
-	public function testCSS() {
-		$css = ''.randomString(30).' {text-align: center;}';
-		$link = HTMLParser::css($css);
-
-		if(preg_match('/\<link\s+rel="stylesheet"\s+href="(.*)"\s+type="text\/css"\s+\/>/', $link, $matches)) {
-			$this->assertTrue(file_exists($matches[1]));
-			$this->assertEqual(file_get_contents($matches[1]), $css);
-
-			unlink($matches[1]);
-			$this->assertFalse(file_exists($matches[1]));
-		} else {
-			$this->fail("Did not get valid HTML from HTMLParser::css.");
-		}
-	}
-
     /**
-     * tests if HTMLParser is preserving scripts when no body exists.
+     * tests if HTMLParser is adding script tag even not body exists.
      */
 	public function testScriptRemovingWithoutBody() {
 	    $html = "<script type=\"text/javascript\">var a = b;</script>";
-	    $this->assertEqual($html, HTMLParser::parseHTML($html));
+	    $this->assertRegExp('/<script/', HTMLParser::parseHTML($html));
+    }
+
+    /**
+     * tests if HTMLParser is non adding script tag if includeResourcesInBody = false
+     */
+    public function testScriptIncludeResourcesFalse() {
+        $html = "<script type=\"text/javascript\">var a = b;</script>";
+        $this->assertNoPattern('/<script/', HTMLParser::parseHTML($html, true, false));
     }
 
     /**
@@ -122,10 +115,10 @@ class HTMLParserTests extends GomaUnitTest {
     }
 
     /**
-     * tests if HTMLParser is not removing scripts from body when it exists and $includeResourcesInBody = false;
+     * tests if HTMLParser is not removing scripts from body when it exists and $includeResourcesInBody = false and parseLinksAndScripts = false
      */
     public function testScriptRemovingWithBodyIncludeInBodyIsFalse() {
         $html = "<html><head><title></title></head><body><script type=\"text/javascript\">var a = b;</script></body></html>";
-        $this->assertTrue(!!strpos(HTMLParser::parseHTML($html, true, false), "var a = b;"));
+        $this->assertTrue(!!strpos(HTMLParser::parseHTML($html, false, false), "var a = b;"));
     }
 }

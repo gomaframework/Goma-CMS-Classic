@@ -16,7 +16,7 @@ class TreeServer extends RequestHandler {
 	/**
 	 * @var array
 	 */
-	public $url_handlers = array(
+	static $url_handlers = array(
 		"setCollapsed/\$name!/\$id!" 	=> "setCollapsed",
 		"setExpanded/\$name!/\$id!" 		=> "setExpanded",
 		"getSubTree/\$name!/\$id!"		=> "getSubTree"
@@ -25,7 +25,7 @@ class TreeServer extends RequestHandler {
 	/**
 	 * @var array
 	 */
-	public $allowed_actions = array(
+	static $allowed_actions = array(
 		"setCollapsed",
 		"setExpanded",
 		"getSubTree"

@@ -1,0 +1,21 @@
+<div class="checkbox-wrapper checkbox-with-children">
+    <% IF $checkboxModel %>
+    <input id="$id" name="$postname" type="checkbox" value="1" checked="checked" />
+    <% ELSE %>
+    <input id="$id" name="$postname" type="checkbox" value="1" />
+    <% END %>
+</div>
+
+<fieldset class="form_field fields-of-folding-checkbox">
+    <% CONTROL fields() as $field %>
+    <% CONTROL field.jsRenderResources() as $resource %>
+    <% INCLUDE_JS $resource %>
+    <% ENDCONTROL %>
+
+    <% CONTROL field.cssRenderResources() as $resource %>
+    <% INCLUDE_CSS $resource %>
+    <% ENDCONTROL %>
+
+    $field.field
+    <% ENDCONTROL %>
+</fieldset>

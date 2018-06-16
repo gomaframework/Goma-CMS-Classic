@@ -329,16 +329,60 @@ class ClassManifestTest extends GomaUnitTest
     /**
      * tests if resolving works with classes which are full qualified.
      */
-    public function testResolveFromUsingWithFullQualified() {
+    public function testResolveFromUsingWithFullQualified()
+    {
         $method = new ReflectionMethod(ClassManifest::class, "resolveClassNameWithUsings");
         $method->setAccessible(true);
 
         $this->assertEqual("test", $method->invoke(null, "\\Test", "Test\\", array()));
-        $this->assertEqual("test", $method->invoke(null, "\\Test", "Test\\", array(
-            "test" => "lala\\test"
-        )));
-        $this->assertEqual("test", $method->invoke(null, "\\TEST", "Test\\", array(
-            "test" => "LALA\\test"
-        )));
+        $this->assertEqual(
+            "test",
+            $method->invoke(
+                null,
+                "\\Test",
+                "Test\\",
+                array(
+                    "test" => "lala\\test"
+                )
+            )
+        );
+        $this->assertEqual(
+            "test",
+            $method->invoke(
+                null,
+                "\\TEST",
+                "Test\\",
+                array(
+                    "test" => "LALA\\test"
+                )
+            )
+        );
+        $this->assertEqual(
+            "serializable",
+            $method->invoke(
+                null,
+                "\Serializable",
+                "Aws",
+                array()
+            )
+        );
+        $this->assertEqual(
+            "serializable",
+            $method->invoke(
+                null,
+                " \Serializable
+",
+                "Aws",
+                array()
+            )
+        );
+    }
+
+    /**
+     * tests if getUrlClassName replaces backslahes with -
+     */
+    public function testgetUrlClassName() {
+        $this->assertEqual("abc-abc", ClassManifest::getUrlClassName("abc\\abc"));
+        $this->assertEqual("abc-abc", ClassManifest::getUrlClassName("\\abc\\abc"));
     }
 }

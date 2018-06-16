@@ -45,6 +45,7 @@ class StaticsManager {
      *
      * @param bool $ignoreAccess
      * @return mixed Value of $var.
+     * @throws ReflectionException
      */
     public static function getStatic($class, $var, $ignoreAccess = false)
     {
@@ -80,6 +81,7 @@ class StaticsManager {
      * @param string $var Name of the variable.
      *
      * @return boolean
+     * @throws ReflectionException
      */
     public static function hasStatic($class, $var)
     {
@@ -126,10 +128,12 @@ class StaticsManager {
      * @param string|gObject $class Name of the class.
      * @param string $func Name of the function.
      * @param bool $ignoreAccess
+     * @param array $args
      *
      * @return mixed return value of call
+     * @throws ReflectionException
      */
-    public static function callStatic($class, $func, $ignoreAccess = false)
+    public static function callStatic($class, $func, $ignoreAccess = false, $args = null)
     {
         $class = self::validate_static_call($class, $func);
 
@@ -145,6 +149,10 @@ class StaticsManager {
                 throw new BadMethodCallException('Call to private method ' . $class . '::' . $func);
             }
 
+            if($args) {
+                return call_user_func_array(array($method, "invoke"), array_merge(array(null), $args));
+            }
+
             return $method->invoke(null, array($class));
         } else {
             throw new BadMethodCallException('Call to unknown method ' . $class . '::' . $func);
@@ -155,6 +163,7 @@ class StaticsManager {
      * adds a var to cache
      * @param string|gObject $class
      * @param string $variableName
+     * @throws ReflectionException
      */
     public static function addSaveVar($class, $variableName)
     {
@@ -205,21 +214,21 @@ class StaticsManager {
     }
 
     /**
-     * gets static property while checking if it is only extended property.
+     * gets static property while checking if it is only inherited property.
      *
      * @param string $class
      * @param string $staticProp
      * @param bool $filterParent
      * @return mixed
      */
-    public static function getNotExtendedStatic($class, $staticProp, $filterParent = true)
+    public static function getNotInheritedStatic($class, $staticProp, $filterParent = true)
     {
         if (StaticsManager::hasStatic($class, $staticProp)) {
             // validates that it is not just the extended property.
             $parent = get_parent_class($class);
             $fields = StaticsManager::getStatic($class, $staticProp);
 
-            if ($filterParent && $parent && self::getNotExtendedStatic($parent, $staticProp, false) === $fields) {
+            if ($filterParent && $parent && self::getNotInheritedStatic($parent, $staticProp, false) === $fields) {
                 return null;
             }
 
@@ -227,5 +236,28 @@ class StaticsManager {
         }
 
         return null;
+    }
+
+    /**
+     * Helper function to merge array return values from class specific methods with parent methods.
+     *
+     * @param string $startingClass
+     * @param string $method
+     * @param array $params
+     * @return array
+     */
+    public static function getInheritedStaticArrayFromMethod($startingClass, $method, $params = array()) {
+        $data = array();
+        $current = $startingClass;
+        while(gObject::method_exists($current, $method)) {
+            $data = array_merge(
+                (array) call_user_func_array(array($current, $method), $params),
+                $data
+            );
+
+            $current = get_parent_class($current);
+        }
+
+        return $data;
     }
 }

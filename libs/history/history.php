@@ -138,12 +138,21 @@ class History extends DataObject
      */
     public static function supportHistoryView()
     {
-        if (isset(self::$supportHistoryView))
+        if (isset(self::$supportHistoryView)) {
             return self::$supportHistoryView;
-        self::$supportHistoryView = array();
-        foreach (ClassInfo::getChildren("historyGenerator") as $child) {
-            self::$supportHistoryView[] = $child;
         }
+
+        self::$supportHistoryView = array();
+        foreach (ClassInfo::getChildren(historyGenerator::class) as $child) {
+            foreach(call_user_func_array(array($child, "modelTypes"), array()) as $className) {
+                if(isset(self::$supportHistoryView[$className])) {
+                    throw new LogicException("Only one historyGenerator should be available per class.");
+                }
+
+                self::$supportHistoryView[$className] = $child;
+            }
+        }
+
         return self::$supportHistoryView;
     }
 
@@ -278,28 +287,45 @@ class History extends DataObject
             return $this->historyData;
         }
 
-        $classname = "historyData_" . $this->dbobject;
-        if (ClassInfo::exists($classname)) {
-            if (gObject::method_exists($classname, "generateHistoryDataExtended")) {
-                $class = new $classname($this);
-                $data = $class->generateHistoryDataExtended();
-                if($data) {
-                    if (isset($data["text"]) || isset($data["icon"])) {
-                        $data = array($data);
-                    }
+        if(isset(self::supportHistoryView()[$this->dbobject])) {
+            $historyGeneratorClass = self::supportHistoryView()[$this->dbobject];
+            /** @var historyGenerator $historyGeneratorInstance */
+            $historyGeneratorInstance = new $historyGeneratorClass($this);
 
-                    for ($i = 0; $i < count($data); $i++) {
-                        if (!isset($data[$i]["icon"]) && !isset($data[$i]["lang"]))
-                            throw new LogicException("Invalid Result from " . $classname . "::generateHistoryDataExtended: icon & text required! " . var_export($data, true));
-                    }
+            $data = $historyGeneratorInstance->generateHistoryDataExtended();
+            if($data) {
+                if (isset($data["text"]) || isset($data["icon"])) {
+                    $data = array($data);
                 }
 
-                $this->historyData = $data;
-                return $data;
-            } else {
-                return null;
+                for ($i = 0; $i < count($data); $i++) {
+
+                    // replace $user
+                    if(preg_match('/\$user/', $data[$i]["text"])) {
+                        // generate user
+                        if($this->autor) {
+                            $user = '<a href="member/'.$this->autor->id . URLEND.'" class="user">' . convert::Raw2text($this->autor->title) . '</a>';
+                        } else {
+                            $user = '<span style="font-style: italic;">System</span>';
+                        }
+                        $data[$i]["text"] = str_replace('$user', $user, $data[$i]["text"]);
+                    }
+
+                    if (!isset($data[$i]["icon"]) && !isset($data[$i]["text"])) {
+                        throw new LogicException(
+                            "Invalid Result from ".$historyGeneratorClass."::generateHistoryDataExtended: icon & text required! ".var_export(
+                                $data,
+                                true
+                            )
+                        );
+                    }
+                }
             }
+
+            $this->historyData = $data;
+            return $data;
         }
+
         return null;
     }
 

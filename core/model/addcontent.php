@@ -28,7 +28,6 @@ class AddContent
      *
      * @name add
      * @param string - content
-     * @internal
      */
     public static function add($content)
     {
@@ -40,7 +39,6 @@ class AddContent
      *
      * @name add
      * @param string - content
-     * @internal
      */
     public static function addSuccess($content)
     {
@@ -52,7 +50,6 @@ class AddContent
      *
      * @name add
      * @param string - content
-     * @internal
      */
     public static function addError($content)
     {
@@ -64,7 +61,6 @@ class AddContent
      *
      * @name add
      * @param string - content
-     * @deprecated
      */
     public static function addNotice($content)
     {

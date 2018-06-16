@@ -15,147 +15,194 @@ i18n::AddLang("/members");
  *
  * last modified: 08.05.2016
  */
-class ProfileController extends FrontedController {
-
-	/**
-	 * @var array
-	 */
-	public $url_handlers = array(
-		"edit" 		=> "edit",
-		"login" 	=> "login",
-		"logout" 	=> "logout",
-		"switchlang"=> "switchlang"
-	);
-
-	/**
-	 * allowed actions
-	 */
-	public $allowed_actions = array("edit", "login", "logout", "switchlang");
-
-	/**
-	 * profile actions
-	 */
-	public $profile_actions;
-
-	/**
-	 * tabs
-	 */
-	protected $tabs;
-
-	/**
-	 * define right model.
-	 */
-	public $model = "user";
+class ProfileController extends FrontedController
+{
 
     /**
      * @var array
      */
-	public static $ssoDomains = array();
+    public static $ssoDomains = array();
+    /**
+     * @var array
+     */
+    static $url_handlers = array(
+        "edit"       => "edit",
+        "login"      => "login",
+        "logout"     => "logout",
+        "switchlang" => "switchlang",
+    );
+    /**
+     * allowed actions
+     */
+    static $allowed_actions = array("edit", "login", "logout", "switchlang");
+    /**
+     * profile actions
+     */
+    public $profile_actions;
+    /**
+     * define right model.
+     */
+    public $model = "user";
+    /**
+     * tabs
+     */
+    protected $tabs;
 
-	/**
-	 * shows the edit-screen
-	 * @return string
-	 */
-	public function edit() {
-		if(!isset(Member::$loggedIn)) {
-			return GomaResponse::redirect(BASE_URI . "profile/login/?redirect=".urlencode(ROOT_PATH . BASE_SCRIPT . "profile/edit/")."");
-		}
+    /**
+     * shows the edit-screen
+     * @return string
+     * @throws Exception
+     */
+    public function edit()
+    {
+        if (!isset(Member::$loggedIn)) {
+            return GomaResponse::redirect(
+                BASE_URI."profile/login/?redirect=".urlencode(ROOT_PATH.BASE_SCRIPT."profile/edit/").""
+            );
+        }
 
-		Core::addBreadCrumb(lang("profile"), "profile/");
-		Core::addBreadCrumb(lang("edit_profile"), "profile/edit/");
-		Core::setTitle(lang("edit_profile"));
+        Core::addBreadCrumb(lang("profile"), "profile/");
+        Core::addBreadCrumb(lang("edit_profile"), "profile/edit/");
+        Core::setTitle(lang("edit_profile"));
 
-		$controller = new EditProfileController();
-		$controller->setModelInst(Member::$loggedIn);
-		return $controller->handleRequest($this->request, true);
-	}
+        $controller = new EditProfileController();
+        $controller->setModelInst(Member::$loggedIn);
 
-	/**
-	 * default screen
-	 *
-	 * @param string|null $id
-	 * @return bool|string
-	 */
-	public function index($id = null) {
-		$id = ($id == null) ? $this->getParam("action") : $id;
-		if($id == null) {
-			if($id = member::$id) {
-				return GomaResponse::redirect(BASE_URI . BASE_SCRIPT . "profile/" . $id . URLEND);
-			} else {
-				return GomaResponse::redirect(BASE_URI);
-			}
-		}
+        return $controller->handleRequest($this->request, true);
+    }
 
-		$this->tabs = new DataSet();
-		$this->profile_actions = new HTMLNode("ul");
+    /**
+     * default screen
+     *
+     * @param string|null $id
+     * @return bool|string
+     */
+    public function index($id = null)
+    {
+        if (Member::$loggedIn) {
+            $id = ($id == null) ? $this->getParam("action") : $id;
+            if ($id == null) {
+                if ($id = member::$id) {
+                    return GomaResponse::redirect(BASE_URI.BASE_SCRIPT."profile/".$id.URLEND);
+                } else {
+                    return GomaResponse::redirect(BASE_URI);
+                }
+            }
 
-		if((isset(member::$id) && $id == member::$id)) {
-			$this->profile_actions->append(new HTMLNode("li", array(), new HTMLNode("a", array("href" => "profile/edit/", "class" => "noAutoHide"), lang("edit_profile"))));
-		}
+            $this->tabs = new DataSet();
+            $this->profile_actions = new HTMLNode("ul");
 
-		// get info-tab
-		$userdata = DataObject::get_one(User::class, array("id" => $id));
-		if(!$userdata || $userdata->status != 1) {
-			return null;
-		}
+            if ((isset(member::$id) && $id == member::$id)) {
+                $this->profile_actions->append(
+                    new HTMLNode(
+                        "li",
+                        array(),
+                        new HTMLNode(
+                            "a",
+                            array("href" => "profile/edit/", "class" => "noAutoHide"),
+                            lang("edit_profile")
+                        )
+                    )
+                );
+            }
 
-		$userdata->editable = ((isset(member::$id) && $id == member::$id)) ? true : false;
-		$info = $userdata->renderWith("profile/info.html");
-		$this->tabs->add(array(
-			"name"		=> "info",
-			"title" 	=> lang("general", "General Information"),
-			"content"	=> $info
-		));
+            // get info-tab
+            $userdata = DataObject::get_one(User::class, array("id" => $id));
+            if (!$userdata || $userdata->status != 1) {
+                return null;
+            }
 
-		Core::addBreadcrumb($userdata->title, URL . URLEND);
-		Core::setTitle($userdata->title);
+            $userdata->editable = ((isset(member::$id) && $id == member::$id)) ? true : false;
+            $info = $userdata->renderWith("profile/info.html");
+            $this->tabs->add(
+                array(
+                    "name"    => "info",
+                    "title"   => lang("general", "General Information"),
+                    "content" => $info,
+                )
+            );
 
-		$this->callExtending("beforeRender", $userdata);
+            Core::addBreadcrumb($userdata->title, URL.URLEND);
+            Core::setTitle($userdata->title);
 
-		return $userdata->customise(array("tabs" => $this->tabs, "profile_actions" => $this->profile_actions->render()))->renderWith("profile/profile.html");
-	}
+            $this->callExtending("beforeRender", $userdata);
 
-	/**
-	 * login-method
-	 */
-	public function login() {
-		Core::addBreadCrumb(lang("login"), "profile/login/");
-		Core::setTitle(lang("login"), "profile/login/");
+            return $userdata->customise(
+                array("tabs" => $this->tabs, "profile_actions" => $this->profile_actions->render())
+            )->renderWith("profile/profile.html");
+        } else {
+            return GomaResponse::redirect(BASE_URI);
+        }
+    }
 
-		// if login and a user want's to login as someone else, we should log him out
-		if(isset(Member::$loggedIn) && isset($this->getRequest()->post_params["pwd"]))
-		{
-			AuthenticationService::sharedInstance()->doLogout();
-			// if a user goes to login and is logged in, we redirect him home
-		} else if(isset(Member::$loggedIn)) {
-			return GomaResponse::redirect($this->getLoginRedirect());
-		}
+    /**
+     * login-method
+     */
+    public function login()
+    {
+        Core::addBreadCrumb(lang("login"), "profile/login/");
+        Core::setTitle(lang("login"), "profile/login/");
 
-		// if no login and pwd and username isset, we login
-		if(isset($this->getRequest()->post_params["user"], $this->getRequest()->post_params["pwd"]))
-		{
-			if(member::doLogin($this->getRequest()->post_params["user"], $this->getRequest()->post_params["pwd"]))
-			{
-				return GomaResponse::redirect($this->getLoginRedirect());
-			}
-		}
+        // if login and a user want's to login as someone else, we should log him out
+        if (isset(Member::$loggedIn) && isset($this->getRequest()->post_params["pwd"])) {
+            AuthenticationService::sharedInstance()->doLogout();
+            // if a user goes to login and is logged in, we redirect him home
+        } else if (isset(Member::$loggedIn)) {
+            return GomaResponse::redirect($this->getLoginRedirect());
+        }
 
-		// else we show template
+        // if no login and pwd and username isset, we login
+        if (isset($this->getRequest()->post_params["user"], $this->getRequest()->post_params["pwd"])) {
+            if (member::doLogin($this->getRequest()->post_params["user"], $this->getRequest()->post_params["pwd"])) {
+                return GomaResponse::redirect($this->getLoginRedirect());
+            }
+        }
 
-		return tpl::render("profile/login.html");
-	}
+        // else we show template
+
+        return tpl::render("profile/login.html");
+    }
+
+    /**
+     * switch-lang view
+     *
+     * @return string
+     */
+    public function switchlang()
+    {
+        return tpl::render("switchlang.html");
+    }
+
+    /**
+     * logout-method
+     */
+    public function logout()
+    {
+        if (isset($this->getRequest()->post_params["logout"])) {
+            AuthenticationService::sharedInstance()->doLogout();
+        }
+
+        return GomaResponse::redirect($this->getRedirect($this));
+    }
 
     /**
      * gets login redirect.
      */
-	protected function getLoginRedirect() {
-        if(isset($this->request->get_params["redirect"])) {
+    protected function getLoginRedirect()
+    {
+        if (isset($this->request->get_params["redirect"])) {
             $domains = self::$ssoDomains;
             $domains[] = $this->request->getServerName();
-            foreach($domains as $domain) {
-                if(isURLFromServer($this->request->get_params["redirect"], $domain)) {
-                    if(isset($this->request->get_params["sessionparam"]) && is_string($this->request->get_params["sessionparam"])) {
-                        $redirect = self::addParamToUrl($this->request->get_params["redirect"], $this->request->get_params["sessionparam"], livecounter::getUserIdentifier());
+            foreach ($domains as $domain) {
+                if (isURLFromServer($this->request->get_params["redirect"], $domain)) {
+                    if (isset($this->request->get_params["sessionparam"]) && is_string(
+                            $this->request->get_params["sessionparam"]
+                        )) {
+                        $redirect = self::addParamToUrl(
+                            $this->request->get_params["redirect"],
+                            $this->request->get_params["sessionparam"],
+                            livecounter::getUserIdentifier()
+                        );
                     } else {
                         $redirect = $this->request->get_params["redirect"];
                     }
@@ -167,25 +214,4 @@ class ProfileController extends FrontedController {
 
         return ROOT_PATH;
     }
-
-	/**
-	 * switch-lang view
-	 *
-	 * @return string
-	 */
-	public function switchlang() {
-		return tpl::render("switchlang.html");
-	}
-
-	/**
-	 * logout-method
-	 */
-	public function	logout()
-	{
-		if(isset($this->getRequest()->post_params["logout"])) {
-			AuthenticationService::sharedInstance()->doLogout();
-		}
-
-		return GomaResponse::redirect($this->getRedirect($this));
-	}
 }

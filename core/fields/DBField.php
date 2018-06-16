@@ -424,7 +424,7 @@ class DBField extends gObject implements IDataBaseField
      */
     public function getTemplateVar($var) {
         if(strpos($var, ".")) {
-            throw new InvalidArgumentException('Arguments with dots like "' . $var . '" are not allowed in a DB-Field, because it\'s recursive.');
+            $var = substr($var, 0, strpos($var, "."));
         }
 
         // check for args
@@ -439,7 +439,7 @@ class DBField extends gObject implements IDataBaseField
             return call_user_func_array(array($this, $var), $args);
         }
 
-        return null;
+        return $this->forTemplate();
     }
 
     /**

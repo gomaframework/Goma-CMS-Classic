@@ -52,8 +52,9 @@ class MySQLWriterImplementation implements iDataBaseWriter {
             }
         }
 
-        $this->writer->callModelExtending("onBeforeManipulate", $manipulation, $b, $this);
-        $this->writer->callModelExtending("onBeforeWriteData", $manipulation, $b, $this);
+        $job = "write";
+        $this->writer->callModelExtending("onBeforeManipulate", $manipulation, $job, $this);
+        $this->writer->callModelExtending("onBeforeWriteData", $manipulation, $job, $this);
 
         // fire manipulation to DataBase
         if (SQL::manipulate($manipulation)) {
@@ -316,8 +317,8 @@ class MySQLWriterImplementation implements iDataBaseWriter {
             }
         }
 
-        $b = "write_state";
-        $this->writer->callModelExtending("onBeforeManipulate", $manipulation, $b);
+        $job = "write_state";
+        $this->writer->callModelExtending("onBeforeManipulate", $manipulation, $job);
 
         if(!SQL::manipulate($manipulation)) {
             throw new SQLException("Could not insert into state table.");
