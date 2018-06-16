@@ -30,11 +30,6 @@ class PageComments extends DataObject {
      */
     static $index = array("name" => true);
 
-    /**
-     * rights
-     */
-    public $writeField = "autorid";
-
     static $search_fields = array(
         "name", "text"
     );
@@ -42,27 +37,25 @@ class PageComments extends DataObject {
     /**
      * insert is always okay
      */
-    public function canInsert($row = null)
+    public function canInsert()
     {
         return true;
     }
 
     /**
      * generates the form
-     *
-     * @name getForm
-     * @access public
+     * @param Form $form
      */
     public function getForm(&$form)
     {
-        if (member::$nickname) {
-            $form->add(new HiddenField("name", member::$nickname));
+        if (member::$loggedIn) {
+            $form->add(new HiddenField("name", member::$loggedIn->title()));
         } else {
             $form->add(new TextField("name", lang("name", "Name")));
         }
 
         $form->add(new BBCodeEditor("text", lang("text", "text"), null, null, null, array("showAlign" => false)));
-        if (!member::login())
+        if (!isset(Member::$loggedIn))
             $form->add(new Captcha("captcha"));
         $form->addValidator(new RequiredFields(array("text", "name", "captcha")), "fields");
         $form->addAction(new AjaxSubmitButton("save", lang("co_add_comment", "add comment"), "ajaxsave", "safe", array("green")));
@@ -88,6 +81,21 @@ class PageComments extends DataObject {
         return $this->created();
     }
 
+    /**
+     * @return bool
+     */
+    public function getWriteAccess()
+    {
+        if (!self::Versioned($this->classname) && $this->can("Write")) {
+            return true;
+        } else if ($this->can("Publish")) {
+            return true;
+        } else if ($this->can("Delete")) {
+            return true;
+        }
+
+        return false;
+    }
 
     /**
      * returns the representation of this record

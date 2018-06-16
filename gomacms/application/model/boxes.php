@@ -162,12 +162,11 @@ class Boxes extends DataObject implements Notifier {
 
 	/**
 	 * returns if edit is on
-	 * @param Boxes|null $row
 	 * @return bool
 	 */
-	public function canWrite($row)
+	public function canWrite()
 	{
-		$data = DataObject::get_by_id("pages", $row->seiteid);
+		$data = DataObject::get_by_id("pages", $this->seiteid);
 		if ($data && $data->can("Write")) {
 			return true;
 		}
@@ -177,12 +176,11 @@ class Boxes extends DataObject implements Notifier {
 
 	/**
 	 * returns if deletion is allowed
-	 * @param Boxes $row
 	 * @return bool
 	 */
-	public function canDelete($row = null)
+	public function canDelete()
 	{
-		$data = DataObject::get_by_id("pages", $row->seiteid);
+		$data = DataObject::get_by_id("pages", $this->seiteid);
 		if ($data && $data->can("Delete")) {
 			return true;
 		}
@@ -192,12 +190,11 @@ class Boxes extends DataObject implements Notifier {
 
 	/**
 	 * returns if inserting is allowed
-	 * @param Boxes $row
 	 * @return bool
 	 */
-	public function canInsert($row = null)
+	public function canInsert()
 	{
-		$data = DataObject::get_by_id("pages", $row->seiteid);
+		$data = DataObject::get_by_id("pages", $this->seiteid);
 		if ($data && $data->can("Insert")) {
 			return true;
 		}

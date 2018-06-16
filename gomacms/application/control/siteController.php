@@ -60,7 +60,8 @@ class siteController extends Controller
                 unset($page, $path);
                 $error = DataObject::get_one("errorpage");
                 if ($error) {
-                    return $error->controller()->handleRequest($this->request, $this->isSubController());
+                    $errorController = new errorPageController();
+                    return $errorController->getWithModel($error)->handleRequest($this->request, $this->isSubController());
                 }
                 unset($error);
             }

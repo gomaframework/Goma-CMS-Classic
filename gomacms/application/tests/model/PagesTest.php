@@ -86,4 +86,128 @@ class PagesTest extends GomaUnitTest implements TestAble {
     public function unitTestParentType($page, $expected) {
 
     }
+
+    /**
+     * checks if canInsert is trying to solve the problem with parent.
+     *
+     * 1. Ensure no suer is logged in
+     * 2. Create Page $parent
+     * 3. Assign PermissionMock to $parent->edit_permission, $has = true
+     * 4. Write page $parent
+     * 5. Create Page $child
+     * 6. Assign $child->parent to $parent
+     * 7. Assert that $child->can("Insert") is true
+     */
+    public function testCanInsertParent() {
+        try {
+            $current = Member::$loggedIn;
+            Member::InitUser(null);
+
+            $parent = new Page();
+            $mock = new PermissionMock(array("type" => "users"));
+            $mock->has = true;
+            $parent->setEdit_Permission($mock);
+            $parent->writeToDB(false, true);
+
+            $child = new Page();
+            $child->parent = $parent;
+            $this->assertTrue($child->can("Insert"));
+        } finally {
+            Member::InitUser($current);
+
+            if($parent) {
+                $parent->remove(true);
+            }
+        }
+    }
+
+    /**
+     * tests simple hierarchy
+     *
+     * 1. Create page "Test" $parent
+     * 2. Create page "Child" $child, set parent $parent
+     * 3. Write $parent
+     * 4. Write $child
+     * 5. Assert that $parent->children() contains 1 page
+     * 6. Assert that $parent->children()->first() is equal to $child
+     * 7. Assert that $parent->getAllChildVersionIDs() returns array with $child->versionid
+     */
+    public function testHierarchyChildren() {
+        try {
+            $parent = new Page(array(
+                "title" => "Test"
+            ));
+            $child = new Page(array(
+                "title" => "Child",
+                "parent" => $parent
+            ));
+            $parent->writeToDB(false, true);
+            $child->writeToDB(false, true);
+
+            $this->assertEqual(1, $parent->children()->count());
+            $this->assertEqual($child->id, $parent->children()->first()->id);
+            $this->assertEqual(array($child->versionid), $parent->getAllChildVersionIDs());
+        } finally {
+            if($parent) {
+                $parent->remove(true);
+            }
+
+            if($child) {
+                $child->remove(true);
+            }
+        }
+    }
+
+
+    /**
+     * tests simple hierarchy
+     *
+     * 1. Create page "Test" $parent
+     * 2. Create page "Child" $child, set parent $parent
+     * 3. Write $parent as state
+     * 4. Write $child as state
+     * 5. Assert that $parent->children()->setVersion(DataObject::VERSION_DATA) contains 1 page
+     * 6. Assert that $parent->children()->setVersion(DataObject::VERSION_DATA)->first() is equal to $child
+     */
+    public function testHierarchyChildrenState() {
+        try {
+            $parent = new Page(array(
+                "title" => "Test"
+            ));
+            $child = new Page(array(
+                "title" => "Child",
+                "parent" => $parent
+            ));
+            $parent->writeToDB(false, true, 1);
+            $child->writeToDB(false, true, 1);
+
+            $this->assertEqual(1, $parent->children()->setVersion(DataObject::VERSION_STATE)->count());
+            $this->assertEqual($child->id, $parent->children()->setVersion(DataObject::VERSION_STATE)->first()->id);
+            $this->assertEqual(array($child->versionid), $parent->getAllChildVersionIDs());
+        } finally {
+            if($parent) {
+                $parent->remove(true);
+            }
+
+            if($child) {
+                $child->remove(true);
+            }
+        }
+    }
+}
+
+class PermissionMock extends Permission {
+    /**
+     * @var bool
+     */
+    static $db = array("has" => "Switch");
+
+    /**
+     * @param null $user
+     * @return bool
+     */
+    public function hasPermission($user = null)
+    {
+        return (bool) $this->has;
+    }
 }

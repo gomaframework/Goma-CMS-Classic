@@ -14,6 +14,16 @@ defined("IN_GOMA") OR die();
 class HistoryData_Settings extends historyGenerator
 {
     /**
+     * support for NewSettings.
+     *
+     * @return array
+     */
+    public static function modelTypes()
+    {
+        return array_merge(array(Newsettings::class), ClassInfo::getChildren(Newsettings::class));
+    }
+
+    /**
      * @return array
      */
     public function generateHistoryData()

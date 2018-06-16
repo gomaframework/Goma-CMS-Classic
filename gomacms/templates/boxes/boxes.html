@@ -1,6 +1,6 @@
 <% INCLUDE_CSS "boxes.less" %>
 
-<% IF $cached %>
+<% IF $cache %>
 	<% IF $canWrite AND NOT adminAsUser() %>
 		<% GLOAD("sortable") %>
 		<% GLOAD("resizable") %>

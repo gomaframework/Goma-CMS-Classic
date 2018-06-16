@@ -35,7 +35,6 @@ class SitemapController extends Controller {
 
 		$str .= "</urlset>";
 
-		HTTPResponse::setHeader("content-type", "text/xml");
-		return $str;
+		return GomaResponse::create(null, $str)->setHeader("content-type", "text/xml")->setIsFullPage(true);
 	}
 }

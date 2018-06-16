@@ -395,31 +395,4 @@ class contentAdmin extends LeftAndMain {
 
         return $this->ajaxSave($data, $response, $form, $controller);
     }
-
-    /**
-     * help-texts.
-     */
-    public function helpData()
-    {
-        return array(
-            "#treenode_leftandmain_treerenderer_page_0_addButton a" => array(
-                "text"     => lang("HELP.ADD-NEW-PAGE"),
-                "position" => "right"
-            ),
-            ".hitarea:first a span"                                 => array(
-                "text"     => lang("HELP.HIERARCHY_OPEN"),
-                "position" => "bottom"
-            ),
-            ".treewrapper:first"                                    => array(
-                "text"     => lang("HELP.PAGES_SORT"),
-                "position" => "fixed",
-                "autoHide" => false,
-                "bottom"   => "1em",
-                "left"     => "0.5em"
-            ),
-            "#visit_webpage"                                        => array(
-                "text" => lang("PREVIEW")
-            )
-        );
-    }
 }

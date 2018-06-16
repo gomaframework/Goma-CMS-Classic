@@ -71,7 +71,7 @@ class Pages extends DataObject implements PermProvider, Notifier {
      *
      *@name search_fields
      */
-    static $search_fields = array("data", "title", "mainbartitle", "meta_keywords");
+    static $search_fields = array("data", "title", "mainbartitle");
 
 
     /**
@@ -83,7 +83,7 @@ class Pages extends DataObject implements PermProvider, Notifier {
     static $index = array(
         array("type" => "INDEX", "fields" => "path,sort", "name" => "path"),
         array("type" => "INDEX", "fields" => "parentid,mainbar", "name"	=> "mainbar"),
-        array("type" => "INDEX", "fields" => "class_name,data,title,mainbartitle,meta_keywords,id","name" => "sitesearch")
+        array("type" => "INDEX", "fields" => "class_name,data,title,mainbartitle,id","name" => "sitesearch")
     );
 
     /**
@@ -416,11 +416,16 @@ class Pages extends DataObject implements PermProvider, Notifier {
     /**
      * helper for permission-settings.
      *
+     * @param   Permission $perm
+     * @param   string $name name of permission
+     * @param   string $globalParent of global parent permission when parent permission has become invalid.
      * @param   Permission
-     * @param   string name of permission
-     * @param   string name of global parent permission when parent permission has become invalid.
      */
     protected function setPermission($perm, $name, $globalParent = null) {
+        if($perm === null) {
+            throw new InvalidArgumentException("\$perm should not be null when setting permission $name");
+        }
+
         $perm->forModel = "pages";
         if($perm->parentid != 0) {
             if($perm->parent->name == "" && $this->parentid == 0) {
@@ -439,8 +444,6 @@ class Pages extends DataObject implements PermProvider, Notifier {
     /**
      * gets edit_permission
      *
-     * @name getEdit_Permission
-     * @access public
      * @return Permission
      */
     public function Edit_Permission() {
@@ -449,9 +452,7 @@ class Pages extends DataObject implements PermProvider, Notifier {
 
     /**
      * sets the edit-permission
-     *
-     *@name setEdit_Permission
-     *@access public
+     * @param Permission $perm
      */
     public function setEdit_Permission($perm) {
         $this->setPermission($perm, "edit_permission", "PAGES_WRITE");
@@ -460,8 +461,6 @@ class Pages extends DataObject implements PermProvider, Notifier {
     /**
      * gets publish_permission
      *
-     * @name getPublish_Permission
-     * @access public
      * @return Permission
      */
     public function Publish_Permission() {
@@ -842,7 +841,6 @@ class Pages extends DataObject implements PermProvider, Notifier {
     /**
      * returns that everyone who has the permission to view the content-page in admin-panel can view drafts and versions
      *
-     * @name canViewVersions
      * @return bool
      */
     public function canViewVersions() {
@@ -851,15 +849,16 @@ class Pages extends DataObject implements PermProvider, Notifier {
 
     /**
      * permission-checks
-     * @param Pages|null $row
      * @return bool
      */
-    public function canWrite($row = null) {
-        if(Permission::check("superadmin"))
+    public function canWrite()
+    {
+        if (Permission::check("superadmin")) {
             return true;
+        }
 
-        if(isset($row) && is_object($row->edit_permission) && $row->edit_permission->type != "admins") {
-            return $row->edit_permission->hasPermission();
+        if (is_object($this->edit_permission) && $this->edit_permission->type != "admins") {
+            return $this->edit_permission->hasPermission();
         }
 
         return Permission::check("PAGES_WRITE");
@@ -867,44 +866,41 @@ class Pages extends DataObject implements PermProvider, Notifier {
 
     /**
      * can-publish-rights
-     * @param Pages|null $row
      * @return bool
      */
-    public function canPublish($row) {
-        if(Permission::check("superadmin"))
+    public function canPublish()
+    {
+        if (Permission::check("superadmin")) {
             return true;
+        }
 
-        if(isset($row) && is_object($row->publish_permission) && $row->publish_permission->type != "admins")
-            return $row->publish_permission->hasPermission();
+        if (is_object($this->publish_permission) && $this->publish_permission->type != "admins") {
+            return $this->publish_permission->hasPermission();
+        }
 
 
         return Permission::check("PAGES_PUBLISH");
     }
 
     /**
-     * permission-checks
-     * @param Pages|null $row
      * @return bool
      */
-    public function canDelete($row = null)
+    public function canDelete()
     {
         return Permission::check("PAGES_DELETE");
     }
 
     /**
      * permission-checks
-     * @param Pages|null $row
      * @return bool
      */
-    public function canInsert($row = null)
+    public function canInsert()
     {
-        if(isset($row)) {
-            if($row->parentid != 0) {
-                $data = DataObject::get_versioned("pages", "state", array("id" => $row->parentid));
+        if ($this->parentid != 0) {
+            $data = DataObject::get_versioned("pages", "state", array("id" => $this->parentid));
 
-                if($data->Count() > 0) {
-                    return $data->first()->can("Write");
-                }
+            if ($data->Count() > 0) {
+                return $data->first()->can("Write");
             }
         }
 
@@ -985,7 +981,7 @@ class Pages extends DataObject implements PermProvider, Notifier {
                 false
             );
 
-            if(!member::login()) {
+            if(!isset(Member::$loggedIn)) {
                 $this->addFilterToQueryForGuest($query);
             } else if(Permission::check("ADMIN_CONTENT")) {
                 $this->addFilterToQueryForAdmin($query);
@@ -1059,28 +1055,31 @@ class Pages extends DataObject implements PermProvider, Notifier {
             }
 
             // add Version-Params
-            if(isset($dataParams["version"]))
+            if(isset($dataParams["version"])) {
                 $data->setVersion($dataParams["version"]);
+            }
 
-            if(isset($dataParams["filter"]))
-                $data->addFilter($dataParams["filter"]);
+            $filter = isset($dataParams["filter"]) ? $dataParams["filter"] : array();
+            $data->addFilter($filter);
 
             $nodes = array();
             foreach($data as $record) {
                 $node = new TreeNode($record->classname . "_" . $record->versionid, $record->id, $record->title, $record->classname);
 
                 // add a bubble for changed or new pages.
-                if(!$record->isPublished())
-                    if($record->everPublished())
+                if(!$record->isPublished()) {
+                    if ($record->everPublished()) {
                         $node->addBubble(lang("CHANGED"), "red");
-                    else
+                    } else {
                         $node->addBubble(lang("NEW"), "blue");
+                    }
+                }
 
                 if(!$record->mainbar) {
                     $node->addClass("hidden");
                 }
 
-                if($record->children()->setVersion($data->getVersion())->filter($data->getFilter())->count() > 0) {
+                if($record->children()->setVersion($data->getVersion())->addFilter($filter)->count() > 0) {
                     $node->setChildCallback(array("pages", "build_tree"), $dataParams);
                 }
 
