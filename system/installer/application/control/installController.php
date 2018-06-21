@@ -12,21 +12,18 @@ class InstallController extends FrontedController {
 	/**
 	 * url_handlers
 	*/
-	public $url_handlers = array(
+	static $url_handlers = array(
+	    "install"                   => "install",
 		"installapp/\$app!" 		=> "installApp",
+		"langselect"                => "langselect",
 		"execInstall/\$rand!"		=> "execInstall",
 		"restore"					=> "selectRestore",
-        "restoreFolder/\$app!"      => "restoreFolder"
+        "restoreFolder/\$app!"      => "restoreFolder",
+        "showRestore"               => "showRestore",
+        "installBackup"             => "installBackup",
+        "installFormBackup"         => "installFormBackup",
 	);
-	
-	/**
-	 * actions
-	*/
-	public $allowed_actions = array(
-		"install", "installApp", "langselect", "execInstall", "selectRestore",
-        "showRestore", "installBackup", "installFormBackup", "restoreFolder"
-	);
-	
+
 	/**
 	 * shows install fronted if language is already selected, else shows lang-select
 	*/
