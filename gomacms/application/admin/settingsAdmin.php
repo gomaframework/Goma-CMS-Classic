@@ -14,11 +14,11 @@ defined("IN_GOMA") OR die();
 class settingsAdmin extends adminItem
 {
 	// config
-	public $text = '{$_lang_settings}';
+    static $text = '{$_lang_settings}';
 
-	public $sort = 980;
+    static $sort = 980;
 
-	public $rights = "SETTINGS_ADMIN";
+	static $rights = "SETTINGS_ADMIN";
 
 	public $model = "newsettings";
 

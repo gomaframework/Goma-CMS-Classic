@@ -19,12 +19,12 @@ class contentAdmin extends LeftAndMain {
     /**
      * the text in the admin-panel
      */
-    public $text = '{$_lang_content}';
+    static $text = '{$_lang_content}';
 
     /**
      * permissions you need to view the adminItem
      */
-    public $rights = "ADMIN_CONTENT";
+    static $rights = "ADMIN_CONTENT";
 
     /**
      * template of the admin-panel (default)
@@ -38,7 +38,7 @@ class contentAdmin extends LeftAndMain {
 
     static $icon = "templates/images/content.png";
 
-    public $sort = 990;
+    static $sort = 990;
 
     /**
      * colors in the tree
@@ -57,8 +57,10 @@ class contentAdmin extends LeftAndMain {
     /**
      * extend actions
      */
-    public $allowed_actions = array(
-        "revert_changes", "unpublish", "preview"
+    static $url_handlers = array(
+        "revert_changes/\$id" => "revert_changes",
+        "unpublish/\$id" => "unpublish",
+        "preview/\$id" => "preview"
     );
 
     /**

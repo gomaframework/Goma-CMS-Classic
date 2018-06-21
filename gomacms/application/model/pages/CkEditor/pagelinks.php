@@ -25,18 +25,14 @@ class PageLinksController extends RequestHandler {
 	 * limit for the list
 	*/
 	public $limit = 15;
+
 	/**
 	 * urls
 	*/
-	public $url_handlers = array(
+	static $url_handlers = array(
 		"search/\$search" => "search"
 	);
-	/**
-	 * actions
-	*/
-	public $allowed_actions = array(
-		"search"
-	);
+
 	/**
 	 * index
 	*/

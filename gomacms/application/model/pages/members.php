@@ -45,13 +45,10 @@ class members extends Page
 class membersController extends PageController
 {
 		
-		public $url_handlers = array(
+		static $url_handlers = array(
 			'member/$id!'		=> 'showmember'
 		);
-		
-		public $allowed_actions = array(
-			"showmember"
-		);
+
 		/**
 		 * template of this controller
 		 *@var string

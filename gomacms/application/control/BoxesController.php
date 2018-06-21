@@ -23,26 +23,12 @@ class BoxesController extends FrontedController {
     /**
      * some urls
      */
-    public $url_handlers = array(
+    static $url_handlers = array(
         "\$pid!/add"               => "add",
         "\$pid!/edit/\$id!"        => "edit",
         "\$pid!/delete/\$id"       => "delete",
         "\$pid!/saveBoxWidth/\$id" => "saveBoxWidth",
         "\$pid!/saveBoxOrder"      => "saveBoxOrder"
-    );
-
-    /**
-     * rights
-     *
-     * @name allowed_actions
-     * @access public
-     */
-    public $allowed_actions = array(
-        "add"          => "->canEdit",
-        "edit"         => "->canEdit",
-        "delete"       => "->canEdit",
-        "saveBoxWidth" => "->canEdit",
-        "saveBoxOrder" => "->canEdit"
     );
 
     /**

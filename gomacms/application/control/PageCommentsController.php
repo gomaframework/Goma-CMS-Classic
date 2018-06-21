@@ -13,7 +13,6 @@ defined("IN_GOMA") OR die();
  * @version 1.0
  */
 class PageCommentsController extends FrontedController {
-    public $allowed_actions = array("edit", "delete");
 
     public $template = "comments/comments.html";
 
@@ -64,8 +63,8 @@ class PageCommentsControllerExtension extends ControllerExtension {
     public static $extra_methods = array(
         "pagecomments"
     );
-    public $allowed_actions = array(
-        "pagecomments"
+    static $url_handlers = array(
+        "pagecomments" => "pagecomments"
     );
 
     public function pagecomments()

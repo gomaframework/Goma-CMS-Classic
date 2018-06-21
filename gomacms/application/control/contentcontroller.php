@@ -36,16 +36,6 @@ class ContentController extends FrontedController
      */
     public $template = "pages/page.html";
 
-    /**
-     * default-url-handlers
-     *
-     * @name url_handlers
-     * @access public
-     */
-    public $url_handlers = array(
-        '$Action//$id/$otherid' => '$Action'
-    );
-
     static $enableBacktracking = true;
 
     static $less_vars = "default.less";

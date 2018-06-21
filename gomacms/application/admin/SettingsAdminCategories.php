@@ -22,8 +22,9 @@ class SettingsAdminCategories extends AbstractCategoryController {
     /**
      * @var array
      */
-    public $allowed_actions = array(
-        "general", "security"
+    static $url_handlers = array(
+        "general" => "general",
+        "security" => "security"
     );
 
     /**

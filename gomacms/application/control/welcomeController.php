@@ -12,10 +12,10 @@ class welcomeController extends Controller {
 	/**
 	 * allowed_actions
 	 */
-	public $allowed_actions = array(
-		"step2",
-		"step3",
-		"finish"
+	static $url_handlers = array(
+		"step2" => "step2",
+		"step3" => "step3",
+		"finish" => "finish"
 	);
 	/**
 	 * index
