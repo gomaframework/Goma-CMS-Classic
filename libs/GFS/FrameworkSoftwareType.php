@@ -206,7 +206,7 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
      */
 	public static function backup($request, $file, $name, $changelog = null) {
 		// if we are currently building the file, don't delete
-		if(!GFS_Package_Creator::wasPacked($file, $request)) {
+		if(isCommandLineInterface() || !GFS_Package_Creator::wasPacked($file, $request)) {
 			if(file_exists($file)) {
 				@unlink($file);
 			}
@@ -229,11 +229,10 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 
 		$gfs->write("info.plist", $plist->toXML());
 
-		if(!GFS_Package_Creator::wasPacked($file, $request)) {
+		if(isCommandLineInterface() || !GFS_Package_Creator::wasPacked($file, $request)) {
 			$gfs->setAutoCommit(false);
 			$gfs->add(FRAMEWORK_ROOT, "/data/system/", array("temp", LOG_FOLDER, "/installer/data", "version.php"));
 			$gfs->add(ROOT . "system/images/", "/data/images/", array("resampled"));
-			$gfs->add(ROOT . "languages/", "/data/languages/");
 			$out = $gfs->commitReply(null, null, isCommandLineInterface() ? -1 : 2.0, isCommandLineInterface());
             if(is_a($out, GomaResponse::class)) {
                 return $out;
@@ -242,7 +241,6 @@ class G_FrameworkSoftwareType extends G_SoftwareType {
 
 		// add some files
 		$gfs->addFromFile(ROOT . "index.php", "/data/index.php");
-		//$gfs->addFromFile(ROOT . ".htaccess", "/data/.htaccess");
 		$gfs->close();
 
 		return true;

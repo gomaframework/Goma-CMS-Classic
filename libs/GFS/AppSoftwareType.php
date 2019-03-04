@@ -658,7 +658,18 @@ class G_AppSoftwareType extends G_SoftwareType {
 
 		$excludeFiles = isset(ClassInfo::$appENV["app"]["excludeFiles"]) ? ClassInfo::$appENV["app"]["excludeFiles"] : array();
 
-		return Backup::generateBackup($file, $request, $excludeFiles, $tables, '{!#PREFIX}', !isset($_GET["dontIncludeTPL"]), ClassInfo::$appENV["app"]["requireFrameworkVersion"], $changelog);
+		return Backup::generateBackup(
+		    $file,
+            $request,
+            $excludeFiles,
+            $tables,
+            '{!#PREFIX}',
+            !isset($_GET["dontIncludeTPL"]),
+            ClassInfo::$appENV["app"]["requireFrameworkVersion"],
+            $changelog,
+            0.0,
+            true
+        );
 	}
 
 

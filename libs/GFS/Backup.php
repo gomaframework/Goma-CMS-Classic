@@ -6,8 +6,6 @@
  * @license: LGPL http://www.gnu.org/copyleft/lesser.html see 'license.txt'
  * @author Goma-Team
  */
-StaticsManager::addSaveVar("Backup", "excludeList");
-StaticsManager::addSaveVar("Backup", "fileExcludeList");
 
 define("BACKUP_MODEL_BACKUP_DIR", CURRENT_PROJECT . "/backup/");
 
@@ -33,9 +31,15 @@ class Backup extends gObject {
      * @param float $maxTime
      * @param bool $cli
      * @return string
-     * @throws GFSFileExistsException
+     * @throws GFSDBException
+     * @throws GFSException
+     * @throws GFSFileException
+     * @throws GFSReadonlyException
      * @throws GFSRealFilePermissionException
+     * @throws GFSVersionException
+     * @throws IOException
      * @throws PListException
+     * @throws ReflectionException
      * @throws SQLException
      */
     public static function generateDBBackup($file, $request, $prefix = DB_PREFIX, $excludeList = array(), $maxTime = 1.0, $cli = false)
@@ -180,10 +184,10 @@ class Backup extends gObject {
 
             $diff = microtime(true) - $time;
             if ($maxTime > 0 && $diff > $maxTime) {
-                if($request->canReplyJSON()) {
+                if(!isCommandLineInterface() && $request->canReplyJSON()) {
                     return GomaResponse::create(null, new JSONResponseBody(array(
                         "file" => $file,
-                        "redirect" => $_SERVER["REQUEST_URI"],
+                        "redirect" => $request->url,
                         "reload" => true,
                         "archive" =>  "SQL-Backup",
                         "progress" => ($i / count(ClassInfo::$database)) * 100,
@@ -195,7 +199,7 @@ class Backup extends gObject {
 
 
                 $template = new Template;
-                $template->assign("destination", $_SERVER["REQUEST_URI"]);
+                $template->assign("destination", $request->url);
                 $template->assign("reload", true);
                 $template->assign("archive", "SQL-Backup");
                 $template->assign("progress", ($i / count(ClassInfo::$database)) * 100);
@@ -318,7 +322,8 @@ class Backup extends gObject {
     public static function generateBackup($file, $request, $excludeList = array(), $excludeSQLList = array(), $SQLprefix = DB_PREFIX,
                                           $includeTPL = true, $framework = null, $changelog = null, $maxTime = 1.0, $cli = false)
     {
-        if (GFS_Package_Creator::wasPacked(null, $request) && GlobalSessionManager::globalSession()->hasKey("backup") &&
+        if (!isCommandLineInterface() &&
+            GFS_Package_Creator::wasPacked(null, $request) && GlobalSessionManager::globalSession()->hasKey("backup") &&
             GFS_Package_Creator::wasPacked(GlobalSessionManager::globalSession()->get("backup"), $request)
         ) {
             $file = GlobalSessionManager::globalSession()->get("backup");
@@ -385,6 +390,17 @@ class Backup extends gObject {
     /**
      * @param array $args
      * @param int $code
+     * @throws GFSDBException
+     * @throws GFSException
+     * @throws GFSFileException
+     * @throws GFSFileExistsException
+     * @throws GFSReadonlyException
+     * @throws GFSRealFileNotFoundException
+     * @throws GFSRealFilePermissionException
+     * @throws GFSVersionException
+     * @throws IOException
+     * @throws PListException
+     * @throws ReflectionException
      * @throws SQLException
      */
     public static function cli($args, &$code) {
@@ -392,15 +408,17 @@ class Backup extends gObject {
             if($args["-backup"] == "sql") {
                 $file = isset($args["backupfile"]) ? $args["backupfile"] : "sql" . "." . randomString(5) . "." . date("m-d-y_H-i-s", NOW) . ".sgfs";
 
-                self::generateDBBackup(self::BACKUP_PATH . "/" . $file, Director::createRequestFromEnvironment(URL),
+                self::generateDBBackup(self::BACKUP_PATH . "/" . $file, new Request("get", ""),
                     DB_PREFIX, array(), -1, true);
             } else {
                 $file = isset($args["backupfile"]) ? $args["backupfile"] : "full" . "." . randomString(5) . "." . date("m-d-y_H-i-s", NOW) . ".gfs";
 
-                self::generateBackup(self::BACKUP_PATH . "/" . $file, array(), array(), DB_PREFIX, true, null, null, -1, true);
+                self::generateBackup(self::BACKUP_PATH . "/" . $file, new Request("get", ""), array(), array(), DB_PREFIX, true, null, null, -1, true);
             }
         }
     }
 }
 
+StaticsManager::addSaveVar("Backup", "excludeList");
+StaticsManager::addSaveVar("Backup", "fileExcludeList");
 Core::addToHook("cli", array(Backup::class, "cli"));

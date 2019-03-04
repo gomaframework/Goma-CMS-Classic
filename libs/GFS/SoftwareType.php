@@ -951,11 +951,11 @@ abstract class g_SoftwareType {
      * @throws GFSRealFilePermissionException
      */
 	public function finalizeDistro($data, $form = null, $controller = null, $request = null) {
-        if(!isset($request) && !isset($form)) {
+        if(!isset($request) && !isset($form) && !isCommandLineInterface()) {
             throw new InvalidArgumentException();
         }
         
-        $request = isset($request) ? $request : $form->getRequest();
+        $request = isCommandLineInterface() || isset($request) ? $request : $form->getRequest();
 
 		GlobalSessionManager::globalSession()->set(self::FINALIZE_SESSION_VAR, $data);
 
