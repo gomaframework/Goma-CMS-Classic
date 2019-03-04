@@ -18,7 +18,7 @@ class settingsAdmin extends adminItem
 
     static $sort = 980;
 
-	static $rights = "SETTINGS_ADMIN";
+    static $rights = "SETTINGS_ADMIN";
 
 	public $model = "newsettings";
 

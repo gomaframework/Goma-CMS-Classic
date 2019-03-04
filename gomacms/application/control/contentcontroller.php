@@ -25,11 +25,6 @@ class ContentController extends FrontedController
     public static $activeids = array();
 
     /**
-     * @var Pages
-     */
-    protected $subPage;
-
-    /**
      * default templte of a page
      *
      * @name template
@@ -39,6 +34,10 @@ class ContentController extends FrontedController
     static $enableBacktracking = true;
 
     static $less_vars = "default.less";
+
+    static $url_handlers = array(
+        "\$subpage!" => "handleSubpage"
+    );
 
     /**
      * @param null|ViewAccessableData $model
@@ -69,19 +68,21 @@ class ContentController extends FrontedController
     }
 
     /**
-     * extends hasAction for:
-     * - Permission-checks with Password
-     * - sub-pages
-     *
-     * @param string $action
-     * @param bool $hasAction
+     * @throws Exception
      */
-    public function extendHasAction($action, &$hasAction)
-    {
-        // check for sub-page
-        if($this->willHandleWithSubpage($action)) {
-            $hasAction = true;
+    public function handleSubpage() {
+        $path = $this->getParam("subpage");
+        if (trim($path) != "" && preg_match('/^[a-zA-Z0-9_\-\/]+$/Usi', $path)) {
+            $subPage = $this->service()->getPageWithState(
+                array("path" => array("LIKE", $path), "parentid" => $this->modelInst()->id),
+                isset($this->getRequest()->get_params["pages_state"])
+            );
+            if($subPage !== null) {
+                return ControllerResolver::instanceForModel($subPage)->handleRequest($this->request, $this->isSubController());
+            }
         }
+
+        return null;
     }
 
     /**
@@ -157,30 +158,15 @@ class ContentController extends FrontedController
     }
 
     /**
-     * action-handling
-     *
      * @param string $action
      * @param string $content
-     * @return void
-     * @throws Exception
+     * @param bool $handleWithMethod
      */
-    public function extendHandleAction($action, &$content)
+    public function onBeforeHandleAction($action, &$content, &$handleWithMethod)
     {
-        $check = $this->checkForReadPermission();
-        if(is_array($check)) {
-            $response = $this->showPasswordForm($check);
-            if($response->getRawBody() !== true) {
-                $content = $response;
-                return;
-            }
-        }
+        parent::onBeforeHandleAction($action, $content, $handleWithMethod);
 
         array_push(self::$activeids, $this->modelInst()->id);
-
-        if ($content === null && $action != "" && $this->subPage != null) {
-            $content = ControllerResolver::instanceForModel($this->subPage)->handleRequest($this->request, $this->isSubController());
-            return;
-        }
 
         if ($this->modelInst()->parentid == 0 && $this->modelInst()->sort == 0) {
             defined("HOMEPAGE") OR define("HOMEPAGE", true);
@@ -188,6 +174,16 @@ class ContentController extends FrontedController
         } else {
             defined("HOMEPAGE") OR define("HOMEPAGE", false);
             Core::setTitle($this->modelInst()->windowtitle);
+        }
+
+        $check = $this->checkForReadPermission();
+        if(is_array($check)) {
+            $response = $this->showPasswordForm($check);
+            if($response->getRawBody() !== true) {
+                $content = $response;
+                $handleWithMethod = false;
+                return;
+            }
         }
     }
 
@@ -246,6 +242,7 @@ class ContentController extends FrontedController
      * @param string $uploadHash reference
      * @param int $lowestmtime reference
      * @return array
+     * @throws Exception
      */
     protected static function fetchUploadObjects($content, &$uploadHash, &$lowestmtime) {
         $uploadHash = "";

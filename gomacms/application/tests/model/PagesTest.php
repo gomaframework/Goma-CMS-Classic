@@ -97,6 +97,7 @@ class PagesTest extends GomaUnitTest implements TestAble {
      * 5. Create Page $child
      * 6. Assign $child->parent to $parent
      * 7. Assert that $child->can("Insert") is true
+     * @throws Exception
      */
     public function testCanInsertParent() {
         try {
@@ -131,6 +132,7 @@ class PagesTest extends GomaUnitTest implements TestAble {
      * 5. Assert that $parent->children() contains 1 page
      * 6. Assert that $parent->children()->first() is equal to $child
      * 7. Assert that $parent->getAllChildVersionIDs() returns array with $child->versionid
+     * @throws Exception
      */
     public function testHierarchyChildren() {
         try {
@@ -158,7 +160,6 @@ class PagesTest extends GomaUnitTest implements TestAble {
         }
     }
 
-
     /**
      * tests simple hierarchy
      *
@@ -168,6 +169,7 @@ class PagesTest extends GomaUnitTest implements TestAble {
      * 4. Write $child as state
      * 5. Assert that $parent->children()->setVersion(DataObject::VERSION_DATA) contains 1 page
      * 6. Assert that $parent->children()->setVersion(DataObject::VERSION_DATA)->first() is equal to $child
+     * @throws Exception
      */
     public function testHierarchyChildrenState() {
         try {
@@ -183,7 +185,7 @@ class PagesTest extends GomaUnitTest implements TestAble {
 
             $this->assertEqual(1, $parent->children()->setVersion(DataObject::VERSION_STATE)->count());
             $this->assertEqual($child->id, $parent->children()->setVersion(DataObject::VERSION_STATE)->first()->id);
-            $this->assertEqual(array($child->versionid), $parent->getAllChildVersionIDs());
+            $this->assertEqual(array($child->versionid), $parent->getAllChildVersionIDs(DataObject::VERSION_STATE));
         } finally {
             if($parent) {
                 $parent->remove(true);
@@ -191,6 +193,90 @@ class PagesTest extends GomaUnitTest implements TestAble {
 
             if($child) {
                 $child->remove(true);
+            }
+        }
+    }
+
+    /**
+     * tests simple hierarchy
+     *
+     * 1. Create page "Test" $parent
+     * 2. Create page "Child" $child, set parent $parent
+     * 3. Write $parent as state
+     * 4. Write $child as state
+     * 5. Assert that $parent->children()->setVersion(DataObject::VERSION_DATA) contains 1 page
+     * 6. Assert that $parent->children()->setVersion(DataObject::VERSION_DATA)->first() is equal to $child
+     * 7. Assert that $parent->getAllChildVersionIDs(DataObject::VERSION_STATE) is array of $child->versionid
+     * 8. Store $child->versionid as $oldChildVersionId
+     * 9. Publish $parent and $child
+     * 10. Assert that $child->versionid is equal to $oldChildVersionId (Publish has happened, but no write)
+     * 10. Assert that $parent->getAllChildVersionIDs() is array of $child->versionid
+     * @throws Exception
+     */
+   /* TODO: Make it work
+   public function testHierarchyChildrenStateBecomingPublish() {
+        try {
+            $parent = new Page(array(
+                "title" => "Test"
+            ));
+            $child = new Page(array(
+                "title" => "Child",
+                "parent" => $parent
+            ));
+            $parent->writeToDB(false, true, 1);
+            $child->writeToDB(false, true, 1);
+
+            $this->assertEqual(1, $parent->children()->setVersion(DataObject::VERSION_STATE)->count());
+            $this->assertEqual($child->id, $parent->children()->setVersion(DataObject::VERSION_STATE)->first()->id);
+            $this->assertEqual(array($child->versionid), $parent->getAllChildVersionIDs(DataObject::VERSION_STATE));
+
+            $oldChildVersionId = $child->versionid;
+            $parent->writeToDB(false, true, 2, false, true, true);
+            $child->writeToDB(false, true, 2, false, true, true);
+            $this->assertEqual($oldChildVersionId, $child->versionid);
+            $this->assertEqual(array($child->versionid), $parent->getAllChildVersionIDs());
+
+        } finally {
+            if($parent) {
+                $parent->remove(true);
+            }
+
+            if($child) {
+                $child->remove(true);
+            }
+        }
+    }*/
+
+    /**
+     * tests if pages class can create filename which is not taken yet.
+     * 1. Create random path $randomPath
+     * 2. Create $page1 with title $randomPath
+     * 3. Write $page1 as state
+     * 4. Create $page2 with title $randomPath
+     * 5. Write $page2 as state
+     * 6. Assert that $page1->path is different from $page2->path
+     */
+    public function testFindFilenameNotSelectedState() {
+        try {
+            $randomPath = randomString(10);
+            $page1 = new Page(array(
+                "title" => $randomPath
+            ));
+            $page1->writeToDB(false, true, 1);
+
+            $page2 = new Page(array(
+                "title" => $randomPath
+            ));
+            $page2->writeToDB(false, true, 1);
+
+            $this->assertNotEqual($page1->path, $page2->path);
+        } finally {
+            if($page1) {
+                $page1->remove(true);
+            }
+
+            if($page2) {
+                $page2->remove(true);
             }
         }
     }

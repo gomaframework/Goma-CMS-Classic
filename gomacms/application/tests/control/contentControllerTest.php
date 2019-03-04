@@ -232,4 +232,37 @@ class contentControllerTest extends GomaUnitTest
 
         return $request;
     }
+
+    /**
+     * tests if subpages are shown.
+     * @throws DataNotFoundException
+     * @throws MySQLException
+     * @throws PermissionException
+     * @throws SQLException
+     */
+    public function testSubpage() {
+        try {
+            $page = new Page();
+            $page->title = "testSub";
+            $page->writeToDB(false, true);
+
+            $subPage = new Page();
+            $subPage->parentid = $page->id;
+            $subPage->title = "under page";
+            $subPage->data = "Hello World123";
+            $subPage->writeToDB(false, true);
+
+            $request = new Request("get", $subPage->path);
+            $response = Director::directRequest($request, false);
+            $this->assertRegExp("/Hello World123/", (string) $response);
+        } finally {
+            if($subPage) {
+                $subPage->remove(true);
+            }
+
+            if($page) {
+                $page->remove(true);
+            }
+        }
+    }
 }

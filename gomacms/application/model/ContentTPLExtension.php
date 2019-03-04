@@ -49,7 +49,7 @@ class ContentTPLExtension extends Extension {
             return true;
         }
 
-        if(!isset(contentController::$activeids[$level - 2]))
+        if(!isset(contentController::$activeids[$level - 2]) || !contentController::$activeids[$level - 2])
         {
             return false;
         }

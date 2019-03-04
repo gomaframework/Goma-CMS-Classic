@@ -51,14 +51,12 @@ class membersController extends PageController
 
 		/**
 		 * template of this controller
-		 *@var string
+		 * var string
 		*/
 		public $template = "account/memberlist.html";
+
 		/**
 		 * shows a specific member
-		 *
-		 *@name showmember
-		 *@access public
 		*/
 		public function showmember()
 		{
