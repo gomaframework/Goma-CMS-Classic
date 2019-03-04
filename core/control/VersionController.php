@@ -22,8 +22,8 @@ class VersionController extends Controller {
     public $template = "versions/versionsOverview.html";
 
     static $url_handlers = array(
-        "preview" => "preview",
-        "restore" => "restore"
+        "preview/\$id!" => "preview",
+        "restore/\$id!" => "restore"
     );
 
     /**
@@ -55,7 +55,7 @@ class VersionController extends Controller {
     }
 
     /**
-     *
+     * @throws \Exception
      */
     public function preview() {
         $model = $this->getSingleModel();
@@ -72,6 +72,7 @@ class VersionController extends Controller {
      * @param DataObject $model
      * @param DataObject $version
      * @return \GomaResponse|\GomaResponseBody|mixed|string
+     * @throws \Exception
      */
     protected function serveControllerAndAddVersionInfo($controller, $model, $version) {
         $response = $controller->handleRequest($this->request, true);

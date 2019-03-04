@@ -178,7 +178,7 @@ class CacheManager {
      * @return bool
      */
     public function shouldDeleteCacheFolder($file, $forceFolders) {
-        if(file_exists($this->cacheDirectory . $file . "/.dontremove") && !$forceFolders) {
+        if(@file_exists($this->cacheDirectory . $file . "/.dontremove") && !$forceFolders) {
             return false;
         }
 
@@ -200,27 +200,32 @@ class CacheManager {
             return false;
         }
 
+        $time = @filemtime($this->dir() . $file);
+        if(!is_numeric($time)) {
+            return false;
+        }
+
         // lifetime for GFS-Files is 2 hours cause it is used for upgrade.
-        if(substr($file, 0, 3) == "gfs" && filemtime($this->dir() . $file) > NOW - 7200) {
+        if(substr($file, 0, 3) == "gfs" && $time > NOW - 7200) {
             return false;
         }
 
         // lifetime for sessions is 1 hour.
         if(preg_match('/^data\.([a-zA-Z0-9_]{20})\.goma$/Usi', $file)) {
-            if(filemtime($this->cacheDirectory . $file) > NOW - 3600) {
+            if($time > NOW - 3600) {
                 return false;
             }
         }
 
         // lifetime for uploads is 1 hour of last touch.
         if(preg_match('/^upload\.([a-zA-Z0-9_]{20})\.goma$/Usi', $file)) {
-            if(filemtime($this->cacheDirectory . $file) > NOW - 3600) {
+            if($time > NOW - 3600) {
                 return false;
             }
         }
 
         // check for lifetime for all files.
-        if($maxLifeTime != 0 && filemtime($this->cacheDirectory . $file) >= time() - $maxLifeTime) {
+        if($maxLifeTime != 0 && $time >= time() - $maxLifeTime) {
             return false;
         }
 
@@ -241,3 +246,4 @@ class CacheManager {
         return $dir;
     }
 }
+

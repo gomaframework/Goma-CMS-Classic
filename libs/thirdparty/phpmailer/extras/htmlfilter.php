@@ -104,7 +104,7 @@ function tln_skipspace($body, $offset)
  */
 function tln_findnxstr($body, $offset, $needle)
 {
-    $pos = strpos($body, $needle, $offset);
+    $pos = strpos($body, (string) $needle, $offset);
     if ($pos === false) {
         $pos = strlen($body);
     }

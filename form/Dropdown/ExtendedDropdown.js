@@ -37,7 +37,7 @@ goma.form.ExtendedDropdown = function (form, field) {
  */
 goma.form.ExtendedDropdown.prototype.init = function () {
     var options = {
-        plugins: ['infinite_scroll'],
+        plugins: ['infinite_scroll', 'remove_button'],
         valueField: "valueRepresentation",
         searchField: "searchInfo",
         options: this.field.selectedItems,

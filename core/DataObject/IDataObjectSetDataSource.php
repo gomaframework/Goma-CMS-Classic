@@ -92,6 +92,12 @@ interface IDataObjectSetDataSource {
     public function clearCache();
 
     /**
+     * @param Closure $closure
+     * @return Closure
+     */
+    public function registerCacheCallback($closure);
+
+    /**
      * @param array $manipulation
      * @return bool
      */

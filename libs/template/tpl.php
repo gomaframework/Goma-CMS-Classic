@@ -769,7 +769,7 @@ $data = array_pop($dataStack);
 	{
 		$clause = $matches[1];
 		// first parse
-		$clause = str_replace("=", '==', $clause);
+		$clause = str_replace(" = ", ' == ', $clause);
 		$clause = str_replace("====", '==', $clause);
 		$clause = str_replace("!==", '!=', $clause);
 		$clause = preg_replace('/NOT\s+/i', '!', $clause);

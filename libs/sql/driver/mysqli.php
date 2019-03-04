@@ -60,7 +60,7 @@ class mysqliDriver implements SQLDriver
         if (mysqli_connect_errno()) {
             if ($test = new MySQLi($dbhost, $dbuser, $dbpass)) {
                 logging("Create DataBase " . $dbdb);
-                if ($test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_general_ci")) {
+                if ($test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_unicode_ci")) {
                     $test->close();
                     return $this->connect($dbuser, $dbdb, $dbpass, $dbhost);
                 }
@@ -80,14 +80,14 @@ class mysqliDriver implements SQLDriver
      */
     public function test($dbuser, $dbdb, $dbpass, $dbhost)
     {
-        $test = new MySQLi($dbhost, $dbuser, $dbpass, $dbdb);
+        $test = @new MySQLi($dbhost, $dbuser, $dbpass, $dbdb);
         if (!mysqli_connect_errno()) {
             $test->close();
             return true;
         } else {
             if ($test = new MySQLi($dbhost, $dbuser, $dbpass)) {
                 logging("Create DataBase " . $dbdb);
-                if ($test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_general_ci")) {
+                if ($test->query("CREATE DATABASE " . $dbdb . " DEFAULT COLLATE = utf8_unicode_ci")) {
                     $test->close();
                     return true;
                 } else {
@@ -269,10 +269,10 @@ class mysqliDriver implements SQLDriver
     public function escape_string($str)
     {
         if (is_array($str)) {
-            throw new LogicException("Array is not allowed as given value for escape_string. Expected string.");
+            throw new InvalidArgumentException("Array is not allowed as given value for escape_string. Expected string.");
         }
         if (is_object($str)) {
-            throw new LogicException("Object is not allowed as given value for escape_string. Expected string.");
+            throw new InvalidArgumentException("Object is not allowed as given value for escape_string. Expected string.");
         }
 
         return $this->_db->real_escape_string((string)$str);
@@ -285,10 +285,10 @@ class mysqliDriver implements SQLDriver
     public function real_escape_string($str)
     {
         if (is_array($str)) {
-            throw new LogicException("Array is not allowed as given value for escape_string. Expected string.");
+            throw new InvalidArgumentException("Array is not allowed as given value for escape_string. Expected string.");
         }
         if (is_object($str)) {
-            throw new LogicException("Object is not allowed as given value for escape_string. Expected string.");
+            throw new InvalidArgumentException("Object is not allowed as given value for escape_string. Expected string.");
         }
 
         return $this->_db->real_escape_string((string)$str);
@@ -870,7 +870,7 @@ class mysqliDriver implements SQLDriver
 
             $sql .= '' . $type . ' ' . $name . ' (' . implode(',', $ifields) . ')';
         }
-        $sql .= ") DEFAULT CHARACTER SET 'utf8' COLLATE utf8_general_ci";
+        $sql .= ") DEFAULT CHARACTER SET 'utf8' COLLATE utf8_unicode_ci";
 
         if (sql::query($sql)) {
             ClassInfo::$database[$table] = $fields;
@@ -925,7 +925,11 @@ class mysqliDriver implements SQLDriver
     public function writeManipulation($manipulation)
     {
         if (PROFILE) Profiler::mark("MySQLi::writeManipulation");
-        $manipulation = $this->extractManipulationSQL($manipulation);
+        try {
+            $manipulation = $this->extractManipulationSQL($manipulation);
+        } catch (InvalidArgumentException $e) {
+            throw new InvalidArgumentException($e->getMessage() . print_r($manipulation, true), $e->getCode(), $e);
+        }
 
         foreach($manipulation as $info) {
             if(isset($info["sql"])) {
@@ -947,7 +951,7 @@ class mysqliDriver implements SQLDriver
             switch (strtolower($data["command"])) {
                 case "update":
                     if (isset($data["id"]) || isset($data["where"])) {
-                        if (count($data["fields"]) > 0) {
+                        if (isset($data["fields"]) && count($data["fields"]) > 0) {
                             if (
                                 (isset($data["table_name"]) && $table_name = $data["table_name"]) ||
                                 (ModelInfoGenerator::classTable($class) && $table_name = ModelInfoGenerator::classTable($class))
@@ -1020,9 +1024,14 @@ class mysqliDriver implements SQLDriver
                     }
 
                     break;
+                case "rawupdate":
+                    if(!isset($data["sql"])) {
+                        throw new InvalidArgumentException("rawupdate requires defined SQL.");
+                    }
+                    break;
                 default:
                     if (PROFILE) Profiler::unmark("MySQLi::writeManipulation");
-                    throw new InvalidArgumentException("Manipulation requires valid command: INSERT, DELETE or UPDATE. " . print_r($manipulation, true));
+                    throw new InvalidArgumentException("Manipulation requires valid command: INSERT, DELETE, RAWUPDATE or UPDATE." . print_r($data, true));
             }
         }
 

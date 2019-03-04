@@ -149,6 +149,46 @@ class SwitchTest extends \GomaUnitTest {
             }
         }
     }
+
+    /**
+     * Tests if getting switch field from db returns boolean for false.
+     */
+    public function testWrite0AndGetFalse() {
+        try {
+            $entity = new SwitchTestEntity();
+            $entity->switch1 = 0;
+            $entity->writeToDB(false, true);
+
+            /** @var SwitchTestEntity $entityFromDb */
+            $entityFromDb = \DataObject::get_one(SwitchTestEntity::class, array("switch1" => false));
+            $this->assertTrue(is_bool($entityFromDb->switch1));
+            $this->assertFalse($entityFromDb->switch1);
+        } finally {
+            if($entity) {
+                $entity->remove(true);
+            }
+        }
+    }
+
+    /**
+     * Tests if getting switch field from db returns boolean for true.
+     */
+    public function testWrite1AndGetTrue() {
+        try {
+            $entity = new SwitchTestEntity();
+            $entity->switch1 = 1;
+            $entity->writeToDB(false, true);
+
+            /** @var SwitchTestEntity $entityFromDb */
+            $entityFromDb = \DataObject::get_one(SwitchTestEntity::class, array("switch1" => true));
+            $this->assertTrue(is_bool($entityFromDb->switch1));
+            $this->assertTrue($entityFromDb->switch1);
+        } finally {
+            if($entity) {
+                $entity->remove(true);
+            }
+        }
+    }
 }
 
 /**

@@ -543,6 +543,7 @@ abstract class gObject
      * @name getInstance
      * @param string $extensionClassName of extension
      * @return Extension
+     * @throws ReflectionException
      */
     private function getInstance($extensionClassName)
     {

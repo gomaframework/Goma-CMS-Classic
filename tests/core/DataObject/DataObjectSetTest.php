@@ -1,6 +1,7 @@
 <?php
 namespace Goma\Test\Model;
 use ArrayList;
+use Closure;
 use Controller;
 use DataObject;
 use DataObjectSet;
@@ -599,13 +600,13 @@ class DataObjectSetTests extends GomaUnitTest
         $i = 0;
         foreach($set as $record) {
             if($i == 0) {
-                $this->assertTrue($record === $set->first());
+                $this->assertIdentical($record, $set->first());
             } else {
                 $this->assertFalse($record === $set->first());
             }
 
             if($i == 1) {
-                $this->assertTrue($record === $set->last());
+                $this->assertIdentical($record, $set->last());
             } else {
                 $this->assertFalse($record === $set->last());
             }
@@ -616,13 +617,13 @@ class DataObjectSetTests extends GomaUnitTest
         $i = 0;
         foreach($set as $record) {
             if($i == 0) {
-                $this->assertTrue($record === $set->first());
+                $this->assertIdentical($record, $set->first());
             } else {
                 $this->assertFalse($record === $set->first());
             }
 
             if($i == 1) {
-                $this->assertTrue($record === $set->last());
+                $this->assertIdentical($record, $set->last());
             } else {
                 $this->assertFalse($record === $set->last());
             }
@@ -1429,6 +1430,17 @@ class MockIDataObjectSetDataSource implements IDataObjectSetDataSource {
     public function clearCache()
     {
     }
+
+    /**
+     * @param Closure $closure
+     * @return Closure
+     */
+    public function registerCacheCallback($closure) {
+        return function() {
+            return;
+        };
+    }
+
 
     /**
      * @param array $manipulation

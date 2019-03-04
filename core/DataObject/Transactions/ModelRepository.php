@@ -79,7 +79,7 @@ class ModelRepository extends IModelRepository {
      * @param bool $forceWrite if to override permissions
      * @param bool $silent if to not update last-modified and editorid
      * @param bool $overrideCreated if to not force created and autorid to not be changed
-     * @throws OperationNotValidException
+     * @throws PermissionException
      */
     public function writeState($record, $forceWrite = false, $silent = false, $overrideCreated = false) {
         $writeType = DataObject::Versioned($record->classname) ? self::WRITE_TYPE_SAVE : self::WRITE_TYPE_PUBLISH;

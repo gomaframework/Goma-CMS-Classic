@@ -820,81 +820,139 @@ class ManyManyIntegrationTest extends GomaUnitTest implements TestAble
      * 8. checks if everything got right
      * 9. removes one and checks if remove was successful
      *
+     * @throws DataObjectSetCommitException
      * @throws MySQLException
+     * @throws PermissionException
+     * @throws SQLException
      */
     public function testRevertStateToPublishWithPublished()
     {
-        $newOne = new ManyManyTestObjectOne(array(
-            "one" => 10
-        ));
-        $newOne->twos()->add(new ManyManyTestObjectTwo(array(
-            "two" => 10
-        )));
-        $newOne->twos()->add(new ManyManyTestObjectTwo(array(
-            "two" => 11
-        )));
-        $newOne->writeToDB(true, true, 2);
+        try {
+            $newOne = new ManyManyTestObjectOne(
+                array(
+                    "one" => 10
+                )
+            );
+            $newOne->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 10
+                    )
+                )
+            );
+            $newOne->twos()->add(
+                new ManyManyTestObjectTwo(
+                    array(
+                        "two" => 11
+                    )
+                )
+            );
+            $newOne->writeToDB(true, true, 2);
 
-        $this->assertEqual(array(10, 11), $newOne->twos()->fieldToArray("two"));
-        $first = $newOne->twos()->first();
-        $first->two = 12;
-        $newOne->twos()->updateFields(
-            $first
-        );
-        $newOne->writeToDB(false, true, 1);
+            $this->assertEqual(array(10, 11), $newOne->twos()->fieldToArray("two"));
+            $first = $newOne->twos()->first();
+            $first->two = 12;
+            $newOne->twos()->updateFields(
+                $first
+            );
+            $newOne->writeToDB(false, true, 1);
 
-        $this->assertEqual($newOne, $newOne->twos()->getOwnRecord());
-        $this->assertEqual(12, $newOne->twos()->first()->two);
-        $this->assertEqual(2, $newOne->twos()->count());
+            $this->assertEqual($newOne, $newOne->twos()->getOwnRecord());
+            $this->assertEqual(12, $newOne->twos()->first()->two);
+            $this->assertEqual(2, $newOne->twos()->count());
 
-        $this->assertEqual(1, DataObject::count(ManyManyTestObjectTwo::class, array(
-            "two" => 10
-        )));
-        $this->assertEqual(array(12, 11), $newOne->twos()->fieldToArray("two"));
+            $this->assertEqual(
+                1,
+                DataObject::count(
+                    ManyManyTestObjectTwo::class,
+                    array(
+                        "two" => 10
+                    )
+                )
+            );
+            $this->assertEqual(array(12, 11), $newOne->twos()->fieldToArray("two"));
 
-        // check for state
-        $stateOne = DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
-            "one" => 10
-        ))->first();
-        $this->assertEqual(array(12, 11), $stateOne->twos()->fieldToArray("two"));
+            // check for state
+            $stateOne = DataObject::get_versioned(
+                ManyManyTestObjectOne::class,
+                DataObject::VERSION_STATE,
+                array(
+                    "one" => 10
+                )
+            )->first();
+            $this->assertEqual(array(12, 11), $stateOne->twos()->fieldToArray("two"));
 
-        // revert
-        /** @var ManyManyTestObjectOne $stateOne */
-        $publishedOne = DataObject::get(ManyManyTestObjectOne::class, array(
-            "one" => 10
-        ))->first();
-        $this->assertEqual(array(10, 11), $publishedOne->twos()->fieldToArray("two"));
+            // revert
+            /** @var ManyManyTestObjectOne $stateOne */
+            $publishedOne = DataObject::get(
+                ManyManyTestObjectOne::class,
+                array(
+                    "one" => 10
+                )
+            )->first();
+            $this->assertEqual(array(10, 11), $publishedOne->twos()->fieldToArray("two"));
 
-        $publishedOne->writeToDB(false, true, 2);
+            $publishedOne->writeToDB(false, true, 2);
 
-        // check for revert
-        $this->assertEqual(2, DataObject::get(ManyManyTestObjectTwo::class, array(
-            "two" => array(10, 11)
-        ))->count());
-        $this->assertEqual(1, DataObject::get(ManyManyTestObjectTwo::class, array(
-            "two" => array(12, 11)
-        ))->count());
+            // check for revert
+            $this->assertEqual(
+                2,
+                DataObject::get(
+                    ManyManyTestObjectTwo::class,
+                    array(
+                        "two" => array(10, 11)
+                    )
+                )->count()
+            );
+            $this->assertEqual(
+                1,
+                DataObject::get(
+                    ManyManyTestObjectTwo::class,
+                    array(
+                        "two" => array(12, 11)
+                    )
+                )->count()
+            );
 
-        // check for state
-        $stateOne = DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
-            "one" => 10
-        ))->first();
-        $this->assertEqual(array(10, 11), $stateOne->twos()->fieldToArray("two"));
+            // check for state
+            $stateOne = DataObject::get_versioned(
+                ManyManyTestObjectOne::class,
+                DataObject::VERSION_STATE,
+                array(
+                    "one" => 10
+                )
+            )->first();
+            $this->assertEqual(array(10, 11), $stateOne->twos()->fieldToArray("two"));
 
-        // cleanup
-        $this->assertEqual(2, $stateOne->twos()->count());
-        foreach ($stateOne->twos() as $two) {
-            $two->remove(true);
+            $this->assertEqual(2, $stateOne->twos()->count());
+        } finally {
+            // cleanup
+            foreach ($stateOne->twos() as $two) {
+                $two->remove(true);
+            }
+
+            $stateOne->remove(true);
+
+            $this->assertEqual(
+                0,
+                DataObject::get(
+                    ManyManyTestObjectTwo::class,
+                    array(
+                        "two" => array(10, 11)
+                    )
+                )->count()
+            );
+
+            $this->assertNull(
+                DataObject::get_versioned(
+                    ManyManyTestObjectOne::class,
+                    DataObject::VERSION_STATE,
+                    array(
+                        "one" => 10
+                    )
+                )->first()
+            );
         }
-
-        $this->assertEqual(0, DataObject::get(ManyManyTestObjectTwo::class, array(
-            "two" => array(10, 11)
-        ))->count());
-
-        $stateOne->remove(true);
-        $this->assertNull(DataObject::get_versioned(ManyManyTestObjectOne::class, DataObject::VERSION_STATE, array(
-            "one" => 10
-        ))->first());
     }
 
     /**

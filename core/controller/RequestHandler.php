@@ -281,6 +281,7 @@ class RequestHandler extends gObject
         }
 
         $hasAction = true;
+
         if (!gObject::method_exists($this, $action) || !$this->checkPermission($action, $classWithActionDefined)) {
             $hasAction = false;
         }

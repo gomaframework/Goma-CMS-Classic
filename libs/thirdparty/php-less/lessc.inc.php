@@ -3510,7 +3510,7 @@ class lessc_parser {
 		while (true) {
 			// find the next item
 			foreach ($look as $token) {
-				$pos = strpos($text, $token);
+				$pos = strpos($text, (string) $token);
 				if ($pos !== false) {
 					if (!isset($min) || $pos < $min[1]) $min = array($token, $pos);
 				}

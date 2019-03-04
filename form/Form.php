@@ -462,7 +462,7 @@ class Form extends AbstractFormComponentWithChildren {
 		if(count($errors) > 0) {
 			$js .= "form.setLeaveCheck(true);";
 		}
-		Resources::addJS('$(function(){ '.$js.' window['.var_export($this->id(), true).'] = form; });');
+		Resources::addJS('$(function(){ '.$js.' });');
 
 		if(PROFILE)
 			Profiler::unmark("Form::renderForm::render");

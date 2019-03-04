@@ -227,7 +227,7 @@ class GD extends \gObject
 
         if(isset($this->type["create"])) {
             if(is_callable($this->type["create"])) {
-                $this->gd = call_user_func_array($this->type["create"], array($this->pic));
+                $this->gd = @call_user_func_array($this->type["create"], array($this->pic));
                 return $this->gd;
             }
         }

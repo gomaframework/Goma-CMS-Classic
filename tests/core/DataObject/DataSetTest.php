@@ -425,9 +425,9 @@ class DataSetTests extends GomaUnitTest {
     }
 
     /**
-     * tests multi iterator with delete.
+     * tests if array stays the same if removing within iterator.
      */
-    public function testMultiIterator() {
+    public function testIteratingStaysWhileRemoving() {
         $data = array(
             $this->daniel,
             $this->janine,
@@ -436,15 +436,48 @@ class DataSetTests extends GomaUnitTest {
         );
 
         $i = 0;
-        $list = new ArrayList($data);
+        $list = new DataSet($data);
         foreach($list as $record) {
             if($i == 0) {
-                $i++;
                 $list->remove($record);
-                $this->assertEqual($record, $this->daniel);
-            } else {
-                $this->assertEqual($record, $this->janine);
             }
+
+            if($i % 2 == 1) {
+                $this->assertEqual($record, $this->janine);
+            } else {
+                $this->assertEqual($record, $this->daniel);
+            }
+            $i++;
+        }
+    }
+
+    /**
+     * tests if array stays the same if removing within iterator, but it changes afterwards.
+     */
+    public function testIteratingChangeAfterDeleteAndIteration() {
+        $data = array(
+            $this->daniel,
+            $this->janine,
+            $this->daniel,
+            $this->janine
+        );
+
+        $i = 0;
+        $list = new DataSet($data);
+        foreach($list as $record) {
+            if($i == 0) {
+                $list->remove($record);
+            }
+            $i++;
+        }
+
+        foreach($list as $record) {
+            if($i == 1) {
+                $this->assertEqual($this->daniel, $record);
+            } else {
+                $this->assertEqual($this->janine, $record);
+            }
+            $i++;
         }
     }
 

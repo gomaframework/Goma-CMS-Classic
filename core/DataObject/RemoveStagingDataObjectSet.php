@@ -120,6 +120,14 @@ abstract class RemoveStagingDataObjectSet extends DataObjectSet {
     }
 
     /**
+     * @return bool
+     */
+    public function hasChanged()
+    {
+        return parent::hasChanged() || $this->removeStaging->count() > 0;
+    }
+
+    /**
      * @return array
      */
     protected function getFilterForQuery()

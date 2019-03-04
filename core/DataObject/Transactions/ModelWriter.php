@@ -295,8 +295,8 @@ class ModelWriter extends gObject {
      */
     protected function hasBeenWritten($model) {
         return (
-            $model->publishedid == 0 ||
-            $model->stateid == 0);
+            $model->publishedid != 0 ||
+            $model->stateid != 0);
     }
 
     /**
@@ -385,13 +385,23 @@ class ModelWriter extends gObject {
         $this->forceVersionIds();
 
         // try and find out whether to write cause of state
-        if (!$this->hasBeenWritten($this->model)) {
+        if ($this->hasBeenWritten($this->model)) {
             if($oldData = $this->getObjectToUpdate()->ToArray()) {
                 // first check for raw data.
                 foreach ($oldData as $key => $val) {
                     if (!self::valueMatches($val, $this->data[$key])) {
                         return true;
                     }
+                }
+
+                foreach(array_diff($this->getObjectToUpdate()->DataBaseFields(true), array_keys($oldData)) as $field) {
+                    if(isset($this->data[$field])) {
+                        return true;
+                    }
+                }
+
+                if(isset($this->data["didchangeobject"])) {
+                    return true;
                 }
             }
 
@@ -426,6 +436,8 @@ class ModelWriter extends gObject {
 
     /**
      * writes generated data to DataBase.
+     * @throws PermissionException
+     * @throws MySQLException
      */
     public function write() {
         if ($this->getCommandType() != IModelRepository::COMMAND_TYPE_PUBLISH && $this->getCommandType(
@@ -469,9 +481,9 @@ class ModelWriter extends gObject {
                 } else {
                     $this->databaseWriter->publish();
                 }
-
-                $this->callPostFlightEvents();
             }
+
+            $this->callPostFlightEvents();
         } finally {
             if(isset($lockKey)) {
                 unset(self::$writeActions[$lockKey]);
@@ -498,8 +510,6 @@ class ModelWriter extends gObject {
      * preflight events.
      */
     protected function callPreflightEvents() {
-        DataObjectQuery::clearCache();
-
         $this->callModelExtending("onBeforeWrite");
 
         if($this->getCommandType() == IModelRepository::COMMAND_TYPE_PUBLISH || $this->getWriteType() == IModelRepository::WRITE_TYPE_PUBLISH) {

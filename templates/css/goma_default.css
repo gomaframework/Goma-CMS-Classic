@@ -169,6 +169,10 @@ a.button {
     padding: 0.5em;
 }
 
+.endless-end {
+    clear: both;
+}
+
 @media only screen and (min-width: 30em) {
     #login_page .left {
         float: left;

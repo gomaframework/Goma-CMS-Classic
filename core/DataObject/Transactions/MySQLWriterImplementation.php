@@ -29,6 +29,7 @@ class MySQLWriterImplementation implements iDataBaseWriter {
 
     /**
      * writes data to Database.
+     * @throws SQLException
      */
     public function write()
     {
@@ -68,20 +69,50 @@ class MySQLWriterImplementation implements iDataBaseWriter {
 
     /**
      * publish.
+     * @param bool $alreadyWritten
+     * @throws SQLException
      */
-    public function publish()
+    public function publish($alreadyWritten = false)
     {
-        $this->insertIntoStateTable(array(
-            "id"            => $this->recordid(),
-            "publishedid"   => $this->model()->versionid,
-            "stateid"       => $this->model()->versionid
-        ), "update");
+        $manipulation = array();
 
-        $this->model()->stateid = $this->model()->publishedid = $this->model()->versionid;
+        if($alreadyWritten) {
+            // upgrade snap_priority if existing
+            if(isset(ClassInfo::$database[$this->model()->baseTable]["snap_priority"])) {
+                $manipulation[$this->model()->baseTable] = array(
+                    "command" => "update",
+                    "fields" => array(
+                        "snap_priority" => 2
+                    ),
+                    "where" => array(
+                        "id" => $this->model()->versionid
+                    )
+                );
+            }
+
+            // allow extensions to hook in
+            $job = "write";
+            $this->writer->callModelExtending("onBeforeManipulate", $manipulation, $job, $this);
+            $this->writer->callModelExtending("onBeforeWriteData", $manipulation, $job, $this);
+        }
+
+        // fire manipulation to DataBase
+        if (SQL::manipulate($manipulation)) {
+            $this->insertIntoStateTable(array(
+                "id"            => $this->recordid(),
+                "publishedid"   => $this->model()->versionid,
+                "stateid"       => $this->model()->versionid
+            ), "update");
+
+            $this->model()->stateid = $this->model()->publishedid = $this->model()->versionid;
+        } else {
+            throw new SQLException();
+        }
     }
 
     /**
      * updates state table with new record and versionid.
+     * @throws SQLException
      */
     protected function updateStateTable() {
         if($this->writer->getWriteType() == ModelRepository::WRITE_TYPE_PUBLISH || !DataObject::Versioned($this->model()->classname)) {
@@ -138,6 +169,7 @@ class MySQLWriterImplementation implements iDataBaseWriter {
      *
      * @param array $data
      * @return int
+     * @throws SQLException
      */
     protected function insertBaseClassAndGetVersionId($data) {
 
@@ -200,6 +232,7 @@ class MySQLWriterImplementation implements iDataBaseWriter {
     /**
      * returns default manipulation fields for generated table.
      *
+     * @param string $class
      * @return array
      */
     protected function generateDefaultTableManipulation($class) {
@@ -261,6 +294,7 @@ class MySQLWriterImplementation implements iDataBaseWriter {
     /**
      * forces recordid is represented in state-table.
      * it may change recordid.
+     * @throws SQLException
      */
     protected function forceRecordId() {
         if ($this->writer->getCommandType() == ModelRepository::COMMAND_TYPE_INSERT) {

@@ -10,21 +10,13 @@
 
 
 class CacheTest extends GomaUnitTest {
-	/**
-	 * area
-	*/
-	static $area = "Cache";
-
-	/**
-	 * internal name.
-	*/
-	public $name = "Cacher";
-
 	public function setUp() {
 		Core::deletecache();
 	}
 
 	public function tearDown() {
+	    parent::tearDown();
+
 		$cacher = new Cacher("testNotExisting");
 		$cacher->delete();
 	}

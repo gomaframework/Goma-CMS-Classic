@@ -968,4 +968,16 @@ class Controller extends RequestHandler
 
         return convert::raw2text($modified);
     }
+
+    /**
+     * cloning this controller should also clone the service.
+     */
+    public function __clone()
+    {
+        parent::__clone();
+
+        if($this->service) {
+            $this->service = clone $this->service;
+        }
+    }
 }

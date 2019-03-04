@@ -23,7 +23,6 @@ class HomePageController extends RequestHandler {
         if (GlobalSessionManager::globalSession()->hasKey(self::SESSION_LANGSELECT) || isset($this->request->get_params["setlang"])) {
             GlobalSessionManager::globalSession()->set(self::SESSION_LANGSELECT, true);
             $controller = new InstallController();
-
             return $controller->handleRequest($this->request, $this->isSubController());
         } else {
             return $this->langSelect();

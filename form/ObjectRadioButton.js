@@ -30,7 +30,7 @@ function initObjectRadioButtons(field, divid, radioids) {
         if (element.find(".form_field:first-child").find(".field").length > 0) {
             element.find(".form_field:first-child").find(".field").click();
         } else {
-            element.find(".form_field:first-child").find(".input:not(type=checkbox)").click();
+            element.find(".form_field:first-child").find(".input:not([type=checkbox])").click();
         }
     });
 

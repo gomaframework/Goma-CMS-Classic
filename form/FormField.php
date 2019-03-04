@@ -25,13 +25,6 @@ class FormField extends AbstractFormComponent {
     public $container;
 
     /**
-     * @var array
-     */
-    static $url_handlers = array(
-        '$Action//$id/$otherid' => '$Action'
-    );
-
-    /**
      * value
      *
      * @var mixed

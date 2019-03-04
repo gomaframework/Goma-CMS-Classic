@@ -42,7 +42,7 @@ class SelectSQLField extends DBField {
      * @return mixed
      */
 	public static function maskSlashes($key) {
-	    return str_replace("\"", "\\\"", $key);
+	    return addslashes($key);
     }
 
     /**

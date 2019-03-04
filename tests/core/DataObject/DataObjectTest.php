@@ -277,6 +277,26 @@ class DataObjectTests extends GomaUnitTest
             }
         }
     }
+
+    /**
+     * tests if all db fields are castable.
+     */
+    public function testAllCastingWorksOnAllClasses() {
+        $castingError = array();
+
+        foreach(ClassInfo::$class_info as $class => $classInfo) {
+            if(isset($classInfo["db"])) {
+                foreach ($classInfo["db"] as $field => $casting) {
+                    $result = DBField::parseCasting($casting);
+                    if($result === null) {
+                        $castingError[] = "$class::$field :" . $casting;
+                    }
+                }
+            }
+        }
+
+        $this->assertEqual(array(), $castingError);
+    }
 }
 
 class MockWriteEntity extends DataObject {}

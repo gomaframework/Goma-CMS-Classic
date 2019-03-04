@@ -209,6 +209,8 @@ class User extends DataObject implements PermProvider
      * forms
      *
      * @param Form $form
+     * @throws PermissionException
+     * @throws SQLException
      * @throws \Goma\Form\Exception\DuplicateActionException
      */
     public function getForm(&$form)
@@ -255,10 +257,15 @@ class User extends DataObject implements PermProvider
             }
         }
 
+        $requiredFields = array("password", "repeat", "email");
+        if (!self::$useEmailAsNickname) {
+            $requiredFields[] = "nickname";
+        }
         if (Permission::check("USERS_MANAGE")) {
-            $form->addValidator(new RequiredFields(array("nickname", "password", "groups", "repeat", "email")), "required_users");
+            $requiredFields[] = "groups";
+            $form->addValidator(new RequiredFields($requiredFields), "required_users");
         } else {
-            $form->addValidator(new RequiredFields(array("nickname", "password", "repeat", "email")), "required_users");
+            $form->addValidator(new RequiredFields($requiredFields), "required_users");
         }
         $form->addValidator(new FormValidator(array($this, '_validateuser')), "validate_user");
 
@@ -302,7 +309,7 @@ class User extends DataObject implements PermProvider
 
         $form->email->info = lang("email_correct_info");
         $form->nickname->disable();
-        $form->addValidator(new RequiredFields(array("nickname", "groupid", "email")), "requirefields");
+        $form->addValidator(new RequiredFields(array("nickname", "email")), "requirefields");
 
         // group selection for admin
         if ($this["id"] == member::$id || (!Permission::check("USERS_MANAGE") && !member::$loggedIn->groupadmin)) {

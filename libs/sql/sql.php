@@ -162,7 +162,7 @@ class SQL
             slow_query_log("Slow SQL-Query: " . $sql . " (" . $time . "ms)");
             if($time > 10000 && !$longQuery) {
                 if(!isCommandLineInterface()) {
-                    throw new LogicException("SQL-Queries takes way too long, cancelling.");
+                    throw new LogicException("SQL-Queries takes way too long, cancelling. Please try again later.");
                 } else {
                     echo "SQL-Queries taking very long: " . $time . "\n Query: " . $_sql . "\n";
                 }
@@ -502,11 +502,20 @@ class SQL
                         if ($b == 0) {
                             $b++;
                         } else {
-                            $currentQuery .= " OR ";
+                            if($value === null) {
+                                $currentQuery .= " AND ";
+                            } else {
+                                $currentQuery .= " OR ";
+                            }
                         }
-                        $currentQuery .= "(".$alias.".".$field." IS NOT NULL AND ";
-                        $currentQuery .= self::parseValue($alias.".".$field, $value);
-                        $currentQuery .= ")";
+
+                        if($value === null) {
+                            $currentQuery .= $alias.".".$field." IS NULL ";
+                        } else {
+                            $currentQuery .= "(".$alias.".".$field." IS NOT NULL AND ";
+                            $currentQuery .= self::parseValue($alias.".".$field, $value);
+                            $currentQuery .= ")";
+                        }
                     }
                     $currentQuery .= " ) ";
                     continue;

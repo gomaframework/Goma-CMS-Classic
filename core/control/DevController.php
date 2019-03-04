@@ -31,20 +31,17 @@ class Dev extends RequestHandler
         "test"                          => "test",
         "rebuild"                       => "rebuild",
         "builddev"                      => "builddev",
-        "buildExpDistro"                => "buildExpDistro"
+        "buildExpDistro"                => "buildExpDistro",
+        "fixPermissions"                => "fixPermissions"
     );
 
     static $allowed_actions = array(
-        "builddev",
-        "rebuild",
-        "flush",
         "buildDistro"            => "->isDev",
         "buildAppDistro"         => "->isDev",
         "buildExpDistro"         => "->isDev",
         "cleanUpVersions"        => "->isDev",
         "setPermissionsSafeMode" => "->isDev",
-        "setChmod777",
-        "test",
+        "fixPermissions"         => "superadmin",
     );
 
     /**
@@ -458,6 +455,30 @@ class Dev extends RequestHandler
         FileSystem::applySafeMode(null, null, true);
 
         return "OK";
+    }
+
+    /**
+     *
+     */
+    public function fixPermissions() {
+        $permissions = DataObject::get(Permission::class);
+        $permissions->activatePagination($this->getParam("page"));
+        foreach($permissions as $permission) {
+            // force rewrite
+            try {
+                $permission->didChangeObject = true;
+                $permission->writeToDB(false, true);
+            } catch (Exception $e) {
+                log_exception($e);
+                AddContent::addError($e->getMessage());
+            }
+        }
+
+        $view = new ViewAccessableData();
+        $view->page = $permissions->getPage();
+        $view->allPages = $permissions->getPageCount();
+        $view->nextPage = $permissions->isNextPage() ? $this->request->getFullPath() . "?page=" . $permissions->nextPage() : null;
+        return $view->renderWith("Dev/fixPermissions.html");
     }
 
     /**

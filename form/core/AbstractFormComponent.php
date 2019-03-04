@@ -39,7 +39,7 @@ abstract class AbstractFormComponent extends RequestHandler {
      *
      * @var bool
      */
-    public $useStateData = false;
+    public $useStateData = null;
 
     /**
      * the parent field of this field, e.g. a form or a fieldset
@@ -148,10 +148,6 @@ abstract class AbstractFormComponent extends RequestHandler {
      * @return $this
      */
     public function setModel($model) {
-        if(is_a($model, "viewaccessabledata")) {
-            $this->useStateData = ($model->queryVersion == "state");
-        }
-
         $this->model = $model;
 
         return $this;
@@ -265,7 +261,8 @@ abstract class AbstractFormComponent extends RequestHandler {
     public function ID()
     {
         $formId = $this->parent ? $this->form()->getName() : "";
-        return "form_field_" . str_replace("\\", "_", $this->classname) . "_" . $formId . "_" . $this->name;
+        return "form_field_" . str_replace(array("\\", "[", "]"), "_", $this->classname) . "_" . $formId . "_" .
+            str_replace(array("\\", "[", "]"), "_", $this->name);
     }
 
     /**
@@ -319,7 +316,7 @@ abstract class AbstractFormComponent extends RequestHandler {
      */
     public function PostName()
     {
-        return isset($this->overridePostName) ? strtolower($this->overridePostName) : $this->dbname;
+        return $this->parent ? $this->parent->PostNamePrefix() . $this->dbname : $this->dbname;
     }
 
     /**
@@ -519,5 +516,24 @@ abstract class AbstractFormComponent extends RequestHandler {
     {
         $this->templateView = $templateView;
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isStateData() {
+        if(is_bool($this->useStateData)) {
+            return $this->useStateData;
+        }
+
+        if($this->parent && is_bool($this->parent->useStateData)) {
+            return $this->parent->useStateData;
+        }
+
+        if(is_a($this->model, ViewAccessableData::class) && $this->model->queryVersion == DataObject::VERSION_STATE) {
+            return true;
+        }
+
+        return false;
     }
 }

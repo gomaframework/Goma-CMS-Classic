@@ -16,6 +16,7 @@ class ExternalFormController extends RequestHandler {
      * @param Request $request
      * @param bool $subController
      * @return mixed
+     * @throws Exception
      */
     public function handleRequest($request, $subController = false) {
         try {
@@ -40,9 +41,11 @@ class ExternalFormController extends RequestHandler {
      * @param string $form
      * @param string $field
      * @return bool|mixed
+     * @throws Exception
      */
     public function FieldExtAction($form, $field) {
         $field = strtolower($field);
+
         /** @var Form $formInstance */
         if($formInstance = GlobalSessionManager::globalSession()->get(Form::SESSION_PREFIX . "." . strtolower($form))) {
             if(isset($formInstance->$field)) {

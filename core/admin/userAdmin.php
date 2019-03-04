@@ -48,7 +48,7 @@ class userAdmin extends adminItem {
 	 * extend actions
 	*/
 	static $url_handlers = array(
-		"toggleLock" => "toggleLock"
+		"toggleLock/\$id!" => "toggleLock"
 	);
 
 	/**

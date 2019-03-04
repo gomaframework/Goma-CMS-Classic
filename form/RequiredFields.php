@@ -143,4 +143,23 @@ class RequiredFields extends FormValidator
 
         return $js;
     }
+
+    /**
+     * @param Form $form
+     */
+    public function setForm(&$form)
+    {
+        parent::setForm($form);
+
+        $missingFields = array();
+        foreach($this->data as $field) {
+            if (!$this->form->hasField($field)) {
+                $missingFields[] = $field;
+            }
+        }
+
+        if($missingFields) {
+            throw new InvalidArgumentException("RequiredFields: Not all required fields are defined in the Form. Missing: " . implode(", ", $missingFields));
+        }
+    }
 }

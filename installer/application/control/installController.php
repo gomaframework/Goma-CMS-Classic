@@ -12,7 +12,7 @@ class InstallController extends FrontedController {
 	/**
 	 * url_handlers
 	*/
-	public $url_handlers = array(
+	static $url_handlers = array(
 		"installapp/\$app!" 		=> "installApp",
 		"execInstall/\$rand!"		=> "execInstall",
 		"restore"					=> "selectRestore",
@@ -22,7 +22,7 @@ class InstallController extends FrontedController {
 	/**
 	 * actions
 	*/
-	public $allowed_actions = array(
+	static $allowed_actions = array(
 		"install", "installApp", "langselect", "execInstall", "selectRestore",
         "showRestore", "installBackup", "installFormBackup", "restoreFolder"
 	);

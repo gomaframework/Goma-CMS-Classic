@@ -269,8 +269,8 @@ class CSV extends gObject implements Iterator {
 	 */
 	public function __get($var)
 	{
-		if (!strpos("_", $var)) {
-
+		if (!strpos($var, "_")) {
+            return false;
 		}
 		$arr = explode("_", $var);
 
@@ -287,7 +287,7 @@ class CSV extends gObject implements Iterator {
 	 */
 	public function __set($var, $data)
 	{
-		if (!strpos("_", $var)) {
+		if (!strpos($var, "_")) {
 			return false;
 		}
 		$arr = explode("_", $var);
