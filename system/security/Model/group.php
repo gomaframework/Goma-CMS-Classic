@@ -120,7 +120,7 @@ class Group extends DataObject implements PermProvider
 
         // permissions
         if (Permission::check("canManagePermissions")) {
-            $form->general->add(new ClusterFormField("mypermissions", lang("rights")));
+            $form->general->add(new ClusterFormField("mypermissions", array(), lang("rights")));
 
             foreach (Permission::$providedPermissions as $name => $data) {
                 $active = ($this->permissions(array("name" => $name))->count() > 0) ? 1 : 0;

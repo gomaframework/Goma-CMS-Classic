@@ -93,6 +93,10 @@ class ModelInfoGeneratorTest extends GomaUnitTest implements TestAble
                 array_merge(ModelInfo_extendedInterceptMockClassWithProp::$db, ModelInfo_doubleExtendedClassWithProp::$db))
         );
     }
+
+    public function testGenerateDisallowedFields() {
+        $this->assertTrue(count(ModelInfoGenerator::getReservedWords()) > 0);
+    }
 }
 
 class ModelInfo_MockFirstClass {

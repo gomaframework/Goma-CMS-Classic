@@ -7,6 +7,7 @@
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  */
 class ModelInfoGenerator {
+
     /**
      * combines data from given class-attribute + given extension method
      * @param string|gObject $class
@@ -49,6 +50,7 @@ class ModelInfoGenerator {
      * @param string|gObject $class
      * @param bool $parents
      * @return array
+     * @throws DBFieldNotValidException
      */
     public static function generateDBFields($class, $parents = false) {
         $fields = self::generate_combined_array($class, "db", "DBFields", $parents);
@@ -65,28 +67,6 @@ class ModelInfoGenerator {
         }
 
         return $fields;
-    }
-
-    /**
-     * validates db fields.
-     *
-     * @param $class
-     * @param $fields
-     * @throws DBFieldNotValidException
-     */
-    public static function validateDBFields($class, $fields) {
-        foreach($fields as $name => $type) {
-            // hack to not break current Goma-CMS Build
-            if((
-                    in_array($name, array("long", "order", "select", "where", "group", "bool", "int")) ||
-                    !ViewAccessableData::isViewableMethod($name) ||
-                    !preg_match('/^[a-zA-Z_][a-zA-Z_0-9]+$/', $name)
-                )
-                &&
-                (ClassInfo::$appENV["app"]["name"] != "gomacms" || goma_version_compare(ClassInfo::appVersion(), "2.0RC2-074", ">="))) {
-                throw new DBFieldNotValidException($class . "." . $name);
-            }
-        }
     }
 
     /**
@@ -237,6 +217,7 @@ class ModelInfoGenerator {
      * @param string|gObject $class
      * @param string $name of many-many-relationship
      * @return array
+     * @throws ReflectionException
      */
     public static function get_many_many_extraFields($class, $name) {
         $name = strtolower($name);
@@ -267,6 +248,7 @@ class ModelInfoGenerator {
      *
      * @param string|gObject $class
      * @return array
+     * @throws DBFieldNotValidException
      */
     public static function generateIndexes($class) {
         $indexes = self::generate_combined_array($class, "index", "index", false);
@@ -280,7 +262,7 @@ class ModelInfoGenerator {
         }
 
         // validate
-        self::validateIndexes($indexes);
+        self::validateIndexes($class, $indexes);
 
         $db = self::generateDBFields($class, false);
         if (isset($db["last_modified"])) {
@@ -291,12 +273,50 @@ class ModelInfoGenerator {
     }
 
     /**
-     * validates indexes.
+     * validates db fields.
      *
-     * @name validateIndexes
-     * @param indexes
+     * @param $class
+     * @param $fields
+     * @throws DBFieldNotValidException
      */
-    protected static function validateIndexes($indexes) {
+    public static function validateDBFields($class, $fields) {
+        foreach($fields as $name => $type) {
+            // hack to not break current Goma-CMS Build
+            if((
+                    in_array(strtoupper($name), self::getReservedWords()) ||
+                    !ViewAccessableData::isViewableMethod($name) ||
+                    !preg_match('/^[a-zA-Z_][a-zA-Z_0-9]+$/', $name)
+                )
+                &&
+                (ClassInfo::$appENV["app"]["name"] != "gomacms" || goma_version_compare(ClassInfo::appVersion(), "2.0RC2-074", ">="))) {
+                throw new DBFieldNotValidException($class . "." . $name);
+            }
+        }
+    }
+
+    /**
+     * returns uppercase array of reserved words, e.g. due to MySQL. The list is basically defined in the reserved_words.csv file and can be extended by that way.
+     * @return array
+     */
+    public static function getReservedWords() {
+        $csv = new CSV(
+            file_get_contents(ROOT . "system/core/DataObject/reserved_words.csv")
+        );
+        $words = array();
+        foreach($csv as $row) {
+            if(isset($row[1])) {
+                $words[] = strtoupper(trim($row[1]));
+            }
+        }
+
+        return $words;
+    }
+
+    /**
+     * validates indexes.
+     * @param array $indexes
+     */
+    protected static function validateIndexes($class, $indexes) {
         foreach($indexes as $name => $type) {
             if (is_array($type)) {
                 if (!isset($type["fields"])) {

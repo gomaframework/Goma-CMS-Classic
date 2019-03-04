@@ -112,8 +112,6 @@ class TableFieldEditButton implements TableField_ColumnProvider, TableField_URLH
 	 *
 	 * this is NOT namespaced, so please be unique
 	 *
-	 * @name getURLHandlers
-	 * @access public
 	 * @return array
 	 */
 	public function getURLHandlers($tableField) {
@@ -122,15 +120,16 @@ class TableFieldEditButton implements TableField_ColumnProvider, TableField_URLH
 		);
 	}
 
-	/**
-	 * edit-action
-	 *
-	 * @param TableField $tableField
-	 * @param Request $request
-	 * @return string
-	 */
+    /**
+     * edit-action
+     *
+     * @param TableField $tableField
+     * @param Request $request
+     * @return string
+     * @throws PermissionException
+     */
 	public function edit($tableField, $request) {
-		$data = clone $tableField->getData();
+        $data = clone $tableField->getData();
 		$data->filter(array("id" => $request->getParam("id")));
 		if($data->Count() > 0) {
 			$title = $this->title;

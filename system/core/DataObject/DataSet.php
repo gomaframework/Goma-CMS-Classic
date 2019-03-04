@@ -316,46 +316,11 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
     }
 
     /**
-     * returns current position
-     */
-    public function position() {
-        return $this->position;
-    }
-
-    /**
      *
      */
     public function can() {
         $args = func_get_args();
         return call_user_func_array(array($this->first(), "can"), $args);
-    }
-
-    /**
-     * @return mixed|ViewAccessableData
-     */
-    public function current() {
-        $this->items[$this->position] = $this->getConverted(parent::current());
-
-        return $this->items[$this->position];
-    }
-
-    /**
-     * sets the position of the array
-     * @param int $pos
-     * @return mixed|ViewAccessableData|void
-     */
-    public function setPosition($pos) {
-        if($pos < count($this->items) && $pos > -1) {
-            $this->position = $pos;
-        }
-        return $this->current();
-    }
-
-    /**
-     * gets the position
-     */
-    public function getPosition() {
-        return $this->position;
     }
 
     /**
@@ -576,6 +541,14 @@ class DataSet extends ArrayList implements IDataSet, ISortableDataObjectSet {
             return true;
 
         return ((gObject::method_exists($this->classname, $method) || parent::__cancall($method)) || (is_object($this->first()) && gObject::method_exists($this->first(), $method)));
+    }
+
+    /**
+     * @return ArrayListIterator|Traversable
+     */
+    public function getIterator()
+    {
+        return new DataSetIterator($this->items, $this->items, $this);
     }
 
     /**

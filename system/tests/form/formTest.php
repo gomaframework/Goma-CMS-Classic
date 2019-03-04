@@ -272,9 +272,12 @@ class FormTest extends GomaUnitTest implements TestAble {
 		$this->assertNull($data["test"]);
 	}
 
+    /**
+     * @throws Exception
+     */
 	public function _exceptionSubmit() {
 		self::$testCalled = 2;
-		throw new Exception("Problem");
+		throw new Exception("Mock Exception, which should be thrown");
 	}
 
 	public function testTemplateExists() {
@@ -408,9 +411,21 @@ class FormTest extends GomaUnitTest implements TestAble {
 	}
 
     /**
-     * tests if changing the model while throwing an exception is saved back to the form.
+     * tests if changing the model while submitting doesnt change the model in the form.
+     *
+     * 1. Create form $form with action
+     * 2. Set submission to "manipulateModel"
+     * 3. set Model of Form to stdClass $model
+     * 4. set $form->state->blah to 123
+     * 5. render form
+     * 6. assert that $form->state->blah is still 123
+     * 7. assert that $model is equal to form->getModel
+     * 8. set request of form where post data for test is "test"
+     * 9. call $form->trySubmit
+     * 10. Assert that $form->getModel()->test is null
+     * 11. Assert that state->blah is still 123
      */
-	public function testChangeModel() {
+	public function testSubmitWithoutExceptionDoesntChangeModel() {
 		$form = new Form(new Controller(), "blub", array(), array(
 			new FormAction("test", "test")
 		));
@@ -426,22 +441,45 @@ class FormTest extends GomaUnitTest implements TestAble {
 			"test" => "test"
 		)));
 		$form->trySubmit();
-		$this->assertEqual(null, $form->getModel()->test);
+		$this->assertFalse(isset($form->getModel()->test));
 		$this->assertEqual(321, $form->state->blah);
+	}
 
+    /**
+     * tests if changing the model while submitting doesnt change the model in the form.
+     *
+     * 1. Create form $form with action
+     * 2. Set submission to "manipulateModelException"
+     * 3. set Model of Form to stdClass $model
+     * 4. set getModel()->test to 0
+     * 5. set $form->state->blah to 321
+     * 6. render form
+     * 7. assert that $form->state->blah is still 321
+     * 8. assert that $model is equal to form->getModel
+     * 9. set request of form where post data for test is "test"
+     * 10. call $form->trySubmit
+     * 11. Assert that $form->getModel()->test is equal to 0
+     * 12. Assert that state->blah is still 321
+     */
+    public function testSubmitWithExceptionDoesntChangeModel() {
+        $form = new Form(new Controller(), "blub", array(), array(
+            new FormAction("test", "test")
+        ));
+        $form->setSubmission(array($this, "manipulateModelException"));
+        $form->setModel($model = new StdClass());
         $form->getModel()->test = 0;
         $form->state->blah = 123;
+        $form->render()->render();
         $this->assertNotEqual(321, $form->state->blah);
         $this->assertEqual(0, $form->getModel()->test);
-        $form->setSubmission(array($this, "manipulateModelException"));
 
         $form->setRequest(new Request("post", "test", array(), array(
             "test" => "test"
         )));
         $form->trySubmit();
-        $this->assertEqual(0, $form->getModel()->test);
+        $this->assertIdentical(0, $form->getModel()->test);
         $this->assertEqual(321, $form->state->blah);
-	}
+    }
 
 	/**
 	 * @param $data

@@ -388,7 +388,7 @@ class HasOneDropdownDataSource implements IDropdownDataSource
      * if data is collected by post data. Else normal model is used.
      *
      * @param ExtendedDropdown $dropdown
-     * @param $selected mixed[]|mixed values which are selected.
+     * @param $selected DropdownItem[]|mixed values which are selected.
      * @return mixed
      */
     public function getResultValues($dropdown, $selected)

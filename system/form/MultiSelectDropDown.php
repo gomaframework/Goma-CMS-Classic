@@ -12,6 +12,7 @@
  * @author      Goma-Team
  *
  * @version     1.2
+ * @deprecated Use ExtendedDropdown instead
  */
 class MultiSelectDropDown extends DropDown
 {

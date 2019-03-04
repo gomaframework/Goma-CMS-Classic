@@ -29,13 +29,20 @@ class ClusterFormField extends FieldSet
      * constructing
      *
      * @param string|null $name
-     * @param string|null $title
      * @param array|null $fields
+     * @param string|null $title
      * @param string|ViewAccessableData|null $value
      * @param Form|null $form
      */
-    public function __construct($name = null, $title = null, $fields = null, $value = null, &$form = null)
+    public function __construct($name = null, $fields = null, $title = null, $value = null, &$form = null)
     {
+        // support for both parameter ordering
+        if(is_string($fields)) {
+            $_fields = $title;
+            $title = $fields;
+            $fields = $_fields;
+        }
+
         parent::__construct($name, $fields, $title, $form);
 
         $this->model = $value;
@@ -100,18 +107,6 @@ class ClusterFormField extends FieldSet
         }
 
         return null;
-    }
-
-    /**
-     * @param AbstractFormComponent $field
-     * @param null $sort
-     * @param null $to
-     */
-    public function add($field, $sort = null, $to = null)
-    {
-        $field->overridePostName = $this->PostName()."_".$field->PostName();
-
-        parent::add($field, $sort, $to);
     }
 
     /**
@@ -217,6 +212,13 @@ class ClusterFormField extends FieldSet
     }
 
     /**
+     * @return null|string
+     */
+    public function js() {
+        return parent::js() . "\nwindow[\"{$this->id()}\"] = field;";
+    }
+
+    /**
      * registers a field in this form
      *
      * @param string $name
@@ -247,5 +249,13 @@ class ClusterFormField extends FieldSet
      */
     protected function setFormRegisterOnParent()
     {
+    }
+
+    /**
+     * @return string
+     */
+    public function PostNamePrefix()
+    {
+        return parent::PostNamePrefix() . $this->PostName() . "_";
     }
 }

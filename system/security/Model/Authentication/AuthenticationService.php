@@ -112,6 +112,7 @@ class AuthenticationService extends gObject {
      * forces a logout
      * @param string|null $sessionId if to logout specific id
      * @throws MySQLException
+     * @throws SQLException
      */
     public function doLogout($sessionId = null) {
         if(!isset($sessionId)) {
@@ -134,6 +135,8 @@ class AuthenticationService extends gObject {
      * @param string|null $sessionId
      * @param int $allowStatus which status should be additionally allowed?
      * @return User
+     * @throws PermissionException
+     * @throws SQLException
      */
     public function checkLogin($user, $pwd, $sessionId = null, $allowStatus = -1) {
         if($userObject = $this->resolveUser($user, $pwd)) {

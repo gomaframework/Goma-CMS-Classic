@@ -51,6 +51,10 @@ function ImageUploadController(field, updateUrl, options) {
         }
     }.bind(this));
 
+    if(!('draggable' in document.createElement('span'))) {
+        this.fieldElement.find(".drag").hide();
+    }
+
     $(window).resize(this.updateFactorsBasedOnHTML.bind(this));
 
     return this;

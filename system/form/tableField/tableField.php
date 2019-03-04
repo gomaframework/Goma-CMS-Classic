@@ -377,9 +377,9 @@ class tableField extends FormField {
 			"header"	=> true,
 			"footer"	=> true
 		);
-		
-		reset($content);
-		while(list($k,$v) = each($content)) {
+
+        $fragmentDeferred = array();
+		foreach($content as $k => $v) {
 			if(preg_match_all('/DefineFragment\(([a-z0-9\-_]+)\)/i', $v, $matches)) {
 				foreach($matches[1] as $match) {
 					$fragmentName = strtolower($match);

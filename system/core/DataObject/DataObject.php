@@ -542,6 +542,8 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      */
     public function onAfterRemove()
     {
+        $this->clearCache();
+
         $this->callExtending("onAfterRemove");
     }
 
@@ -570,6 +572,8 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      */
     public function onAfterWrite($modelWriter)
     {
+        $this->clearCache();
+
         $this->callExtending("onAfterWrite", $modelWriter);
     }
 
@@ -591,6 +595,8 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      */
     public function onAfterPublish($modelWriter)
     {
+        $this->clearCache();
+
         $this->callExtending("onAfterPublish", $modelWriter);
     }
 
@@ -682,6 +688,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      * @throws Exception
      * @throws PermissionException
      * @throws SQLException
+     * @throws FormInvalidDataException
      * @return void
      */
     public function writeToDB($forceInsertNewRecord = false, $forceWrite = false, $snap_priority = 2, $forcePublish = false, $history = true, $silent = false, $overrideCreated = false)
@@ -705,7 +712,7 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
             HistoryWriter::disableHistory();
         }
 
-        if($writeType >  IModelRepository::WRITE_TYPE_SAVE) {
+        if($writeType > IModelRepository::WRITE_TYPE_SAVE) {
             if($forceInsertNewRecord) {
                 $repository->add($this, $forceWrite, $silent, $overrideCreated);
             } else {
@@ -904,10 +911,6 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
         } else {
             return false;
         }
-
-        $this->clearCache();
-
-        $writer = new ModelWriter($this, IModelRepository::COMMAND_TYPE_DELETE, $this, Core::repository());
 
         $this->onBeforeRemove($manipulation);
         $this->callExtending("onBeforeRemove", $manipulation);
@@ -2439,6 +2442,14 @@ abstract class DataObject extends ViewAccessableData implements PermProvider,
      */
     public function clearCache() {
         DataObjectQuery::clearCache($this->baseClass);
+    }
+
+    /**
+     * @param Closure $closure
+     * @return Closure
+     */
+    public function registerCacheCallback($closure) {
+        return DataObjectQuery::registerCacheCallback(static::class, $closure);
     }
 
 

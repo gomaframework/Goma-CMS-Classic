@@ -24,14 +24,24 @@ class GomaUnitTestWithAdmin extends \GomaUnitTest
      */
     protected $password;
 
+    /**
+     * @throws \DataObjectSetCommitException
+     * @throws \MySQLException
+     * @throws \PermissionException
+     * @throws \SQLException
+     */
     public function setUp() {
         if($group = DataObject::get_one("group", array(
             "permissions" => array(
                 "name" => "superadmin"
             )
         ))) {
+            if($user = \DataObject::get_one(User::class, array("email" => "admintest@goma-cms.org"))) {
+                $user->remove(true);
+            }
+
             $this->adminUser = new User();
-            $this->adminUser->nickname = "admintest@vorort.news";
+            $this->adminUser->nickname = "admintest@goma-cms.org";
             $this->adminUser->email = $this->adminUser->nickname;
             $this->adminUser->password = $this->password = randomString(10);
             $this->adminUser->name = "MyAdmin";

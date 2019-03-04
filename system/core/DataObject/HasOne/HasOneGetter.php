@@ -58,6 +58,8 @@ class HasOneGetter extends AbstractGetterExtension implements postArgumentsQuery
         foreach($this->hasOne() as $name => $data) {
             if(is_array($this->getOwner()->fieldGet($name))) {
                 $this->getOwner()->setField($name, $this->getOwner()->createNew($this->getOwner()->fieldGet($name)));
+            } else if(!$this->getOwner()->fieldGet($name) && !$this->getOwner()->fieldGet($name . "id")) {
+                $this->getOwner()->setField($name . "id", 0);
             }
         }
     }
@@ -181,7 +183,7 @@ class HasOneGetter extends AbstractGetterExtension implements postArgumentsQuery
                 $this->getOwner()->setField($name, $value);
                 $this->getOwner()->setField($name  ."id", $value->id != 0 ? $value->id : null);
             } else {
-                throw new InvalidArgumentException("setting HasOne-Relationship must be either DataObject or null.");
+                throw new InvalidArgumentException("setting HasOne-Relationship " .$name. " must be either DataObject or null.");
             }
         } else if(substr($name, 0, 3) == "set") {
             $this->setHasOne(substr($name, 3), $value);

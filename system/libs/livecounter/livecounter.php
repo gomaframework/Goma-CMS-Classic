@@ -207,9 +207,11 @@ class livecounter extends DataObject
             ignore_user_abort(true);
         }
 
-        GlobalSessionManager::globalSession()->stopSession();
+        if(isCommandLineInterface()) {
+            return;
+        }
 
-        if(isCommandLineInterface()) return;
+        GlobalSessionManager::globalSession()->stopSession();
 
         if(function_exists("fastcgi_finish_request")) {
             fastcgi_finish_request();

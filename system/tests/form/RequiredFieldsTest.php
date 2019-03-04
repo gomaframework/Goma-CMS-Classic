@@ -10,16 +10,6 @@
 
 class RequiredFieldsTest extends GomaUnitTest implements TestAble {
     /**
-     * area
-     */
-    static $area = "Form";
-
-    /**
-     * internal name.
-     */
-    public $name = "RequiredFieldsTest";
-
-    /**
      * tests fields.
      */
     public function testRequiredFields() {
@@ -34,12 +24,6 @@ class RequiredFieldsTest extends GomaUnitTest implements TestAble {
         ), array(
             "test" => 1
         ), array("TEST")));
-
-        $this->assertNull($this->unitTestRequiredFields(array(
-            new TextField("test", "test")
-        ), array(
-            "test" => 1
-        ), array("TEST1")));
 
         $this->assertThrows(function() {
             $this->unitTestRequiredFields(array(
@@ -131,6 +115,7 @@ class RequiredFieldsTest extends GomaUnitTest implements TestAble {
      * @param array $result
      * @param array $requiredFields
      * @return bool|string
+     * @throws Exception
      */
     protected function unitTestRequiredFields($fields, $result, $requiredFields) {
         $form = new Form(new RequestHandler(), "test", $fields);
@@ -139,6 +124,39 @@ class RequiredFieldsTest extends GomaUnitTest implements TestAble {
         $form->result = $result;
 
         $required->validate();
+    }
+
+    /**
+     * tests if RequiredFields validates if fields are existing.
+     *
+     * 1. Create Form with Field test1
+     * 2. Add Validator with test1 and test2
+     * 3. Assert that InvalidArgumentException has been thrown.
+     */
+    public function testRequiredFieldsNotExistingValidation() {
+        $form = new Form(new RequestHandler(), "test", array(
+            new TextField("test1", "test")
+        ));
+
+        $this->assertThrows(function() use($form) {
+            $form->addValidator($required = new RequiredFields(array("test1", "test2")), "require");
+        }, InvalidArgumentException::class);
+    }
+
+    /**
+     * tests if RequiredFields validates if fields are existing, but doesn't throw if everything is ok.
+     *
+     * 1. Create Form with Field test1
+     * 2. Add Validator with test1
+     * 3. Assert that still no exception has been thrown.
+     */
+    public function testRequiredFieldsExistingValidation() {
+        $form = new Form(new RequestHandler(), "test", array(
+            new TextField("test1", "test")
+        ));
+
+        $form->addValidator($required = new RequiredFields(array("test1")), "require");
+        $this->assertTrue(true);
     }
 }
 

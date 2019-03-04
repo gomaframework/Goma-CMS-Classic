@@ -425,6 +425,7 @@ class TableFieldFilterHeader implements TableField_HTMLProvider, TableField_Data
                 array("" => "-") + $this->selectList[$columnField],
                 $value
             );
+            $searchField->disableSelectize();
         } else {
             $searchField = new TextField('filter['.$columnField.']', '', $value);
             $searchField->setPlaceholder($title);

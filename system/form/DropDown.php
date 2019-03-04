@@ -12,6 +12,7 @@
  * @author Goma-Team
  *
  * @version 1.6
+ * @deprecated Use ExtendedDropdown instead
  */
 class DropDown extends FormField {
 	/**
@@ -336,7 +337,7 @@ class DropDown extends FormField {
 		}
 
 		if($record = $this->getDataFromValue()) {
-			return array($this->getKeyFromKey($record) => $this->getIdentifierFromValue($record));
+			return array($this->getKeyFromKey($record) => $this->getIdentifierFromValue($record, true));
 		}
 
 		return array();
@@ -446,7 +447,11 @@ class DropDown extends FormField {
 		if(is_array($this->options)) {
 			foreach ($this->options as $key => $val) {
 				if (preg_match('/' . preg_quote($search, '/') . '/i', $val)) {
-					$result[$key] = preg_replace('/(' . preg_quote($search, "/") . ')/Usi', "<strong>\\1</strong>", convert::raw2text($val));
+					$result[$key] = preg_replace(
+					    '/(' . preg_quote(convert::raw2text($search), "/") . ')/Usi',
+                        "<strong>\\1</strong>",
+                        convert::raw2text($val)
+                    );
 				}
 			}
 		} else if(is_a($this->options, "DataObjectSet")) {
@@ -454,17 +459,18 @@ class DropDown extends FormField {
 			$result->search($search);
 		}
 
-		return $this->getResultFromData($page, $result);
+		return $this->getResultFromData($page, $result, false);
 	}
 
-	/**
-	 * creates result out of data.
-	 *
-	 * @param int $page
-	 * @param array $dataSource
-	 * @return array
-	 */
-	protected function getResultFromData($page, $dataSource) {
+    /**
+     * creates result out of data.
+     *
+     * @param int $page
+     * @param array $dataSource
+     * @param bool $escape
+     * @return array
+     */
+	protected function getResultFromData($page, $dataSource, $escape = true) {
 		// generate paging-data
 		$start = ($page * 10) - 10;
 		$end = $start + 10;
@@ -484,7 +490,7 @@ class DropDown extends FormField {
 			}
 			$arr[] = array(
 				"key" => $this->getKeyFromInfo($dataSource, $key, $value),
-				"value" => $this->getIdentifierFromValue($value),
+				"value" => $this->getIdentifierFromValue($value, $escape),
 				"smallText" => $this->getInfoFromValue($value)
 			);
 			$i++;
@@ -530,19 +536,20 @@ class DropDown extends FormField {
 		return $key;
 	}
 
-	/**
-	 * @param string|DataObject|array $value
-	 * @return string
-	 */
-	protected function getIdentifierFromValue($value)
+    /**
+     * @param string|DataObject|array $value
+     * @param string $escape
+     * @return string
+     */
+	protected function getIdentifierFromValue($value, $escape)
 	{
 		if(is_string($value) || is_int($value)) {
-			return convert::raw2text($value);
+			return $escape ? convert::raw2text($value) : $value;
 		}
 
 		if(is_array($value)) {
 			if(isset($value[$this->showfield])) {
-				return convert::raw2text($value[$this->showfield]);
+				return $escape ? convert::raw2text($value[$this->showfield]) : $value[$this->showfield];
 			} else {
 				return "Unnamed Record " . convert::raw2text(print_r($value, true));
 			}
@@ -550,9 +557,9 @@ class DropDown extends FormField {
 
 		if(is_object($value)) {
 			if($value->{$this->showfield}) {
-				return convert::raw2text($value->{$this->showfield});
+				return $escape ? convert::raw2text($value->{$this->showfield}) : $value->{$this->showfield};
 			} else if(gObject::method_exists($value, "__toString")) {
-				return (string) $value;
+				return $escape ? convert::raw2text((string) $value) : $value;
 			}
 		}
 
@@ -561,7 +568,7 @@ class DropDown extends FormField {
 
 	/**
 	 * @param $id
-	 * @return string|void
+	 * @return string
 	 */
 	protected function getIdentifierFromKey($id)
 	{
@@ -569,7 +576,7 @@ class DropDown extends FormField {
 			$id = $this->options[$id];
 		}
 
-		return $this->getIdentifierFromValue($id);
+		return $this->getIdentifierFromValue($id, true);
 	}
 
 	/**

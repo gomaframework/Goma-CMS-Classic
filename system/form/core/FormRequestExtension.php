@@ -25,10 +25,6 @@ class FormRequestExtension extends ControllerExtension {
         "handleForm"
     );
 
-    static $allowed_actions = array(
-        "handleForm"
-    );
-
     /**
      * FormRequestExtension constructor.
      * @param ExternalFormController|null $externalFormController

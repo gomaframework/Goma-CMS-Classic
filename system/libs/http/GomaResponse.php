@@ -190,7 +190,7 @@ class GomaResponse extends gObject {
     public function setBody($body)
     {
         if(is_a($body, "GomaResponse")) {
-            throw new InvalidArgumentException();
+            throw new InvalidArgumentException("Body is of class GomaResponse, should be string or GomaResponseBody.");
         } else if(is_a($body, "GomaResponseBody")) {
             $this->body = $body;
         } else {

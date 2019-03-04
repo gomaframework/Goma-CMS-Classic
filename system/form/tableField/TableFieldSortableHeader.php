@@ -145,7 +145,14 @@ class TableFieldSortableHeader implements TableField_HTMLProvider, TableField_Da
                 return $data;
             }
 
-            return $data->sort($state->sortColumn, $state->sortDirection);
+            try {
+                return $data->sort($state->sortColumn, $state->sortDirection);
+            } catch (InvalidSortArgumentException $e) {
+                log_exception($e);
+                AddContent::addError($e->getMessage());
+
+                return $data;
+            }
         }
     }
 

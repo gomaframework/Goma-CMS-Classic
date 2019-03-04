@@ -18,13 +18,6 @@ class FileUpload extends FormField {
     );
 
     /**
-     * used for controller.
-     */
-    static $allowed_actions = array(
-        "ajaxUpload",
-        "frameUpload"
-    );
-    /**
      * all allowed file-extensions for this field.
      */
     public $allowed_file_types = array(

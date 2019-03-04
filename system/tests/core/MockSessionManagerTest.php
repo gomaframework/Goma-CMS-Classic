@@ -26,7 +26,7 @@ class MockSessionManager implements ISessionManager {
      */
     public static function startWithIdAndName($id, $name = null)
     {
-        // TODO: Implement startWithIdAndName() method.
+        return new MockSessionManager();
     }
 
     /**

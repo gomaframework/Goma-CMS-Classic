@@ -164,6 +164,8 @@ class Permission extends DataObject
      *
      * @param string $permissionCode
      * @return bool
+     * @throws PermissionException
+     * @throws SQLException
      */
     public static function check($permissionCode)
     {
@@ -184,8 +186,10 @@ class Permission extends DataObject
     /**
      * forces that a specific permission exists
      *
-     * @name forceExisting
      * @return Permission
+     * @throws PermissionException
+     * @throws SQLException
+     * @throws FormInvalidDataException
      */
     public static function forceExisting($r)
     {
@@ -208,10 +212,12 @@ class Permission extends DataObject
                         return self::$perm_cache[$r];
                     }
                 }
-                $perm = new Permission(array_merge(self::$providedPermissions[$r]["default"], array("name" => $r)));
+                $defaultInfo = isset(self::$providedPermissions[$r]["default"]) ? (array) self::$providedPermissions[$r]["default"] : array();
+                $perm = new Permission(array_merge($defaultInfo, array("name" => $r)));
 
-                if (isset(self::$providedPermissions[$r]["default"]["type"]))
+                if (isset(self::$providedPermissions[$r]["default"]["type"])) {
                     $perm->setType(self::$providedPermissions[$r]["default"]["type"]);
+                }
 
                 $perm->writeToDB(true, true, 2, false, false);
 
@@ -247,6 +253,7 @@ class Permission extends DataObject
      * writing
      * @param ModelWriter $modelWriter
      * @throws FormInvalidDataException
+     * @throws DataObjectSetCommitException
      */
     public function onBeforeWrite($modelWriter)
     {
@@ -431,6 +438,21 @@ class Permission extends DataObject
         $this->setField("type", $type);
     }
 
+    /**
+     * preserve Defaults
+     *
+     * @param mixed $prefix
+     * @param $log
+     * @return bool|void
+     */
+    public function preserveDefaults($prefix = DB_PREFIX, &$log)
+    {
+        parent::preserveDefaults($prefix, $log);
+
+        foreach (self::$providedPermissions as $name => $data) {
+            self::forceExisting($name);
+        }
+    }
 
     /**
      * checks if the current user has the permission to do this

@@ -126,5 +126,16 @@ abstract class GomaUnitTest extends \PHPUnit\Framework\TestCase implements TestA
     protected function assertSyntax($code) {
         $this->assertTrue($this->checkSyntax($code));
     }
+
+    public function tearDown()
+    {
+        $refl = new ReflectionObject($this);
+        foreach ($refl->getProperties() as $prop) {
+            if (!$prop->isStatic() && 0 !== strpos($prop->getDeclaringClass()->getName(), 'PHPUnit_')) {
+                $prop->setAccessible(true);
+                $prop->setValue($this, null);
+            }
+        }
+    }
 }
 

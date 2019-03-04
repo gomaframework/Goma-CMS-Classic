@@ -15,6 +15,39 @@ class DataObjectQuery {
     protected static $datacache = array();
 
     /**
+     * @var array[]
+     */
+    protected static $cacheCallbacks = array();
+
+    /**
+     * registers cache callback. Returns closure to unregister.
+     *
+     * @param string $givenClass
+     * @param Closure $callback
+     * @return Closure
+     */
+    public static function registerCacheCallback($givenClass, $callback) {
+        $class = self::getBaseClass($givenClass);
+
+        if(!is_callable($callback)) {
+            throw new InvalidArgumentException("Callback not callable");
+        }
+
+        if(!ClassInfo::exists($class)) {
+            throw new InvalidArgumentException("Given DataObject cache class not found.");
+        }
+
+        do {
+            $random = randomString(10);
+        } while(isset(self::$cacheCallbacks[$class][$random]));
+
+        self::$cacheCallbacks[$class][$random] = $callback;
+        return function() use($class, $random) {
+            unset(self::$cacheCallbacks[$class][$random]);
+        };
+    }
+
+    /**
      * clears cache.
      *
      * @param string|object|null $class
@@ -22,8 +55,20 @@ class DataObjectQuery {
     public static function clearCache($class = null) {
         if(isset($class)) {
             self::$datacache[self::getBaseClass($class)] = array();
+
+            if(isset(self::$cacheCallbacks[self::getBaseClass($class)])) {
+                foreach (self::$cacheCallbacks[self::getBaseClass($class)] as $callback) {
+                    call_user_func_array($callback, array());
+                }
+            }
         } else {
             self::$datacache = array();
+
+            foreach(self::$cacheCallbacks as $class => $calls) {
+                foreach ($calls as $callback) {
+                    call_user_func_array($callback, array());
+                }
+            }
         }
     }
 

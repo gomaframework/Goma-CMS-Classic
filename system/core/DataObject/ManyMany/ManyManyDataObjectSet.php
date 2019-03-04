@@ -586,6 +586,14 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
     }
 
     /**
+     * @return bool
+     */
+    public function hasChanged()
+    {
+        return parent::hasChanged() || $this->updateFieldsStage->count() > 0;
+    }
+
+    /**
      * @param array $addedRecords
      * @throws MySQLException
      */
@@ -732,7 +740,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
         $relationTable = $this->relationShip->getTableName();
         // search second join
         foreach ((array)$join as $table => $data) {
-            if (strpos($data, $relationTable)) {
+            if (strpos($data, (string) $relationTable)) {
                 unset($join[$table]);
             }
         }

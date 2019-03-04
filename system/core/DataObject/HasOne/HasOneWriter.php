@@ -3,8 +3,6 @@
 /**
  * Basic Class for Writing Has-One-Relationships of Models to DataBase.
  *
- * @method ModelWriter getOwner()
- *
  * @package     Goma\Model
  *
  * @license     GNU Lesser General Public License, version 3; see "LICENSE.txt"
@@ -17,6 +15,9 @@
 class HasOneWriter extends Extension {
     /**
      * iterates through has-one-relationships and checks if there is something to write.
+     * @throws MySQLException
+     * @throws PermissionException
+     * @throws ReflectionException
      */
     public function onBeforeDBWriter() {
 
@@ -67,11 +68,32 @@ class HasOneWriter extends Extension {
                         $this->getOwner()->getModel()->setField($key . "id", $record->id);
                         unset($data[$key]);
                     }
+                } else {
+                    $this->getOwner()->getModel()->setField($key . "id", isset($data[$key . "id"]) ? $data[$key . "id"] : 0);
                 }
             }
         }
 
         $owner->setData($data);
+    }
+
+    /**
+     * clear caches
+     */
+    public function onAfterWrite() {
+        /** @var ModelWriter $owner */
+        $owner = $this->getOwner();
+
+        $cacheClearing = array();
+        if ($has_one = $owner->getModel()->hasOne()) {
+            foreach ($has_one as $key => $value) {
+                $cacheClearing[$value->getTargetClass()] = $value->getTargetClass();
+            }
+        }
+
+        foreach($cacheClearing as $class) {
+            DataObjectQuery::clearCache($class);
+        }
     }
 
     /**
@@ -145,6 +167,8 @@ class HasOneWriter extends Extension {
     /**
      * @param DataObject $record
      * @param bool $force
+     * @throws MySQLException
+     * @throws PermissionException
      */
     protected function writeObject($record, $force = false) {
         /** @var ModelWriter $owner */
@@ -161,6 +185,7 @@ class HasOneWriter extends Extension {
         );
         $writer->write();
     }
+
     /**
      * @param ModelHasOneRelationshipInfo $info
      * @return bool
