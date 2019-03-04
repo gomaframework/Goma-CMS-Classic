@@ -38,6 +38,9 @@ class contentAdmin extends LeftAndMain {
 
     static $icon = "templates/images/content.png";
 
+    /**
+     * @var int
+     */
     static $sort = 990;
 
     /**
@@ -55,12 +58,12 @@ class contentAdmin extends LeftAndMain {
     );
 
     /**
-     * extend actions
+     * extend url-handlers
      */
     static $url_handlers = array(
-        "revert_changes/\$id" => "revert_changes",
-        "unpublish/\$id" => "unpublish",
-        "preview/\$id" => "preview"
+        "revert_changes" => "revert_changes",
+        "unpublish" => "unpublish",
+        "preview" => "preview"
     );
 
     /**
@@ -334,7 +337,7 @@ class contentAdmin extends LeftAndMain {
 
         $form->add(new HiddenField("class_name", $model->DataClass()));
 
-        $form->addValidator(new requiredFields(array('filename', 'title', 'parenttype')), "default_required_fields"); // valiadte it!
+        $form->addValidator(new requiredFields(array('title', 'parenttype')), "default_required_fields"); // valiadte it!
         $form->addValidator(new FormValidator(array($model, "validatePageType")), "pagetype");
         $form->addValidator(new FormValidator(array($model, "validatePageFileName")), "filename");
 

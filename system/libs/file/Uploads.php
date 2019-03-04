@@ -679,7 +679,7 @@ class Uploads extends DataObject
      */
     public function formattedFileSize()
     {
-        return FileSizeFormatter::format_nice(filesize($this->realfile));
+        return FileSizeFormatter::format_nice(@filesize($this->realfile));
     }
 
     /**
@@ -689,7 +689,7 @@ class Uploads extends DataObject
      */
     public function filesize()
     {
-        return filesize($this->realfile);
+        return @filesize($this->realfile);
     }
 
     /**

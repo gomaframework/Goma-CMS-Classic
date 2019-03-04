@@ -104,19 +104,19 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     /**
      * first-cache.
      *
-     * @var ViewAccessableData
+     * @var DataObject|null
      */
     protected $firstCache;
 
     /**
-     * @var ViewAccessableData
+     * @var DataObject|null
      */
     protected $lastCache;
 
     /**
-     * @var int
+     * @var Closure
      */
-    protected $position = 0;
+    protected $currentCacheCallback;
 
     /**
      * constructor
@@ -245,6 +245,14 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
 
         $this->dbDataSource = $source;
         $this->inExpansion = $source->getInExpansion();
+
+        if(is_callable($this->currentCacheCallback)) {
+            call_user_func_array($this->currentCacheCallback, array());
+        }
+
+        $this->currentCacheCallback = $this->dbDataSource->registerCacheCallback(function(){
+            $this->clearCache();
+        });
 
         return $this;
     }
@@ -669,66 +677,12 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     }
 
     /**
-     * rewind
+     * @return DataObjectSetIterator|Traversable
      */
-    public function rewind()
+    public function getIterator()
     {
         $this->forceData();
-        $this->position = 0;
-    }
-
-    /**
-     * gets the current value
-     *
-     * @name current
-     * @return DataObject
-     */
-    public function current($position = null)
-    {
-        if (!isset($position)) {
-            $position = $this->position;
-        }
-
-        $this->forceData();
-
-        if ($position == 0 && $this->firstCache !== null) {
-            $this->items[$position] = $this->firstCache;
-        }
-
-        if ($position == count($this->items) - 1 && $this->lastCache !== null) {
-            $this->items[$position] = $this->lastCache;
-        }
-
-        $this->items[$position] = $this->getConverted($this->items[$position]);
-
-        return $this->items[$position];
-    }
-
-    /**
-     * check if data exists
-     */
-    public function valid()
-    {
-        return isset($this->items[$this->position]);
-    }
-
-    /**
-     * @return int
-     */
-    public function key()
-    {
-        return $this->position;
-    }
-
-    public function next()
-    {
-        $this->position++;
-    }
-
-    public function reset()
-    {
-        $this->position = 0;
-        $this->forceData();
+        return new DataObjectSetIterator($this->items, $this->items, $this->firstCache, $this->lastCache, $this);
     }
 
     /**
@@ -883,6 +837,13 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
             if (is_a($this->dbDataSource, \Goma\Model\Group\GroupedDataObjectSetDataSource::class)) {
                 $this->dbDataSource = $this->dbDataSource->getDataSource();
                 $this->clearCache();
+            } else {
+                $this->setDbDataSource(
+                    new \Goma\Model\Group\GroupedDataObjectSetDataSource(
+                        $this->dbDataSource(),
+                        null
+                    )
+                );
             }
         } else {
             if ($this->hasChanged()) {
@@ -901,7 +862,6 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
                 $this->setDbDataSource(
                     new \Goma\Model\Group\GroupedDataObjectSetDataSource(
                         $this->dbDataSource(),
-                        $this->modelSource,
                         $field
                     )
                 );
@@ -1032,7 +992,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         if (isset($sort)) {
             foreach ($sort as $column => $type) {
                 if (!$this->canSortBy($column)) {
-                    throw new InvalidArgumentException("can not sort by $column");
+                    throw new InvalidSortArgumentException($column, "can not sort by $column");
                 }
             }
         }
@@ -1300,6 +1260,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
      * @param DataObject $record
      * @param bool $write
      * @return $this
+     * @throws DataObjectSetCommitException
      */
     public function push($record, $write = false)
     {
@@ -1346,9 +1307,11 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
 
     /**
      * alias for push
+     *
      * @param mixed $item
      * @param bool $write
      * @return DataObjectSet
+     * @throws DataObjectSetCommitException
      */
     public function add($item, $write = false)
     {
@@ -1356,11 +1319,11 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
     }
 
     /**
-     * adds a new record to this set
+     * adds multiple new records to the  set.
      *
-     * @name addMany
-     * @access public
+     * @param array $data
      * @return array
+     * @throws DataObjectSetCommitException
      */
     public function addMany($data)
     {
@@ -1400,7 +1363,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         } else if (is_null($item)) {
             return null;
         } else {
-            throw new InvalidArgumentException("\$item for getConverted must be either array or object.");
+            throw new InvalidArgumentException("\$item for getConverted must be either array, null or object.");
         }
 
         if (is_a($object, "DataObject")) {
@@ -1613,7 +1576,6 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         if (isset($this->items)) {
             foreach ($this->items as $key => $item) {
                 if ($item === $record) {
-                    $this->position--;
                     unset($this->items[$key]);
                 }
             }
@@ -2044,6 +2006,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
      *
      * @param int $n
      * @return ArrayList
+     * @throws Exception
      */
     public function pickRandomly($n)
     {
@@ -2130,50 +2093,39 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         }
         return $newData;
     }
-}
-
-class DataObjectSetCommitException extends GomaException
-{
-    /**
-     * exceptions.
-     *
-     * @var Exception[]
-     */
-    public $exceptions;
 
     /**
-     * @var DataObject[]
+     * sleep cleanup
      */
-    public $records;
-
-    protected $standardCode = ExceptionManager::DATAOBJECTSET_COMMIT;
-
-    /**
-     * DataObjectSetCommitException constructor.
-     * @param Exception[] $exceptions
-     * @param DataObject[] $records
-     * @param string $message
-     * @param null|int $code
-     * @param null|Exception $previous
-     */
-    public function __construct($exceptions, $records, $message = "", $code = null, $previous = null)
+    public function __sleep()
     {
-        parent::__construct($message, $code, $previous);
+        $this->clearCache();
 
-        $this->exceptions = $exceptions;
-        $this->records = $records;
+        $blackList = array("currentCacheCallback");
+        return array_diff(array_keys(get_object_vars($this)), $blackList);
     }
 
-    public function getDeveloperMessage()
+    /**
+     * wakeup restore
+     */
+    public function __wakeup()
     {
-        $message = parent::getDeveloperMessage();
+        parent::__wakeup();
 
-        foreach ($this->exceptions as $exception) {
-            $message .= get_class($exception).": ".$exception->getCode().": ".$exception->getMessage()." in ".
-                $exception->getFile()." on line ".$exception->getLine()."\n".
-                exception_get_dev_message($exception)."\n".$exception->getTraceAsString()."\n\n";
+        if($this->dbDataSource) {
+            // relink event
+            $this->setDbDataSource($this->dbDataSource);
         }
+    }
 
-        return $message;
+    /**
+     * on destruct remove event for cache callback.
+     */
+    public function __destruct()
+    {
+        if(is_callable($this->currentCacheCallback)) {
+            call_user_func_array($this->currentCacheCallback, array());
+        }
     }
 }
+

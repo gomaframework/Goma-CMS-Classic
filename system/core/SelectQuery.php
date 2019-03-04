@@ -210,7 +210,7 @@ class SelectQuery {
 					$this->filter[] = $v;
 				} else if(isset($this->filter[$k])) {
 					if(is_array($this->filter[$k])) {
-						$this->filter[$k] = array_intersect($this->filter[$k], $v);
+						$this->filter[$k] = array_intersect($this->filter[$k], (array) $v);
 					} else {
 						$this->filter[$k] = array_merge((array)$this->filter[$k], (array)$v);
 					}

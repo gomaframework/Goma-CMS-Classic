@@ -17,6 +17,7 @@ class welcomeController extends Controller {
 		"step3" => "step3",
 		"finish" => "finish"
 	);
+
 	/**
 	 * index
 	 */

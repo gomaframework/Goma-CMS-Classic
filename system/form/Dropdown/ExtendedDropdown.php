@@ -46,13 +46,6 @@ class ExtendedDropdown extends FormField
     );
 
     /**
-     * @var array
-     */
-    static $allowed_actions = array(
-        "search", "createItem"
-    );
-
-    /**
      * @param string $name
      * @param string $title
      * @param IDropdownDataSource $dataSource
@@ -130,10 +123,10 @@ class ExtendedDropdown extends FormField
     {
         if (!isset($this->hasNoValue) || !$this->hasNoValue) {
             if($this->POST) {
-                if (!$this->isDisabled() && $this->parent && ($postData = $this->parent->getFieldPost($this->PostName())) !== null) {
-                    if(($dropdownItemsPost = $this->convertPostDataToDropdownItemsIfPossible($postData)) !== null) {
-                        return $this->dataSource->getResultValues($this, $dropdownItemsPost);
-                    }
+                if (!$this->isDisabled() && $this->parent && $this->parent->getFieldPost($this->PostName() . "__extendedPost") !== null) {
+                    $postData = $this->parent->getFieldPost($this->PostName());
+                    $dropdownItemsPost = (array) $this->convertPostDataToDropdownItemsIfPossible($postData);
+                    return $this->dataSource->getResultValues($this, $dropdownItemsPost);
                 }
             }
         }
@@ -274,7 +267,7 @@ class ExtendedDropdown extends FormField
 
         return array_map(function($item){
             /** @var DropdownItem $item */
-            if(!strpos(strtolower($item->getSearchInfo()), $this->getParam("search"))) {
+            if(!strpos(strtolower($item->getSearchInfo()), (string) $this->getParam("search"))) {
                 $item->addSearchInfo((string)$this->getParam("search"));
             }
 

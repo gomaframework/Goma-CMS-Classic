@@ -97,13 +97,13 @@ class Mail
     /**
      * sends a mail
      *
-     * @name    send
      * @param    string - adresse
      * @param    string - subject
      * @param    string - text
-     * @access    public
      * @return    bool
-     **/
+     *
+     * @throws phpmailerException
+     */
     public function send($address, $subject, $message)
     {
         $this->address = $address;
@@ -127,8 +127,8 @@ class Mail
      *
      * @hook    mail_prepareMailer($this, $mailer)    called before data like sender or receiver is set
      * @hook    mail_prepareSend($this, $mailer)    called immediatly before preperation is done.
-     * @name    prepareMail
      * @return PHPMailer
+     * @throws phpmailerException
      */
     public function prepareMail()
     {
@@ -167,6 +167,7 @@ class Mail
      *
      * @param string $from
      * @param PHPMailer $mailer
+     * @throws phpmailerException
      */
     protected function setFrom($from, $reply, $mailer) {
         if (!empty($from)) {
@@ -290,12 +291,11 @@ class Mail
     /**
      * sends HTML with predefined template
      *
-     * @name    sendHTML
-     * @access    public
      * @param    string    addresse
      * @param    string    subject
      * @param    string    message
      * @return bool
+     * @throws phpmailerException
      */
     public function sendHTML($adresse, $subject, $message)
     {

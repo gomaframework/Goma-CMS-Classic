@@ -45,6 +45,7 @@ class PageComments extends DataObject {
     /**
      * generates the form
      * @param Form $form
+     * @throws \Goma\Form\Exception\DuplicateActionException
      */
     public function getForm(&$form)
     {
@@ -55,9 +56,12 @@ class PageComments extends DataObject {
         }
 
         $form->add(new BBCodeEditor("text", lang("text", "text"), null, null, null, array("showAlign" => false)));
-        if (!isset(Member::$loggedIn))
+        if (!isset(Member::$loggedIn)) {
             $form->add(new Captcha("captcha"));
-        $form->addValidator(new RequiredFields(array("text", "name", "captcha")), "fields");
+            $form->addValidator(new RequiredFields(array("text", "name", "captcha")), "fields");
+        } else {
+            $form->addValidator(new RequiredFields(array("text", "name")), "fields");
+        }
         $form->addAction(new AjaxSubmitButton("save", lang("co_add_comment", "add comment"), "ajaxsave", "safe", array("green")));
     }
 
@@ -66,6 +70,7 @@ class PageComments extends DataObject {
      *
      * @name getEditForm
      * @access public
+     * @throws \Goma\Form\Exception\DuplicateActionException
      */
     public function getEditForm(&$form)
     {

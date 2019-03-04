@@ -1,0 +1,12 @@
+<h1>Fixing permissions...</h1>
+$page of $allPages
+
+<% IF $nextPage %>
+<script type="text/javascript">
+    setTimeout(function(){
+        location.href = "$nextPage"
+    }, 200);
+</script>
+<% ELSE %>
+<div class="success">Done</div>
+<% END %>

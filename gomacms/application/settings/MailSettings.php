@@ -65,9 +65,11 @@ class MailSettings extends Newsettings {
 		Resources::addData('var mailSettings_FieldSet = "'.$set->divID().'"; var mailSettings_Switch = "'.$radio->divID().'"; var mailSettings_authToken = "'.SMTPConnector::allowSMTPConnect().'";');
 	}
 
-	/**
-	 * sets SMTP-Settings to mailer when creating a mail.
-	 */
+    /**
+     * sets SMTP-Settings to mailer when creating a mail.
+     * @param Mail $mail
+     * @param PHPMailer $mailer
+     */
 	public static function setSMTPSettings($mail, $mailer) {
 		if(SettingsController::get("useSMTP")) {
 			$mailer->isSMTP();

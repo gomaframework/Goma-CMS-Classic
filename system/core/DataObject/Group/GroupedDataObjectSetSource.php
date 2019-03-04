@@ -1,6 +1,8 @@
 <?php
+
 namespace Goma\Model\Group;
 
+use Closure;
 use ManyMany_DataObjectSet;
 use SelectQuery;
 use ViewAccessableData;
@@ -18,20 +20,14 @@ defined("IN_GOMA") OR die();
  *
  * @version 1.0
  */
-class GroupedDataObjectSetDataSource implements \IDataObjectSetDataSource {
+class GroupedDataObjectSetDataSource implements \IDataObjectSetDataSource
+{
     /**
      * original datasource.
      *
      * @var \IDataObjectSetDataSource
      */
     protected $datasource;
-
-    /**
-     * model source.
-     *
-     * @var \IDataObjectSetModelSource
-     */
-    protected $modelSource;
 
     /**
      * @var string|array
@@ -41,13 +37,11 @@ class GroupedDataObjectSetDataSource implements \IDataObjectSetDataSource {
     /**
      * GroupedDataObjectSetModelSource constructor.
      * @param \IDataObjectSetDataSource $datasource
-     * @param \IDataObjectSetModelSource $modelSource
      * @param string|array $groupField
      */
-    public function __construct($datasource, $modelSource, $groupField)
+    public function __construct($datasource, $groupField)
     {
         $this->datasource = $datasource;
-        $this->modelSource = $modelSource;
         $this->groupField = $groupField;
     }
 
@@ -62,9 +56,27 @@ class GroupedDataObjectSetDataSource implements \IDataObjectSetDataSource {
      * @param array $search
      * @return ViewAccessableData[]|array
      */
-    public function getRecords($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $search = array())
-    {
-        return $this->datasource->getGroupedRecords($version, $this->groupField, $filter, $sort, $limit, $joins, $search);
+    public function getRecords(
+        $version,
+        $filter = array(),
+        $sort = array(),
+        $limit = array(),
+        $joins = array(),
+        $search = array()
+    ) {
+        if ($this->groupField) {
+            return $this->datasource->getGroupedRecords(
+                $version,
+                $this->groupField,
+                $filter,
+                $sort,
+                $limit,
+                $joins,
+                $search
+            );
+        }
+
+        return $this->datasource->getRecords($version, $filter, $sort, $limit, $joins, $search);
     }
 
     /**
@@ -82,23 +94,55 @@ class GroupedDataObjectSetDataSource implements \IDataObjectSetDataSource {
      * @param array $groupby
      * @return mixed
      */
-    public function getAggregate($version, $aggregate, $aggregateField = "*", $distinct = false, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $search = array(), $groupby = array())
-    {
-        if(is_string($aggregate)) {
-            if($aggregateField == "*") {
+    public function getAggregate(
+        $version,
+        $aggregate,
+        $aggregateField = "*",
+        $distinct = false,
+        $filter = array(),
+        $sort = array(),
+        $limit = array(),
+        $joins = array(),
+        $search = array(),
+        $groupby = array()
+    ) {
+        if (is_string($aggregate)) {
+            if ($aggregateField == "*") {
                 $aggregateField = $this->groupField;
             }
         } else {
-            foreach($aggregate as $singleAggregate) {
-                if(strtolower($singleAggregate) == "count") {
+            foreach ($aggregate as $singleAggregate) {
+                if (strtolower($singleAggregate) == "count") {
                     $countAggregate = $singleAggregate;
-                    $count = $this->datasource->getAggregate($version, $singleAggregate, $this->groupField, true, $filter, $sort, $limit, $joins, $search, $groupby);
+                    $count = $this->datasource->getAggregate(
+                        $version,
+                        $singleAggregate,
+                        $this->groupField,
+                        true,
+                        $filter,
+                        $sort,
+                        $limit,
+                        $joins,
+                        $search,
+                        $groupby
+                    );
                 }
             }
         }
 
-        $data = $this->datasource->getAggregate($version, $aggregate, $aggregateField, true, $filter, $sort, $limit, $joins, $search, $groupby);
-        if(isset($count, $countAggregate)) {
+        $data = $this->datasource->getAggregate(
+            $version,
+            $aggregate,
+            $aggregateField,
+            true,
+            $filter,
+            $sort,
+            $limit,
+            $joins,
+            $search,
+            $groupby
+        );
+        if (isset($count, $countAggregate)) {
             $data[$countAggregate] = $count;
         }
 
@@ -115,15 +159,18 @@ class GroupedDataObjectSetDataSource implements \IDataObjectSetDataSource {
      * @param array $search
      * @return ViewAccessableData[]|array
      */
-    public function getGroupedRecords($version, $groupField, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $search = array())
-    {
-        return new \DataObjectSet(
-            array(
-                new GroupedDataObjectSetDataSource($this->datasource, $this->modelSource, $groupField),
-                $this->modelSource
-            )
-        );
+    public function getGroupedRecords(
+        $version,
+        $groupField,
+        $filter = array(),
+        $sort = array(),
+        $limit = array(),
+        $joins = array(),
+        $search = array()
+    ) {
+        return $this->datasource->getGroupedRecords($version, $groupField, $filter, $sort, $limit, $joins, $search);
     }
+
 
     /**
      * @param string $field
@@ -184,6 +231,15 @@ class GroupedDataObjectSetDataSource implements \IDataObjectSetDataSource {
     }
 
     /**
+     * @param Closure $closure
+     * @return Closure
+     */
+    public function registerCacheCallback($closure) {
+        return $this->datasource->registerCacheCallback($closure);
+    }
+
+
+    /**
      * @param array $manipulation
      * @return bool
      */
@@ -201,10 +257,17 @@ class GroupedDataObjectSetDataSource implements \IDataObjectSetDataSource {
      * @param bool $forceClasses
      * @return SelectQuery
      */
-    public function buildExtendedQuery($version, $filter = array(), $sort = array(), $limit = array(), $joins = array(), $forceClasses = true)
-    {
+    public function buildExtendedQuery(
+        $version,
+        $filter = array(),
+        $sort = array(),
+        $limit = array(),
+        $joins = array(),
+        $forceClasses = true
+    ) {
         $query = $this->datasource->buildExtendedQuery($version, $filter, $sort, $limit, $joins, $forceClasses);
         $query->groupby($this->groupField);
+
         return $query;
     }
 
@@ -239,6 +302,7 @@ class GroupedDataObjectSetDataSource implements \IDataObjectSetDataSource {
     public function setGroupField($groupField)
     {
         $this->groupField = $groupField;
+
         return $this;
     }
 }

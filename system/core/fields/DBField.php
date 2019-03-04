@@ -401,7 +401,7 @@ class DBField extends gObject implements IDataBaseField
                 if($json = json_decode("[".fixJSON($argString)."]", true)) {
                     $args = $json;
                 } else {
-                    throw new InvalidArgumentException("Could not parse casting arguments for " . $casting);
+                    throw new InvalidArgumentException("Could not parse casting arguments for " . $casting . ". JSON Error: " . json_last_error());
                 }
             }
             unset($matches);
@@ -445,16 +445,16 @@ class DBField extends gObject implements IDataBaseField
     /**
      * converts by casting
      *
-     * @param string|array casting
-     * @param string - name
-     * @param mixed - value
+     * @param string|array $castingToParse
+     * @param string $name
+     * @param mixed $value
      * @return string
      */
-    public static function convertByCasting($casting, $name, $value) {
+    public static function convertByCasting($castingToParse, $name, $value) {
         if(!is_string($name)) {
             throw new InvalidArgumentException("Second argument (\$name) of DBField::convertByCastingIfDefault must be an string.");
         }
-        $casting = self::parseCasting($casting);
+        $casting = self::parseCasting($castingToParse);
         if(isset($casting)) {
             $object = new $casting["class"]($name, $value, isset($casting["args"]) ? $casting["args"] : array());
             if(isset($casting["method"])) {
@@ -463,7 +463,7 @@ class DBField extends gObject implements IDataBaseField
                 return $object->__toString();
             }
         } else {
-            throw new InvalidArgumentException("Invalid casting-Array given to DBField::convertByCasting");
+            throw new InvalidArgumentException("Invalid casting-Array given to DBField::convertByCasting(".var_export($castingToParse, true).", ".var_export($name, true).", ".var_export($value, true)."). ");
         }
     }
 
@@ -490,23 +490,32 @@ class DBField extends gObject implements IDataBaseField
     /**
      * gets an object by casting
      *
-     * @param string|array casting
-     * @param string - name
-     * @param mixed - value
+     * @param $casting
+     * @param $name
+     * @param $value
+     * @param bool $throwErrorOnFail
      * @return DBField
      */
     public static function getObjectByCasting($casting, $name, $value, $throwErrorOnFail = false) {
+        if(PROFILE) Profiler::mark("DBField::getObjectByCasting");
+
         if(!is_string($name)) {
+            if(PROFILE) Profiler::unmark("DBField::getObjectByCasting");
             throw new InvalidArgumentException("Second argument (\$name) of DBField::convertByCastingIfDefault must be an string.");
         }
         $casting = self::parseCasting($casting);
+        $object = null;
         if(isset($casting)) {
-            return new $casting["class"]($name, $value, isset($casting["args"]) ? $casting["args"] : array());
+            $object = new $casting["class"]($name, $value, isset($casting["args"]) ? $casting["args"] : array());
         } else if($throwErrorOnFail) {
+            if(PROFILE) Profiler::unmark("DBField::getObjectByCasting");
             throw new LogicException("Invalid casting given to DBField::getObjectByCasting '".$casting."'");
         } else {
-            return new DBField($name, $value, array());
+            $object = new DBField($name, $value, array());
         }
+
+        if(PROFILE) Profiler::unmark("DBField::getObjectByCasting");
+        return $object;
     }
 
     /**

@@ -56,3 +56,4 @@ system/version.php
 system/installer/version.php
 gomacms/application/l.php
 l.php
+gomacms/application/.DS_Store

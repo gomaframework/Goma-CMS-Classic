@@ -17,7 +17,6 @@ defined("IN_GOMA") OR die();
  */
 class HasOneDropdown extends ExtendedDropdown
 {
-
 	/**
 	 * @param string $name
 	 * @param string $title
@@ -32,6 +31,16 @@ class HasOneDropdown extends ExtendedDropdown
 		return new self($name, $title, $showField, $where, $value, $parent);
 	}
 
+    /**
+     * @param $name
+     * @param $title
+     * @param string $showField
+     * @param null $infoField
+     * @param array $where
+     * @param null $value
+     * @param null $parent
+     * @return HasOneDropdown
+     */
 	public static function createWithInfoField($name, $title, $showField = "title", $infoField = null, $where = array(), $value = null, $parent = null) {
 		$field = self::create($name, $title, $showField, $where, $value, $parent);
 
@@ -71,7 +80,7 @@ class HasOneDropdown extends ExtendedDropdown
 
         /** @var HasOneDropdownDataSource $source */
         $source = $this->dataSource;
-        $source->setUseStateData($this->useStateData);
+        $source->setUseStateData($this->isStateData());
 
         return $info;
     }

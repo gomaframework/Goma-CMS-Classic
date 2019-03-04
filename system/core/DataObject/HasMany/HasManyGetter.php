@@ -82,7 +82,7 @@ class HasManyGetter extends AbstractGetterExtension {
 
         return $objectToFilter;
     }
-
+    
     /**
      * returns one or many hasMany-Relationsips.
      *

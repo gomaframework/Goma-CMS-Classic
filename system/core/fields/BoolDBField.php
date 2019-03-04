@@ -2,6 +2,6 @@
 /**
  * bool-type.
  */
-class BoolDBField extends CheckBoxSQLField {}
+class BoolSQLField extends CheckBoxSQLField {}
 
 class BooleanSQLField extends CheckBoxSQLField {}

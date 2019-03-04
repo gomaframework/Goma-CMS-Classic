@@ -46,7 +46,6 @@ Selectize.define('infinite_scroll', function(options) {
             self.lastValue = value;
             self.onSearchChange(query);
             self.refreshOptions();
-            self.clearOptions();
             self.trigger('type', value);
         }
     };

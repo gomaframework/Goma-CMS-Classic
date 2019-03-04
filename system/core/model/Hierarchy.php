@@ -4,7 +4,28 @@ defined("IN_GOMA") OR die();
 /**
  * This extension is used to have a better performance
  * when using parent and child-relationships.
+ * It preserves a tree of published and state record hierarchy.
  * It provides features like "AllChildren", "getAllParents"
+ * It has a table in the following format:
+ * - id
+ * - parentid
+ * - height (distance to root of parentid)
+ * - state (2 for published, 1 for state)
+ *
+ * Each record has at least itself as published and state record, which will be for root (ID=1):
+ * (id, parentid, height, state)
+ * (1, 1, 0, 2),
+ * (1, 1, 0, 1)
+ *
+ * Additionally per parent it has an additional record, for example if 5 is root and 6 is child:
+ * (id, parentid, height, state)
+ * (5, 5, 0, 2),
+ * (5, 5, 0, 1),
+ * (6, 5, 0, 2),
+ * (6, 5, 0, 1),
+ * (6, 6, 1, 2),
+ * (6, 6, 1, 1)
+ *
  *
  * @package        Goma\Model
  * @method  DataObject getOwner()
@@ -17,17 +38,13 @@ class Hierarchy extends DataObjectExtension
 {
     /**
      * extra-methods
-     *
-     * @name extra_methods
      */
     protected static $extra_methods = array(
         "getAllChildren",
-        "getallChildVersionIDs",
-        "getAllChildIDs",
-        "searchChildren",
-        "searchAllChildren",
-        "getAllParentIDs",
-        "getAllParents"
+        "getAllParents",
+        "getAllChildVersionIDs",
+        "getAllChildrenIds",
+        "getAllParentIds"
     );
 
     /**
@@ -72,186 +89,144 @@ class Hierarchy extends DataObjectExtension
      */
     public function getAllChildren($filter = null, $sort = null, $limit = null)
     {
-        return DataObject::get(
+        $data = DataObject::get(
             $this->getOwner()->classname,
-            array_merge((array)$filter, array($this->getOwner()->baseTable."_tree.parentid" => $this->getOwner()->id)),
-            $sort,
-            $limit,
-            array(
+            array_merge(
+                (array)$filter,
                 array(
-                    DataObject::JOIN_TYPE        => "INNER",
-                    DataObject::JOIN_TABLE       => $this->getOwner()->baseTable."_tree",
-                    DataObject::JOIN_STATEMENT   => $this->getOwner()->baseTable."_tree.id = ".$this->getOwner(
-                        )->baseTable.".id",
-                    DataObject::JOIN_INCLUDEDATA => false,
-                ),
-            )
-        );
-    }
-
-    /**
-     * searches through all direct children of a record
-     *
-     * @param string|array $search
-     * @param array|string|null $filter
-     * @param array|string|null $sort
-     * @param int|array|null $limit
-     * @return DataObjectSet
-     * @internal param $SearchChildren
-     */
-    public function SearchChildren($search, $filter = null, $sort = null, $limit = null)
-    {
-        return DataObject::search_object(
-            $this->getOwner()->classname,
-            $search,
-            array_merge((array)$filter, array("parentid" => $this->getOwner()->id)),
-            $sort,
+                    $this->getHierarchyTable() . ".parentid" => $this->getOwner()->id,
+                    $this->getHierarchyTable() . ".id" => array("!=", $this->getOwner()->id)
+                )
+            ),
+            array(),
             $limit
         );
-    }
-
-    /**
-     * searches through all children and subchildren to of record
-     *
-     * @name SearchAllChildren
-     * @return DataObjectSet|DataSet
-     */
-    public function SearchAllChildren($search, $filter = null, $sort = null, $limit = null)
-    {
-        return DataObject::search_object(
-            $this->getOwner()->classname,
-            $search,
-            array_merge((array)$filter, array($this->getOwner()->baseTable."_tree.parentid" => $this->getOwner()->id)),
-            $sort,
-            $limit,
-            array(
-                array(
-                    DataObject::JOIN_TYPE        => "INNER",
-                    DataObject::JOIN_TABLE       => $this->getOwner()->baseTable."_tree",
-                    DataObject::JOIN_STATEMENT   => $this->getOwner()->baseTable."_tree.id = ".$this->getOwner(
-                        )->baseTable.".id",
-                    DataObject::JOIN_INCLUDEDATA => false,
-                ),
-            )
-        );
-    }
-
-    /**
-     * returns a list of all parentids to the top
-     *
-     * @name getAllParentIDs
-     * @return array
-     */
-    public function getAllParentIDs()
-    {
-        $parentid = $this->getOwner()->parentid;
-
-        $query = new SelectQuery(
-            $this->getOwner()->baseTable."_tree",
-            array("parentid"),
-            array("id" => $this->getOwner()->versionid)
-        );
-
-        $ids = $this->getArrayFromDB($query, "$parentid");
-
-        return array_filter(
-            $ids,
-            function ($v) {
-                return $v != 0;
-            }
-        );
+        $dataSource = new HierarchyDataSource($data->getDbDataSource());
+        $data->setDbDataSource($dataSource);
+        $data->sort($sort);
+        return $data;
     }
 
     /**
      * returns a dataset of all parents
      *
-     * @name getAllParents
+     * @param null $filter
+     * @param null $sort
+     * @param null $limit
      * @return DataObjectSet
      */
     public function getAllParents($filter = null, $sort = null, $limit = null)
     {
         if (!isset($sort)) {
-            $sort = array($this->getOwner()->baseTable."_tree.height" => "DESC");
+            $sort = array($this->getHierarchyTable() . ".height" => "DESC");
         }
 
-        return DataObject::get(
+        $data = DataObject::get(
             $this->getOwner()->classname,
-            array_merge((array)$filter, array($this->getOwner()->baseTable."_tree.id" => $this->getOwner()->versionid)),
-            $sort,
-            $limit,
-            array(
-                $this->getOwner()->baseTable."_tree" => array(
-                    DataObject::JOIN_TYPE        => "INNER",
-                    DataObject::JOIN_TABLE       => $this->getOwner()->baseTable."_tree",
-                    DataObject::JOIN_STATEMENT   => $this->getOwner()->baseTable."_tree.parentid = ".$this->getOwner(
-                        )->baseTable.".recordid",
-                    DataObject::JOIN_INCLUDEDATA => false,
-                ),
-            )
+            array_merge(
+                (array)$filter,
+                array(
+                    $this->getHierarchyTable() . ".id" => $this->getOwner()->id,
+                    $this->getHierarchyTable() . ".parentid" => array("!=", $this->getOwner()->id)
+                )
+            ),
+            array(),
+            $limit
         );
+        $dataSource = new HierarchyDataSource($data->getDbDataSource());
+        $data->setDbDataSource($dataSource);
+        $data->sort($sort);
+        return $data;
     }
 
     /**
-     * gets all versionids of the children
-     *
-     * @name getAllChildVersionIDs
-     * @access public
-     * @return array
-     */
-    public function getAllChildVersionIDs()
-    {
-
-        $query = new SelectQuery(
-            $this->getOwner()->baseTable."_tree",
-            array("id"),
-            array("parentid" => $this->getOwner()->id)
-        );
-
-        return $this->getArrayFromDB($query, "id");
-    }
-
-    /**
-     * gets all ids of the children
-     *
-     * @name getAllChildVersionIDs
-     * @access public
-     * @return array
-     */
-    public function getAllChildIDs()
-    {
-        $query = new SelectQuery(
-            $this->getOwner()->baseTable."_tree",
-            array("recordid"),
-            array("parentid" => $this->getOwner()->id)
-        );
-        $query->innerJOIN(
-            $this->getOwner()->baseTable,
-            $this->getOwner()->baseTable.".id = ".$this->getOwner()->baseTable."_tree.id"
-        );
-
-        return $this->getArrayFromDB($query, "recordid");
-    }
-
-    /**
-     * builds an array of all fields with $fieldname.
-     *
-     * @param SelectQuery $query
      * @param string $field
+     * @param array $filter
+     * @param null $version
+     * @param null|callable $modifyQuery
      * @return array
      * @throws SQLException
      */
-    protected function getArrayFromDB($query, $field)
-    {
-        $ids = array();
-        if ($query->execute()) {
-            while ($row = $query->fetch_assoc()) {
-                $ids[] = $row[$field];
-            }
-
-            return $ids;
-        } else {
-            throw new SQLException();
+    public function queryIds($field, $filter, $version = null, $modifyQuery = null) {
+        if($version !== false) {
+            $filter = array(
+                array("state" => ($version == DataObject::VERSION_STATE) ? 1 : 2),
+                $filter
+            );
         }
+        $query = new SelectQuery(
+            $this->getHierarchyTable(),
+            array($field),
+            $filter
+        );
+        if($modifyQuery) {
+            $newQuery = call_user_func_array($modifyQuery, array($query));
+            if(isset($newQuery)) {
+                $query = $newQuery;
+            }
+        }
+        $query->sort("height", "ASC");
+        $result = $query->execute();
+        $ids = array();
+        while ($row = $result->fetch_assoc()) {
+            $ids[$row[$field]] = $row[$field];
+        }
+
+        return array_values($ids);
+    }
+
+    /**
+     * @param string|null|false $version false means state AND published children are returned
+     * @param null|int $recordId if to search for children of different record
+     * @param bool $includeSelf
+     * @return array
+     * @throws SQLException
+     */
+    public function getAllChildrenIds($version = null, $recordId = null, $includeSelf = false)
+    {
+        $filter = array(
+            "parentid" => $recordId ? $recordId : $this->getOwner()->id
+        );
+        if(!$includeSelf) {
+            $filter["id"] = array("!=", $recordId ? $recordId : $this->getOwner()->id);
+        }
+        return $this->queryIds("id", $filter, $version);
+    }
+
+    /**
+     * @param null|int $version
+     * @return array
+     * @throws SQLException
+     */
+    public function getAllChildVersionIDs($version = null) {
+        $filter = array(
+            "parentid" => $this->getOwner()->id,
+            "id" => array("!=", $this->getOwner()->id)
+        );
+        $field = ($version == DataObject::VERSION_STATE) ? "stateid" : "publishedid";
+        return $this->queryIds($field, $filter, $version, function($query) {
+            $baseTableState = $this->getOwner()->baseTable . "_state";
+            /** @var SelectQuery $query */
+            $query->join("INNER", $baseTableState, $baseTableState . ".id = " . $this->getHierarchyTable() . ".id");
+        });
+    }
+
+    /**
+     * @param string|null|false $version false means state AND published children are returned
+     * @param null|int $recordId if to search for children of different record
+     * @param bool $includeSelf
+     * @return array
+     * @throws SQLException
+     */
+    public function getAllParentIds($version = null, $recordId = null, $includeSelf = false)
+    {
+        $filter = array(
+            "id" => $recordId ? $recordId : $this->getOwner()->id
+        );
+        if(!$includeSelf) {
+            $filter["id"] = array("!=", $recordId ? $recordId : $this->getOwner()->id);
+        }
+        return $this->queryIds("parentid", $filter, $version);
     }
 
     /**
@@ -260,71 +235,165 @@ class Hierarchy extends DataObjectExtension
      * @param ModelWriter $modelWriter
      * @param array $manipulation
      * @param string $job
+     * @throws SQLException
      */
     public function onBeforeManipulate($modelWriter, &$manipulation, $job)
     {
-        if ($job == "write" && isset(ClassInfo::$database[$this->getOwner()->baseTable."_tree"])) {
-            $manipulation["tree_table"] = array(
-                "command"    => "insert",
-                "table_name" => $this->getOwner()->baseTable."_tree",
-                "fields"     => array(),
-            );
+        if ($job == "write" && isset(ClassInfo::$database[$this->getHierarchyTable()])) {
+            $isVersioned = DataObject::Versioned($this->getOwner());
+            $isPublish = !$isVersioned || $modelWriter->getWriteType() == IModelRepository::WRITE_TYPE_PUBLISH;
 
-            $height = 0;
-            $currentParent = $this->getOwner();
-
-            $ids = array();
-
-            while ($currentParent->parent && $height < 100) {
-                $currentParent = $currentParent->parent();
-
-                if (!in_array($currentParent->id, $ids)) {
-                    $manipulation["tree_table"]["fields"][] = array(
-                        "id"       => $this->getOwner()->versionid,
-                        "parentid" => $currentParent->id,
+            // update and delete query only required when updating object
+            if($modelWriter->getObjectToUpdate() !== null) {
+                $manipulation["tree_table_truncate"] = array(
+                    "command"    => "delete",
+                    "table_name" => $this->getHierarchyTable(),
+                    "where"      => array(),
+                );
+                if($isPublish) {
+                    $manipulation["tree_table_update_height_publish"] = array(
+                        "command" => "rawupdate"
                     );
-                    $ids[] = $currentParent->id;
-                    $height++;
-                } else {
-                    throw new LogicException("Endless-Hierarchy-Error: ".$currentParent->id." is a endless-loop.");
                 }
-            }
 
-            if ($height == 100) {
-                throw new LogicException(
-                    'Hierarchy only supports height up to 100. This object seems to have more than hundred parent nodes. <pre>'.print_r(
-                        $this->getOwner(),
-                        true
-                    ).'</pre>'
+                $manipulation["tree_table_update_height_state"] = array(
+                    "command" => "rawupdate"
                 );
             }
 
-            $manipulation["tree_table"]["fields"][] = array(
-                "id"       => $this->getOwner()->versionid,
-                "parentid" => 0,
-                "height"   => 0,
+            $manipulation["tree_table"] = array(
+                "command"    => "insert",
+                "table_name" => $this->getHierarchyTable(),
+                "fields"     => array(),
             );
-            foreach ($manipulation["tree_table"]["fields"] as $key => $data) {
-                $manipulation["tree_table"]["fields"][$key]["height"] = $height;
-                $height--;
+            $oldParentId = $modelWriter->getObjectToUpdate() && $modelWriter->getObjectToUpdate()->parent ?
+                $modelWriter->getObjectToUpdate()->parent->id : null;
+            $parentId = $this->getOwner()->parent ? $this->getOwner()->parent->id : 0;
+
+            $parentsPublish = $this->getAllParentIds(null, $parentId, true);
+            $parentsState = $isVersioned ? $this->getAllParentIds(DataObject::VERSION_STATE, $parentId, true) : $parentsPublish;
+
+            // insert new information when creating new object
+            if($modelWriter->getObjectToUpdate() !== null) {
+                $oldParentsPublished = $this->getAllParentIds(null, $oldParentId, true);
+                $oldParentsState = $isVersioned ? $this->getAllParentIds(DataObject::VERSION_STATE, $oldParentId, true) : $oldParentsPublished;
+                $allChildrenPublished = $this->getAllChildrenIds();
+                $allChildrenState = $isVersioned ? $this->getAllChildrenIds(DataObject::VERSION_STATE) : $allChildrenPublished;
+
+                $allChildrenPublishedAndMe = array_merge($allChildrenPublished, array($this->getOwner()->id));
+                $allChildrenStateAndMe = array_merge($allChildrenState, array($this->getOwner()->id));
+
+                // delete old hierarchy
+                $manipulation["tree_table_truncate"]["where"] = array(
+                    array(
+                        "id" => array_merge($allChildrenState, array($this->getOwner()->id)),
+                        "parentid" => $oldParentsState,
+                        "state" => 1
+                    ),
+                );
+                if($isPublish) {
+                    $manipulation["tree_table_truncate"]["where"][] = "OR";
+                    $manipulation["tree_table_truncate"]["where"][] = array(
+                        "id" => $allChildrenPublishedAndMe,
+                        "parentid" => $oldParentsPublished,
+                        "state" => 2
+                    );
+                }
+
+                // Update child hierarchy "height" fields to reflect new heights
+                $heightDiffPublish = count($oldParentsPublished) - count($parentsPublish);
+                $heightDiffState = count($oldParentsState) - count($parentsState);
+
+                if($isPublish) {
+                    $manipulation["tree_table_update_height_publish"]["sql"] = "UPDATE ".DB_PREFIX.$this->getHierarchyTable(
+                        )." SET height = height + ".$heightDiffPublish." ".SQL::extractToWhere(
+                            array(
+                                "id"    => $allChildrenPublishedAndMe,
+                                "state" => 2
+                            )
+                        );
+                }
+
+                $manipulation["tree_table_update_height_state"]["sql"] =
+                    "UPDATE " . DB_PREFIX . $this->getHierarchyTable() .
+                    " SET height = height + " . $heightDiffState .
+                    " " . SQL::extractToWhere(array(
+                        "id" => $allChildrenStateAndMe,
+                        "state" => 1
+                    ));
+
+                // Insert all new parents including child hierarchies
+                if($isPublish) {
+                    $this->generateManipulationForParents($parentsPublish, 2, $allChildrenPublished, $manipulation);
+                }
+
+                $this->generateManipulationForParents($parentsState, 1, $allChildrenState, $manipulation);
+            }
+
+            // insert my hierarchy (again if update)
+            if($isPublish) {
+                $this->generateManipulationForParentsAndMe($parentsPublish, 2, $manipulation);
+            }
+            $this->generateManipulationForParentsAndMe(
+                $parentsState,
+                1,
+                $manipulation
+            );
+        }
+    }
+
+    /**
+     * @param int[] $parents
+     * @param int $state
+     * @param int[] $records
+     * @param array $manipulation
+     */
+    protected function generateManipulationForParents($parents, $state, $records, &$manipulation) {
+        foreach($records as $recordId) {
+            foreach($parents as $sort => $parent) {
+                $manipulation["tree_table"]["fields"][] = array(
+                    "id" => $recordId,
+                    "parentid" => $parent,
+                    "height" => $sort,
+                    "state" => $state
+                );
             }
         }
     }
 
     /**
+     * @param int[] $parents
+     * @param int $state
+     * @param array $manipulation
+     */
+    protected function generateManipulationForParentsAndMe($parents, $state, &$manipulation) {
+        $this->generateManipulationForParents($parents, $state, array($this->getOwner()->id), $manipulation);
+        $manipulation["tree_table"]["fields"][] = array(
+            "id" => $this->getOwner()->id,
+            "parentid" => $this->getOwner()->id,
+            "height" => count($parents),
+            "state" => $state
+        );
+    }
+
+    /**
      * before removing data
      * @param array $manipulation
+     * @throws SQLException
      */
     public function onBeforeRemove(&$manipulation)
     {
         if (!DataObject::versioned($this->getOwner()->classname) && isset(
-                ClassInfo::$database[$this->getOwner()->baseTable."_tree"]
+                ClassInfo::$database[$this->getHierarchyTable()]
             )) {
             $manipulation["delete_tree"] = array(
-                "table"   => $this->getOwner()->baseTable."_tree",
+                "table"   => $this->getHierarchyTable(),
                 "command" => "delete",
                 "where"   => array(
-                    "id" => $this->getOwner()->versionid,
+                    "id" => array_merge(
+                        array($this->getOwner()->id),
+                        $this->getAllChildrenIds(false)
+                    )
                 ),
             );
         }
@@ -332,17 +401,25 @@ class Hierarchy extends DataObjectExtension
 
     /**
      * generates some ClassInfo
+     * @param bool $force
      */
-    public function generateClassInfo()
+    public function generateClassInfo($force = false)
     {
-        if (defined("SQL_LOADUP") && $this->getOwner() && SQL::getFieldsOfTable($this->getOwner()->baseTable."_tree")) {
-            // set Database-Record
-            ClassInfo::$database[$this->getOwner()->baseTable."_tree"] = array(
+        if ($force || defined("SQL_LOADUP") && $this->getOwner() && SQL::getFieldsOfTable($this->getHierarchyTable())) {
+            ClassInfo::$database[$this->getHierarchyTable()] = array(
                 "id"       => "int(10)",
                 "parentid" => "int(10)",
                 "height"   => "int(10)",
+                "state"    => "int(1)"
             );
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function getHierarchyTable() {
+        return $this->getOwner()->baseTable."_hierarchy";
     }
 
     /**
@@ -360,40 +437,44 @@ class Hierarchy extends DataObjectExtension
             return;
         }
 
-        $migrate = !SQL::getFieldsOfTable($this->getOwner()->baseTable."_tree");
+        $migrate = !SQL::getFieldsOfTable($this->getHierarchyTable());
 
         $log .= SQL::requireTable(
-            $this->getOwner()->baseTable."_tree",
+            $this->getHierarchyTable(),
             array(
                 "id"       => "int(10)",
                 "parentid" => "int(10)",
                 "height"   => "int(10)",
+                "state"    => "int(1)"
             ),
             array(),
             array(),
             $prefix
         );
 
-        // set Database-Record
-        ClassInfo::$database[$this->getOwner()->baseTable."_tree"] = array(
-            "id"       => "int(10)",
-            "parentid" => "int(10)",
-            "height"   => "int(10)",
-        );
+        $this->generateClassInfo(true);
 
         if ($migrate !== false) {
-            $sql = "SELECT recordid, parentid, id FROM ".$prefix.$this->getOwner()->baseTable." ORDER BY id DESC";
-            $directParents = array();
-            $versions = array();
+            $sql = "SELECT b.recordid, b.parentid, b.id as versionid, s.stateid, s.publishedid FROM ".
+                $prefix.$this->getOwner()->baseTable." b,  ".
+                $prefix.$this->getOwner()->baseTable."_state s WHERE s.stateid = b.id OR s.publishedid = b.id ORDER BY s.id DESC";
+            $directStateParents = array();
+            $directPublishedParents = array();
 
             $i = 0;
             if ($result = SQL::query($sql)) {
                 while ($row = SQL::fetch_object($result)) {
-                    if (!isset($directParents[$row->recordid])) {
-                        $directParents[$row->recordid] = $row->parentid;
+                    if($row->stateid == $row->versionid) {
+                        if (!isset($directStateParents[$row->recordid])) {
+                            $directStateParents[$row->recordid] = $row->parentid;
+                        }
                     }
 
-                    $versions[$row->id] = $row->parentid;
+                    if($row->publishedid == $row->versionid) {
+                        if (!isset($directPublishedParents[$row->recordid])) {
+                            $directPublishedParents[$row->recordid] = $row->parentid;
+                        }
+                    }
 
                     $i++;
                 }
@@ -401,38 +482,55 @@ class Hierarchy extends DataObjectExtension
                 throw new SQLException();
             }
 
-            if (count($directParents) > 0) {
-                $insert = "INSERT INTO ".$prefix.$this->getOwner()->baseTable."_tree (id, parentid, height) VALUES ";
+            if (count($directPublishedParents) > 0) {
+                $insert = "INSERT INTO ".$prefix.$this->getHierarchyTable()." (id, parentid, height, state) VALUES ";
 
-                $a = 0;
-                foreach ($versions as $id => $parent) {
-                    if ($a == 0) {
-                        $a++;
-                    } else {
-                        $insert .= ", ";
-                    }
-
-                    // calc height
-                    $height = 0;
-                    $tid = $parent;
-                    while (isset($directParents[$tid])) {
-                        $tid = $directParents[$tid];
-                        $height++;
-                    }
-
-                    $insert .= "(".$id.", ".(int)$parent.", $height)";
-                    $tid = $parent;
-                    while (isset($directParents[$tid])) {
-                        $tid = $directParents[$tid];
-                        $height--;
-                        $insert .= ",(".$id.", ".(int)$tid.", $height)";
-                    }
-                }
+                $firstLine = true;
+                $insert .= $this->buildInsert($directStateParents, 1, $firstLine);
+                $insert .= $this->buildInsert($directPublishedParents, 2, $firstLine);
 
                 if (!SQL::Query($insert)) {
                     throw new SQLException();
                 }
             }
         }
+    }
+
+    /**
+     * @param array$parentArray
+     * @param int $state
+     * @param bool $firstLine
+     * @return string
+     */
+    protected function buildInsert($parentArray, $state, &$firstLine)
+    {
+        $insert = "";
+        foreach ($parentArray as $recordId => $parent) {
+            if ($firstLine) {
+                $firstLine = false;
+            } else {
+                $insert .= ", ";
+            }
+
+            // calc height
+            $publishedHeight = 0;
+            $tid = $parent;
+            while (isset($parentArray[$tid])) {
+                $tid = $parentArray[$tid];
+                $publishedHeight++;
+            }
+
+            $parentid = ((int)$parent != 0) ? (int) $parent : $recordId;
+            $insert .= "(".$recordId.", ".(int)$parentid.", $publishedHeight, $state)";
+            $tid = $parent;
+            while (isset($parentArray[$tid])) {
+                $tid = $parentArray[$tid];
+                $publishedHeight--;
+                $parentid = ((int)$tid != 0) ? (int) $tid : $recordId;
+                $insert .= ",(".$recordId.", ".$parentid.", $publishedHeight, $state)";
+            }
+        }
+
+        return $insert;
     }
 }

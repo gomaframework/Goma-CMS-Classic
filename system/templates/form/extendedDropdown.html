@@ -15,6 +15,7 @@
 <% END %>
 
 <div class="input">
+    <input type="hidden" name="{$PostName}__extendedPost" value="1" />
     <select id="$id" name="$PostName[]" placeholder="$placeholder.text()">
         <% IF $selectedItems %>
         <% CONTROL selectedItems() as $item %>

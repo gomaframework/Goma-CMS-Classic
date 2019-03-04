@@ -67,7 +67,7 @@ class SettingsAdminCategories extends AbstractCategoryController {
      * @param string $action
      * @return bool
      */
-    public function hasAction($action)
+    public function hasAction($action, $classWithActionDefined = null)
     {
         $probClass = str_replace("_", "\\", $action);
         if(\ClassInfo::exists($probClass) && is_subclass_of($probClass, Newsettings::class)) {

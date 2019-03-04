@@ -386,6 +386,15 @@ class UploadsBackTrackDataSource implements IDataObjectSetDataSource {
     }
 
     /**
+     * @param Closure $closure
+     * @return Closure
+     */
+    public function registerCacheCallback($closure) {
+        return DataObjectQuery::registerCacheCallback(Uploads::class, $closure);
+    }
+
+
+    /**
      * @param array $manipulation
      * @return bool
      */

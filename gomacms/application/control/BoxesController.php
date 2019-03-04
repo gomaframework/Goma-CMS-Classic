@@ -32,6 +32,17 @@ class BoxesController extends FrontedController {
     );
 
     /**
+     * rights
+     */
+    static $allowed_actions = array(
+        "add"          => "->canEdit",
+        "edit"         => "->canEdit",
+        "delete"       => "->canEdit",
+        "saveBoxWidth" => "->canEdit",
+        "saveBoxOrder" => "->canEdit"
+    );
+
+    /**
      * returns if edit is on
      */
     public function canEdit()

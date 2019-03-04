@@ -34,9 +34,10 @@ class FormFieldErrorRenderData extends FormFieldRenderData {
     /**
      * to rest-array.
      * @param bool $includeRendered
+     * @param bool $includeChildren
      * @return array
      */
-    public function ToRestArray($includeRendered = false)
+    public function ToRestArray($includeRendered = false, $includeChildren = true)
     {
         $data = array(
             "name" => $this->name,

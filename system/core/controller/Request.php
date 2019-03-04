@@ -125,6 +125,13 @@ class Request extends gObject
     protected $requestController;
 
     /**
+     * debug purpose.
+     *
+     * @var string
+     */
+    protected $lastRule;
+
+    /**
      * @param string $method
      * @param string $url
      * @param array $get_params
@@ -393,6 +400,8 @@ class Request extends gObject
         if (PROFILE) {
             Profiler::unmark("request::match");
         }
+
+        $this->lastRule = $pattern;
 
         return $params;
 

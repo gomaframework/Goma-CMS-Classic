@@ -46,11 +46,12 @@ class Member extends gObject {
 	 */
 	public static $loggedIn;
 
-	/**
-	 * checks the login and writes the types
-	 *
-	 * @return 	boolean	true if logged in
-	 */
+    /**
+     * checks the login and writes the types
+     *
+     * @return    boolean    true if logged in
+     * @throws MySQLException
+     */
 	public static function Init() {
 		if(PROFILE) Profiler::mark("member::Init");
 
@@ -99,14 +100,16 @@ class Member extends gObject {
 		return false;
 	}
 
-	/**
-	 * login an user with the params
-	 * if the params are incorrect, it returns false.
-	 *
-	 * @param 	string $user
-	 * @param 	string $pwd
-	 * @return 	bool
-	 */
+    /**
+     * login an user with the params
+     * if the params are incorrect, it returns false.
+     *
+     * @param    string $user
+     * @param    string $pwd
+     * @return    bool
+     * @throws PermissionException
+     * @throws SQLException
+     */
 	public static function doLogin($user, $pwd)
 	{
 		try {

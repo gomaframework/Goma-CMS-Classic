@@ -398,6 +398,7 @@ function writeProjectConfig($data = array(), $project = CURRENT_PROJECT) {
  * Gets the private key of the installation.
  *
  * @return string 15 chars private key
+ * @throws ProjectConfigWriteException
  */
 function getPrivateKey() {
 	if(!file_exists(ROOT . "_config.php")) {
@@ -414,9 +415,11 @@ function getPrivateKey() {
 /**
  * sets a project-folder in the project-stack
  *
- * @name setProject
- * @access public
+ * @param $project
+ * @param null $domain
  * @return bool|void
+ * @throws ProjectConfigWriteException
+ * @access public
  */
 function setProject($project, $domain = null) {
 	if(file_exists(ROOT . "_config.php")) {
@@ -452,8 +455,9 @@ function setProject($project, $domain = null) {
  * removes a given project from project-stack
  *
  * @name removeProject
- * @access public
  * @return bool|void
+ * @throws ProjectConfigWriteException
+ * @access public
  */
 function removeProject($project) {
 	if(file_exists(ROOT . "_config.php")) {
@@ -706,6 +710,8 @@ function Goma_ExceptionHandler($exception) {
 	$content = str_replace('{$errdetails}', $details, $content);
 	$content = str_replace('$uri', $uri, $content);
 
+	$exitCode = $exception->getCode() != 0 ? $exception->getCode() : 8;
+
 	if(!isCommandLineInterface()) {
 		if (gObject::method_exists($exception, "http_status")) {
 			HTTPResponse::setResHeader($exception->http_status());
@@ -714,9 +720,11 @@ function Goma_ExceptionHandler($exception) {
 		}
 		HTTPResponse::sendHeader();
 		echo $content;
+
+		echo("\nExiting with code " . $exitCode);
 	}
 
-	exit($exception->getCode() != 0 ? $exception->getCode() : 8);
+	exit($exitCode);
 }
 
 /**
@@ -1155,7 +1163,7 @@ function parseUrl() {
 		// URL-END
 		if (preg_match('/^(.*)' . preg_quote(URLEND, "/") . '$/Usi', $url, $matches)) {
 			$url = $matches[1];
-		} else if ($url != "" && !Core::is_ajax() && !preg_match('/\.([a-zA-Z]+)$/i', $url) && count($_POST) == 0) {
+		} else if (isset($_SERVER['REQUEST_METHOD']) && strtoupper($_SERVER['REQUEST_METHOD']) == 'GET' && $url != "" && !Core::is_ajax() && !preg_match('/\.([a-zA-Z]+)$/i', $url) && count($_POST) == 0) {
 			// enforce URLEND
 			$get = "";
 			$i = 0;

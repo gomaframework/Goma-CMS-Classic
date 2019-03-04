@@ -146,13 +146,6 @@ class ImageUploadField extends FileUpload
 
         $end = microtime(true);
 
-        // cleanup
-        if ($this->getModel()->sourceImage && $this->getModel()->id != $upload->id) {
-            if ($this->getModel()->hasNoLinks()) {
-                $this->getModel()->remove(true);
-            }
-        }
-
         $this->model = $upload;
 
         $end2 = microtime(true);

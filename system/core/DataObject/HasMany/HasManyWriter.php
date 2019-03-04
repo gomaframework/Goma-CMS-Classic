@@ -25,13 +25,22 @@ class HasManyWriter extends Extension {
             $data = $owner->getData();
             /** @var HasManyGetter $hasManyExtension */
             if ($has_many = $hasManyExtension->hasMany()) {
-                foreach ($has_many as $name => $class) {
+                foreach ($has_many as $name => $info) {
                     if (isset($data[$name]) && is_object($data[$name]) && is_a($data[$name], "HasMany_DataObjectSet")) {
                         /** @var HasMany_DataObjectSet $hasManyObject */
                         $hasManyObject = $data[$name];
 
-                        $hasManyObject->setRelationENV($has_many[$name], $owner->getModel()->id, $owner->getModel());
-                        $hasManyObject->commitStaging(false, true, $owner->getWriteType());
+                        $hasManyObject->setRelationENV(
+                            $has_many[$name],
+                            $owner->getModel()->id,
+                            $owner->getModel()
+                        );
+
+                        if($this->shouldUpdateData($info) && $hasManyObject->hasChanged()) {
+                            $hasManyObject->commitStaging(false, true, $owner->getWriteType());
+                        } else if($this->getOwner()->getObjectToUpdate() == null) {
+                            $hasManyObject->setFetchMode(DataObjectSet::FETCH_MODE_EDIT);
+                        }
                     } else {
                         if (isset($data[$name]) && !isset($data[$name . "ids"]) && is_array($data[$name])) {
                             $data[$name . "ids"] = $data[$name];
@@ -42,7 +51,7 @@ class HasManyWriter extends Extension {
                                 throw new InvalidArgumentException("HasMany-Relationship must contain only already written records.");
                             }
 
-                            $this->removeFromRelationShip($class->getTargetClass(), $has_many[$name]->getInverse() . "id", $owner->getModel()->id, $data[$name . "ids"], $has_many[$name]->shouldRemoveData());
+                            $this->removeFromRelationShip($info->getTargetClass(), $has_many[$name]->getInverse() . "id", $owner->getModel()->id, $data[$name . "ids"], $has_many[$name]->shouldRemoveData());
                             $this->updateRelationship($data[$name . "ids"], $has_many[$name]);
                         }
                     }
@@ -61,6 +70,9 @@ class HasManyWriter extends Extension {
      * @param int $key
      * @param int[] $excludeRecordIds
      * @param bool $removeFromDatabase
+     * @throws MySQLException
+     * @throws PermissionException
+     * @throws SQLException
      */
     protected function removeFromRelationShip($class, $field, $key, $excludeRecordIds, $removeFromDatabase) {
         /** @var ModelWriter $owner */
@@ -88,6 +100,7 @@ class HasManyWriter extends Extension {
     /**
      * @param array $ids
      * @param ModelHasManyRelationShipInfo $relationShip
+     * @throws PermissionException
      */
     protected function updateRelationship($ids, $relationShip) {
         $owner = $this->getOwner();
@@ -145,6 +158,22 @@ class HasManyWriter extends Extension {
                 }
             }
         });
+    }
+
+    /**
+     * @param ModelHasManyRelationShipInfo $info
+     * @return bool
+     */
+    protected function shouldRemoveData($info) {
+        return (substr($info->getCascade(), 0, 1) == 1);
+    }
+
+    /**
+     * @param ModelHasManyRelationShipInfo $info
+     * @return bool
+     */
+    protected function shouldUpdateData($info) {
+        return (substr($info->getCascade(), 1, 1) == 1);
     }
 }
 gObject::extend("ModelWriter", "HasManyWriter");

@@ -55,6 +55,7 @@ abstract class historyGenerator extends gObject
      */
     public static function modelTypes() {
         $baseClass = str_replace("historydata_", "", strtolower(static::class));
+
         if(ClassInfo::exists($baseClass)) {
             return array_merge(array($baseClass), ClassInfo::getChildren($baseClass));
         }

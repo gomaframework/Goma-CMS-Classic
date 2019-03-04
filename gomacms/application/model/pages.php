@@ -614,14 +614,14 @@ class Pages extends DataObject implements PermProvider, Notifier {
      */
     protected function _validatePageFileName() {
         if($this->filename) {
-            if($this->filenameTaken()) {
+            if($this->filenameTaken() || $this->filenameTaken(false)) {
                 throw new FormInvalidDataException("filename", lang("site_exists", "The page with this filename already exists."));
             }
         } else {
             $i = 2;
             $this->setPath($this->title);
 
-            while($this->filenameTaken()) {
+            while($this->filenameTaken() || $this->filenameTaken(false)) {
                 $this->setPath($this->title . "-" . $i);
                 $i++;
             }
@@ -632,14 +632,15 @@ class Pages extends DataObject implements PermProvider, Notifier {
      * writes the form
      *
      * @param Form $form
+     * @throws MySQLException
+     * @throws PermissionException
+     * @throws SQLException
      */
     public function getForm(&$form)
     {
         parent::getForm($form);
 
         $allowed_parents = $this->parentResolver()->getAllowedParents();
-
-        $form->addValidator(new requiredFields(array('path','title', 'parenttype')), "default_required_fields");
 
         $form->useStateData = true;
         $this->queryVersion = "state";
@@ -714,6 +715,8 @@ class Pages extends DataObject implements PermProvider, Notifier {
             $write->setInherit(Permission::forceExisting("PAGES_WRITE"));
             $publish->setInherit(Permission::forceExisting("PAGES_PUBLISH"));
         }
+
+        $form->addValidator(new requiredFields(array('title', 'parenttype')), "default_required_fields");
 
         // infos for users
         $parentDropdown->info_field = "url";

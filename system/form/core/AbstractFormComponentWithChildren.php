@@ -480,4 +480,12 @@ abstract class AbstractFormComponentWithChildren extends AbstractFormComponent {
             $field->argumentResult($result);
         }
     }
+
+    /**
+     * @return string
+     */
+    public function PostNamePrefix()
+    {
+        return $this->parent ? $this->parent->PostNamePrefix() : "";
+    }
 }

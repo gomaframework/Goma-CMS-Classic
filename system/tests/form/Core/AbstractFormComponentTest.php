@@ -122,14 +122,6 @@ class AbstractFormComponentTest extends GomaUnitTest {
         ));
         $this->assertEqual($set->getModel(), $model);
         $this->assertEqual($field->getModel(), 345);
-
-        $field->overridePostName = "lala";
-        $this->assertEqual($field->PostName(), "lala");
-        $this->assertEqual($set->getFieldValue("lala"), 1);
-        $this->assertEqual($field->getModel(), 345);
-
-        $request->post_params["lala"] = 2;
-        $this->assertEqual($field->getModel(), 2);
     }
 
     /**

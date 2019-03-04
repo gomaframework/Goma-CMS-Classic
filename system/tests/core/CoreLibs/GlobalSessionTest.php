@@ -7,19 +7,8 @@
  * @author		Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  */
-
-
 class GlobalSessionTests extends GomaUnitTest
 {
-    /**
-     * area
-     */
-    static $area = "Session";
-
-    /**
-     * internal name.
-     */
-    public $name = "GlobalSessionManager";
 
     /**
      * tests host resolution.
@@ -49,14 +38,22 @@ class GlobalSessionTests extends GomaUnitTest
         $this->assertIdentical(Core::globalSession(), GlobalSessionManager::globalSession());
     }
 
+    /**
+     *
+     */
     public function testStopAndSet() {
-        $session = SessionManager::startWithIdAndName("test", "blub");
-        $session->stopSession();
+        try {
+            $session = SessionManager::startWithIdAndName("test", "blub");
+            $session->stopSession();
 
-        $this->assertThrows(function() use($session) {
-            $session->set("blub", 123);
-        }, "InvalidArgumentException");
-
-        GlobalSessionManager::Init(session_id());
+            $this->assertThrows(
+                function () use ($session) {
+                    $session->set("blub", 123);
+                },
+                "InvalidArgumentException"
+            );
+        } finally {
+            GlobalSessionManager::Init(session_id());
+        }
     }
 }

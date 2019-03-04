@@ -15,7 +15,7 @@ defined("IN_GOMA") OR die();
  * @author		Goma-Team
  * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
  */
-class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IFormForModelGenerator {
+class ViewAccessableData extends gObject implements IteratorAggregate, ArrayAccess, IFormForModelGenerator {
 	/**
 	 * default datatype for casting.
 	 *
@@ -91,12 +91,12 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 	 *
 	 * @var array
 	 */
-	private static $notViewableMethods = array("getdata", "get_versioned", "getform", "geteditform", "getactions", "getwholedata", "set_many_many", "get_has_one", "get_many", "get", "setfield", "setwholedata", "write", "writerecord", "__construct", "method_exists", "callmethodbyrecord", "getmanymany", "gethasmany", "search", "where", "fields", "getoffset", "getversion", "_get", "getobject", "versioned");
+	private static $notViewableMethods = array("getdata", "renderwith", "get_versioned", "getform", "geteditform", "getactions", "getwholedata", "set_many_many", "get_has_one", "get_many", "get", "setfield", "setwholedata", "write", "writerecord", "__construct", "method_exists", "callmethodbyrecord", "getmanymany", "gethasmany", "search", "where", "fields", "getoffset", "getversion", "_get", "getobject", "versioned");
 
 	/**
 	 * a list of methods can't be called as getters. this is for internal usage.
 	 */
-	public static $notCallableGetters = array("valid", "current", "rewind", "next", "key", "duplicate", "reset", "__construct");
+	public static $notCallableGetters = array("duplicate", "reset", "__construct");
 
     /**
      * @param string $method
@@ -260,36 +260,10 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 	}
 
 	/**
-	 * sets the position of the array
-	 *
-	 */
-	public function setPosition($pos) {
-		if($pos < count($this->data) && $pos > -1) {
-			$this->position = $pos;
-			if((count($this->data) / 2) < $pos) {
-				end($this->data);
-				$i = count($this->data);
-				while($i > $pos) {
-					prev($this->data);
-					$i--;
-				}
-			} else {
-				reset($this->data);
-				$i = 0;
-				while($i < $pos) {
-					next($this->data);
-					$i++;
-				}
-			}
-		}
-	}
-
-	/**
 	 * resets the data
 	 */
 	public function reset() {
 		$this->data = array();
-		$this->position = 0;
 		$this->customised = array();
 	}
 
@@ -345,63 +319,6 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 		$duplicate = clone $this;
 		$this->callExtending("duplicate");
 		return $duplicate;
-	}
-
-	//!Iterator
-
-	/**
-	 * iterator
-	 * this extends this dataobject to use foreach on it
-	 * @link http://php.net/manual/en/class.iterator.php
-	 */
-	/**
-	 * this var is the current position
-	 */
-	private $position = 0;
-	/**
-	 * rewind $position to 0
-	 */
-	public function rewind() {
-		if(is_array($this->data)) {
-			reset($this->data);
-		}
-		$this->position = 0;
-	}
-
-	/**
-	 * check if data exists
-	 */
-	public function valid() {
-		return ($this->position < count($this->data));
-	}
-
-	/**
-	 * gets the key
-	 */
-	public function key() {
-		return key($this->data);
-	}
-
-	/**
-	 * gets the next one
-	 */
-	public function next() {
-
-		$this->position++;
-		next($this->data);
-	}
-
-    /**
-     * gets the current value
-     *
-     * @return mixed|ViewAccessableData
-     */
-	public function current() {
-		$data = current($this->data);
-		if(is_array($data))
-			$data = new ViewAccessAbleData($data);
-
-		return $data;
 	}
 
 	/**
@@ -842,6 +759,7 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
      *
      * @param string $field low field name
      * @return mixed
+     * @throws ReflectionException
      */
     protected function defaultCastingForField($field) {
         if(
@@ -1181,6 +1099,18 @@ class ViewAccessableData extends gObject implements Iterator, ArrayAccess, IForm
 	{
 
 	}
+
+    /**
+     * Retrieve an external iterator
+     * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
+     * @return Traversable An instance of an object implementing <b>Iterator</b> or
+     * <b>Traversable</b>
+     * @since 5.0.0
+     */
+    public function getIterator()
+    {
+        return new ViewAccessableDataIterator($this->data);
+    }
 }
 
 

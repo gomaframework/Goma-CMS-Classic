@@ -68,16 +68,12 @@ fieldset {
         > select {
             width: 100%;
 
-            > select {
-                width: 100%;
+            padding: 0.5em;
 
-                padding: 0.5em;
-
-                -moz-appearance: window;
-                -webkit-appearance: none;
-                background: transparent;
-                border: 0;
-            }
+            -moz-appearance: window;
+            -webkit-appearance: none;
+            background: transparent;
+            border: 0;
         }
         .select-wrapper.disabled {
             border: 0.063em solid #aaa;
@@ -112,19 +108,8 @@ fieldset {
         }
     }
 
-    .goma-form-dropdown-extendeddropdown {
-        > label {
-            vertical-align: top;
-            padding-top: .75em;
-        }
-        .input {
-            display: inline-block;
-            margin-left: -.25em;
-        }
-    }
-
     /* full-sized-fields */
-    .form_field.fullSize {
+    &.fullSize {
         &.textarea {
             > label {
                 vertical-align: top;
@@ -138,7 +123,7 @@ fieldset {
                 width: 100%;
             }
         }
-        .field {
+        .field, .input {
             width: 100%;
         }
         .info_field {
@@ -154,7 +139,7 @@ fieldset {
         }
     }
 
-    .form_field.hidden {
+    &.hidden {
         padding: 0 !important;
     }
 
@@ -229,7 +214,7 @@ fieldset {
     }
 
     .goma-form-dropdown-extendeddropdown .input {
-        display: block;
+        display: inline-block;
         font-weight: normal;
         padding: 0.25em 0;
         color: #333;
@@ -237,8 +222,33 @@ fieldset {
     }
 }
 
-.goma-form-dropdown-extendeddropdown .input {
-    margin-left: 0;
+.goma-form-dropdown-extendeddropdown {
+    > label {
+        vertical-align: top;
+        padding-top: .75em;
+    }
+    .input {
+        display: inline-block;
+        margin-left: -.25em;
+    }
+    .selectize-control.multi {
+        .item {
+            background: @system-tint;
+            color: @system-tint-bg;
+            border-radius: .25em;
+            padding: .25em .5em;
+        }
+
+        a {
+            color: @system-tint-bg;
+            background: transparent;
+            padding-left: .5em;
+        }
+        .item.active {
+            background: darken(@system-tint, 10%);
+            color: lighten(@system-tint-bg, 10%);
+        }
+    }
 }
 
 fieldset > .form_field {

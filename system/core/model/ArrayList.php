@@ -709,51 +709,15 @@ class ArrayList extends ViewAccessableData implements Countable {
 		return $data;
 	}
 
-	/**
-	 * iterator
-	 * this extends this dataobject to use foreach on it
-	 * @link http://php.net/manual/en/class.iterator.php
-	 */
-	protected $position = 0;
+    /**
+     * @return ArrayListIterator|Traversable
+     */
+	public function getIterator()
+    {
+        return new ArrayListIterator($this->items);
+    }
 
-	/**
-	 * rewind $position to 0.
-	 */
-	public function rewind() {
-		$this->position = 0;
-	}
-
-	/**
-	 * check if data exists and position is valid.
-	 */
-	public function valid() {
-		return ($this->position < count($this->items));
-	}
-
-	/**
-	 * gets the key of curren titem.
-	 */
-	public function key() {
-		return $this->position;
-	}
-
-	/**
-	 * moves pointer to the next item.
-	 */
-	public function next() {
-
-		$this->position++;
-	}
-
-	/**
-	 * gets the value of the current item.
-	 */
-	public function current() {
-		return $this->items[$this->position];
-	}
-
-
-	/**
+    /**
 	 * generates an array, where the value is a given field
 	 *
 	 * @param string $field

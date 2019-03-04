@@ -253,7 +253,7 @@ class Core extends gObject {
 		Resources::add("default.css", "css", "main");
 		Resources::add("goma_default.css", "css", "main");
 
-        if(preg_match('/(?i)msie [5-8]/',$_SERVER['HTTP_USER_AGENT'])) {
+        if(isset($_SERVER['HTTP_USER_AGENT']) && preg_match('/(?i)msie [5-8]/', $_SERVER['HTTP_USER_AGENT'])) {
             Resources::add("system/libs/thirdparty/respond/respond.min.js", "js", "main");
         }
 

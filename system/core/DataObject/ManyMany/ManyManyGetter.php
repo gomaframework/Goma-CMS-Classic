@@ -75,6 +75,7 @@ class ManyManyGetter extends AbstractGetterExtension implements PostArgumentsQue
      * @param bool $forceClasses
      * @param ModelManyManyRelationShipInfo[] $relationShips
      * @return array
+     * @throws Exception
      */
     protected function factorOutFilter($filterArray, $version, $forceClasses, $relationShips) {
         foreach($filterArray as $key => $value) {
@@ -149,6 +150,8 @@ class ManyManyGetter extends AbstractGetterExtension implements PostArgumentsQue
      * @param array|string $filter
      * @param array|string $sort
      * @return ManyMany_DataObjectSet
+     * @throws MySQLException
+     * @throws SQLException
      */
     public function getManyMany($name, $filter = null, $sort = null) {
         $name = trim(strtolower($name));

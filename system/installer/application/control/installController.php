@@ -23,7 +23,7 @@ class InstallController extends FrontedController {
         "installBackup"             => "installBackup",
         "installFormBackup"         => "installFormBackup",
 	);
-
+	
 	/**
 	 * shows install fronted if language is already selected, else shows lang-select
 	*/

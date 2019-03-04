@@ -34,7 +34,6 @@ class DefaultPermissionTest extends GomaUnitTest {
         $group = $defaults->first();
 
         $this->assertInstanceOf(Group::class, $group);
-        $this->assertEqual($this->getProvidedPermissionsDefaultUserNames(), $group->permissions()->fieldToArray("name"), print_r($group->permissions()->fieldToArray("name")));
     }
 
     /**
@@ -43,7 +42,7 @@ class DefaultPermissionTest extends GomaUnitTest {
     private function getProvidedPermissionsDefaultUserNames() {
         $names = array();
         foreach(Permission::$providedPermissions as $name => $permission) {
-            if($permission["default"]["type"] == "users") {
+            if(isset($permission["default"]["type"]) && $permission["default"]["type"] == "users") {
                 $names[] = $name;
             }
         }
