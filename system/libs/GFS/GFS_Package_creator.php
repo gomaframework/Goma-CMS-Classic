@@ -56,7 +56,7 @@ class GFS_Package_Creator extends GFS {
     public function __construct($filename, $flag = null, $writeMode = null, $request = null) {
         parent::__construct($filename, isset($flag) ? $flag : GFS_READWRITE, $writeMode);
 
-        $this->request = isset($request) ? $request : Director::createRequestFromEnvironment(URL);
+        $this->request = isCommandLineInterface() || isset($request) ? $request : Director::createRequestFromEnvironment(URL);
     }
 
     /**
@@ -301,18 +301,28 @@ class GFS_Package_Creator extends GFS {
 	 * creates the index
 	*/ 
 	public function indexHelper($folder, &$index, $path, $excludeList = array(), $internalPath = "") {
-		foreach(scandir($folder) as $file) {
-			if($file != "." && $file != "..") {
-				if(in_array($file, $excludeList) || in_array($internalPath . "/" . $file, $excludeList)) {
-					continue;
-				}
-				if(is_dir($folder . "/" . $file)) {
-					$this->indexHelper($folder . "/" . $file, $index, $path . "/" . $file, $excludeList, $internalPath . "/" . $file);
-				} else {
-					$index[$folder . "/" . $file] = $path . "/" . $file;
-				}
-			}
-		}
+	    if(file_exists($folder)) {
+            foreach (scandir($folder) as $file) {
+                if ($file != "." && $file != "..") {
+                    if (in_array($file, $excludeList) || in_array($internalPath."/".$file, $excludeList)) {
+                        continue;
+                    }
+                    if (is_dir($folder."/".$file)) {
+                        $this->indexHelper(
+                            $folder."/".$file,
+                            $index,
+                            $path."/".$file,
+                            $excludeList,
+                            $internalPath."/".$file
+                        );
+                    } else {
+                        $index[$folder."/".$file] = $path."/".$file;
+                    }
+                }
+            }
+        } else {
+	        throw new InvalidArgumentException("Folder $folder does not exist.");
+        }
 	}
 
     /**
@@ -324,7 +334,7 @@ class GFS_Package_Creator extends GFS {
 	public function showUI($file = null, $reload = true) {
 		if(!defined("BASE_URI")) define("BASE_URI", "./"); // most of the users use this path ;)
 
-		if($this->request->canReplyJSON()) {
+		if(!isCommandLineInterface() && $this->request->canReplyJSON()) {
 			return GomaResponse::create(null, new JSONResponseBody(array(
 				"redirect" => $file,
 				"reload" => $reload,
