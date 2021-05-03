@@ -647,25 +647,6 @@ class ClassManifest {
 	}
 }
 
-// fallback
-if(!function_exists("spl_autoload_register")) {
-	$GLOBALS["__autoload_stack"] = array();
-	function spl_autoload_register($callback, $throw = false, $preprend = false) {
-		if($preprend)
-			$GLOBALS["__autoload_stack"] = array_merge(array($callback), $GLOBALS["__autoload_stack"]);
-		else
-			$GLOBALS["__autoload_stack"] = array_merge($GLOBALS["__autoload_stack"], array($callback));
-
-	}
-
-	function __autoload($class_name) {
-		foreach($GLOBALS["__autoload_stack"] as $callback) {
-			call_user_func_array($callback, array($class_name));
-		}
-	}
-
-}
-
 spl_autoload_register("ClassManifest::load");
 
 // This method does not exist in each PHP-Build

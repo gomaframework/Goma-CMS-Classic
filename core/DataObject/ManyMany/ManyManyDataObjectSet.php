@@ -359,7 +359,7 @@ class ManyMany_DataObjectSet extends RemoveStagingDataObjectSet implements ISort
         }
 
         $recordIdQuery = new SelectQuery($this->relationShip->getTargetBaseTableName(), array());
-        $recordIdQuery->innerJoin($this->relationShip->getTableName(), " {$this->relationShip->getTableName()}.{$this->relationShip->getTargetField()} =" .
+        $recordIdQuery->innerJoin($this->relationShip->getTableName(), " {$this->relationShip->getTableName()}.{$this->relationShip->getTargetField()} = " .
             "{$this->relationShip->getTargetBaseTableName()}.id AND {$this->relationShip->getTableName()}.{$this->relationShip->getOwnerField()} = '{$this->getQueryVersionID($oldId)}'");
 
         if (ClassManifest::isSameClass($this->relationShip->getTargetClass(), $this->ownRecord->DataClass()) ||

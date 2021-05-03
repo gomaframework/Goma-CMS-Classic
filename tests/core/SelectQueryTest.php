@@ -34,7 +34,7 @@ class SelectQueryTest extends GomaUnitTest implements TestAble {
         $query = new SelectQuery("user");
         $query->sort("rand()");
         $this->assertEqual(
-            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            "SELECT user.* FROM ".DB_PREFIX."user AS user   ORDER BY RAND()",
             $query->build()
         );
     }
@@ -46,7 +46,7 @@ class SelectQueryTest extends GomaUnitTest implements TestAble {
         $query = new SelectQuery("user");
         $query->sort("RAND()");
         $this->assertEqual(
-            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            "SELECT user.* FROM ".DB_PREFIX."user AS user   ORDER BY RAND()",
             $query->build()
         );
     }
@@ -58,7 +58,7 @@ class SelectQueryTest extends GomaUnitTest implements TestAble {
         $query = new SelectQuery("user");
         $query->sort("RAND");
         $this->assertEqual(
-            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            "SELECT user.* FROM ".DB_PREFIX."user AS user   ORDER BY RAND()",
             $query->build()
         );
     }
@@ -70,7 +70,7 @@ class SelectQueryTest extends GomaUnitTest implements TestAble {
         $query = new SelectQuery("user");
         $query->sort("rand");
         $this->assertEqual(
-            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            "SELECT user.* FROM ".DB_PREFIX."user AS user   ORDER BY RAND()",
             $query->build()
         );
     }
@@ -82,7 +82,7 @@ class SelectQueryTest extends GomaUnitTest implements TestAble {
         $query = new SelectQuery("user");
         $query->sort(array("rand"));
         $this->assertEqual(
-            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            "SELECT user.* FROM ".DB_PREFIX."user AS user   ORDER BY RAND()",
             $query->build()
         );
     }
@@ -94,7 +94,7 @@ class SelectQueryTest extends GomaUnitTest implements TestAble {
         $query = new SelectQuery("user");
         $query->sort(array("rand()"));
         $this->assertEqual(
-            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND()",
+            "SELECT user.* FROM ".DB_PREFIX."user AS user   ORDER BY RAND()",
             $query->build()
         );
     }
@@ -107,7 +107,7 @@ class SelectQueryTest extends GomaUnitTest implements TestAble {
         $query->sort(array("rand()"));
         $query->sort("id", "desc");
         $this->assertEqual(
-            "SELECT user.* FROM ".DB_PREFIX."user AS user  ORDER BY RAND(),id DESC",
+            "SELECT user.* FROM ".DB_PREFIX."user AS user   ORDER BY RAND(),id DESC",
             $query->build()
         );
     }

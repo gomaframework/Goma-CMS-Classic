@@ -92,7 +92,7 @@ class SelectQuery {
 	/**
 	 * @var array
 	 */
-	static $aliases = array("group" => "_group");
+	static $aliases = array("group" => "_group", "groups" => "_groups");
 
 	/**
 	 * this is a cache for generating field-list and coliding fields
@@ -118,8 +118,8 @@ class SelectQuery {
 	 * @return mixed
 	 */
 	public static function getAlias($table) {
-		if(isset(self::$aliases[$table])) {
-			return self::$aliases[$table];
+		if(isset(self::$aliases[strtolower($table)])) {
+			return self::$aliases[strtolower($table)];
 		}
 		return $table;
 	}
@@ -525,8 +525,8 @@ class SelectQuery {
 		}
 
 		foreach(self::$aliases as $k => $v) {
-			$statement = str_replace(" " . $k . ".", " " . $v . ".", $statement);
-			$statement = str_replace("AS " . $k . " ", "AS " . $v . " ", $statement);
+			$statement = trim(str_replace(" " . $k . ".", " " . $v . ".", " " . $statement));
+			$statement = trim(str_replace("AS " . $k . " ", "AS " . $v . " ", " " . $statement));
 		}
 
 		return $statement;
@@ -573,7 +573,7 @@ class SelectQuery {
 			$parsedValue = self::parseDBFieldData($key, $data[0]);
 			return array($parsedValue[0], $data[1]);
 		} else if(!strpos($data, ".")) {
-			return array($data, $key);
+			return array(self::getAlias($data), $key);
 		} else {
 			return array($this->replaceAliasInStatement($data), $key);
 		}
@@ -598,7 +598,6 @@ class SelectQuery {
 	protected function generateDBFieldColidingCache() {
 		if(!isset(self::$new_field_cache[$this->fromHash()])) {
 			$DBFields = $this->db_fields;
-
 			foreach($DBFields as $k => $v) {
 				$DBFields[$k] = $this->parseDBFieldData($k, $v);
 			}
@@ -618,7 +617,7 @@ class SelectQuery {
 				foreach($tablefields as $field) {
 					if(!isset($DBFields[$field])) {
 						if (!isset($foundFields[$field])) {
-							$foundFields[$field] = $alias;
+							$foundFields[$field] = self::getAlias($alias);
 						} else {
 							if(!RegexpUtil::isNumber($alias) || !RegexpUtil::isNumber($foundFields[$field])) {
 								if (!isset($colidingFields[$field])) {
@@ -697,7 +696,7 @@ class SelectQuery {
 			}
 
 			if(is_array($data)) {
-				$table = $data["table"];
+				$table = self::getAlias($data["table"]);
 				$data = $data["statement"];
 				$fromHash[$alias] = $data;
 			} else {
@@ -716,7 +715,7 @@ class SelectQuery {
 		// WHERE
 
 		$data = $this->generateDBFieldColidingCache();
-		$sql .= SQL::extractToWhere($this->filter, true, $data["dbfields"], $data["coliding"]);
+		$sql .= " " . $this->replaceAliasInStatement(SQL::extractToWhere($this->filter, true, $data["dbfields"], $data["coliding"]));
 
 		//$sql .= $this->addWhere;
 		// GROUP BY
@@ -798,7 +797,7 @@ class SelectQuery {
 			$colidingSQL = array();
 
 			foreach($data["dbfields"] as $field => $info) {
-				$colidingSQL[] = $info[1] ? $info[0] . "." . $info[1] . " as " . $field : $info[0] . " as " . $field;
+				$colidingSQL[] = $info[1] ? self::getAlias($info[0]) . "." . $info[1] . " as " . $field : $info[0] . " as " . $field;
 			}
 
 			// fix coliding fields
