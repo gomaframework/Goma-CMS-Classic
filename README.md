@@ -5,6 +5,8 @@ This is a Web Content Managment System, which allows you to create fast and easy
 
 At the moment we're developing version 2.0 of Goma, so please be patient. It's done, when it's done.
 
+Also a package-based version of Goma is in development, this is built based on composer.
+
 ### Installation of Goma
 
 Please follow the [Installation guide](https://confluence.goma-cms.org/display/GOMA/Installation+Guide) on our confluence space.
@@ -19,16 +21,12 @@ For IIS, you need the module [URL Rewrite](http://www.iis.net/downloads/microsof
 More Troubleshooting is also on our [Confluence Troubleshooting-Page](https://confluence.goma-cms.org/display/GOMA/Troubleshooting)
 
 
-Team
+Contributors
 ----
 
 ### Development
 * [Daniel Gruber](https://repo.goma-cms.org/users/daniel.gruber)
-* [Fabian Parzefall](https://repo.goma-cms.org/users/fabian.parzefall)
-* [Julian Frielinghaus](https://repo.goma-cms.org/users/julian.frielinghaus)
-
-#### Quality & User-Experience
-* [Patrick Lemke](https://repo.goma-cms.org/users/patrick.lemke)
+* [Julian Christl](https://repo.goma-cms.org/users/julian.christl)
 
 Important External Libraries
 ------------------
