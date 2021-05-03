@@ -1287,7 +1287,7 @@ class DataObjectSet extends ViewAccessableData implements IDataSet
         $this->staging->add($record);
 
         if (($this->page === null || count($this->items) == $this->perPage)) {
-            if (count($this->items) < $this->perPage || $matchesFilter) {
+            if ($matchesFilter || ($this->items !== null && count($this->items) < $this->perPage)) {
                 if ($this->items !== null && $this->fetchMode == self::FETCH_MODE_EDIT) {
                     $this->items[] = $record;
                 }

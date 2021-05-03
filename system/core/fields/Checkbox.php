@@ -29,7 +29,7 @@ class CheckBoxSQLField extends DBField {
      * @return string
      */
     static public function getFieldType($args = array(), $allowNull = null) {
-        return 'enum("0","1") NOT NULL';
+        return 'enum("0","1")';
     }
 
     /**
