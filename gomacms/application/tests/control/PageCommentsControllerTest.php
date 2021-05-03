@@ -1,5 +1,5 @@
 <?php
-defined("IN_GOMA") OR die();
+defined("IN_GOMA") or die();
 
 /**
  * PageCommentsControllerTest.
@@ -11,18 +11,18 @@ defined("IN_GOMA") OR die();
  *
  * @version 1.0
  */
-class PageCommentsControllerTest extends AbstractControllerTest {
+class PageCommentsControllerTest extends AbstractControllerTest
+{
 
     public $name = "PageCommentsController";
 
     protected function getUrlsForFirstResponder()
     {
-        return array(
-
-        );
+        return array();
     }
 
-    public function testPageCommentsLoaded() {
+    public function testPageCommentsLoaded()
+    {
         $request = new Request("get", "test");
         $page = new Page();
         $page->title = "My Page";
@@ -32,6 +32,9 @@ class PageCommentsControllerTest extends AbstractControllerTest {
         $contentController->setModelInst($page);
         $response = Director::serve($contentController->handleRequest($request), $request, false);
 
-        $this->assertTrue(strpos($response, lang("co_add_comment")) !== false, "Asserting true for response " . $response);
+        $this->assertTrue(
+            strpos($response, lang("co_add_comment")) !== false,
+            "Asserting true for response ".$response
+        );
     }
 }

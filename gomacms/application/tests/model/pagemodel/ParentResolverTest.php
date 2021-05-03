@@ -1,13 +1,15 @@
-<?php defined("IN_GOMA") OR die();
+<?php defined("IN_GOMA") or die();
+
 /**
  * Unit-Tests for ParentResolver.
  *
- * @package		Goma\Test
+ * @package        Goma\Test
  *
- * @author		Goma-Team
- * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
+ * @author        Goma-Team
+ * @license        GNU Lesser General Public License, version 3; see "LICENSE.txt"
  */
-class ParentResolverTest extends GomaUnitTest implements TestAble {
+class ParentResolverTest extends GomaUnitTest implements TestAble
+{
 
 
     static $area = "cms";
@@ -16,7 +18,8 @@ class ParentResolverTest extends GomaUnitTest implements TestAble {
      */
     public $name = "ParentResolver";
 
-    public function testFilterParents() {
+    public function testFilterParents()
+    {
         $pages = new ParentResolver("mockAbc", "mockPage");
         $reflectionMethod = new ReflectionMethod("ParentResolver", "filterParents");
         $reflectionMethod->setAccessible(true);
@@ -24,34 +27,37 @@ class ParentResolverTest extends GomaUnitTest implements TestAble {
         $allowParents1 = array("test", "abc");
 
         mockAbc::$allow_parents = $allowParents1;
-        $this->assertEqual($reflectionMethod->invoke($pages, $allowParents1), $allowParents1);
+        $this->assertEquals($allowParents1, $reflectionMethod->invoke($pages, $allowParents1));
 
         mockAbc::$allow_parents = array("mockAbc");
-        $this->assertEqual($reflectionMethod->invoke($pages, array("mockabc")), array("mockabc"));
+        $this->assertEquals(array("mockabc"), $reflectionMethod->invoke($pages, array("mockabc")));
 
         mockAbc::$allow_parents = array(" MOCKABC ");
-        $this->assertEqual($reflectionMethod->invoke($pages, array("mockabc")), array("mockabc"));
+        $this->assertEquals(array("mockabc"), $reflectionMethod->invoke($pages, array("mockabc")));
 
         mockAbc::$allow_parents = array("testMock");
-        $this->assertEqual($reflectionMethod->invoke($pages, array("testmock")), array("testmock"));
+        $this->assertEquals(array("testmock"), $reflectionMethod->invoke($pages, array("testmock")));
 
         mockAbc::$allow_parents = array(" TESTMOCK ");
-        $this->assertEqual($reflectionMethod->invoke($pages, array("testmock")), array("testmock"));
+        $this->assertEquals(array("testmock"), $reflectionMethod->invoke($pages, array("testmock")));
 
         mockAbc::$allow_parents = array();
-        $this->assertEqual($reflectionMethod->invoke($pages, array()), array());
+        $this->assertEquals(array(), $reflectionMethod->invoke($pages, array()));
     }
 }
 
-class mockPage extends Page {
+class mockPage extends Page
+{
     static $cname = "";
 }
 
-class mockAbc extends mockPage {
+class mockAbc extends mockPage
+{
     static $allow_parents = array();
     static $cname = "";
 }
 
-class testMock extends mockPage {
+class testMock extends mockPage
+{
     static $cname = "";
 }

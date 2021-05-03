@@ -1,5 +1,5 @@
 <?php
-defined("IN_GOMA") OR die();
+defined("IN_GOMA") or die();
 
 /**
  * SiteControllerTest.
@@ -11,7 +11,8 @@ defined("IN_GOMA") OR die();
  *
  * @version 1.0
  */
-class SiteControllerTest extends AbstractControllerTest {
+class SiteControllerTest extends AbstractControllerTest
+{
 
     public $name = "SiteController";
 
@@ -21,7 +22,7 @@ class SiteControllerTest extends AbstractControllerTest {
             "blub",
             "blah",
             "test/lala/123",
-            "POST blah"
+            "POST blah",
         );
     }
 }

@@ -1,13 +1,15 @@
-<?php defined("IN_GOMA") OR die();
+<?php defined("IN_GOMA") or die();
+
 /**
  * Unit-Tests for Pages.
  *
- * @package		Goma\Test
+ * @package        Goma\Test
  *
- * @author		Goma-Team
- * @license		GNU Lesser General Public License, version 3; see "LICENSE.txt"
+ * @author        Goma-Team
+ * @license        GNU Lesser General Public License, version 3; see "LICENSE.txt"
  */
-class PagesTest extends GomaUnitTest implements TestAble {
+class PagesTest extends GomaUnitTest implements TestAble
+{
 
 
     static $area = "cms";
@@ -21,18 +23,18 @@ class PagesTest extends GomaUnitTest implements TestAble {
     /**
      *
      */
-    public function setup() {
-        if(DataObject::get(pages::class)->count() == 0) {
+    public function setUp(): void
+    {
+        if (DataObject::get(pages::class)->count() == 0) {
             $this->parentIdForZero = 0;
         } else {
-            $this->parentIdForZero = DataObject::get_one(pages::class, array(
-                "children.count" => 0
-            ))->id;
+            $this->parentIdForZero = DataObject::get_one(pages::class, array("children.count" => 0))->id;
         }
     }
 
-    public function tearDown() {
-        foreach(DataObject::get(pages::class, array("parentid" => $this->parentIdForZero)) as $page) {
+    public function tearDown(): void
+    {
+        foreach (DataObject::get(pages::class, array("parentid" => $this->parentIdForZero)) as $page) {
             $page->remove(true);
         }
     }
@@ -40,51 +42,58 @@ class PagesTest extends GomaUnitTest implements TestAble {
     /**
      * tests if permissions are instantly written.
      */
-    public function testAddPermissionWithoutWriting() {
+    public function testAddPermissionWithoutWriting()
+    {
         $page = new Page();
         $perm = new Permission();
 
         $page->addPermission($perm, "read_permission");
 
-        $this->assertEqual($perm->id, 0);
-        $this->assertEqual($page->id, 0);
-        $this->assertEqual($page->read_permission, $perm);
+        $this->assertEquals(0, $perm->id);
+        $this->assertEquals(0, $page->id);
+        $this->assertEquals($perm, $page->read_permission);
 
-        $this->assertEqual($perm->id, 0);
-        $this->assertEqual($page->id, 0);
+        $this->assertEquals(0, $perm->id);
+        $this->assertEquals(0, $page->id);
     }
 
     /**
      * tests sort when no other page in that set exists.
      */
-    public function testSortWhenNothingExists() {
+    public function testSortWhenNothingExists()
+    {
         $page = new Page(array("parentid" => $this->parentIdForZero));
         $page->onBeforeWrite(new ModelWriter($page, IModelRepository::COMMAND_TYPE_PUBLISH, $page, Core::repository()));
-        $this->assertEqual($page->sort, 0);
+        $this->assertEquals(0, $page->sort);
     }
 
     /**
      * tests sort when something is existing.
      * @throws MySQLException
      */
-    public function testSortWhenSomeExist() {
+    public function testSortWhenSomeExist()
+    {
         $page = new Page(array("parentid" => $this->parentIdForZero));
         $page->writeToDB(false, true);
 
         $secondPage = new Page(array("parentid" => $this->parentIdForZero));
-        $secondPage->onBeforeWrite(new ModelWriter($page, IModelRepository::COMMAND_TYPE_PUBLISH, $page, Core::repository()));
-        $this->assertEqual($page->sort + 1, $secondPage->sort);
+        $secondPage->onBeforeWrite(
+            new ModelWriter($page, IModelRepository::COMMAND_TYPE_PUBLISH, $page, Core::repository())
+        );
+        $this->assertEquals($page->sort + 1, $secondPage->sort);
     }
 
     /**
      * tests parent-type.
      */
-    public function testParentType() {
-
+    public function testParentType()
+    {
+        $this->markTestIncomplete();
     }
 
-    public function unitTestParentType($page, $expected) {
-
+    public function unitTestParentType($page, $expected)
+    {
+        $this->markTestIncomplete();
     }
 
     /**
@@ -99,7 +108,8 @@ class PagesTest extends GomaUnitTest implements TestAble {
      * 7. Assert that $child->can("Insert") is true
      * @throws Exception
      */
-    public function testCanInsertParent() {
+    public function testCanInsertParent()
+    {
         try {
             $current = Member::$loggedIn;
             Member::InitUser(null);
@@ -116,7 +126,7 @@ class PagesTest extends GomaUnitTest implements TestAble {
         } finally {
             Member::InitUser($current);
 
-            if($parent) {
+            if ($parent) {
                 $parent->remove(true);
             }
         }
@@ -134,27 +144,32 @@ class PagesTest extends GomaUnitTest implements TestAble {
      * 7. Assert that $parent->getAllChildVersionIDs() returns array with $child->versionid
      * @throws Exception
      */
-    public function testHierarchyChildren() {
+    public function testHierarchyChildren()
+    {
         try {
-            $parent = new Page(array(
-                "title" => "Test"
-            ));
-            $child = new Page(array(
-                "title" => "Child",
-                "parent" => $parent
-            ));
+            $parent = new Page(
+                array(
+                    "title" => "Test",
+                )
+            );
+            $child = new Page(
+                array(
+                    "title"  => "Child",
+                    "parent" => $parent,
+                )
+            );
             $parent->writeToDB(false, true);
             $child->writeToDB(false, true);
 
-            $this->assertEqual(1, $parent->children()->count());
-            $this->assertEqual($child->id, $parent->children()->first()->id);
-            $this->assertEqual(array($child->versionid), $parent->getAllChildVersionIDs());
+            $this->assertEquals(1, $parent->children()->count());
+            $this->assertEquals($child->id, $parent->children()->first()->id);
+            $this->assertEquals(array($child->versionid), $parent->getAllChildVersionIDs());
         } finally {
-            if($parent) {
+            if ($parent) {
                 $parent->remove(true);
             }
 
-            if($child) {
+            if ($child) {
                 $child->remove(true);
             }
         }
@@ -171,27 +186,32 @@ class PagesTest extends GomaUnitTest implements TestAble {
      * 6. Assert that $parent->children()->setVersion(DataObject::VERSION_DATA)->first() is equal to $child
      * @throws Exception
      */
-    public function testHierarchyChildrenState() {
+    public function testHierarchyChildrenState()
+    {
         try {
-            $parent = new Page(array(
-                "title" => "Test"
-            ));
-            $child = new Page(array(
-                "title" => "Child",
-                "parent" => $parent
-            ));
+            $parent = new Page(
+                array(
+                    "title" => "Test",
+                )
+            );
+            $child = new Page(
+                array(
+                    "title"  => "Child",
+                    "parent" => $parent,
+                )
+            );
             $parent->writeToDB(false, true, 1);
             $child->writeToDB(false, true, 1);
 
-            $this->assertEqual(1, $parent->children()->setVersion(DataObject::VERSION_STATE)->count());
-            $this->assertEqual($child->id, $parent->children()->setVersion(DataObject::VERSION_STATE)->first()->id);
-            $this->assertEqual(array($child->versionid), $parent->getAllChildVersionIDs(DataObject::VERSION_STATE));
+            $this->assertEquals(1, $parent->children()->setVersion(DataObject::VERSION_STATE)->count());
+            $this->assertEquals($child->id, $parent->children()->setVersion(DataObject::VERSION_STATE)->first()->id);
+            $this->assertEquals(array($child->versionid), $parent->getAllChildVersionIDs(DataObject::VERSION_STATE));
         } finally {
-            if($parent) {
+            if ($parent) {
                 $parent->remove(true);
             }
 
-            if($child) {
+            if ($child) {
                 $child->remove(true);
             }
         }
@@ -213,39 +233,44 @@ class PagesTest extends GomaUnitTest implements TestAble {
      * 10. Assert that $parent->getAllChildVersionIDs() is array of $child->versionid
      * @throws Exception
      */
-   /* TODO: Make it work
-   public function testHierarchyChildrenStateBecomingPublish() {
+    public function testHierarchyChildrenStateBecomingPublish()
+    {
+        $this->markTestSkipped("Make it work");
         try {
-            $parent = new Page(array(
-                "title" => "Test"
-            ));
-            $child = new Page(array(
-                "title" => "Child",
-                "parent" => $parent
-            ));
+            $parent = new Page(
+                array(
+                    "title" => "Test",
+                )
+            );
+            $child = new Page(
+                array(
+                    "title"  => "Child",
+                    "parent" => $parent,
+                )
+            );
             $parent->writeToDB(false, true, 1);
             $child->writeToDB(false, true, 1);
 
-            $this->assertEqual(1, $parent->children()->setVersion(DataObject::VERSION_STATE)->count());
-            $this->assertEqual($child->id, $parent->children()->setVersion(DataObject::VERSION_STATE)->first()->id);
-            $this->assertEqual(array($child->versionid), $parent->getAllChildVersionIDs(DataObject::VERSION_STATE));
+            $this->assertEquals(1, $parent->children()->setVersion(DataObject::VERSION_STATE)->count());
+            $this->assertEquals($child->id, $parent->children()->setVersion(DataObject::VERSION_STATE)->first()->id);
+            $this->assertEquals(array($child->versionid), $parent->getAllChildVersionIDs(DataObject::VERSION_STATE));
 
             $oldChildVersionId = $child->versionid;
             $parent->writeToDB(false, true, 2, false, true, true);
             $child->writeToDB(false, true, 2, false, true, true);
-            $this->assertEqual($oldChildVersionId, $child->versionid);
-            $this->assertEqual(array($child->versionid), $parent->getAllChildVersionIDs());
+            $this->assertEquals($oldChildVersionId, $child->versionid);
+            $this->assertEquals(array($child->versionid), $parent->getAllChildVersionIDs());
 
         } finally {
-            if($parent) {
+            if ($parent) {
                 $parent->remove(true);
             }
 
-            if($child) {
+            if ($child) {
                 $child->remove(true);
             }
         }
-    }*/
+    }
 
     /**
      * tests if pages class can create filename which is not taken yet.
@@ -256,33 +281,39 @@ class PagesTest extends GomaUnitTest implements TestAble {
      * 5. Write $page2 as state
      * 6. Assert that $page1->path is different from $page2->path
      */
-    public function testFindFilenameNotSelectedState() {
+    public function testFindFilenameNotSelectedState()
+    {
         try {
             $randomPath = randomString(10);
-            $page1 = new Page(array(
-                "title" => $randomPath
-            ));
+            $page1 = new Page(
+                array(
+                    "title" => $randomPath,
+                )
+            );
             $page1->writeToDB(false, true, 1);
 
-            $page2 = new Page(array(
-                "title" => $randomPath
-            ));
+            $page2 = new Page(
+                array(
+                    "title" => $randomPath,
+                )
+            );
             $page2->writeToDB(false, true, 1);
 
-            $this->assertNotEqual($page1->path, $page2->path);
+            $this->assertNotEquals($page1->path, $page2->path);
         } finally {
-            if($page1) {
+            if ($page1) {
                 $page1->remove(true);
             }
 
-            if($page2) {
+            if ($page2) {
                 $page2->remove(true);
             }
         }
     }
 }
 
-class PermissionMock extends Permission {
+class PermissionMock extends Permission
+{
     /**
      * @var bool
      */
@@ -294,6 +325,6 @@ class PermissionMock extends Permission {
      */
     public function hasPermission($user = null)
     {
-        return (bool) $this->has;
+        return (bool)$this->has;
     }
 }
